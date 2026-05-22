@@ -1,0 +1,10 @@
+{
+  "case_id": "demo-case-001",
+  "chief_complaint": "Cough and fever",
+  "hpi": "58-year-old presents with 5 days productive cough and fever to 38.9°C",
+  "demographics": "58M",
+  "vitals": "T 38.9°C, HR 98, RR 22, SpO2 94% on room air",
+  "gold_diagnosis": "Community-acquired pneumonia",
+  "max_cost_usd": 500,
+  "notes": "Inspired by NEJM Case Records / Microsoft Sequential Diagnosis Benchmark (SD Bench). Research demo only — not for clinical use."
+}

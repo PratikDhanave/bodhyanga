@@ -1,0 +1,110 @@
+package agents
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodh/pkg/medical"
+)
+
+// DiagnosticSupervisor emulates MAI-DxO: coordinates the virtual physician panel
+// through sequential diagnosis (ask → test → verify → diagnose).
+type DiagnosticSupervisor struct{}
+
+func (a *DiagnosticSupervisor) ID() string   { return "diagnostic_supervisor" }
+func (a *DiagnosticSupervisor) Name() string { return "Diagnostic Orchestrator (MAI-DxO style)" }
+func (a *DiagnosticSupervisor) Capabilities() []string {
+	return []string{"supervise_diagnosis", "sequential_diagnosis"}
+}
+
+func (a *DiagnosticSupervisor) HandleMessage(ctx context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {
+	switch msg.Type {
+	case "case_state":
+		return a.routeInitial(ctx, msg, env)
+	case "questions_complete", "tests_complete", "reasoning_verified":
+		return a.routeNext(ctx, msg, env)
+	case "diagnosis":
+		return a.finalize(ctx, msg, env)
+	default:
+		env.Logf("[supervisor] unhandled type=%s", msg.Type)
+		return nil, nil
+	}
+}
+
+func (a *DiagnosticSupervisor) routeInitial(_ context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {
+	state, _ := medical.DecodeState(msg.Content)
+	env.Logf("[supervisor] starting sequential diagnosis for case %s", state.CaseID)
+	out := agent.NewMessage(a.ID(), "questioner", agent.RoleAgent, "case_state", msg.Content, copyMeta(msg.Metadata))
+	return []agent.Message{out}, nil
+}
+
+func (a *DiagnosticSupervisor) routeNext(_ context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {
+	switch msg.Type {
+	case "questions_complete":
+		env.Logf("[supervisor] history gathered — ordering tests")
+		out := agent.NewMessage(a.ID(), "test_planner", agent.RoleAgent, "case_state", msg.Content, copyMeta(msg.Metadata))
+		return []agent.Message{out}, nil
+	case "tests_complete":
+		env.Logf("[supervisor] results available — forming diagnosis")
+		out := agent.NewMessage(a.ID(), "diagnostician", agent.RoleAgent, "case_state", msg.Content, copyMeta(msg.Metadata))
+		return []agent.Message{out}, nil
+	case "reasoning_verified":
+		env.Logf("[supervisor] reasoning verified — requesting final diagnosis")
+		out := agent.NewMessage(a.ID(), "diagnostician", agent.RoleAgent, "case_state", msg.Content, copyMeta(msg.Metadata))
+		return []agent.Message{out}, nil
+	}
+	return nil, nil
+}
+
+func (a *DiagnosticSupervisor) finalize(_ context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {
+	state, _ := medical.DecodeState(msg.Content)
+	env.Logf("[supervisor] ═══ FINAL DIAGNOSIS for case %s ═══", state.CaseID)
+	env.Logf("[supervisor] working diagnosis: %s", state.WorkingDiagnosis)
+	env.Logf("[supervisor] total diagnostic cost: $%.2f (budget $%.2f)", state.TotalCostUSD, state.MaxCostUSD)
+	if state.GoldDiagnosis != "" {
+		match := state.WorkingDiagnosis == state.GoldDiagnosis
+		env.Logf("[supervisor] gold standard: %s | match=%v", state.GoldDiagnosis, match)
+	}
+	env.Logf("[supervisor] hypotheses considered: %v", state.Hypotheses)
+	return nil, nil
+}
+
+// copyMeta returns a shallow copy of metadata for downstream messages.
+func copyMeta(m map[string]any) map[string]any {
+	if m == nil {
+		return map[string]any{}
+	}
+	out := make(map[string]any, len(m))
+	for k, v := range m {
+		out[k] = v
+	}
+	return out
+}
+
+func metadataString(m map[string]any, key string) string {
+	if m == nil {
+		return ""
+	}
+	if v, ok := m[key].(string); ok {
+		return v
+	}
+	return ""
+}
+
+func metadataFloat(m map[string]any, key string, def float64) float64 {
+	if m == nil {
+		return def
+	}
+	if v, ok := m[key].(float64); ok {
+		return v
+	}
+	return def
+}
+
+// PanelReport formats a human-readable summary (for API layer later).
+func PanelReport(state medical.CaseState) string {
+	return fmt.Sprintf("case=%s diagnosis=%q cost=$%.2f tests=%d questions=%d",
+		state.CaseID, state.WorkingDiagnosis, state.TotalCostUSD,
+		len(state.TestsOrdered), len(state.QuestionsAsked))
+}
