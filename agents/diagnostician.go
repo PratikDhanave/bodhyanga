@@ -45,6 +45,15 @@ func (a *DiagnosticianAgent) HandleMessage(ctx context.Context, msg agent.Messag
 }
 
 func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
+	if state.Condition == "chf" && len(state.RPMAlerts) >= 2 {
+		return medical.DiagnosisProposal{
+			Diagnosis:    "Acute decompensated heart failure",
+			Confidence:   0.84,
+			Differential: state.Hypotheses,
+			Rationale:    "Dyspnea with weight gain and RPM alerts (elevated BP, weight, low SpO2)",
+		}
+	}
+
 	xray, hasInfiltrate := state.TestResults["chest_xray"]
 	cbc, hasLeukocytosis := state.TestResults["complete_blood_count"]
 

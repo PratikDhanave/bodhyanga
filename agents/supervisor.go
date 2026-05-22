@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodh/pkg/eval"
 	"github.com/PratikDhanave/bodh/pkg/medical"
 )
 
@@ -67,7 +68,26 @@ func (a *DiagnosticSupervisor) finalize(_ context.Context, msg agent.Message, en
 		env.Logf("[supervisor] gold standard: %s | match=%v", state.GoldDiagnosis, match)
 	}
 	env.Logf("[supervisor] hypotheses considered: %v", state.Hypotheses)
+	if len(state.RPMAlerts) > 0 {
+		env.Logf("[supervisor] RPM alerts at intake: %v", state.RPMAlerts)
+	}
+	metrics := eval.ScoreCase(state, metadataInt(msg.Metadata, "message_steps", 11))
+	env.Logf("[supervisor] eval: accuracy=%.0f cost=$%.2f utilization=%.0f%% rpm_alerts=%d",
+		metrics.Accuracy*100, metrics.CostUSD, metrics.CostUtilization*100, metrics.RPMAlertCount)
 	return nil, nil
+}
+
+func metadataInt(m map[string]any, key string, def int) int {
+	if m == nil {
+		return def
+	}
+	if v, ok := m[key].(int); ok {
+		return v
+	}
+	if v, ok := m[key].(float64); ok {
+		return int(v)
+	}
+	return def
 }
 
 // copyMeta returns a shallow copy of metadata for downstream messages.

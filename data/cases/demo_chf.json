@@ -1,0 +1,17 @@
+{
+  "case_id": "demo-case-chf-001",
+  "condition": "chf",
+  "chief_complaint": "Worsening shortness of breath and leg swelling",
+  "hpi": "72-year-old with known HFrEF presents with 4 days progressive dyspnea, 6 lb weight gain, orthopnea",
+  "demographics": "72F",
+  "vitals": "BP 168/94, HR 108, RR 24, SpO2 91% on room air",
+  "gold_diagnosis": "Acute decompensated heart failure",
+  "max_cost_usd": 600,
+  "rpm_observations": [
+    {"device": "bp_cuff", "metric": "systolic_bp", "value": 168, "unit": "mmHg", "taken_at": "2026-05-20T08:00:00Z"},
+    {"device": "scale", "metric": "weight_lb", "value": 192, "unit": "lb", "taken_at": "2026-05-20T08:00:00Z"},
+    {"device": "pulse_ox", "metric": "spo2", "value": 91, "unit": "%", "taken_at": "2026-05-20T08:00:00Z"},
+    {"device": "bp_cuff", "metric": "heart_rate", "value": 108, "unit": "bpm", "taken_at": "2026-05-20T08:00:00Z"}
+  ],
+  "notes": "Chronic care / RPM-style case inspired by population health programs (e.g. remote monitoring for CHF). Research demo only."
+}

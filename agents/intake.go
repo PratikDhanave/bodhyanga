@@ -25,17 +25,19 @@ func (a *IntakeAgent) HandleMessage(ctx context.Context, msg agent.Message, env 
 	env.Logf("[intake] case=%v chief_complaint=%q", msg.Metadata["case_id"], pres.ChiefComplaint)
 
 	state := medical.CaseState{
-		CaseID:       metadataString(msg.Metadata, "case_id"),
-		Presentation: pres.ChiefComplaint + "; " + pres.HPI,
-		Answers:      make(map[string]string),
-		TestResults:  make(map[string]string),
-		MaxCostUSD:   metadataFloat(msg.Metadata, "max_cost_usd", 500),
-		GoldDiagnosis: metadataString(msg.Metadata, "gold_diagnosis"),
+		CaseID:          metadataString(msg.Metadata, "case_id"),
+		Presentation:    pres.ChiefComplaint + "; " + pres.HPI,
+		Answers:         make(map[string]string),
+		TestResults:     make(map[string]string),
+		MaxCostUSD:      metadataFloat(msg.Metadata, "max_cost_usd", 500),
+		GoldDiagnosis:   metadataString(msg.Metadata, "gold_diagnosis"),
+		Condition:       pres.Condition,
+		RPMObservations: pres.RPMObservations,
 	}
 
 	out := agent.NewMessage(
 		a.ID(),
-		"diagnostic_supervisor",
+		"rpm_monitor",
 		agent.RoleAgent,
 		"case_state",
 		medical.EncodeState(state),

@@ -14,7 +14,10 @@ type CaseState struct {
 	WorkingDiagnosis string           `json:"working_diagnosis,omitempty"`
 	TotalCostUSD    float64           `json:"total_cost_usd"`
 	MaxCostUSD      float64           `json:"max_cost_usd"`
-	GoldDiagnosis   string            `json:"gold_diagnosis,omitempty"` // for eval/benchmark only
+	GoldDiagnosis    string             `json:"gold_diagnosis,omitempty"` // for eval/benchmark only
+	Condition        string             `json:"condition,omitempty"`      // e.g. chf, cap, dm
+	RPMObservations  []RPMObservation   `json:"rpm_observations,omitempty"`
+	RPMAlerts        []string           `json:"rpm_alerts,omitempty"`
 }
 
 // DiagnosticTest represents a virtual investigation with cost (SD Bench methodology).
@@ -42,7 +45,9 @@ type PatientPresentation struct {
 	ChiefComplaint string `json:"chief_complaint"`
 	HPI            string `json:"hpi"`
 	Demographics   string `json:"demographics,omitempty"`
-	Vitals         string `json:"vitals,omitempty"`
+	Vitals            string             `json:"vitals,omitempty"`
+	Condition         string             `json:"condition,omitempty"`
+	RPMObservations   []RPMObservation   `json:"rpm_observations,omitempty"`
 }
 
 // DiagnosisProposal is emitted when the virtual panel is ready to diagnose.

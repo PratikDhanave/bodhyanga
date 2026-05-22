@@ -6,13 +6,13 @@ Go · MARA · Medical AI · Sequential Diagnosis · Open Source
 
 **Module path:** `github.com/PratikDhanave/bodh`
 
-**Architecture diagrams:** [Architecture.png](Architecture.png) (MARA platform) · [architectureflow.webp](architectureflow.webp) (sequential diagnosis flow)
+**Architecture diagrams:** [Architecture.png](Architecture.png) (MARA platform) · [architectureflow.png](architectureflow.png) (sequential diagnosis flow)
 
 ---
 
 ## Table of contents
 
-1. [Architecture diagrams](#architecture-diagrams) — [`Architecture.png`](Architecture.png) · [`architectureflow.webp`](architectureflow.webp)
+1. [Architecture diagrams](#architecture-diagrams) — [`Architecture.png`](Architecture.png) · [`architectureflow.png`](architectureflow.png)
 2. [Start here (new contributors)](#start-here-new-contributors)
 3. [What is Bodh?](#what-is-bodh)
 4. [Research disclaimer](#research-disclaimer)
@@ -55,7 +55,7 @@ Read this README in order. You do **not** need prior LLM framework experience. Y
 **First, open the two diagrams** (also linked at the top of this file):
 
 1. [`Architecture.png`](Architecture.png) — how Bodh fits Microsoft MARA (orchestrator, registry, bus, eval).
-2. [`architectureflow.webp`](architectureflow.webp) — how one case moves through the virtual physician panel.
+2. [`architectureflow.png`](architectureflow.png) — how one case moves through the virtual physician panel.
 
 Full legend tables: [Architecture diagrams](#architecture-diagrams).
 
@@ -188,15 +188,29 @@ This repository includes **two architecture images** at the repo root. Use them 
 | File | What it shows | When to use it |
 |------|----------------|----------------|
 | [**Architecture.png**](Architecture.png) | Microsoft-style **Multi-Agent Reference Architecture** — user app, orchestrator, classifier, registry, knowledge, storage, local/remote agent layers, MCP, observability, evaluation | Onboarding to **platform** packages (`pkg/orchestration`, `pkg/registry`, `pkg/comm`, …) |
-| [**architectureflow.webp**](architectureflow.webp) | **Bodh sequential diagnosis flow** — virtual physician panel, message path from presentation to final diagnosis | Onboarding to **`agents/`** and `cmd/demo` clinical routing |
+| [**architectureflow.png**](architectureflow.png) | **Bodh sequential diagnosis flow** — virtual physician panel, message path from presentation to final diagnosis | Onboarding to **`agents/`** and `cmd/demo` clinical routing |
+| [`architectureflow.webp`](architectureflow.webp) | WebP source (optional); prefer **PNG** in README for GitHub rendering | Asset pipeline |
 
 > **Maintainers:** When box-level architecture or the diagnosis pipeline changes, update the matching image so it stays the visual source of truth.
+
+### Why images sometimes do not show on GitHub
+
+| Cause | Fix |
+|-------|-----|
+| **WebP in README** | GitHub support is inconsistent in some clients; this repo displays **`architectureflow.png`** (PNG export of the WebP). |
+| **Very large PNG** | `Architecture.png` is ~2000×2400px; the README uses HTML `width` so it scales in the browser. |
+| **File not on `main`** | Images must be committed on the branch you view (paths are relative to repo root). |
+| **Broken relative path** | Use `./Architecture.png` from README at root—do not move images without updating links. |
+
+If preview still fails, open the file directly: [Architecture.png](Architecture.png) · [architectureflow.png](architectureflow.png).
 
 ### Platform architecture — `Architecture.png`
 
 High-level MARA stack: user → application → orchestration (classifier, registry) → knowledge & storage → supervisor/worker agents (MCP) → tools → observability → evaluation feedback.
 
-![Bodh platform architecture aligned with Microsoft Multi-Agent Reference Architecture (MARA)](Architecture.png)
+<p align="center">
+  <img src="./Architecture.png" alt="Bodh platform architecture aligned with Microsoft Multi-Agent Reference Architecture (MARA)" width="720"/>
+</p>
 
 **How to read this diagram with the code**
 
@@ -214,17 +228,20 @@ High-level MARA stack: user → application → orchestration (classifier, regis
 | Observability | Logs, traces, clocks | `pkg/observability` |
 | Evaluation | Accuracy vs. gold diagnosis, cost metrics | `pkg/eval` · planned: `cmd/bench` |
 
-### Clinical flow — `architectureflow.webp`
+### Clinical flow — `architectureflow.png`
 
-End-to-end **sequential diagnosis** for one case: presentation → history → tests (with cost check) → diagnosis → reasoning verification → final report. This is the Bodh mapping of [MAI-DxO](https://microsoft.ai/news/the-path-to-medical-superintelligence/)’s virtual physician panel and [SD Bench](https://microsoft.ai/news/the-path-to-medical-superintelligence/)’s stepwise encounters.
+End-to-end **sequential diagnosis** for one case: presentation → **RPM monitor** → history → tests (with cost check) → diagnosis → reasoning verification → final report. This is the Bodh mapping of [MAI-DxO](https://microsoft.ai/news/the-path-to-medical-superintelligence/)’s virtual physician panel and [SD Bench](https://microsoft.ai/news/the-path-to-medical-superintelligence/)’s stepwise encounters.
 
-![Bodh sequential diagnosis message flow — virtual physician panel](architectureflow.webp)
+<p align="center">
+  <img src="./architectureflow.png" alt="Bodh sequential diagnosis message flow — virtual physician panel" width="720"/>
+</p>
 
 **How to read this diagram with the code**
 
 | Step on the flow | Agent ID | Message `Type` (typical) | Source file |
 |------------------|----------|--------------------------|-------------|
 | Case intake | `intake` | `presentation` → `case_state` | `agents/intake.go` |
+| RPM triage | `rpm_monitor` | `case_state` (alerts) | `agents/rpm_monitor.go` |
 | Panel coordination | `diagnostic_supervisor` | `case_state`, `questions_complete`, `tests_complete`, `diagnosis` | `agents/supervisor.go` |
 | Ask question (MAI-DxO) | `questioner` | `case_state` → `questions_complete` | `agents/questioner.go` |
 | Request test (MAI-DxO) | `test_planner` | `case_state` | `agents/test_planner.go` |
@@ -233,13 +250,13 @@ End-to-end **sequential diagnosis** for one case: presentation → history → t
 | Verify reasoning (MAI-DxO) | `reasoning_verifier` | `diagnosis_proposal` → `diagnosis` | `agents/reasoning_verifier.go` |
 | Domain state in every hop | — | JSON in `Content` | `pkg/medical` (`CaseState`) |
 
-The ASCII diagrams in [Architecture overview](#architecture-overview) below duplicate this flow in text form for terminals and diffs; prefer **`architectureflow.webp`** for slides and **`Architecture.png`** for platform discussions.
+The ASCII diagrams in [Architecture overview](#architecture-overview) below duplicate this flow in text form for terminals and diffs; prefer **`architectureflow.png`** for GitHub/README and **`Architecture.png`** for platform discussions.
 
 ---
 
 ## Architecture overview
 
-> **Visual references:** Platform boxes → [`Architecture.png`](Architecture.png). Clinical message path → [`architectureflow.webp`](architectureflow.webp). See [Architecture diagrams](#architecture-diagrams) for full legend tables.
+> **Visual references:** Platform boxes → [`Architecture.png`](Architecture.png). Clinical message path → [`architectureflow.png`](architectureflow.png). See [Architecture diagrams](#architecture-diagrams) for full legend tables.
 
 ### System diagram (how pieces connect)
 
@@ -305,7 +322,7 @@ Microsoft’s diagram describes a panel that can **Ask Question**, **Request Tes
 
 ### Sequential diagnosis sequence (mermaid)
 
-Same flow as [`architectureflow.webp`](architectureflow.webp) (recommended for slides and docs); mermaid below is for GitHub/GitLab rendering in-repo.
+Same flow as [`architectureflow.png`](architectureflow.png); mermaid below is for GitHub/GitLab rendering in-repo.
 
 ```mermaid
 sequenceDiagram

@@ -39,7 +39,11 @@ func (a *QuestionerAgent) HandleMessage(ctx context.Context, msg agent.Message, 
 		state.Answers[q] = simulatedAnswer(q, state.Presentation)
 	}
 
-	state.Hypotheses = []string{"community_acquired_pneumonia", "viral_upper_respiratory_infection", "pulmonary_embolism"}
+	if state.Condition == "chf" {
+		state.Hypotheses = []string{"acute_decompensated_heart_failure", "copd_exacerbation", "pneumonia"}
+	} else {
+		state.Hypotheses = []string{"community_acquired_pneumonia", "viral_upper_respiratory_infection", "pulmonary_embolism"}
+	}
 	env.Logf("[questioner] %d questions answered; hypotheses: %v", len(state.QuestionsAsked), state.Hypotheses)
 
 	out := agent.NewMessage(
