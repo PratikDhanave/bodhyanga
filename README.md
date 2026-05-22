@@ -71,6 +71,7 @@ That pattern is exactly what MARA’s building blocks describe: an **orchestrato
 git clone https://github.com/PratikDhanave/bodh.git
 cd bodh
 go run ./cmd/demo
+go run ./cmd/demo -case=data/cases/demo_chf.json   # CHF + RPM
 go test ./...
 ```
 
@@ -393,7 +394,7 @@ MARA components you will **add for Bodh** (not all are code yet):
 
 ## Virtual physician panel (MAI-DxO mapping)
 
-> **Visual:** Agent order and message hops — [`architectureflow.webp`](architectureflow.webp). Platform wiring (orchestrator, registry, bus) — [`Architecture.png`](Architecture.png).
+> **Visual:** Agent order and message hops — [`architectureflow.png`](architectureflow.png). Platform wiring (orchestrator, registry, bus) — [`Architecture.png`](Architecture.png).
 
 ### Agent registry table
 
@@ -752,7 +753,7 @@ go test ./pkg/medical/... -v
 
 ## Walkthrough: `cmd/demo` (line by line)
 
-Open `cmd/demo/main.go` alongside this section and [`architectureflow.webp`](architectureflow.webp) so each `bus.Publish` step maps to an arrow on the flow diagram.
+Open `cmd/demo/main.go` alongside this section and [`architectureflow.png`](architectureflow.png) so each `bus.Publish` step maps to an arrow on the flow diagram.
 
 ### Step 1 — Observability and environment
 
@@ -819,7 +820,7 @@ time.Sleep(3 * time.Second)
 
 ## Complete message trace (demo case)
 
-For `demo-case-001` (cough/fever → pneumonia), the following messages are emitted (simplified). This table matches the numbered path in [`architectureflow.webp`](architectureflow.webp):
+For `demo-case-001` (cough/fever → pneumonia), the following messages are emitted (simplified). This table matches the numbered path in [`architectureflow.png`](architectureflow.png):
 
 | Step | From | To | Type | Notes |
 |------|------|-----|------|-------|
@@ -1019,7 +1020,7 @@ Add an `LLMClient` to a custom `Environment`; call it from `questioner`, `diagno
 | Layer | Status | Where |
 |-------|--------|-------|
 | **MARA platform** | ✅ Implemented | `pkg/protocol`, `pkg/agent`, `pkg/registry`, `pkg/comm`, `pkg/orchestration`, `pkg/governance`, `pkg/observability`, `pkg/memory`, `pkg/eval` — see [`Architecture.png`](Architecture.png) |
-| **Architecture diagrams** | ✅ In repo | [`Architecture.png`](Architecture.png), [`architectureflow.webp`](architectureflow.webp) |
+| **Architecture diagrams** | ✅ In repo | [`Architecture.png`](Architecture.png), [`architectureflow.png`](architectureflow.png) |
 | **Medical domain** | ✅ Implemented | `pkg/medical` |
 | **Medical governance** | ✅ Implemented | `pkg/governance/medical_policy.go` |
 | **Virtual physician panel** | ✅ Demo (rule-based) | `agents/*.go` |
@@ -1038,7 +1039,7 @@ Add an `LLMClient` to a custom `Environment`; call it from `questioner`, `diagno
 
 | Phase | Goal | Deliverables |
 |-------|------|--------------|
-| **1** ✅ | MARA platform + demo panel | `cmd/demo`, 7 agents, governance tests |
+| **1** ✅ | MARA platform + demo panel + RPM/CHF | `cmd/demo`, 8 agents, `pkg/eval` metrics, governance tests |
 | **2** | LLM integration | `Environment` with model router; prompt templates per agent |
 | **3** | SD Bench-style eval | Case manifest, accuracy + cost report, Pareto plots |
 | **4** | API + persistence | REST/gRPC, case CRUD, audit log |
@@ -1051,7 +1052,8 @@ Add an `LLMClient` to a custom `Environment`; call it from `questioner`, `diagno
 ```
 bodh/
 ├── Architecture.png             # MARA platform map (orchestrator, registry, agents, eval)
-├── architectureflow.webp        # Sequential diagnosis message flow (virtual physician panel)
+├── architectureflow.png        # Sequential diagnosis flow (display in README)
+├── architectureflow.webp       # WebP source for flow diagram
 ├── cmd/
 │   └── demo/                    # Sequential diagnosis entrypoint
 ├── agents/                      # Virtual physician panel
@@ -1104,7 +1106,7 @@ bodh/
 ## Contributing
 
 - Open issues for bugs, agent ideas, and benchmark integrations.
-- **Diagram hygiene:** If a PR changes platform boxes or agent flow, update [`Architecture.png`](Architecture.png) and/or [`architectureflow.webp`](architectureflow.webp) and the matching tables in [Architecture diagrams](#architecture-diagrams).
+- **Diagram hygiene:** If a PR changes platform boxes or agent flow, update [`Architecture.png`](Architecture.png) and/or [`architectureflow.png`](architectureflow.png) and the matching tables in [Architecture diagrams](#architecture-diagrams).
 - **Good first tasks:**
   - Loader: read `data/cases/*.json` and publish `presentation` messages
   - Table-driven tests for each agent’s `HandleMessage`
@@ -1127,7 +1129,7 @@ bodh/
 | Asset | Path |
 |-------|------|
 | MARA platform architecture | [`Architecture.png`](Architecture.png) |
-| Sequential diagnosis flow | [`architectureflow.webp`](architectureflow.webp) |
+| Sequential diagnosis flow | [`architectureflow.png`](architectureflow.png) |
 
 ### Clinical AI context (external)
 
