@@ -28,7 +28,8 @@ At the heart of any future clinical product: **safety, trust, transparency, and 
 
 ### Part I — Get started
 1. [Quick start](#quick-start)
-2. **[Architecture diagrams (25 diagrams)](#architecture-diagrams)** ← all the system pictures in one place
+2. **[Architecture diagrams (2 PNGs + 25 mermaid)](#architecture-diagrams)** ← all the system pictures in one place
+   - **0. Canonical PNGs (start here)** — [Platform architecture (Architecture.png)](#platform-architecture--architecturepng) · [Clinical flow (architectureflow.png)](#clinical-flow--architectureflowpng)
    - A. Bird's-eye views — [System context](#1-system-context-level-1--bodh-in-its-world) · [MARA → packages](#2-mara-platform--building-blocks--go-packages) · [Logical layers](#3-logical-layers--request-through-the-stack)
    - B. Control plane — [Message lifecycle](#4-message-lifecycle--what-happens-to-one-message) · [Governance pipeline](#5-governance-pipeline--composite-policy) · [Package graph](#6-package-dependency-graph)
    - C. State machines — [HITL lifecycle](#7-hitl-review-lifecycle--state-machine) · [Billing periods](#8-billing-period-state-machine-cms-programs) · [Nurse tasks](#9-nurse-task-lifecycle-pkgtasks) · [CarePlan templates](#10-careplan-template-selection) · [MPI matching](#11-master-patient-index--matching-pipeline) · [Inbox triage](#12-inbox-triage-decision-tree-inbox_triage)
@@ -45,7 +46,6 @@ At the heart of any future clinical product: **safety, trust, transparency, and 
 7. [Care-services catalog](#care-services-catalog)
 
 ### Part III — Architecture
-9. [Reading the PNG diagrams](#reading-the-png-diagrams)
 10. [MARA concepts → Go packages](#mara-concepts--go-packages)
 11. [Virtual physician panel (MAI-DxO mapping)](#virtual-physician-panel-mai-dxo-mapping)
 12. [Care-services workflows](#care-services-workflows)
@@ -147,6 +147,23 @@ go run ./cmd/caredemo -workflow=adt
 # HTTP API (RPM ingest, ADT, CDM, TCM, Panel, Inbox, Refill, Prior auth, FHIR)
 go run ./cmd/care -addr=:8088
 
+# SD-Bench runner — loads every case fixture, prints accuracy/cost table
+go run ./cmd/bench
+
+# Operator CLI — manage reviews / tasks / notifications against a running cmd/care
+go install ./cmd/bodhctl
+bodhctl reviews pending
+bodhctl reviews approve <id>
+
+# Common dev workflow via Makefile
+make all          # vet + test + build
+make ci           # vet + test + govulncheck
+make demo         # diagnostic flow
+make caredemo     # care workflows (HITL on)
+make care         # HTTP API on :8088
+make bench        # SD-Bench
+make docker       # container build
+
 # Test suite
 go test ./...
 ```
@@ -179,9 +196,57 @@ For the care demo:
 
 # Architecture diagrams
 
-This section is the visual index of the system. Twenty-three diagrams grouped into six families — start at the top, drill into whichever matches the question in front of you. Every diagram below uses [Mermaid](https://mermaid.js.org/) and renders inline on GitHub.
+This section is the visual index of the system. **Start with the two PNG diagrams below** — the Microsoft-style MARA platform view and the sequential-diagnosis flow — then drill into the 25 mermaid diagrams grouped by topic (A–F).
 
-> **Legend:** rounded boxes = agents or services · cylinders = data stores · dashed lines = optional / async · solid lines = synchronous calls or message hops · `human_review` gate is always shown explicitly.
+> **Legend (mermaid sections):** rounded boxes = agents or services · cylinders = data stores · dashed lines = optional / async · solid lines = synchronous calls or message hops · `human_review` gate is always shown explicitly.
+
+---
+
+## 0. Canonical platform diagrams (start here)
+
+### Platform architecture — [`Architecture.png`](Architecture.png)
+
+The Microsoft-style **Multi-Agent Reference Architecture (MARA)** mapping — user, application, orchestrator, classifier, registry, knowledge/storage, supervisor/worker agents, MCP, observability, evaluation.
+
+<p align="center">
+  <img src="./Architecture.png" alt="Bodh platform architecture aligned with Microsoft MARA" width="820"/>
+</p>
+
+**How each box maps to the Go code:**
+
+| Area on diagram | Bodh implementation | Go path |
+|-----------------|---------------------|---------|
+| User / User application | Entry that publishes the first `protocol.Message` | `cmd/demo`, `cmd/caredemo`, `cmd/care` (HTTP), `cmd/bodhctl` (CLI) |
+| Orchestrator | Subscribes agents, runs governance, calls `HandleMessage`, republishes outputs | `pkg/orchestration` |
+| Classifier | Route intent (chest pain vs rash, refill vs urgent) | `inbox_triage` agent · future `pkg/classifier` |
+| Agent registry | Lists agents, resolves capabilities | `pkg/registry` |
+| Knowledge layer | Guidelines, differentials, RAG | Planned: DB + vector index |
+| Storage layer | Case + roster + queue + reviews + audit | `pkg/memory`, `pkg/persistence` (JSON file), `pkg/audit` (append-only) · planned PostgreSQL |
+| Supervisor agent | Decompose diagnosis | `agents/supervisor.go` |
+| Workers | Intake, questioner, tests, cost, dx, verify, CDM/TCM/panel/VO/RPM/engagement/readmission/human-review | `agents/*.go` (17 agents + HITL gate) |
+| Integration / MCP / tools | Labs, imaging, LLM APIs, FHIR, HL7 v2 | `pkg/fhir` (today) · planned MCP tools |
+| Governance | Allow/deny boundary; PHI redaction | `pkg/governance`, `pkg/phi` |
+| Observability | Logs, traces, clocks, audit | `pkg/observability`, `pkg/audit` |
+| Evaluation | Accuracy vs gold, cost metrics | `pkg/eval` + `cmd/bench` |
+
+### Clinical flow — [`architectureflow.png`](architectureflow.png)
+
+End-to-end **sequential diagnosis** for one case: presentation → RPM monitor → history → tests (with cost check + rework loop) → diagnosis → reasoning verification → human sign-off → final report. The Bodh expression of [MAI-DxO](https://microsoft.ai/news/the-path-to-medical-superintelligence/)'s virtual physician panel.
+
+<p align="center">
+  <img src="./architectureflow.png" alt="Sequential diagnosis flow — virtual physician panel" width="820"/>
+</p>
+
+**Why images sometimes do not show on GitHub**
+
+| Cause | Fix |
+|-------|-----|
+| WebP in README | GitHub support is inconsistent; this repo displays the **PNG** export |
+| Very large PNG | The README uses HTML `width` so the PNG scales in the browser |
+| File not on `main` | Images must be committed on the branch you view |
+| Broken relative path | Use `./Architecture.png` from README root |
+
+> The mermaid sections below are the live, in-code companion to these two PNGs — they stay in sync with the source tree as agents are added.
 
 ---
 
@@ -980,7 +1045,9 @@ bodh/
 ├── cmd/
 │   ├── demo/                    # Sequential diagnosis entrypoint
 │   ├── caredemo/                # Care-services workflows (CDM/TCM/Panel/VO/ADT)
-│   └── care/                    # HTTP API
+│   ├── care/                    # HTTP API
+│   ├── bench/                   # SD-Bench fixture runner
+│   └── bodhctl/                 # Operator CLI (stdlib HTTP client)
 ├── agents/                      # Virtual physician panel + care services
 │   ├── intake.go
 │   ├── supervisor.go            # diagnostic_supervisor (MAI-DxO-style)
@@ -1014,7 +1081,10 @@ bodh/
 │   ├── persistence/             # JSON file store
 │   ├── memory/                  # KV store
 │   ├── observability/           # Logger + Clock
-│   └── eval/                    # InteractionRecord, CaseMetrics
+│   ├── eval/                    # InteractionRecord, CaseMetrics
+│   ├── hitl/                    # Human-in-the-loop review queue
+│   ├── phi/                     # PHI redaction (regex patterns + logger wrapper)
+│   └── audit/                   # Append-only HIPAA audit log (file-backed)
 ├── data/
 │   └── cases/
 │       ├── demo_pneumonia.json
@@ -1094,51 +1164,6 @@ Each service is one or more Bodh agents subscribing to specific message types, s
 | Readmission tracking | `readmission_tracker` (ADT feed + transparent risk score) | ✅ |
 | EHR integration | `pkg/fhir` (Patient / Observation / Encounter / Condition) + HL7 v2 (planned) | ✅ FHIR · 🔲 HL7 v2 |
 | Analytics / outcomes | `pkg/eval` + `pkg/analytics` | ✅ |
-
----
-
-## Reading the PNG diagrams
-
-The two original platform PNGs ship in the repo root. The interactive Mermaid index lives at the top of this README ([Architecture diagrams](#architecture-diagrams)) — the section below is the original Microsoft-style platform view plus the "how each box maps to the Go code" table that's most useful when you're reading `pkg/orchestration` for the first time.
-
-| File | What it shows | When to use it |
-|------|----------------|----------------|
-| [**Architecture.png**](Architecture.png) | Microsoft-style **MARA** — user, orchestrator, classifier, registry, knowledge, storage, supervisor/worker agents, MCP, observability, evaluation | Onboarding to **platform** packages |
-| [**architectureflow.png**](architectureflow.png) | **Sequential diagnosis flow** — virtual physician panel | Onboarding to **`agents/`** + `cmd/demo` |
-| [`architectureflow.webp`](architectureflow.webp) | WebP source (PNG preferred for GitHub) | Asset pipeline |
-
-<p align="center">
-  <img src="./Architecture.png" alt="Bodh platform architecture aligned with Microsoft MARA" width="720"/>
-</p>
-
-**How to read this diagram with the code:**
-
-| Area on diagram | Bodh implementation | Go path |
-|-----------------|---------------------|---------|
-| User / User application | Entry that publishes the first `protocol.Message` | `cmd/demo`, `cmd/caredemo`, `cmd/care` (HTTP) |
-| Orchestrator | Subscribes agents, runs governance, calls `HandleMessage`, republishes outputs | `pkg/orchestration` |
-| Classifier | Route intent (chest pain vs rash, refill vs urgent) | `inbox_triage` agent · future `pkg/classifier` |
-| Agent registry | Lists agents, resolves capabilities | `pkg/registry` |
-| Knowledge layer | Guidelines, differentials, RAG | Planned: DB + vector index |
-| Storage layer | Case + roster + queue + reviews | `pkg/memory`, `pkg/persistence` (JSON file today) · planned PostgreSQL |
-| Supervisor agent | Decompose diagnosis | `agents/supervisor.go` |
-| Workers | Intake, questioner, tests, cost, dx, verify, CDM/TCM/panel/VO/RPM/engagement/readmission/human-review | `agents/*.go` |
-| Integration / MCP / tools | Labs, imaging, LLM APIs, FHIR, HL7 v2 | `pkg/fhir` (today) · planned MCP tools |
-| Observability | Logs, traces, clocks | `pkg/observability` |
-| Evaluation | Accuracy vs gold, cost metrics | `pkg/eval` · planned `cmd/bench` |
-
-<p align="center">
-  <img src="./architectureflow.png" alt="Sequential diagnosis flow — virtual physician panel" width="720"/>
-</p>
-
-**Why images sometimes do not show on GitHub**
-
-| Cause | Fix |
-|-------|-----|
-| WebP in README | GitHub support is inconsistent; this repo displays the **PNG** export |
-| Very large PNG | The README uses HTML `width` so the PNG scales |
-| File not on `main` | Images must be committed on the branch you view |
-| Broken relative path | Use `./Architecture.png` from README root |
 
 ---
 
@@ -2757,6 +2782,14 @@ See [Virtual physician panel](#virtual-physician-panel-mai-dxo-mapping) and [Car
 | Patient engagement | ✅ | `agents/engagement.go`, `pkg/engagement` |
 | Readmission tracker | ✅ | `agents/readmission_tracker.go`, `pkg/medical/adt.go` |
 | Human-in-the-loop gate | ✅ | `agents/human_review.go`, `pkg/hitl`, `pkg/medical/review.go` |
+| Cost-rework on budget deny | ✅ | `cost_guardian` → `tests_revise` → `supervisor.reviseTests` |
+| PHI redaction (logs) | ✅ | `pkg/phi` (default-pattern set + logger wrapper) |
+| HIPAA audit log | ✅ | `pkg/audit` (in-memory + file-backed append-only JSON-lines) |
+| Multi-tenant + scope policies | ✅ available | `governance.RequireTenantPolicy`, `RequireScopePolicy` |
+| SD-Bench runner | ✅ | `cmd/bench` (loads `data/cases/*.json` → accuracy/cost report) |
+| Operator CLI | ✅ | `cmd/bodhctl` (stdlib-only HTTP client) |
+| Agent-level tests | ✅ initial | `intake`, `cdm_planner`, `panel_manager`, `human_review` |
+| Project infra | ✅ | `Makefile`, `Dockerfile`, `.github/workflows/ci.yml` |
 | FHIR R4 adapter | ✅ minimal | `pkg/fhir` |
 | Cohort analytics | ✅ | `pkg/analytics` |
 | Persistence | ✅ JSON file | `pkg/persistence` |

@@ -48,3 +48,35 @@ func TestMaxDiagnosticCostPolicy_DeniesOverBudget(t *testing.T) {
 		t.Fatalf("expected deny, got %s", res.Decision)
 	}
 }
+
+func TestRequireTenantPolicy(t *testing.T) {
+	p := RequireTenantPolicy{}
+	deny := protocol.NewMessage("user", "x", protocol.RoleUser, "any", "{}", nil)
+	if got, _ := p.Evaluate(context.Background(), deny); got.Decision != DecisionDeny {
+		t.Errorf("missing meta should deny, got %s", got.Decision)
+	}
+	deny2 := protocol.NewMessage("user", "x", protocol.RoleUser, "any", "{}", map[string]any{})
+	if got, _ := p.Evaluate(context.Background(), deny2); got.Decision != DecisionDeny {
+		t.Errorf("missing tenant_id should deny")
+	}
+	ok := protocol.NewMessage("user", "x", protocol.RoleUser, "any", "{}", map[string]any{"tenant_id": "t-1"})
+	if got, _ := p.Evaluate(context.Background(), ok); got.Decision != DecisionAllow {
+		t.Errorf("tenant_id present should allow, got %s", got.Decision)
+	}
+}
+
+func TestRequireScopePolicy(t *testing.T) {
+	p := RequireScopePolicy{Required: map[string]string{"cdm_request": "user/CarePlan.write"}}
+	unrelated := protocol.NewMessage("user", "x", protocol.RoleUser, "unrelated_type", "{}", nil)
+	if got, _ := p.Evaluate(context.Background(), unrelated); got.Decision != DecisionAllow {
+		t.Errorf("type with no required scope should allow")
+	}
+	deny := protocol.NewMessage("user", "x", protocol.RoleUser, "cdm_request", "{}", map[string]any{"scopes": "user/Patient.read user/Observation.read"})
+	if got, _ := p.Evaluate(context.Background(), deny); got.Decision != DecisionDeny {
+		t.Errorf("missing required scope should deny, got %s", got.Decision)
+	}
+	ok := protocol.NewMessage("user", "x", protocol.RoleUser, "cdm_request", "{}", map[string]any{"scopes": "user/Patient.read user/CarePlan.write"})
+	if got, _ := p.Evaluate(context.Background(), ok); got.Decision != DecisionAllow {
+		t.Errorf("scope present should allow, got %s", got.Decision)
+	}
+}

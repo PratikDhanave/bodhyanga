@@ -2,6 +2,7 @@ package governance
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/PratikDhanave/bodh/pkg/protocol"
@@ -58,6 +59,53 @@ type ResearchDisclaimerPolicy struct{}
 
 func (ResearchDisclaimerPolicy) Evaluate(_ context.Context, _ protocol.Message) (PolicyResult, error) {
 	return allow("research demo — not for clinical use"), nil
+}
+
+// RequireTenantPolicy denies any message missing tenant_id in metadata.
+// Operators enabling multi-tenancy compose this into their CompositePolicy so
+// every hop carries a tenant correlator that downstream stores can enforce
+// (e.g. PostgreSQL row-level security).
+type RequireTenantPolicy struct{}
+
+func (RequireTenantPolicy) Evaluate(_ context.Context, msg protocol.Message) (PolicyResult, error) {
+	if msg.Metadata == nil {
+		return deny("tenant_id required: no metadata"), nil
+	}
+	if v, ok := msg.Metadata["tenant_id"].(string); !ok || v == "" {
+		return deny("tenant_id required"), nil
+	}
+	return allow("tenant_id present"), nil
+}
+
+// RequireScopePolicy denies a message if the SMART-on-FHIR scope expected for
+// its Type is missing from metadata.scopes (space-separated string, as in OAuth
+// 2.0 token introspection). Required maps message Type -> required scope.
+//
+// Example:
+//
+//	RequireScopePolicy{Required: map[string]string{
+//	    "cdm_request":      "user/CarePlan.write",
+//	    "discharge_event":  "user/Encounter.read",
+//	}}
+type RequireScopePolicy struct {
+	Required map[string]string
+}
+
+func (p RequireScopePolicy) Evaluate(_ context.Context, msg protocol.Message) (PolicyResult, error) {
+	required, ok := p.Required[msg.Type]
+	if !ok {
+		return allow("no scope required for type"), nil
+	}
+	if msg.Metadata == nil {
+		return deny("scopes missing for " + required), nil
+	}
+	scopes, _ := msg.Metadata["scopes"].(string)
+	for _, s := range strings.Fields(scopes) {
+		if s == required {
+			return allow("scope " + required + " present"), nil
+		}
+	}
+	return deny("required scope missing: " + required), nil
 }
 
 func allow(reason string) PolicyResult {

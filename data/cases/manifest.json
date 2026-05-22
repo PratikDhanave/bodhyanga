@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "description": "Bodh case fixture index — used by cmd/bench to enumerate SD-Bench style demo cases.",
+  "cases": [
+    {"file": "demo_pneumonia.json", "label": "Community-acquired pneumonia"},
+    {"file": "demo_chf.json",       "label": "Acute decompensated heart failure (RPM + ADHF)"},
+    {"file": "demo_uri.json",       "label": "Viral upper respiratory infection (negative case)"},
+    {"file": "demo_pe.json",        "label": "Pulmonary embolism (out-of-rule miss)"}
+  ]
+}

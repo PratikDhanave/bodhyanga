@@ -23,9 +23,11 @@ func (a *CostGuardianAgent) HandleMessage(ctx context.Context, msg agent.Message
 	}
 
 	if state.TotalCostUSD > state.MaxCostUSD {
-		env.Logf("[cost_guardian] DENY: cost $%.2f exceeds budget $%.2f", state.TotalCostUSD, state.MaxCostUSD)
-		// In production: emit message to supervisor to revise workup.
-		return nil, nil
+		env.Logf("[cost_guardian] DENY: cost $%.2f exceeds budget $%.2f — requesting revision",
+			state.TotalCostUSD, state.MaxCostUSD)
+		out := agent.NewMessage(a.ID(), "diagnostic_supervisor", agent.RoleAgent,
+			"tests_revise", medical.EncodeState(state), copyMeta(msg.Metadata))
+		return []agent.Message{out}, nil
 	}
 
 	env.Logf("[cost_guardian] APPROVE: $%.2f / $%.2f budget (%.0f%% utilized)",

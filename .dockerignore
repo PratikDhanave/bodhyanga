@@ -1,0 +1,9 @@
+.git
+.github
+.claude
+.genie-ref
+*.md
+*.png
+*.webp
+data/
+coverage.out

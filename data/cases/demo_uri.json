@@ -1,0 +1,10 @@
+{
+  "case_id": "demo-case-uri-001",
+  "chief_complaint": "Sore throat and runny nose",
+  "hpi": "29-year-old presents with 3 days of sore throat, runny nose, low-grade fever 37.6°C, no productive cough",
+  "demographics": "29F",
+  "vitals": "T 37.6°C, HR 78, RR 16, SpO2 99% on room air",
+  "gold_diagnosis": "Viral upper respiratory infection",
+  "max_cost_usd": 200,
+  "notes": "Negative case — the demo diagnostician only fires the CAP rule on infiltrate+WBC and the ADHF rule on CHF+RPM. URI lands on 'Undifferentiated' which mismatches gold_diagnosis, exercising the bench's accuracy=0 path."
+}
