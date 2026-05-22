@@ -9,7 +9,12 @@ import (
 )
 
 // ReasoningVerifierAgent implements MAI-DxO self-verification before final diagnosis.
-type ReasoningVerifierAgent struct{}
+//
+// When HITL is true, the verified diagnosis is routed through human_review so a
+// clinician signs off before the supervisor finalizes (FDA CDS-style oversight).
+type ReasoningVerifierAgent struct {
+	HITL bool
+}
 
 func (a *ReasoningVerifierAgent) ID() string   { return "reasoning_verifier" }
 func (a *ReasoningVerifierAgent) Name() string { return "Clinical Reasoning Verifier" }
@@ -24,8 +29,8 @@ func (a *ReasoningVerifierAgent) HandleMessage(ctx context.Context, msg agent.Me
 		return nil, err
 	}
 
-	stateJSON, _ := msg.Metadata["case_state"].(string)
-	state, _ := medical.DecodeState(stateJSON)
+	inputState, _ := msg.Metadata["case_state"].(string)
+	state, _ := medical.DecodeState(inputState)
 
 	// Demo verification rules (production: LLM rubric + clinician review).
 	verified := proposal.Confidence >= 0.5 && proposal.Rationale != ""
@@ -37,13 +42,22 @@ func (a *ReasoningVerifierAgent) HandleMessage(ctx context.Context, msg agent.Me
 	state.WorkingDiagnosis = proposal.Diagnosis
 	env.Logf("[reasoning_verifier] VERIFIED diagnosis %q", proposal.Diagnosis)
 
-	out := agent.NewMessage(
-		a.ID(),
-		"diagnostic_supervisor",
-		agent.RoleAgent,
-		"diagnosis",
-		medical.EncodeState(state),
-		copyMeta(msg.Metadata),
-	)
+	stateJSON := medical.EncodeState(state)
+	meta := copyMeta(msg.Metadata)
+	var out agent.Message
+	if a.HITL {
+		out = agent.NewMessage(a.ID(), "human_review", agent.RoleAgent,
+			"review_request", stateJSON, reviewEnvelope(meta, reviewOptions{
+				Kind:       "diagnosis_review",
+				NextTo:     "diagnostic_supervisor",
+				NextType:   "diagnosis",
+				Priority:   "high",
+				Subject:    "Sign off diagnosis: " + proposal.Diagnosis,
+				SLAMinutes: 4 * 60,
+			}))
+	} else {
+		out = agent.NewMessage(a.ID(), "diagnostic_supervisor", agent.RoleAgent,
+			"diagnosis", stateJSON, meta)
+	}
 	return []agent.Message{out}, nil
 }

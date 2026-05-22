@@ -1,4 +1,4 @@
-// Command care starts an HTTP API that publishes brilliant.care–style messages
+// Command care starts an HTTP API that publishes care-services messages
 // onto the bus and exposes read endpoints for the nurse task queue, the panel
 // report, and the notifier inbox.
 package main
@@ -17,6 +17,7 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/engagement"
 	"github.com/PratikDhanave/bodh/pkg/fhir"
 	"github.com/PratikDhanave/bodh/pkg/governance"
+	"github.com/PratikDhanave/bodh/pkg/hitl"
 	"github.com/PratikDhanave/bodh/pkg/medical"
 	"github.com/PratikDhanave/bodh/pkg/observability"
 	"github.com/PratikDhanave/bodh/pkg/orchestration"
@@ -42,6 +43,8 @@ func main() {
 	patients := medical.NewPatientRegistry()
 	queue := tasks.NewQueue()
 	notifier := engagement.NewInMemory()
+	reviews := hitl.NewQueue()
+	reviewAgent := &agents.HumanReviewAgent{Queue: reviews}
 
 	ctx := context.Background()
 	for _, a := range []agent.Agent{
@@ -52,16 +55,17 @@ func main() {
 		&agents.TestPlannerAgent{},
 		&agents.CostGuardianAgent{},
 		&agents.DiagnosticianAgent{},
-		&agents.ReasoningVerifierAgent{},
-		&agents.CDMPlannerAgent{Registry: patients},
-		&agents.TCMCoordinatorAgent{Tasks: queue, Registry: patients},
-		&agents.PanelManagerAgent{Registry: patients},
+		&agents.ReasoningVerifierAgent{HITL: true},
+		&agents.CDMPlannerAgent{Registry: patients, HITL: true},
+		&agents.TCMCoordinatorAgent{Tasks: queue, Registry: patients, HITL: true},
+		&agents.PanelManagerAgent{Registry: patients, HITL: true},
 		&agents.PreVisitPrepAgent{Registry: patients},
 		&agents.InboxTriageAgent{Tasks: queue},
-		&agents.RefillManagerAgent{Tasks: queue, Registry: patients},
-		&agents.PriorAuthAgent{Tasks: queue},
+		&agents.RefillManagerAgent{Tasks: queue, Registry: patients, HITL: true},
+		&agents.PriorAuthAgent{Tasks: queue, HITL: true},
 		&agents.EngagementAgent{Notifier: notifier},
-		&agents.ReadmissionTrackerAgent{Registry: patients},
+		&agents.ReadmissionTrackerAgent{Registry: patients, HITL: true},
+		reviewAgent,
 	} {
 		_ = reg.Register(ctx, a)
 	}
@@ -169,6 +173,45 @@ func main() {
 	})
 	mux.HandleFunc("/notifications", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, notifier.List())
+	})
+
+	// Human-in-the-loop review endpoints.
+	mux.HandleFunc("GET /reviews", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("status") == "pending" {
+			writeJSON(w, reviews.Pending())
+			return
+		}
+		writeJSON(w, reviews.List())
+	})
+	mux.HandleFunc("GET /reviews/{id}", func(w http.ResponseWriter, r *http.Request) {
+		req, ok := reviews.Get(r.PathValue("id"))
+		if !ok {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		writeJSON(w, req)
+	})
+	mux.HandleFunc("POST /reviews/{id}/decide", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			ReviewerID   string `json:"reviewer_id"`
+			Decision     string `json:"decision"`
+			Reason       string `json:"reason"`
+			Modification string `json:"modification"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		req, resume, ok := reviewAgent.ApplyDecision(
+			r.PathValue("id"), body.ReviewerID, body.Decision, body.Reason, body.Modification)
+		if !ok {
+			http.Error(w, "not found, already decided, or invalid decision", http.StatusBadRequest)
+			return
+		}
+		for _, m := range resume {
+			bus.Publish(r.Context(), m)
+		}
+		writeJSON(w, req)
 	})
 
 	logger.Printf("care HTTP API listening on %s", *addr)

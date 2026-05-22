@@ -1,4 +1,4 @@
-// Command caredemo exercises the brilliant.care service flows in-process:
+// Command caredemo exercises the care-services flows in-process:
 // CDM care planning, TCM after discharge, Panel gap-detection, Virtual Office
 // (inbox / refills / prior auths), and the readmission tracker.
 //
@@ -18,6 +18,7 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/comm"
 	"github.com/PratikDhanave/bodh/pkg/engagement"
 	"github.com/PratikDhanave/bodh/pkg/governance"
+	"github.com/PratikDhanave/bodh/pkg/hitl"
 	"github.com/PratikDhanave/bodh/pkg/medical"
 	"github.com/PratikDhanave/bodh/pkg/observability"
 	"github.com/PratikDhanave/bodh/pkg/orchestration"
@@ -27,6 +28,7 @@ import (
 
 func main() {
 	workflow := flag.String("workflow", "all", "cdm|tcm|panel|virtual_office|adt|all")
+	hitlOn := flag.Bool("hitl", true, "route clinically consequential actions through human_review")
 	flag.Parse()
 
 	logger := observability.NewStdLogger()
@@ -42,18 +44,21 @@ func main() {
 	patients := seedPatients()
 	queue := tasks.NewQueue()
 	notifier := engagement.NewInMemory()
+	reviews := hitl.NewQueue()
+	reviewAgent := &agents.HumanReviewAgent{Queue: reviews}
 
 	ctx := context.Background()
 	for _, a := range []agent.Agent{
-		&agents.CDMPlannerAgent{Registry: patients},
-		&agents.TCMCoordinatorAgent{Tasks: queue, Registry: patients},
-		&agents.PanelManagerAgent{Registry: patients},
+		&agents.CDMPlannerAgent{Registry: patients, HITL: *hitlOn},
+		&agents.TCMCoordinatorAgent{Tasks: queue, Registry: patients, HITL: *hitlOn},
+		&agents.PanelManagerAgent{Registry: patients, HITL: *hitlOn},
 		&agents.PreVisitPrepAgent{Registry: patients},
 		&agents.InboxTriageAgent{Tasks: queue},
-		&agents.RefillManagerAgent{Tasks: queue, Registry: patients},
-		&agents.PriorAuthAgent{Tasks: queue},
+		&agents.RefillManagerAgent{Tasks: queue, Registry: patients, HITL: *hitlOn},
+		&agents.PriorAuthAgent{Tasks: queue, HITL: *hitlOn},
 		&agents.EngagementAgent{Notifier: notifier},
-		&agents.ReadmissionTrackerAgent{Registry: patients},
+		&agents.ReadmissionTrackerAgent{Registry: patients, HITL: *hitlOn},
+		reviewAgent,
 	} {
 		_ = reg.Register(ctx, a)
 	}
@@ -78,12 +83,45 @@ func main() {
 		runADT(ctx, bus)
 	}
 
-	time.Sleep(750 * time.Millisecond)
+	// Phase 1: let upstream agents publish review_requests.
+	time.Sleep(300 * time.Millisecond)
+
+	// Phase 2: drain the review queue. Each approval republishes the original
+	// payload; some of those resumed messages will themselves emit further
+	// review_requests (e.g. discharge_review approval triggers TCM, which then
+	// emits tcm_welcome_review). Loop until the queue is empty.
+	totalApproved := 0
+	for round := 1; round <= 5; round++ {
+		pending := reviews.Pending()
+		if len(pending) == 0 {
+			break
+		}
+		logger.Printf("=== phase 2 round %d: clinician review (auto-approving %d pending) ===",
+			round, len(pending))
+		for _, r := range pending {
+			_, resume, ok := reviewAgent.ApplyDecision(r.ID, "clinician-demo", "approve", "demo auto-approval", "")
+			if !ok {
+				continue
+			}
+			for _, m := range resume {
+				bus.Publish(ctx, m)
+			}
+			totalApproved++
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+
+	// Phase 3: let any remaining resumed messages flow through engagement.
+	time.Sleep(300 * time.Millisecond)
+	_ = totalApproved
+
 	fmt.Println()
 	logger.Printf("=== summary ===")
 	logger.Printf("nurse tasks: %d open / %d total — kinds=%v",
 		len(queue.FilterOpen()), len(queue.List()), queue.CountByKind())
 	logger.Printf("notifications sent: %d", len(notifier.List()))
+	logger.Printf("human reviews: %d total — by status %v — by kind %v",
+		len(reviews.List()), reviews.CountByStatus(), reviews.CountByKind())
 }
 
 func seedPatients() *medical.PatientRegistry {

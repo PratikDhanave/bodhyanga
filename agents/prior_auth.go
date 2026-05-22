@@ -15,6 +15,9 @@ import (
 // Output message Type: prior_auth_status    Content: {"status":"submitted|approved|review"}
 type PriorAuthAgent struct {
 	Tasks *tasks.Queue
+	// HITL routes the outbound status through human_review so a clinician
+	// signs off on PA submissions before they leave the platform.
+	HITL bool
 }
 
 type priorAuthRequest struct {
@@ -61,7 +64,20 @@ func (a *PriorAuthAgent) HandleMessage(_ context.Context, msg agent.Message, env
 		"code":       req.Code,
 		"status":     status,
 	})
-	out := agent.NewMessage(a.ID(), "", agent.RoleAgent, "prior_auth_status",
-		string(body), meta)
+	var out agent.Message
+	if a.HITL {
+		out = agent.NewMessage(a.ID(), "human_review", agent.RoleAgent,
+			"review_request", string(body), reviewEnvelope(meta, reviewOptions{
+				Kind:       "prior_auth_review",
+				NextTo:     "engagement",
+				NextType:   "prior_auth_status",
+				Priority:   "high",
+				Subject:    "Sign off PA: " + req.Code + " for " + req.PatientID,
+				SLAMinutes: 48 * 60,
+			}))
+	} else {
+		out = agent.NewMessage(a.ID(), "", agent.RoleAgent, "prior_auth_status",
+			string(body), meta)
+	}
 	return []agent.Message{out}, nil
 }

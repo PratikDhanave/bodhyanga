@@ -19,6 +19,10 @@ import (
 type RefillManagerAgent struct {
 	Tasks    *tasks.Queue
 	Registry *medical.PatientRegistry
+	// HITL routes the patient-facing refill_response through human_review so a
+	// clinician confirms the refill before SMS goes out (covers controlled
+	// substances + auto-approved meds that need a sign-off).
+	HITL bool
 }
 
 type refillRequest struct {
@@ -69,7 +73,24 @@ func (a *RefillManagerAgent) HandleMessage(_ context.Context, msg agent.Message,
 		"status":     status,
 		"reason":     reason,
 	})
-	out := agent.NewMessage(a.ID(), "engagement", agent.RoleAgent,
-		"refill_response", string(body), meta)
+	var out agent.Message
+	if a.HITL {
+		priority := "normal"
+		if status == "review" {
+			priority = "high"
+		}
+		out = agent.NewMessage(a.ID(), "human_review", agent.RoleAgent,
+			"review_request", string(body), reviewEnvelope(meta, reviewOptions{
+				Kind:       "refill_review",
+				NextTo:     "engagement",
+				NextType:   "refill_response",
+				Priority:   priority,
+				Subject:    "Approve refill response: " + req.Medication + " for " + req.PatientID,
+				SLAMinutes: 24 * 60,
+			}))
+	} else {
+		out = agent.NewMessage(a.ID(), "engagement", agent.RoleAgent,
+			"refill_response", string(body), meta)
+	}
 	return []agent.Message{out}, nil
 }

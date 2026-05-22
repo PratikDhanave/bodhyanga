@@ -1,6 +1,6 @@
 # Bodh — Medical Diagnostic Orchestrator & Care Services Platform (Go)
 
-> **Bodh** (Sanskrit: *bodhi* — knowledge, awakening, insight) is an open-source **medical AI platform** implemented in **Go**. It follows Microsoft's [**Multi-Agent Reference Architecture (MARA)**](https://microsoft.github.io/multi-agent-reference-architecture/), implements a **virtual physician panel** inspired by [**MAI-DxO**](https://microsoft.ai/news/the-path-to-medical-superintelligence/) and the [**Sequential Diagnosis Benchmark (SD Bench)**](https://microsoft.ai/news/the-path-to-medical-superintelligence/), and adds brilliant.care–style **care-services agents** (CDM, TCM, panel management, virtual office, RPM, engagement, readmission tracking) on the same bus.
+> **Bodh** (Sanskrit: *bodhi* — knowledge, awakening, insight) is an open-source **medical AI platform** implemented in **Go**. It follows Microsoft's [**Multi-Agent Reference Architecture (MARA)**](https://microsoft.github.io/multi-agent-reference-architecture/), implements a **virtual physician panel** inspired by [**MAI-DxO**](https://microsoft.ai/news/the-path-to-medical-superintelligence/) and the [**Sequential Diagnosis Benchmark (SD Bench)**](https://microsoft.ai/news/the-path-to-medical-superintelligence/), and adds a **care-services layer** (CDM, TCM, panel management, virtual office, RPM, engagement, readmission tracking) on the same bus.
 
 Go · MARA · Medical AI · Sequential Diagnosis · FHIR · HL7 v2 · HIPAA-aware · Open Source
 
@@ -35,14 +35,15 @@ At the heart of any future clinical product: **safety, trust, transparency, and 
 ### Part II — Background & motivation
 5. [MAI-DxO and SD Bench](#mai-dxo-and-sd-bench)
 6. [Why MARA (and not one big LLM call)](#why-mara-and-not-one-big-llm-call)
-7. [brilliant.care service catalog](#brilliantcare-service-catalog)
+7. [Care-services catalog](#care-services-catalog)
 
 ### Part III — Architecture
 8. [Architecture diagrams](#architecture-diagrams)
 9. [System architecture overview](#system-architecture-overview)
 10. [MARA concepts → Go packages](#mara-concepts--go-packages)
 11. [Virtual physician panel (MAI-DxO mapping)](#virtual-physician-panel-mai-dxo-mapping)
-12. [Care services (brilliant.care–style workflows)](#care-services-brilliantcarestyle-workflows)
+12. [Care-services workflows](#care-services-workflows)
+12b. [Human-in-the-loop (HITL) — clinical oversight gate](#human-in-the-loop-hitl--clinical-oversight-gate)
 13. [Clinical message protocol](#clinical-message-protocol)
 14. [Domain model (`pkg/medical`)](#domain-model-pkgmedical)
 15. [Package guide](#package-guide)
@@ -129,7 +130,7 @@ cd bodh
 go run ./cmd/demo
 go run ./cmd/demo -case=data/cases/demo_chf.json   # CHF + RPM
 
-# Care services (brilliant.care style — CDM, TCM, panel, virtual office, ADT)
+# Care services (CDM, TCM, panel, virtual office, ADT)
 go run ./cmd/caredemo
 go run ./cmd/caredemo -workflow=cdm
 go run ./cmd/caredemo -workflow=tcm
@@ -176,7 +177,7 @@ Bodh is two things in one repository:
 
 1. **A multi-agent diagnostic orchestrator** — a virtual physician panel that asks targeted questions, orders cost-aware tests, infers a working diagnosis, and verifies its reasoning. Inspired by Microsoft's [MAI-DxO](https://microsoft.ai/news/the-path-to-medical-superintelligence/) and benchmarked against the Sequential Diagnosis Benchmark.
 
-2. **A care-services platform** — chronic disease management, transitional care, panel management, virtual office (pre-visit prep, inbox triage, refills, prior auth), patient engagement, and readmission tracking. These mirror the [brilliant.care](https://brilliant.care/index) service catalog and run as additional agents on the same MARA bus.
+2. **A care-services platform** — chronic disease management, transitional care, panel management, virtual office (pre-visit prep, inbox triage, refills, prior auth), patient engagement, and readmission tracking. These run as additional agents on the same MARA bus.
 
 The platform layer (orchestrator, registry, bus, governance, evaluation, observability) follows Microsoft's [Multi-Agent Reference Architecture (MARA)](https://microsoft.github.io/multi-agent-reference-architecture/) — agents do not call each other directly; they emit messages routed by the orchestrator and gated by governance policies.
 
@@ -207,7 +208,7 @@ bodh/
 ├── architectureflow.webp        # WebP source for the flow diagram
 ├── cmd/
 │   ├── demo/                    # Sequential diagnosis entrypoint
-│   ├── caredemo/                # brilliant.care workflows (CDM/TCM/Panel/VO/ADT)
+│   ├── caredemo/                # Care-services workflows (CDM/TCM/Panel/VO/ADT)
 │   └── care/                    # HTTP API
 ├── agents/                      # Virtual physician panel + care services
 │   ├── intake.go
@@ -304,11 +305,11 @@ A single monolithic LLM call is hard to **audit**, **cap cost**, **swap models p
 
 ---
 
-## brilliant.care service catalog
+## Care-services catalog
 
-Inspired by [brilliant.care](https://brilliant.care/index). Each service is one or more Bodh agents subscribing to specific message types, sharing in-memory state (patient registry, nurse task queue, notifier) injected through agent struct fields.
+Each service is one or more Bodh agents subscribing to specific message types, sharing in-memory state (patient registry, nurse task queue, notifier) injected through agent struct fields. The catalog covers the core workflows of value-based primary care: chronic disease management, transitional care, panel management, virtual office work, patient engagement, RPM, and readmission tracking.
 
-| brilliant.care service | Bodh agent(s) | Status |
+| Service | Bodh agent(s) | Status |
 |------------------------|---------------|--------|
 | Remote Patient Monitoring (RPM) | `rpm_monitor` + device webhooks via `pkg/medical/rpm.go` | ✅ |
 | Chronic Disease Management (CDM) | `cdm_planner` + `medical.CarePlan` templates (HTN, DM, CHF, CKD, COPD) | ✅ |
@@ -588,9 +589,98 @@ State machine on `msg.Type`:
 
 ---
 
-## Care services (brilliant.care–style workflows)
+## Human-in-the-loop (HITL) — clinical oversight gate
 
-Bodh implements the brilliant.care service catalog as additional agents on the same bus. They share the platform with the diagnostic panel and add their own message types.
+Every clinically consequential action in Bodh can be **gated by a human reviewer** before the platform acts on it. This is the FDA Clinical Decision Support (CDS) carve-out criterion #4 ("enable the clinician to independently review the basis for the recommendations") expressed in code: the platform proposes, a clinician disposes.
+
+### How it works
+
+A single `human_review` agent ([agents/human_review.go](agents/human_review.go)) is the gate. Upstream agents that need oversight do not address their output directly to the next agent — they wrap it in a **review envelope** and address it to `human_review` with type `review_request`. The gate records a `medical.ReviewRequest` in the [pkg/hitl](pkg/hitl/queue.go) queue and emits nothing. A reviewer decides via HTTP (`POST /reviews/{id}/decide`) or programmatic call (`HumanReviewAgent.ApplyDecision`); on approval the original payload is republished to its intended recipient.
+
+```
+upstream agent ──► human_review ──► (pending in queue)
+                                        │
+                            reviewer decides (HTTP / API)
+                                        │
+                            ┌───────────┴───────────┐
+                            │                       │
+                        approve                  reject
+                            │                       │
+                            ▼                       ▼
+                    next agent (resume)      (no resume; logged)
+```
+
+The envelope is opaque metadata, so adding HITL to a new flow does not require any changes to governance or the bus:
+
+| Envelope key | Type | Required | Purpose |
+|--------------|------|----------|---------|
+| `hitl_kind` | string | yes | Review category (e.g. `care_plan_review`) |
+| `hitl_next_to` | string | yes | Agent to forward to on approval |
+| `hitl_next_type` | string | yes | Message type used on resume |
+| `hitl_priority` | string | no | `low` / `normal` / `high` / `urgent` (default `normal`) |
+| `hitl_subject` | string | no | Short label shown in the queue UI |
+| `hitl_sla_minutes` | float64 | no | Deadline; expired reviews never resume |
+
+### Which flows are gated
+
+Every gateable agent carries a `HITL bool` field. Default is `false` (the diagnostic `cmd/demo` is unaffected). `cmd/caredemo` and `cmd/care` set it to `true`. The currently gated outputs:
+
+| Agent | When HITL=true, this output is gated | Review kind |
+|-------|--------------------------------------|-------------|
+| `reasoning_verifier` | verified diagnosis → `diagnostic_supervisor` | `diagnosis_review` |
+| `cdm_planner` | care plan → `engagement` (panel_manager tracking is direct) | `care_plan_review` |
+| `tcm_coordinator` | TCM welcome → `engagement` | `tcm_welcome_review` |
+| `panel_manager` | per-gap outreach → `engagement` | `outreach_review` |
+| `refill_manager` | refill response → `engagement` | `refill_review` |
+| `prior_auth` | PA status → `engagement` | `prior_auth_review` |
+| `readmission_tracker` | discharge → `tcm_coordinator` (priority scales with risk band) | `discharge_review` |
+
+Flows that don't get a gate (already safe, or trivially informational): RPM ingest, panel_report broadcast, pre-visit chart prep (read-only), inbox triage (already routes urgent items to a human via the nurse task queue), readmission risk broadcast.
+
+### Cascades
+
+Approvals can trigger downstream agents that themselves emit review_requests (e.g. `discharge_review` approved → `tcm_coordinator` runs → emits `tcm_welcome_review`). The `cmd/caredemo` auto-approver drains the queue across rounds to demonstrate this; in production the reviewer's UI shows the cascaded reviews as they appear.
+
+### Two-phase demo
+
+```bash
+go run ./cmd/caredemo
+# Phase 1: agents publish review_requests → queued as "pending"
+# Phase 2 (round 1): clinician-demo auto-approves 9 reviews → resumed messages publish
+# Phase 2 (round 2): cascade from TCM publishes one more review_request → approved
+# Phase 3: engagement sends 8 SMS notifications
+# Summary: 10 human reviews (all approved), 12 nurse tasks, 8 notifications sent
+```
+
+Run with HITL off to see the direct (un-gated) behavior:
+
+```bash
+go run ./cmd/caredemo -hitl=false
+```
+
+### HTTP endpoints (`cmd/care`)
+
+| Method | Path | Body | Description |
+|--------|------|------|-------------|
+| `GET`  | `/reviews` | — | All reviews. Query `?status=pending` to filter. |
+| `GET`  | `/reviews/{id}` | — | Single review |
+| `POST` | `/reviews/{id}/decide` | `{reviewer_id, decision, reason, modification}` | `decision` ∈ `approve` / `approve_with_modifications` / `reject`; on approval the resumed message publishes immediately |
+
+### Why this matters
+
+Three reasons it is worth the wiring:
+
+1. **Patient safety.** Rule-based or LLM-backed agents make judgment calls. A clinician sign-off before the platform acts on a patient — sends an SMS, finalizes a diagnosis, submits a prior auth, opens a TCM cascade — is the last line of defense.
+2. **Regulatory fit.** Under the 21st Century Cures Act CDS carve-out, software that supports a clinician but lets them independently review the basis for each recommendation can avoid SaMD classification. HITL is the architectural expression of that test.
+3. **Auditability.** Every gated action becomes a `ReviewRequest` row with reviewer id, timestamp, decision, reason — the forensic trail HIPAA §164.312(b) and 21 CFR Part 11 both expect.
+
+The gate is **opt-in per agent** (no change for the diagnostic demo) and **lossless on reject** (the original message is logged but does not republish, so no half-completed clinical action can leak past the gate).
+
+---
+
+## Care-services workflows
+
+Bodh implements a care-services layer as additional agents on the same bus. They share the platform with the diagnostic panel and add their own message types.
 
 | Service | Agent | Input `Type` | Output `Type` |
 |---------|-------|--------------|---------------|
@@ -1996,7 +2086,7 @@ See [Clinical message protocol](#clinical-message-protocol) above for the full l
 
 ## Agent reference
 
-See [Virtual physician panel](#virtual-physician-panel-mai-dxo-mapping) and [Care services](#care-services-brilliantcarestyle-workflows).
+See [Virtual physician panel](#virtual-physician-panel-mai-dxo-mapping) and [Care-services workflows](#care-services-workflows).
 
 ## What is implemented today vs planned
 
@@ -2014,6 +2104,7 @@ See [Virtual physician panel](#virtual-physician-panel-mai-dxo-mapping) and [Car
 | Virtual Office | ✅ | `pre_visit_prep`, `inbox_triage`, `refill_manager`, `prior_auth` |
 | Patient engagement | ✅ | `agents/engagement.go`, `pkg/engagement` |
 | Readmission tracker | ✅ | `agents/readmission_tracker.go`, `pkg/medical/adt.go` |
+| Human-in-the-loop gate | ✅ | `agents/human_review.go`, `pkg/hitl`, `pkg/medical/review.go` |
 | FHIR R4 adapter | ✅ minimal | `pkg/fhir` |
 | Cohort analytics | ✅ | `pkg/analytics` |
 | Persistence | ✅ JSON file | `pkg/persistence` |
@@ -2038,7 +2129,7 @@ See [Virtual physician panel](#virtual-physician-panel-mai-dxo-mapping) and [Car
 | Phase | Goal | Deliverables |
 |-------|------|--------------|
 | 1 ✅ | MARA platform + diagnostic panel + RPM/CHF | `cmd/demo`, 8 agents, `pkg/eval`, governance tests |
-| 2 ✅ | brilliant.care care services | 9 additional agents, `pkg/tasks`/`engagement`/`fhir`/`analytics`/`persistence`, `cmd/caredemo`, `cmd/care` |
+| 2 ✅ | Care services layer | 9 additional agents, `pkg/tasks`/`engagement`/`fhir`/`analytics`/`persistence`, `cmd/caredemo`, `cmd/care` |
 | 3 | Authentication + multi-tenancy | SMART on FHIR, `RequireScopePolicy`, tenant isolation |
 | 4 | LLM integration | `Environment` with model router; prompt templates per agent; safety harness |
 | 5 | SD-Bench evaluation | Case manifest, accuracy + cost report, Pareto plots |
@@ -2140,6 +2231,6 @@ See [Virtual physician panel](#virtual-physician-panel-mai-dxo-mapping) and [Car
 
 ## License / status
 
-Reference **Go** implementation of MARA patterns for **medical sequential diagnosis** and **brilliant.care–style care services**. Extend agents and policies incrementally; keep `pkg/orchestration` thin and stable.
+Reference **Go** implementation of MARA patterns for **medical sequential diagnosis** and **value-based care services**. Extend agents and policies incrementally; keep `pkg/orchestration` thin and stable.
 
 **Not a medical device. Not clinical software. Research and education only.**

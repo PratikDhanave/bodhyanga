@@ -1,7 +1,7 @@
 // Package fhir is a minimal FHIR R4 adapter — just enough to import Patient,
 // Observation, Encounter and Condition resources into pkg/medical, and export
 // CarePlan / Observation back out. It is intentionally not a full FHIR
-// implementation: only the fields used in the brilliant.care demo flows.
+// implementation: only the fields used in the care-services demo flows.
 package fhir
 
 import (

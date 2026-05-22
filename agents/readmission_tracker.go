@@ -15,8 +15,12 @@ import (
 // Input message Type:  adt_event           Content: medical.ADTEvent JSON
 // Output message Type: readmission_risk    Content: {patient_id, score, band}
 // Output message Type: discharge_event     Content: medical.DischargeSummary JSON
+//
+// When HITL is true, the cascade into tcm_coordinator goes through human_review
+// so a clinician confirms the discharge-to-TCM hand-off before tasks fire.
 type ReadmissionTrackerAgent struct {
 	Registry *medical.PatientRegistry
+	HITL     bool
 }
 
 func (a *ReadmissionTrackerAgent) ID() string   { return "readmission_tracker" }
@@ -69,8 +73,27 @@ func (a *ReadmissionTrackerAgent) HandleMessage(_ context.Context, msg agent.Mes
 		}
 		dMeta := copyMeta(meta)
 		dMeta["case_id"] = e.EventID
-		out = append(out, agent.NewMessage(a.ID(), "tcm_coordinator",
-			agent.RoleAgent, "discharge_event", medical.EncodeDischarge(d), dMeta))
+		dJSON := medical.EncodeDischarge(d)
+		if a.HITL {
+			priority := "normal"
+			if risk.Band == "high" {
+				priority = "urgent"
+			} else if risk.Band == "medium" {
+				priority = "high"
+			}
+			out = append(out, agent.NewMessage(a.ID(), "human_review", agent.RoleAgent,
+				"review_request", dJSON, reviewEnvelope(dMeta, reviewOptions{
+					Kind:       "discharge_review",
+					NextTo:     "tcm_coordinator",
+					NextType:   "discharge_event",
+					Priority:   priority,
+					Subject:    "Confirm discharge -> TCM for " + e.PatientID + " (risk=" + risk.Band + ")",
+					SLAMinutes: 60,
+				})))
+		} else {
+			out = append(out, agent.NewMessage(a.ID(), "tcm_coordinator",
+				agent.RoleAgent, "discharge_event", dJSON, dMeta))
+		}
 	}
 	return out, nil
 }

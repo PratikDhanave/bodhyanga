@@ -14,9 +14,13 @@ import (
 //
 // Input message Type:  cdm_request   Content: {"patient_id","condition","case_id"}
 // Output message Type: care_plan_ready  Content: medical.CarePlan JSON
-// Output routes to:    engagement (for outreach) and panel_manager (for tracking)
+// Output routes to:    engagement (for outreach, optionally HITL-gated) and
+//                      panel_manager (for tracking, always direct).
 type CDMPlannerAgent struct {
 	Registry *medical.PatientRegistry
+	// HITL routes the patient-facing engagement message through human_review
+	// so a clinician approves the care plan before SMS goes out.
+	HITL bool
 }
 
 type cdmRequest struct {
@@ -54,10 +58,24 @@ func (a *CDMPlannerAgent) HandleMessage(_ context.Context, msg agent.Message, en
 		meta["case_id"] = req.CaseID
 	}
 
-	out := agent.NewMessage(a.ID(), "engagement", agent.RoleAgent,
-		"care_plan_ready", medical.EncodeCarePlan(plan), meta)
+	planJSON := medical.EncodeCarePlan(plan)
+	var out agent.Message
+	if a.HITL {
+		out = agent.NewMessage(a.ID(), "human_review", agent.RoleAgent,
+			"review_request", planJSON, reviewEnvelope(meta, reviewOptions{
+				Kind:       "care_plan_review",
+				NextTo:     "engagement",
+				NextType:   "care_plan_ready",
+				Priority:   "normal",
+				Subject:    "Approve " + plan.Condition + " care plan for " + req.PatientID,
+				SLAMinutes: 24 * 60,
+			}))
+	} else {
+		out = agent.NewMessage(a.ID(), "engagement", agent.RoleAgent,
+			"care_plan_ready", planJSON, meta)
+	}
 	track := agent.NewMessage(a.ID(), "panel_manager", agent.RoleAgent,
-		"care_plan_ready", medical.EncodeCarePlan(plan), meta)
+		"care_plan_ready", planJSON, copyMeta(meta))
 	return []agent.Message{out, track}, nil
 }
 

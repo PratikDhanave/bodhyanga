@@ -15,10 +15,14 @@ import (
 // Input message Type:  discharge_event   Content: medical.DischargeSummary JSON
 // Side effects:        creates NurseTasks (med reconciliation + N follow-ups)
 // Output message Type: tcm_tasks_created  Content: JSON {task_ids,...}
-// Output routes to:    engagement (to notify the patient)
+// Output routes to:    engagement (to notify the patient), optionally HITL-gated
+//                      so a nurse confirms the welcome message and task plan.
 type TCMCoordinatorAgent struct {
 	Tasks    *tasks.Queue
 	Registry *medical.PatientRegistry
+	// HITL routes the patient-facing TCM welcome through human_review so a
+	// nurse confirms it before the SMS goes out.
+	HITL bool
 }
 
 func (a *TCMCoordinatorAgent) ID() string   { return "tcm_coordinator" }
@@ -81,7 +85,20 @@ func (a *TCMCoordinatorAgent) HandleMessage(_ context.Context, msg agent.Message
 		meta["case_id"] = d.CaseID
 	}
 	body := fmt.Sprintf(`{"patient_id":%q,"case_id":%q,"task_count":%d}`, d.PatientID, d.CaseID, len(createdIDs))
-	out := agent.NewMessage(a.ID(), "engagement", agent.RoleAgent, "tcm_tasks_created", body, meta)
+	var out agent.Message
+	if a.HITL {
+		out = agent.NewMessage(a.ID(), "human_review", agent.RoleAgent,
+			"review_request", body, reviewEnvelope(meta, reviewOptions{
+				Kind:       "tcm_welcome_review",
+				NextTo:     "engagement",
+				NextType:   "tcm_tasks_created",
+				Priority:   "high",
+				Subject:    "Confirm TCM follow-up for " + d.PatientID + " (" + d.PrimaryDx + ")",
+				SLAMinutes: 4 * 60,
+			}))
+	} else {
+		out = agent.NewMessage(a.ID(), "engagement", agent.RoleAgent, "tcm_tasks_created", body, meta)
+	}
 	return []agent.Message{out}, nil
 }
 

@@ -15,10 +15,14 @@ import (
 // Input message Type:  panel_request    Content: {"condition":"htn|dm|chf|all"}
 // Input message Type:  care_plan_ready  (passively tracks new plans)
 // Output message Type: panel_report     Content: medical.PanelReport JSON
-// Output message Type: engagement_request (per gap) -> engagement
+// Output message Type: engagement_request (per gap) -> engagement, optionally
+//                      HITL-gated so a clinician or panel manager approves each
+//                      outreach before SMS goes out.
 type PanelManagerAgent struct {
 	Registry *medical.PatientRegistry
 	Rules    []medical.PanelRule
+	// HITL routes per-gap engagement_request messages through human_review.
+	HITL bool
 }
 
 type panelRequest struct {
@@ -68,8 +72,31 @@ func (a *PanelManagerAgent) runPanel(msg agent.Message, env agent.Environment) (
 		meta := copyMeta(msg.Metadata)
 		meta["patient_id"] = gap.PatientID
 		gapBody, _ := json.Marshal(gap)
-		out = append(out, agent.NewMessage(a.ID(), "engagement", agent.RoleAgent,
-			"engagement_request", string(gapBody), meta))
+		if a.HITL {
+			out = append(out, agent.NewMessage(a.ID(), "human_review", agent.RoleAgent,
+				"review_request", string(gapBody), reviewEnvelope(meta, reviewOptions{
+					Kind:       "outreach_review",
+					NextTo:     "engagement",
+					NextType:   "engagement_request",
+					Priority:   priorityFromSeverity(gap.Severity),
+					Subject:    "Approve outreach: " + gap.Rule + " for " + gap.PatientID,
+					SLAMinutes: 48 * 60,
+				})))
+		} else {
+			out = append(out, agent.NewMessage(a.ID(), "engagement", agent.RoleAgent,
+				"engagement_request", string(gapBody), meta))
+		}
 	}
 	return out, nil
+}
+
+func priorityFromSeverity(sev string) string {
+	switch sev {
+	case "urgent":
+		return "urgent"
+	case "warn":
+		return "high"
+	default:
+		return "normal"
+	}
 }
