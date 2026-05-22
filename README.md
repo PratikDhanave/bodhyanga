@@ -1,43 +1,46 @@
 # Bodh — Medical Diagnostic Orchestrator (Go)
 
-> **Bodh** (Sanskrit: *bodhi* — knowledge, awakening, insight) is an open-source **medical diagnostic assistant** implemented in **Go**. It follows Microsoft’s [**Multi-Agent Reference Architecture (MARA)**](https://microsoft.github.io/multi-agent-reference-architecture/), mirrors the platform design of [**Genie**](https://github.com/c2siorg/genie) (financial copilot), and implements a **virtual physician panel** inspired by [**MAI-DxO**](https://microsoft.ai/news/the-path-to-medical-superintelligence/) (Microsoft AI Diagnostic Orchestrator) and the [**Sequential Diagnosis Benchmark (SD Bench)**](https://microsoft.ai/news/the-path-to-medical-superintelligence/).
+> **Bodh** (Sanskrit: *bodhi* — knowledge, awakening, insight) is an open-source **medical diagnostic assistant** implemented in **Go**. It follows Microsoft’s [**Multi-Agent Reference Architecture (MARA)**](https://microsoft.github.io/multi-agent-reference-architecture/) and implements a **virtual physician panel** inspired by [**MAI-DxO**](https://microsoft.ai/news/the-path-to-medical-superintelligence/) (Microsoft AI Diagnostic Orchestrator) and the [**Sequential Diagnosis Benchmark (SD Bench)**](https://microsoft.ai/news/the-path-to-medical-superintelligence/).
 
 Go · MARA · Medical AI · Sequential Diagnosis · Open Source
 
 **Module path:** `github.com/PratikDhanave/bodh`
 
+**Architecture diagrams:** [Architecture.png](Architecture.png) (MARA platform) · [architectureflow.webp](architectureflow.webp) (sequential diagnosis flow)
+
 ---
 
 ## Table of contents
 
-1. [Start here (new contributors)](#start-here-new-contributors)
-2. [What is Bodh?](#what-is-bodh)
-3. [Research disclaimer](#research-disclaimer)
-4. [Background: MAI-DxO, SD Bench, and why not USMLE-only?](#background-mai-dxo-sd-bench-and-why-not-usmle-only)
-5. [Why MARA (and not one big LLM call)?](#why-mara-and-not-one-big-llm-call)
-6. [Architecture overview](#architecture-overview)
-7. [MARA concepts → Go packages](#mara-concepts--go-packages)
-8. [Virtual physician panel (MAI-DxO mapping)](#virtual-physician-panel-mai-dxo-mapping)
-9. [Clinical message protocol](#clinical-message-protocol)
-10. [Domain model (`pkg/medical`)](#domain-model-pkgmedical)
-11. [Package guide (read before writing code)](#package-guide-read-before-writing-code)
-12. [Governance and safety policies](#governance-and-safety-policies)
-13. [Walkthrough: `cmd/demo` (line by line)](#walkthrough-cmddemo-line-by-line)
-14. [Complete message trace (demo case)](#complete-message-trace-demo-case)
-15. [Diagnostic test catalog and costs](#diagnostic-test-catalog-and-costs)
-16. [Sample cases and fixtures](#sample-cases-and-fixtures)
-17. [Evaluation (SD Bench alignment)](#evaluation-sd-bench-alignment)
-18. [Add your first Bodh agent (tutorial)](#add-your-first-bodh-agent-tutorial)
-19. [Design rules (from MARA)](#design-rules-from-mara)
-20. [Security, PHI, and compliance notes](#security-phi-and-compliance-notes)
-21. [FAQ](#faq)
-22. [What is implemented today vs planned](#what-is-implemented-today-vs-planned)
-23. [Roadmap](#roadmap)
-24. [Repository layout](#repository-layout)
-25. [MARA chapters — what to read and when](#mara-chapters--what-to-read-and-when)
-26. [Contributing](#contributing)
-27. [References](#references)
-28. [License / status](#license--status)
+1. [Architecture diagrams](#architecture-diagrams) — [`Architecture.png`](Architecture.png) · [`architectureflow.webp`](architectureflow.webp)
+2. [Start here (new contributors)](#start-here-new-contributors)
+3. [What is Bodh?](#what-is-bodh)
+4. [Research disclaimer](#research-disclaimer)
+5. [Background: MAI-DxO, SD Bench, and why not USMLE-only?](#background-mai-dxo-sd-bench-and-why-not-usmle-only)
+6. [Why MARA (and not one big LLM call)?](#why-mara-and-not-one-big-llm-call)
+7. [Architecture overview](#architecture-overview)
+8. [MARA concepts → Go packages](#mara-concepts--go-packages)
+9. [Virtual physician panel (MAI-DxO mapping)](#virtual-physician-panel-mai-dxo-mapping)
+10. [Clinical message protocol](#clinical-message-protocol)
+11. [Domain model (`pkg/medical`)](#domain-model-pkgmedical)
+12. [Package guide (read before writing code)](#package-guide-read-before-writing-code)
+13. [Governance and safety policies](#governance-and-safety-policies)
+14. [Walkthrough: `cmd/demo` (line by line)](#walkthrough-cmddemo-line-by-line)
+15. [Complete message trace (demo case)](#complete-message-trace-demo-case)
+16. [Diagnostic test catalog and costs](#diagnostic-test-catalog-and-costs)
+17. [Sample cases and fixtures](#sample-cases-and-fixtures)
+18. [Evaluation (SD Bench alignment)](#evaluation-sd-bench-alignment)
+19. [Add your first Bodh agent (tutorial)](#add-your-first-bodh-agent-tutorial)
+20. [Design rules (from MARA)](#design-rules-from-mara)
+21. [Security, PHI, and compliance notes](#security-phi-and-compliance-notes)
+22. [FAQ](#faq)
+23. [What is implemented today vs planned](#what-is-implemented-today-vs-planned)
+24. [Roadmap](#roadmap)
+25. [Repository layout](#repository-layout)
+26. [MARA chapters — what to read and when](#mara-chapters--what-to-read-and-when)
+27. [Contributing](#contributing)
+28. [References](#references)
+29. [License / status](#license--status)
 
 ---
 
@@ -48,6 +51,13 @@ Read this README in order. You do **not** need prior LLM framework experience. Y
 - Basic **Go** (interfaces, goroutines, `context`)
 - The idea that **agents coordinate by sending messages**, not by calling each other’s functions directly
 - Familiarity with **clinical workflow** at a high level (presentation → history → tests → diagnosis) helps, but is not required
+
+**First, open the two diagrams** (also linked at the top of this file):
+
+1. [`Architecture.png`](Architecture.png) — how Bodh fits Microsoft MARA (orchestrator, registry, bus, eval).
+2. [`architectureflow.webp`](architectureflow.webp) — how one case moves through the virtual physician panel.
+
+Full legend tables: [Architecture diagrams](#architecture-diagrams).
 
 ### The one-sentence model
 
@@ -106,15 +116,6 @@ Bodh encodes that workflow as a **governed multi-agent system**:
 ### Engineering reality in this repo
 
 Bodh is a **Go codebase** that implements the **multi-agent platform** from MARA. Medical behavior lives in **`agents/`** and **`pkg/medical/`**; the platform in **`pkg/protocol`**, **`pkg/comm`**, **`pkg/orchestration`**, etc. stays stable as you add LLMs, APIs, and benchmarks.
-
-### Relationship to Genie
-
-| Project | Domain | Orchestrator pattern | Platform |
-|---------|--------|----------------------|----------|
-| [**Genie**](https://github.com/c2siorg/genie) | Personal finance | `financial_supervisor`, ingestor, analyzer, … | MARA (Go) |
-| **Bodh** | Clinical diagnosis | `diagnostic_supervisor`, questioner, test_planner, … | MARA (Go) |
-
-If you have read Genie’s README, most of **`pkg/*`** will look familiar. Bodh adds **`pkg/medical`**, **`pkg/governance/medical_policy.go`**, and **`agents/*`** for the virtual physician panel.
 
 ---
 
@@ -180,7 +181,65 @@ A single monolithic LLM call is difficult to **audit**, **cap cost**, **swap mod
 
 ---
 
+## Architecture diagrams
+
+This repository includes **two architecture images** at the repo root. Use them together: one for the **platform** (MARA), one for the **clinical workflow** (Bodh / MAI-DxO sequential diagnosis).
+
+| File | What it shows | When to use it |
+|------|----------------|----------------|
+| [**Architecture.png**](Architecture.png) | Microsoft-style **Multi-Agent Reference Architecture** — user app, orchestrator, classifier, registry, knowledge, storage, local/remote agent layers, MCP, observability, evaluation | Onboarding to **platform** packages (`pkg/orchestration`, `pkg/registry`, `pkg/comm`, …) |
+| [**architectureflow.webp**](architectureflow.webp) | **Bodh sequential diagnosis flow** — virtual physician panel, message path from presentation to final diagnosis | Onboarding to **`agents/`** and `cmd/demo` clinical routing |
+
+> **Maintainers:** When box-level architecture or the diagnosis pipeline changes, update the matching image so it stays the visual source of truth.
+
+### Platform architecture — `Architecture.png`
+
+High-level MARA stack: user → application → orchestration (classifier, registry) → knowledge & storage → supervisor/worker agents (MCP) → tools → observability → evaluation feedback.
+
+![Bodh platform architecture aligned with Microsoft Multi-Agent Reference Architecture (MARA)](Architecture.png)
+
+**How to read this diagram with the code**
+
+| Area on the diagram | What it is in Bodh | Where it lives in Go |
+|---------------------|--------------------|----------------------|
+| User / User Application | Entry that publishes the first `protocol.Message` | Today: `cmd/demo` · planned: `cmd/api` |
+| Orchestrator | Subscribes agents, runs governance, calls `HandleMessage`, republishes outputs | `pkg/orchestration` |
+| Classifier | Route intent (e.g. new case vs. follow-up) | Planned: router agent or `pkg/classifier` |
+| Agent Registry | Lists agents and resolves capabilities | `pkg/registry` |
+| Knowledge Layer | Guidelines, differentials, RAG over clinical text | Planned: DB + vector index |
+| Storage Layer | Conversation history, agent/case state, registry backing store | `pkg/memory` (KV today) · planned: PostgreSQL |
+| Supervisor Agent | Decompose diagnosis into steps | `agents/supervisor.go` (`diagnostic_supervisor`) |
+| Agent #1 … #N (workers) | Intake, questioner, test planner, diagnostician, … | `agents/*.go` |
+| Integration / MCP / External Tools | Labs, imaging, LLM APIs | Planned: tools via extended `Environment` |
+| Observability | Logs, traces, clocks | `pkg/observability` |
+| Evaluation | Accuracy vs. gold diagnosis, cost metrics | `pkg/eval` · planned: `cmd/bench` |
+
+### Clinical flow — `architectureflow.webp`
+
+End-to-end **sequential diagnosis** for one case: presentation → history → tests (with cost check) → diagnosis → reasoning verification → final report. This is the Bodh mapping of [MAI-DxO](https://microsoft.ai/news/the-path-to-medical-superintelligence/)’s virtual physician panel and [SD Bench](https://microsoft.ai/news/the-path-to-medical-superintelligence/)’s stepwise encounters.
+
+![Bodh sequential diagnosis message flow — virtual physician panel](architectureflow.webp)
+
+**How to read this diagram with the code**
+
+| Step on the flow | Agent ID | Message `Type` (typical) | Source file |
+|------------------|----------|--------------------------|-------------|
+| Case intake | `intake` | `presentation` → `case_state` | `agents/intake.go` |
+| Panel coordination | `diagnostic_supervisor` | `case_state`, `questions_complete`, `tests_complete`, `diagnosis` | `agents/supervisor.go` |
+| Ask question (MAI-DxO) | `questioner` | `case_state` → `questions_complete` | `agents/questioner.go` |
+| Request test (MAI-DxO) | `test_planner` | `case_state` | `agents/test_planner.go` |
+| Cost check (MAI-DxO) | `cost_guardian` | `case_state` → `tests_complete` | `agents/cost_guardian.go` |
+| Provide diagnosis (MAI-DxO) | `diagnostician` | `case_state` → `diagnosis_proposal` | `agents/diagnostician.go` |
+| Verify reasoning (MAI-DxO) | `reasoning_verifier` | `diagnosis_proposal` → `diagnosis` | `agents/reasoning_verifier.go` |
+| Domain state in every hop | — | JSON in `Content` | `pkg/medical` (`CaseState`) |
+
+The ASCII diagrams in [Architecture overview](#architecture-overview) below duplicate this flow in text form for terminals and diffs; prefer **`architectureflow.webp`** for slides and **`Architecture.png`** for platform discussions.
+
+---
+
 ## Architecture overview
+
+> **Visual references:** Platform boxes → [`Architecture.png`](Architecture.png). Clinical message path → [`architectureflow.webp`](architectureflow.webp). See [Architecture diagrams](#architecture-diagrams) for full legend tables.
 
 ### System diagram (how pieces connect)
 
@@ -246,6 +305,8 @@ Microsoft’s diagram describes a panel that can **Ask Question**, **Request Tes
 
 ### Sequential diagnosis sequence (mermaid)
 
+Same flow as [`architectureflow.webp`](architectureflow.webp) (recommended for slides and docs); mermaid below is for GitHub/GitLab rendering in-repo.
+
 ```mermaid
 sequenceDiagram
     participant User
@@ -284,7 +345,7 @@ sequenceDiagram
 
 ## MARA concepts → Go packages
 
-This table is the **map of the codebase**. Each row is a MARA idea; the **Go package** is where it lives.
+This table is the **map of the codebase**. Each row is a MARA idea; the **Go package** is where it lives. Box-level layout: [`Architecture.png`](Architecture.png) and its table in [Architecture diagrams](#architecture-diagrams).
 
 | MARA concept | What it does | Go package | Key types / files |
 |--------------|--------------|------------|-------------------|
@@ -314,6 +375,8 @@ MARA components you will **add for Bodh** (not all are code yet):
 ---
 
 ## Virtual physician panel (MAI-DxO mapping)
+
+> **Visual:** Agent order and message hops — [`architectureflow.webp`](architectureflow.webp). Platform wiring (orchestrator, registry, bus) — [`Architecture.png`](Architecture.png).
 
 ### Agent registry table
 
@@ -672,7 +735,7 @@ go test ./pkg/medical/... -v
 
 ## Walkthrough: `cmd/demo` (line by line)
 
-Open `cmd/demo/main.go` alongside this section.
+Open `cmd/demo/main.go` alongside this section and [`architectureflow.webp`](architectureflow.webp) so each `bus.Publish` step maps to an arrow on the flow diagram.
 
 ### Step 1 — Observability and environment
 
@@ -739,7 +802,7 @@ time.Sleep(3 * time.Second)
 
 ## Complete message trace (demo case)
 
-For `demo-case-001` (cough/fever → pneumonia), the following messages are emitted (simplified):
+For `demo-case-001` (cough/fever → pneumonia), the following messages are emitted (simplified). This table matches the numbered path in [`architectureflow.webp`](architectureflow.webp):
 
 | Step | From | To | Type | Notes |
 |------|------|-----|------|-------|
@@ -932,17 +995,14 @@ To detect agents that “cheat” with exhaustive testing. MAI-DxO found orchest
 
 Add an `LLMClient` to a custom `Environment`; call it from `questioner`, `diagnostician`, etc. Keep **one model per agent** optional—MAI-DxO is model-agnostic.
 
-### How is this different from Genie?
-
-Same **MARA skeleton**, different **domain package** and **agents**. Genie asks “where am I overspending?”; Bodh asks “what is the diagnosis and what did workup cost?”
-
 ---
 
 ## What is implemented today vs planned
 
 | Layer | Status | Where |
 |-------|--------|-------|
-| **MARA platform** | ✅ Implemented | `pkg/protocol`, `pkg/agent`, `pkg/registry`, `pkg/comm`, `pkg/orchestration`, `pkg/governance`, `pkg/observability`, `pkg/memory`, `pkg/eval` |
+| **MARA platform** | ✅ Implemented | `pkg/protocol`, `pkg/agent`, `pkg/registry`, `pkg/comm`, `pkg/orchestration`, `pkg/governance`, `pkg/observability`, `pkg/memory`, `pkg/eval` — see [`Architecture.png`](Architecture.png) |
+| **Architecture diagrams** | ✅ In repo | [`Architecture.png`](Architecture.png), [`architectureflow.webp`](architectureflow.webp) |
 | **Medical domain** | ✅ Implemented | `pkg/medical` |
 | **Medical governance** | ✅ Implemented | `pkg/governance/medical_policy.go` |
 | **Virtual physician panel** | ✅ Demo (rule-based) | `agents/*.go` |
@@ -973,6 +1033,8 @@ Same **MARA skeleton**, different **domain package** and **agents**. Genie asks 
 
 ```
 bodh/
+├── Architecture.png             # MARA platform map (orchestrator, registry, agents, eval)
+├── architectureflow.webp        # Sequential diagnosis message flow (virtual physician panel)
 ├── cmd/
 │   └── demo/                    # Sequential diagnosis entrypoint
 ├── agents/                      # Virtual physician panel
@@ -1025,6 +1087,7 @@ bodh/
 ## Contributing
 
 - Open issues for bugs, agent ideas, and benchmark integrations.
+- **Diagram hygiene:** If a PR changes platform boxes or agent flow, update [`Architecture.png`](Architecture.png) and/or [`architectureflow.webp`](architectureflow.webp) and the matching tables in [Architecture diagrams](#architecture-diagrams).
 - **Good first tasks:**
   - Loader: read `data/cases/*.json` and publish `presentation` messages
   - Table-driven tests for each agent’s `HandleMessage`
@@ -1042,9 +1105,12 @@ bodh/
 - [Multi-Agent Reference Architecture (overview)](https://microsoft.github.io/multi-agent-reference-architecture/)
 - [Reference Architecture chapter](https://microsoft.github.io/multi-agent-reference-architecture/docs/reference-architecture/Reference-Architecture.html)
 
-### Related open source
+### In-repo visuals
 
-- [Genie — AI Financial Assistant (Go / MARA)](https://github.com/c2siorg/genie)
+| Asset | Path |
+|-------|------|
+| MARA platform architecture | [`Architecture.png`](Architecture.png) |
+| Sequential diagnosis flow | [`architectureflow.webp`](architectureflow.webp) |
 
 ### Clinical AI context (external)
 
