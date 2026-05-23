@@ -27,7 +27,14 @@ import (
 
 func main() {
 	addr := flag.String("addr", ":8088", "HTTP listen address")
+	provider := flag.String("diagnostician", agents.ProviderRule,
+		"diagnostician backend: rule | llm-anthropic | llm-openai | llm-ollama")
 	flag.Parse()
+
+	diag, err := agents.NewDiagnostician(*provider)
+	if err != nil {
+		log.Fatalf("diagnostician: %v", err)
+	}
 
 	logger := observability.NewStdLogger()
 	env := &orchestration.SimpleEnvironment{Logger: logger, Clock: observability.SystemClock{}}
@@ -54,7 +61,7 @@ func main() {
 		&agents.QuestionerAgent{},
 		&agents.TestPlannerAgent{},
 		&agents.CostGuardianAgent{},
-		&agents.DiagnosticianAgent{},
+		diag,
 		&agents.ReasoningVerifierAgent{HITL: true},
 		&agents.CDMPlannerAgent{Registry: patients, HITL: true},
 		&agents.TCMCoordinatorAgent{Tasks: queue, Registry: patients, HITL: true},
