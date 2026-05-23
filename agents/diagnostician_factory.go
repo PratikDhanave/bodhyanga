@@ -139,6 +139,30 @@ func RiskCalculatorTool() tools.Tool { return tools.DefaultRiskCalculator() }
 // FHIRQueryTool returns the default FHIRQuery stub Tool.
 func FHIRQueryTool() tools.Tool { return tools.FHIRQuery{} }
 
+// NewDiagnosticianSelfConsistency builds a sample-N voting diagnostician
+// for the given provider. The rule provider has no LLM to sample and
+// returns the rule-based agent. The supplied store, when non-nil, enables
+// RAG on each sample. samples <= 0 defaults to DefaultSelfConsistencySamples (5);
+// values greater than maxSelfConsistencySamples (10) are clamped inside the
+// agent's HandleMessage so a typo'd flag cannot fan out hundreds of calls.
+func NewDiagnosticianSelfConsistency(provider string, store knowledge.Store, samples int) (agent.Agent, error) {
+	if provider == "" || provider == ProviderRule {
+		return &DiagnosticianAgent{}, nil
+	}
+	base, err := buildDiagnostician(provider, store)
+	if err != nil {
+		return nil, err
+	}
+	llmBase, ok := base.(*LLMDiagnostician)
+	if !ok {
+		return base, nil
+	}
+	if samples <= 0 {
+		samples = DefaultSelfConsistencySamples
+	}
+	return &SelfConsistencyDiagnostician{Base: llmBase, Samples: samples}, nil
+}
+
 // NewDiagnosticianReflexion builds the Reflexion / Chain-of-Verification
 // diagnostician for the given provider. The rule provider has no LLM to
 // critique with and returns the rule-based agent. The supplied store, when
@@ -203,6 +227,72 @@ func buildDiagnostician(provider string, store knowledge.Store) (agent.Agent, er
 	default:
 		return nil, fmt.Errorf("unknown diagnostician provider %q (expected rule|llm-anthropic|llm-openai|llm-ollama)", provider)
 	}
+}
+
+// NewDiagnosticianFewShot builds an in-context few-shot diagnostician for the
+// given provider. The rule provider has no LLM to prompt and returns the
+// rule-based agent. The supplied shotStore, when non-nil, supplies past
+// clinician-approved cases that are retrieved and injected into the prompt
+// as Examples; a nil shotStore degrades cleanly to the plain LLMDiagnostician
+// behaviour. The ragStore wires the base diagnostician's standard RAG path —
+// Examples and Evidence stack independently. k <= 0 defaults to 3.
+func NewDiagnosticianFewShot(provider string, ragStore, shotStore knowledge.Store, k int) (agent.Agent, error) {
+	if provider == "" || provider == ProviderRule {
+		return &DiagnosticianAgent{}, nil
+	}
+	base, err := buildDiagnostician(provider, ragStore)
+	if err != nil {
+		return nil, err
+	}
+	llmBase, ok := base.(*LLMDiagnostician)
+	if !ok {
+		return base, nil
+	}
+	if k <= 0 {
+		k = 3
+	}
+	return &FewShotDiagnostician{
+		Base:  llmBase,
+		Shots: shotStore,
+		K:     k,
+	}, nil
+}
+
+// LoadDefaultFewShotStore reads BODH_HITL_DECISIONS, parses the file as a
+// HITL queue dump (same shape accepted by cmd/export-hitl-feedback), builds
+// few-shot Documents via knowledge.LoadFewShotCorpus, and indexes them into a
+// new in-memory Store using the supplied embedder. When the env var is
+// unset, missing, empty, or yields zero qualifying documents, returns
+// (nil, nil) so the caller proceeds without few-shot retrieval. Embedder
+// errors and on-disk parse errors are surfaced.
+func LoadDefaultFewShotStore(ctx context.Context, embedder embeddings.Embedder) (knowledge.Store, error) {
+	path := os.Getenv("BODH_HITL_DECISIONS")
+	if path == "" {
+		return nil, nil
+	}
+	if embedder == nil {
+		return nil, errors.New("LoadDefaultFewShotStore: nil embedder")
+	}
+	if info, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	} else if info.Size() == 0 {
+		return nil, nil
+	}
+	docs, err := knowledge.LoadFewShotCorpus(path)
+	if err != nil {
+		return nil, err
+	}
+	if len(docs) == 0 {
+		return nil, nil
+	}
+	store := knowledge.NewInMemoryStore(embedder)
+	if err := store.Index(ctx, docs); err != nil {
+		return nil, err
+	}
+	return store, nil
 }
 
 // LoadDefaultKnowledge reads BODH_KNOWLEDGE_CORPUS, loads the JSON corpus at
