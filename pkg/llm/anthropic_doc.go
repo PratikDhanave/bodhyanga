@@ -10,6 +10,7 @@
 //   - AnthropicEndpoint, AnthropicVersion: defaults for URL and api-version header
 //   - NewAnthropic(apiKey, model) Client: constructor returning an anthropic-backed Client
 //   - anthropicClient: unexported implementation
+//   - anthropicClient.Stream: Server-Sent Events streaming implementation of Streamer
 //
 // See doc.go for package-level documentation.
 

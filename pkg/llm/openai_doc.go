@@ -10,6 +10,7 @@
 //   - OpenAIEndpoint: default URL
 //   - NewOpenAI(apiKey, model) Client: constructor returning an openai-backed Client
 //   - openaiClient: unexported implementation
+//   - openaiClient.Stream: SSE streaming implementation of Streamer
 //
 // See doc.go for package-level documentation.
 

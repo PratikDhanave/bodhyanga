@@ -12,6 +12,7 @@
 //   - OllamaDefaultHost: "http://localhost:11434" used when no host is configured
 //   - NewOllama(host, model) Client: constructor returning an ollama-backed Client
 //   - ollamaClient: unexported implementation
+//   - ollamaClient.Stream: NDJSON streaming implementation of Streamer
 //
 // See doc.go for package-level documentation.
 

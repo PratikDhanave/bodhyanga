@@ -258,6 +258,41 @@ func DefaultEmbedderForProvider(provider string) (embeddings.Embedder, error) {
 	}
 }
 
+// LoadDefaultLLMCache returns a default llm.Cache for the process. When
+// BODH_LLM_CACHE_DIR is set, returns a disk-backed cache rooted at that
+// directory with a 10,000-entry cap; otherwise returns a 1,000-entry
+// in-memory cache. On any file-cache construction failure (mkdir error)
+// the helper falls back to the in-memory cache so callers always get a
+// usable Cache. This helper is exposed for callers that want LLM-call
+// memoisation but is not wired into the existing factories yet — wrap
+// any llm.Client with llm.NewCached(client, LoadDefaultLLMCache()) at
+// the call site.
+func LoadDefaultLLMCache() llm.Cache {
+	if dir := os.Getenv("BODH_LLM_CACHE_DIR"); dir != "" {
+		if c, err := llm.NewFileCache(dir, 10000); err == nil {
+			return c
+		}
+	}
+	return llm.NewMemoryCache(1000)
+}
+
+// LoadDefaultEmbeddingsCache returns a default embeddings.Cache for the
+// process. When BODH_EMBEDDINGS_CACHE_DIR is set, returns a disk-backed
+// cache rooted at that directory with a 10,000-entry cap; otherwise
+// returns a 5,000-entry in-memory cache. On any file-cache construction
+// failure the helper falls back to the in-memory cache. Not wired into
+// existing factories yet — wrap any embeddings.Embedder with
+// embeddings.NewCached(embedder, LoadDefaultEmbeddingsCache()) at the
+// call site.
+func LoadDefaultEmbeddingsCache() embeddings.Cache {
+	if dir := os.Getenv("BODH_EMBEDDINGS_CACHE_DIR"); dir != "" {
+		if c, err := embeddings.NewFileCache(dir, 10000); err == nil {
+			return c
+		}
+	}
+	return embeddings.NewMemoryCache(5000)
+}
+
 func envDefault(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
 		return v

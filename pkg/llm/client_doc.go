@@ -14,6 +14,7 @@
 //   - Role: the "user" / "assistant" string type
 //   - JSONSchema: name/description/schema for structured outputs
 //   - ErrNoMessages, ErrInvalidJSON: failure modes the adapters share
+//   - StreamChunk, Streamer, CanStream: optional token-streaming interface
 //
 // See doc.go for package-level documentation.
 

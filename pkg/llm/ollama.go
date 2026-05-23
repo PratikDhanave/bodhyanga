@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -232,4 +233,159 @@ func (c *ollamaClient) parseResponse(body []byte, expectJSON bool) (*Response, e
 		StopReason:   stop,
 		ToolCalls:    toolCalls,
 	}, nil
+}
+
+// Stream implements Streamer against Ollama's native /api/chat NDJSON stream.
+//
+// Ollama's chat endpoint streams by default — each newline-delimited JSON
+// object is a delta: {"message":{"content":"..."},"done":false} until the
+// final {"done":true} which carries the done_reason and aggregate token
+// counts. Tool calls arrive on the final object (rather than streamed
+// incrementally) and are emitted as ToolCall chunks before the Done chunk.
+func (c *ollamaClient) Stream(ctx context.Context, req Request) (<-chan StreamChunk, error) {
+	if len(req.Messages) == 0 {
+		return nil, ErrNoMessages
+	}
+	payload, err := c.buildPayload(req)
+	if err != nil {
+		return nil, err
+	}
+	payload["stream"] = true
+
+	buf, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.host+ollamaChatPath, bytes.NewReader(buf))
+	if err != nil {
+		return nil, err
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.http.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("ollama: %w", err)
+	}
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		return nil, fmt.Errorf("ollama: http %d: %s", resp.StatusCode, string(body))
+	}
+
+	ch := make(chan StreamChunk)
+	go func() {
+		defer resp.Body.Close()
+		defer close(ch)
+
+		scanner := bufio.NewScanner(resp.Body)
+		scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+
+		var (
+			textBuf     strings.Builder
+			toolCalls   []ToolCall
+			usageIn     int
+			usageOut    int
+			modelName   = c.model
+			doneReason  string
+			finalEmitted bool
+		)
+
+		emit := func(chunk StreamChunk) bool {
+			select {
+			case <-ctx.Done():
+				return false
+			case ch <- chunk:
+				return true
+			}
+		}
+
+		for scanner.Scan() {
+			if ctx.Err() != nil {
+				return
+			}
+			line := bytes.TrimSpace(scanner.Bytes())
+			if len(line) == 0 {
+				continue
+			}
+			var ev struct {
+				Model   string `json:"model"`
+				Message struct {
+					Content   string `json:"content"`
+					ToolCalls []struct {
+						Function struct {
+							Name      string          `json:"name"`
+							Arguments json.RawMessage `json:"arguments"`
+						} `json:"function"`
+					} `json:"tool_calls"`
+				} `json:"message"`
+				Done            bool   `json:"done"`
+				DoneReason      string `json:"done_reason"`
+				PromptEvalCount int    `json:"prompt_eval_count"`
+				EvalCount       int    `json:"eval_count"`
+			}
+			if err := json.Unmarshal(line, &ev); err != nil {
+				continue
+			}
+			if ev.Model != "" {
+				modelName = ev.Model
+			}
+			if ev.Message.Content != "" {
+				textBuf.WriteString(ev.Message.Content)
+				if !emit(StreamChunk{Content: ev.Message.Content}) {
+					return
+				}
+			}
+			for _, tc := range ev.Message.ToolCalls {
+				args := tc.Function.Arguments
+				if len(args) == 0 {
+					args = json.RawMessage("{}")
+				} else {
+					var raw any
+					if err := json.Unmarshal(args, &raw); err == nil {
+						if buf, err := json.Marshal(raw); err == nil {
+							args = buf
+						}
+					}
+				}
+				call := ToolCall{Name: tc.Function.Name, Arguments: args}
+				toolCalls = append(toolCalls, call)
+				if !emit(StreamChunk{ToolCall: &call}) {
+					return
+				}
+			}
+			if ev.Done {
+				if ev.PromptEvalCount > 0 {
+					usageIn = ev.PromptEvalCount
+				}
+				if ev.EvalCount > 0 {
+					usageOut = ev.EvalCount
+				}
+				doneReason = ev.DoneReason
+				if doneReason == "" {
+					doneReason = "stop"
+				}
+				if len(toolCalls) > 0 {
+					doneReason = "tool_use"
+				}
+				final := &Response{
+					Content:      textBuf.String(),
+					InputTokens:  usageIn,
+					OutputTokens: usageOut,
+					Model:        modelName,
+					Provider:     "ollama",
+					StopReason:   doneReason,
+					ToolCalls:    toolCalls,
+				}
+				emit(StreamChunk{Done: true, Final: final})
+				finalEmitted = true
+				return
+			}
+		}
+
+		if err := scanner.Err(); err != nil && ctx.Err() == nil && !finalEmitted {
+			emit(StreamChunk{Done: true, Err: fmt.Errorf("ollama: stream read: %w", err)})
+		}
+	}()
+
+	return ch, nil
 }

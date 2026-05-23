@@ -12,6 +12,9 @@
 //   - Orchestrator: coordinator holding registry, bus, policy, and environment.
 //   - NewOrchestrator: dependency-injection constructor.
 //   - Orchestrator.Start: subscribes every registered agent to the bus and applies policy on each hop.
+//   - Orchestrator.Refresh: hot-reload entry point — subscribes agents added to the registry after Start.
+//   - Orchestrator.Watch: opt-in background loop that calls Refresh on a ticker until ctx is cancelled.
+//   - Orchestrator.subscribeAgentLocked: internal helper that wires a single agent's bus subscription (caller holds o.mu).
 //   - SimpleEnvironment: Logger + Clock-backed agent.Environment implementation.
 //   - SimpleEnvironment.Now / SimpleEnvironment.Logf: environment methods.
 //

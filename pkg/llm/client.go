@@ -149,3 +149,28 @@ var ErrNoMessages = errors.New("llm: request has no messages")
 // ErrInvalidJSON is returned when JSONSchema was requested but the provider
 // returned content that didn't parse.
 var ErrInvalidJSON = errors.New("llm: response was not valid JSON for the requested schema")
+
+// StreamChunk is one delta in a streaming response. Either Content has a
+// partial text chunk, or ToolCall is populated when the model emits a tool
+// invocation mid-stream, or Done=true to signal end of stream with optional
+// final Usage stats.
+type StreamChunk struct {
+	Content  string    // partial text since last chunk; empty on tool/done chunks
+	ToolCall *ToolCall // when the model invoked a tool mid-stream
+	Done     bool      // true on the LAST chunk; carries the final Response too
+	Final    *Response // populated when Done=true; nil otherwise
+	Err      error     // populated if the stream terminated abnormally
+}
+
+// Streamer is an optional interface a Client implements when it supports
+// token streaming. Adapters that don't implement it can still be used via
+// the regular Complete method; callers fall back gracefully.
+type Streamer interface {
+	Stream(ctx context.Context, req Request) (<-chan StreamChunk, error)
+}
+
+// CanStream reports whether a Client also implements Streamer.
+func CanStream(c Client) bool {
+	_, ok := c.(Streamer)
+	return ok
+}

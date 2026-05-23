@@ -36,6 +36,14 @@ type Orchestrator struct {
 	// callers invoke it more than once (a real footgun before — double-
 	// subscription delivered every message twice to every agent).
 	startOnce sync.Once
+
+	// mu guards the started flag and the subscribed set. Start() takes it
+	// briefly to mark started; Refresh() takes it for the full diff +
+	// subscribe pass so concurrent Refresh callers cannot double-subscribe
+	// the same agent ID.
+	mu         sync.Mutex
+	started    bool
+	subscribed map[string]struct{}
 }
 
 // NewOrchestrator constructs a new orchestrator.
@@ -47,10 +55,11 @@ type Orchestrator struct {
 // - a richer environment implementation
 func NewOrchestrator(reg registry.Registry, bus comm.Bus, policy governance.Policy, env agent.Environment) *Orchestrator {
 	return &Orchestrator{
-		reg:    reg,
-		bus:    bus,
-		policy: policy,
-		env:    env,
+		reg:        reg,
+		bus:        bus,
+		policy:     policy,
+		env:        env,
+		subscribed: make(map[string]struct{}),
 	}
 }
 
@@ -78,45 +87,119 @@ func NewOrchestrator(reg registry.Registry, bus comm.Bus, policy governance.Poli
 // - Observability becomes straightforward: all interactions are messages.
 func (o *Orchestrator) Start(ctx context.Context) {
 	o.startOnce.Do(func() {
-		for _, a := range o.reg.List(ctx) {
-			agentID := a.ID()
-			o.bus.Subscribe(agentID, func(c context.Context, msg agent.Message) {
-				// Apply governance *before* the agent sees the message.
-				//
-				// This is a key pattern: centralize safety checks at the boundary.
-				// If a policy denies a message, the agent never processes it.
-				if o.policy != nil {
-					res, err := o.policy.Evaluate(c, msg)
-					if err != nil {
-						o.env.Logf("policy error for msg %s: %v", msg.ID, err)
-						return
-					}
-					if res.Decision == governance.DecisionDeny {
-						o.env.Logf("message %s denied by policy: %s", msg.ID, res.Reason)
-						return
-					}
-				}
+		o.mu.Lock()
+		agents := o.reg.List(ctx)
+		for _, a := range agents {
+			o.subscribeAgentLocked(a)
+		}
+		o.started = true
+		o.mu.Unlock()
+	})
+}
 
-				o.env.Logf("agent %s handling message %s from %s", agentID, msg.ID, msg.From)
+// Refresh re-lists the registry and subscribes any agents that are not yet
+// known to this orchestrator. It returns the IDs that were newly subscribed
+// (in registry-iteration order) so callers can log them.
+//
+// Semantics:
+//
+//   - Idempotent. Calling Refresh repeatedly with no new agents is a no-op
+//     and returns an empty slice.
+//   - Calling Refresh before Start is also a no-op; the initial subscribe
+//     pass is owned by Start. This keeps the contract simple: Refresh only
+//     ever *extends* an already-running orchestrator.
+//   - Agents that were REMOVED from the registry between Start and Refresh
+//     are intentionally not unsubscribed. Their bus subscriptions remain,
+//     which is consistent with the in-memory registry's "register replaces"
+//     model — removal is not a first-class operation here, and tearing down
+//     a live subscription while messages may be in flight is a separate,
+//     more delicate concern.
+func (o *Orchestrator) Refresh(ctx context.Context) (newlySubscribed []string) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	if !o.started {
+		return nil
+	}
+	for _, a := range o.reg.List(ctx) {
+		id := a.ID()
+		if _, ok := o.subscribed[id]; ok {
+			continue
+		}
+		o.subscribeAgentLocked(a)
+		newlySubscribed = append(newlySubscribed, id)
+	}
+	return newlySubscribed
+}
 
-				// Delegate to the agent implementation.
-				//
-				// The agent can return zero messages (no follow-up work) or multiple
-				// messages (fan-out). The orchestrator does not interpret their meaning;
-				// it just republishes them to the bus for routing.
-				out, err := a.HandleMessage(c, msg, o.env)
-				if err != nil {
-					o.env.Logf("agent %s error: %v", agentID, err)
-					return
-				}
-				for _, m := range out {
-					// Re-enter the message stream. This is what creates the multi-agent
-					// flow: one agent's output becomes another agent's input.
-					o.bus.Publish(c, m)
-				}
-			})
+// Watch runs Refresh on an interval until ctx is cancelled. It is opt-in;
+// most callers will trigger Refresh manually after a known registration
+// event. Newly-subscribed agent IDs are logged through the orchestrator's
+// environment so operators can see hot-reloads happen in real time.
+//
+// Watch blocks until ctx is cancelled and then returns. Callers typically
+// run it in a goroutine: `go orch.Watch(ctx, time.Second)`.
+func (o *Orchestrator) Watch(ctx context.Context, interval time.Duration) {
+	if interval <= 0 {
+		return
+	}
+	t := time.NewTicker(interval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			if added := o.Refresh(ctx); len(added) > 0 {
+				o.env.Logf("orchestrator: hot-reload subscribed %d new agent(s): %v", len(added), added)
+			}
+		}
+	}
+}
+
+// subscribeAgentLocked wires a single agent to the bus and records the
+// subscription. The caller MUST hold o.mu.
+//
+// Splitting this out of Start lets Refresh reuse the exact same subscribe
+// closure — including governance evaluation and republish — without
+// duplicating the logic.
+func (o *Orchestrator) subscribeAgentLocked(a agent.Agent) {
+	agentID := a.ID()
+	o.bus.Subscribe(agentID, func(c context.Context, msg agent.Message) {
+		// Apply governance *before* the agent sees the message.
+		//
+		// This is a key pattern: centralize safety checks at the boundary.
+		// If a policy denies a message, the agent never processes it.
+		if o.policy != nil {
+			res, err := o.policy.Evaluate(c, msg)
+			if err != nil {
+				o.env.Logf("policy error for msg %s: %v", msg.ID, err)
+				return
+			}
+			if res.Decision == governance.DecisionDeny {
+				o.env.Logf("message %s denied by policy: %s", msg.ID, res.Reason)
+				return
+			}
+		}
+
+		o.env.Logf("agent %s handling message %s from %s", agentID, msg.ID, msg.From)
+
+		// Delegate to the agent implementation.
+		//
+		// The agent can return zero messages (no follow-up work) or multiple
+		// messages (fan-out). The orchestrator does not interpret their meaning;
+		// it just republishes them to the bus for routing.
+		out, err := a.HandleMessage(c, msg, o.env)
+		if err != nil {
+			o.env.Logf("agent %s error: %v", agentID, err)
+			return
+		}
+		for _, m := range out {
+			// Re-enter the message stream. This is what creates the multi-agent
+			// flow: one agent's output becomes another agent's input.
+			o.bus.Publish(c, m)
 		}
 	})
+	o.subscribed[agentID] = struct{}{}
 }
 
 // SimpleEnvironment is a basic implementation of agent.Environment using observability primitives.

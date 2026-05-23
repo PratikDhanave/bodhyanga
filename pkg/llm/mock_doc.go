@@ -8,6 +8,7 @@
 // Key declarations:
 //   - Mock: struct with Resp, Err, ProviderName, ModelName, Calls fields
 //   - Mock.Provider, Mock.Model, Mock.Complete: implementations of Client
+//   - Mock.Stream: implementation of Streamer that splits Resp.Content into words
 //
 // See doc.go for package-level documentation.
 
