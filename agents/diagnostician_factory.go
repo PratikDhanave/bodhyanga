@@ -11,6 +11,7 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/knowledge"
 	"github.com/PratikDhanave/bodh/pkg/llm"
 	"github.com/PratikDhanave/bodh/pkg/tasks"
+	"github.com/PratikDhanave/bodh/pkg/tools"
 )
 
 // Provider names accepted by NewDiagnostician and the -diagnostician CLI flag.
@@ -97,6 +98,46 @@ func NewDiagnosticianVision(provider string, store knowledge.Store) (agent.Agent
 	}
 	return &LLMDiagnosticianVision{Base: llmBase}, nil
 }
+
+// NewDiagnosticianTools builds the tool-using diagnostician for the given
+// provider. The rule provider has no LLM to drive tool calls and returns the
+// rule-based agent. The supplied store, when non-nil, enables RAG on the
+// underlying LLMDiagnostician. A nil registry installs a default registry
+// pre-populated with all three demo clinical tools (DrugInteraction,
+// DefaultRiskCalculator, FHIRQuery).
+func NewDiagnosticianTools(provider string, store knowledge.Store, registry *tools.Registry) (agent.Agent, error) {
+	if provider == "" || provider == ProviderRule {
+		return &DiagnosticianAgent{}, nil
+	}
+	base, err := buildDiagnostician(provider, store)
+	if err != nil {
+		return nil, err
+	}
+	llmBase, ok := base.(*LLMDiagnostician)
+	if !ok {
+		return base, nil
+	}
+	if registry == nil {
+		registry = tools.NewRegistry(
+			DrugInteractionTool(),
+			RiskCalculatorTool(),
+			FHIRQueryTool(),
+		)
+	}
+	return &ToolUsingDiagnostician{Base: llmBase, Tools: registry}, nil
+}
+
+// DrugInteractionTool returns the default DrugInteraction Tool. Indirection
+// exposed so callers and tests can build a custom registry without having to
+// import pkg/tools alongside pkg/agents.
+func DrugInteractionTool() tools.Tool { return tools.DrugInteraction{} }
+
+// RiskCalculatorTool returns the default RiskCalculator Tool wired to all
+// four sub-calculators.
+func RiskCalculatorTool() tools.Tool { return tools.DefaultRiskCalculator() }
+
+// FHIRQueryTool returns the default FHIRQuery stub Tool.
+func FHIRQueryTool() tools.Tool { return tools.FHIRQuery{} }
 
 // NewDiagnosticianReflexion builds the Reflexion / Chain-of-Verification
 // diagnostician for the given provider. The rule provider has no LLM to
