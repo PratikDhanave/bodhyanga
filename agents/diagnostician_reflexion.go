@@ -152,7 +152,7 @@ func (a *ReflexionDiagnostician) initialDraft(ctx context.Context, state medical
 	}
 	timeout := a.Base.Timeout
 	if timeout == 0 {
-		timeout = 30 * time.Second
+		timeout = 60 * time.Second
 	}
 	minConfidence := a.Base.MinConfidence
 	if minConfidence == 0 {
@@ -176,7 +176,7 @@ func (a *ReflexionDiagnostician) initialDraft(ctx context.Context, state medical
 func (a *ReflexionDiagnostician) runCritique(ctx context.Context, state medical.CaseState, current medical.DiagnosisProposal, retrieved []medical.DiagnosisCitation, round int, env agent.Environment) (critiqueOutput, error) {
 	timeout := a.Timeout
 	if timeout == 0 {
-		timeout = 30 * time.Second
+		timeout = 60 * time.Second
 	}
 	maxTokens := a.MaxTokens
 	if maxTokens == 0 {
