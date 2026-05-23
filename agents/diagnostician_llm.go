@@ -161,7 +161,7 @@ func (a *LLMDiagnostician) callLLM(ctx context.Context, state medical.CaseState,
 	}
 	timeout := a.Timeout
 	if timeout == 0 {
-		timeout = 30 * time.Second
+		timeout = 60 * time.Second
 	}
 	minConfidence := a.MinConfidence
 	if minConfidence == 0 {

@@ -106,11 +106,17 @@ func (c *ollamaClient) buildPayload(req Request) (map[string]any, error) {
 	}
 
 	if req.JSONSchema != nil {
-		var schema map[string]any
-		if err := json.Unmarshal(req.JSONSchema.Schema, &schema); err != nil {
+		// Validate the schema is well-formed JSON, then ask Ollama for a
+		// free-form JSON object. Older Ollama servers (0.4.x and earlier)
+		// only accept format="json"; newer ones (0.5+) accept a JSON Schema
+		// object, but it's not yet universally available. We send "json" for
+		// cross-version compatibility; the schema still lives in the system
+		// prompt so the model knows the expected shape, and the response is
+		// validated client-side in parseResponse.
+		if err := json.Unmarshal(req.JSONSchema.Schema, new(map[string]any)); err != nil {
 			return nil, fmt.Errorf("ollama: bad JSONSchema: %w", err)
 		}
-		payload["format"] = schema
+		payload["format"] = "json"
 	}
 
 	if len(req.Tools) > 0 {

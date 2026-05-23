@@ -89,7 +89,7 @@ func (a *LLMDiagnosticianVision) callLLMWithImage(ctx context.Context, state med
 	}
 	timeout := a.Base.Timeout
 	if timeout == 0 {
-		timeout = 30 * time.Second
+		timeout = 60 * time.Second
 	}
 	minConfidence := a.Base.MinConfidence
 	if minConfidence == 0 {
