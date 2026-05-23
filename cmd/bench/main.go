@@ -50,15 +50,24 @@ type fixture struct {
 }
 
 type result struct {
-	Fixture fixture
-	State   medical.CaseState
-	Metrics eval.CaseMetrics
+	Fixture  fixture
+	State    medical.CaseState
+	Metrics  eval.CaseMetrics
+	Provider string
+	Latency  time.Duration
+}
+
+type providerRun struct {
+	Provider string
+	Results  []result
 }
 
 func main() {
 	casesDir := flag.String("cases", "data/cases", "directory holding case JSON fixtures")
 	outJSON := flag.Bool("json", false, "emit JSON report on stdout instead of the table")
 	timeout := flag.Duration("timeout", 3*time.Second, "wait per case for the pipeline to finalize")
+	providersFlag := flag.String("providers", agents.ProviderRule,
+		"comma-separated diagnostician providers: rule | llm-anthropic | llm-openai | llm-ollama")
 	flag.Parse()
 
 	fixtures, err := loadFixtures(*casesDir)
@@ -71,34 +80,56 @@ func main() {
 		os.Exit(1)
 	}
 
-	results := make([]result, 0, len(fixtures))
-	for _, f := range fixtures {
-		state, ok := runCase(f, *timeout)
-		if !ok {
-			fmt.Fprintf(os.Stderr, "case %s did not finalize within %s — skipping\n", f.CaseID, *timeout)
+	providers := splitCSV(*providersFlag)
+	runs := make([]providerRun, 0, len(providers))
+	for _, p := range providers {
+		diagFactory := func() (agent.Agent, error) { return agents.NewDiagnostician(p) }
+		if _, err := diagFactory(); err != nil {
+			fmt.Fprintf(os.Stderr, "provider %s skipped: %v\n", p, err)
 			continue
 		}
-		m := eval.ScoreCase(state, 11)
-		results = append(results, result{Fixture: f, State: state, Metrics: m})
+		results := make([]result, 0, len(fixtures))
+		for _, f := range fixtures {
+			start := time.Now()
+			state, ok := runCase(f, *timeout, diagFactory)
+			lat := time.Since(start)
+			if !ok {
+				fmt.Fprintf(os.Stderr, "[%s] case %s did not finalize within %s — skipping\n", p, f.CaseID, *timeout)
+				continue
+			}
+			m := eval.ScoreCase(state, 11)
+			results = append(results, result{Fixture: f, State: state, Metrics: m, Provider: p, Latency: lat})
+		}
+		runs = append(runs, providerRun{Provider: p, Results: results})
+	}
+
+	if len(runs) == 0 {
+		fmt.Fprintln(os.Stderr, "no providers ran successfully")
+		os.Exit(1)
 	}
 
 	if *outJSON {
-		out := make([]map[string]any, 0, len(results))
-		for _, r := range results {
-			out = append(out, map[string]any{
-				"case_id":            r.Fixture.CaseID,
-				"file":               r.Fixture.FilePath,
-				"gold_diagnosis":     r.Fixture.GoldDiagnosis,
-				"working_diagnosis":  r.State.WorkingDiagnosis,
-				"accuracy":           r.Metrics.Accuracy,
-				"cost_usd":           r.Metrics.CostUSD,
-				"cost_utilization":   r.Metrics.CostUtilization,
-				"under_budget":       r.Metrics.UnderBudget,
-				"rpm_alert_count":    r.Metrics.RPMAlertCount,
-				"diagnosis_match":    r.Metrics.DiagnosisMatch,
-			})
+		out := make([]map[string]any, 0)
+		summary := make(map[string]any, len(runs))
+		for _, run := range runs {
+			for _, r := range run.Results {
+				out = append(out, map[string]any{
+					"provider":          r.Provider,
+					"case_id":           r.Fixture.CaseID,
+					"file":              r.Fixture.FilePath,
+					"gold_diagnosis":    r.Fixture.GoldDiagnosis,
+					"working_diagnosis": r.State.WorkingDiagnosis,
+					"accuracy":          r.Metrics.Accuracy,
+					"cost_usd":          r.Metrics.CostUSD,
+					"cost_utilization":  r.Metrics.CostUtilization,
+					"under_budget":      r.Metrics.UnderBudget,
+					"rpm_alert_count":   r.Metrics.RPMAlertCount,
+					"diagnosis_match":   r.Metrics.DiagnosisMatch,
+					"latency_ms":        r.Latency.Milliseconds(),
+				})
+			}
+			summary[run.Provider] = summarize(run.Results)
 		}
-		summary := summarize(results)
 		_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
 			"results": out,
 			"summary": summary,
@@ -106,7 +137,32 @@ func main() {
 		return
 	}
 
-	printTable(results)
+	for _, run := range runs {
+		printProviderTable(run)
+	}
+	if len(runs) > 1 {
+		printComparison(runs)
+	}
+}
+
+func splitCSV(s string) []string {
+	out := make([]string, 0)
+	cur := ""
+	for _, r := range s {
+		switch r {
+		case ',', ' ':
+			if cur != "" {
+				out = append(out, cur)
+				cur = ""
+			}
+		default:
+			cur += string(r)
+		}
+	}
+	if cur != "" {
+		out = append(out, cur)
+	}
+	return out
 }
 
 func loadFixtures(dir string) ([]fixture, error) {
@@ -133,8 +189,9 @@ func loadFixtures(dir string) ([]fixture, error) {
 
 // runCase spins up a fresh diagnostic pipeline (HITL off — bench is headless),
 // publishes the presentation, and returns the final CaseState captured from
-// the supervisor's terminal `diagnosis` message.
-func runCase(f fixture, timeout time.Duration) (medical.CaseState, bool) {
+// the supervisor's terminal `diagnosis` message. diagFactory builds the
+// diagnostician agent for the run (rule-based or LLM-backed).
+func runCase(f fixture, timeout time.Duration, diagFactory func() (agent.Agent, error)) (medical.CaseState, bool) {
 	logger := observability.NewStdLogger()
 	env := &orchestration.SimpleEnvironment{Logger: logger, Clock: observability.SystemClock{}}
 	reg := registry.NewInMemory()
@@ -146,6 +203,12 @@ func runCase(f fixture, timeout time.Duration) (medical.CaseState, bool) {
 		governance.ResearchDisclaimerPolicy{},
 	)
 
+	diag, err := diagFactory()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "build diagnostician: %v\n", err)
+		return medical.CaseState{}, false
+	}
+
 	ctx := context.Background()
 	for _, a := range []agent.Agent{
 		&agents.IntakeAgent{},
@@ -154,7 +217,7 @@ func runCase(f fixture, timeout time.Duration) (medical.CaseState, bool) {
 		&agents.QuestionerAgent{},
 		&agents.TestPlannerAgent{},
 		&agents.CostGuardianAgent{},
-		&agents.DiagnosticianAgent{},
+		diag,
 		&agents.ReasoningVerifierAgent{},
 	} {
 		_ = reg.Register(ctx, a)
@@ -203,27 +266,41 @@ func runCase(f fixture, timeout time.Duration) (medical.CaseState, bool) {
 	}
 }
 
-func printTable(results []result) {
+func printProviderTable(run providerRun) {
 	fmt.Println()
-	fmt.Println("Case results")
-	fmt.Println("============")
-	fmt.Printf("%-22s %-32s %-32s %6s %8s %6s\n",
-		"case_id", "gold_diagnosis", "working_diagnosis", "acc", "cost", "budg%")
-	fmt.Println(rule(110))
-	for _, r := range results {
-		fmt.Printf("%-22s %-32s %-32s %6.0f $%-7.0f %5.0f%%\n",
+	fmt.Printf("Provider: %s\n", run.Provider)
+	fmt.Println(rule(78))
+	fmt.Printf("%-22s %-32s %-32s %6s %8s %6s %8s\n",
+		"case_id", "gold_diagnosis", "working_diagnosis", "acc", "cost", "budg%", "latency")
+	fmt.Println(rule(118))
+	for _, r := range run.Results {
+		fmt.Printf("%-22s %-32s %-32s %6.0f $%-7.0f %5.0f%% %7s\n",
 			truncate(r.Fixture.CaseID, 22),
 			truncate(r.Fixture.GoldDiagnosis, 32),
 			truncate(r.State.WorkingDiagnosis, 32),
 			r.Metrics.Accuracy*100,
 			r.Metrics.CostUSD,
 			r.Metrics.CostUtilization*100,
+			r.Latency.Round(time.Millisecond),
 		)
 	}
 	fmt.Println()
-	s := summarize(results)
-	fmt.Printf("Summary: cases=%d  mean_accuracy=%.0f%%  mean_cost=$%.2f  under_budget=%.0f%%\n",
-		s.Cases, s.MeanAccuracyPct, s.MeanCostUSD, s.UnderBudgetPct)
+	s := summarize(run.Results)
+	fmt.Printf("Summary [%s]: cases=%d  mean_accuracy=%.0f%%  mean_cost=$%.2f  under_budget=%.0f%%\n",
+		run.Provider, s.Cases, s.MeanAccuracyPct, s.MeanCostUSD, s.UnderBudgetPct)
+}
+
+func printComparison(runs []providerRun) {
+	fmt.Println()
+	fmt.Println("Provider comparison")
+	fmt.Println(rule(78))
+	fmt.Printf("%-16s %6s %8s %8s %10s\n", "provider", "cases", "acc%", "cost$", "under-bud%")
+	fmt.Println(rule(78))
+	for _, run := range runs {
+		s := summarize(run.Results)
+		fmt.Printf("%-16s %6d %8.0f %8.2f %10.0f\n",
+			run.Provider, s.Cases, s.MeanAccuracyPct, s.MeanCostUSD, s.UnderBudgetPct)
+	}
 }
 
 type bench struct {

@@ -116,6 +116,13 @@ go run ./cmd/care -addr=:8088
 # SD-Bench runner — loads every case fixture, prints accuracy/cost table
 go run ./cmd/bench
 
+# LLM-backed diagnostician (Claude / GPT / local Ollama) with rule-based fallback
+export ANTHROPIC_API_KEY=sk-...          # or OPENAI_API_KEY=sk-...
+go run ./cmd/demo  -diagnostician=llm-anthropic
+go run ./cmd/care  -diagnostician=llm-openai -addr=:8088
+ollama pull llama3.2 && go run ./cmd/demo -diagnostician=llm-ollama
+go run ./cmd/bench -providers=rule,llm-anthropic,llm-openai,llm-ollama  # side-by-side compare
+
 # Operator CLI — manage reviews / tasks / notifications against a running cmd/care
 go install ./cmd/bodhctl
 bodhctl reviews pending
@@ -145,6 +152,16 @@ You should see logs like:
 [bodh] [reasoning_verifier] VERIFIED diagnosis "Community-acquired pneumonia"
 [bodh] [supervisor] gold standard: Community-acquired pneumonia | match=true
 ```
+
+**LLM diagnostician.** Pass `-diagnostician=llm-anthropic`, `-diagnostician=llm-openai`, or `-diagnostician=llm-ollama` to `cmd/demo`, `cmd/care`, or `cmd/bench` to route the diagnosis step through an LLM. The agent emits a structured `DiagnosisProposal` matching the same JSON shape as the rule-based one, so the rest of the pipeline (cost guardian, reasoning verifier, HITL) is unchanged. If the LLM call fails (timeout, bad JSON, low confidence, transport error), the agent falls back to the rule-based diagnostician — the case always finalizes.
+
+Required env vars:
+
+- `ANTHROPIC_API_KEY` — for `llm-anthropic`
+- `OPENAI_API_KEY` — for `llm-openai`
+- (no key) — for `llm-ollama`; uses the local Ollama server, set `OLLAMA_HOST` to override `http://localhost:11434`
+
+Optional model overrides: `BODH_ANTHROPIC_MODEL` (default `claude-sonnet-4-6`), `BODH_OPENAI_MODEL` (default `gpt-4o`), `BODH_OLLAMA_MODEL` (default `llama3.2`). See `.env.example`.
 
 For the care demo:
 
@@ -799,6 +816,18 @@ Patient → `PatientRecord`; Observation → `RPMObservation`; Encounter → `AD
 ### `pkg/persistence` — JSON file store
 
 Implements both `eval.Store` (records) and `memory.KeyValueStore` (KV) in a single file.
+
+### `pkg/llm` — provider-agnostic LLM client
+
+```go
+type Client interface {
+    Provider() string
+    Model() string
+    Complete(ctx context.Context, req Request) (*Response, error)
+}
+```
+
+Adapters: `NewAnthropic(key, model)`, `NewOpenAI(key, model)`, `NewOllama(host, model)`, plus a `Mock` for tests. `Request` carries a system prompt (with optional caching), a message list, an optional JSON Schema, max tokens, and temperature. `Response` carries the assistant content, token usage (including cached input tokens), model, provider, and stop reason. Agents take `llm.Client` by interface; the LLM diagnostician (`agents.LLMDiagnostician`) wraps a client + a rule-based fallback.
 
 ---
 
