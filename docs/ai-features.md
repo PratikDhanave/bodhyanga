@@ -707,5 +707,74 @@ See [`.env.example`](../.env.example) for a copy-paste template covering the cha
 | Cascade diagnostician | Done — Phase 3 in flight | `agents/diagnostician_cascade.go` |
 | MCP tool use across agents | Planned — Phase 4 | — |
 | LLM HITL audit export | Planned — Phase 5 | — |
+| HITL export CLI | Done | `cmd/export-hitl-feedback/main.go` |
 
 For the canonical MARA platform / clinical-flow diagrams, see [diagrams.md](diagrams.md) (group **G. AI subsystem** is the LLM-specific view).
+
+---
+
+## Fine-tuning from HITL decisions
+
+### Purpose
+Every clinician decision on the HITL review queue ([`pkg/hitl`](../pkg/hitl/) + [`medical.ReviewRequest`](../pkg/medical/review.go)) is labelled training data. `approved` reviews are positive examples for SFT, `approved_with_modifications` are preference signals (the modification is preferred over the original), and `rejected` reviews are hard negatives. The [`cmd/export-hitl-feedback`](../cmd/export-hitl-feedback/main.go) binary replays a JSON dump of the queue into two parallel JSONL files that drop straight into HuggingFace `trl`, OpenAI's fine-tune API, or any messages-shaped SFT / DPO trainer.
+
+### Workflow
+
+```
+cmd/care HTTP API   ──► HITL queue (pkg/hitl)
+        │                     │
+        ▼                     ▼
+clinician decides      persisted as JSON dump
+(bodhctl reviews ...)  ([]medical.ReviewRequest)
+                              │
+                              ▼
+                  go run ./cmd/export-hitl-feedback
+                              │
+              ┌───────────────┴───────────────┐
+              ▼                               ▼
+        sft.jsonl                       dpo.jsonl
+   (system/user/assistant)      (prompt/chosen/rejected)
+```
+
+### Run it
+
+```bash
+go run ./cmd/export-hitl-feedback \
+    -in data/hitl-sample.json \
+    -format both \
+    -out-dir ./fine-tune-data
+# Exported 5 SFT lines, 2 DPO pairs, 1 reviews skipped (no decision).
+```
+
+Flags: `-in` (defaults to `$HOME/.bodh/hitl-queue.json`), `-format=sft|dpo|both`, `-out-dir`, `-min-reviews=N` (warn-only), `-include-rejected=true|false`.
+
+### Output shapes
+
+`sft.jsonl` — one line per approved / modified / (optionally) rejected review:
+
+```json
+{"messages":[
+  {"role":"system","content":"<diagnostician system prompt>"},
+  {"role":"user","content":"<CaseState JSON>"},
+  {"role":"assistant","content":"<approved or modified DiagnosisProposal JSON>"}
+],"meta":{"review_id":"rev-cap-001","kind":"diagnosis_review","status":"approved","decided_at":"2026-05-23T09:05:00Z","reviewer_id":"dr-alice"}}
+```
+
+`dpo.jsonl` — one line per `{chosen, rejected}` pair (built from `approved_with_modifications` or from an `approved` + `rejected` sharing a `case_id`):
+
+```json
+{"prompt":{"system":"<diagnostician system prompt>","user":"<CaseState JSON>"},
+ "chosen":"<preferred DiagnosisProposal JSON>",
+ "rejected":"<original or rejected DiagnosisProposal JSON>",
+ "meta":{"source":"approved_with_modifications","review_id":"rev-chf-001"}}
+```
+
+The system prompt is a `const` in `cmd/export-hitl-feedback/main.go` that mirrors `diagnosticianSystemPrompt` in [`agents/diagnostician_llm.go`](../agents/diagnostician_llm.go), so a model fine-tuned on these examples behaves like the LLM diagnostician under the same prompt.
+
+### Caveats
+
+- The current dump format is a static JSON file — convenient for the demo. A future DB-backed exporter will plug into the same `[]medical.ReviewRequest` shape.
+- DPO pairs from `(approved, rejected)` are matched by `case_id`. Reviews without a `case_id` cannot be paired across reviewers.
+- Empty input or zero decided reviews still produce empty output files and exit 0 so CI pipelines stay green during the bootstrapping phase.
+
+---
