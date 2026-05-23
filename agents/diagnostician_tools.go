@@ -97,7 +97,7 @@ func (a *ToolUsingDiagnostician) runWithTools(ctx context.Context, state medical
 	}
 	timeout := a.Base.Timeout
 	if timeout == 0 {
-		timeout = 30 * time.Second
+		timeout = 60 * time.Second
 	}
 	minConfidence := a.Base.MinConfidence
 	if minConfidence == 0 {

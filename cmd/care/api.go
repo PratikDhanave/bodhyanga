@@ -335,9 +335,23 @@ func (s *apiServer) reviewDecide(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	decided, ok := s.reviews.Decide(r.PathValue("id"), body.ReviewerID, body.Decision, body.Reason, body.Modification)
+	// hitl.Queue.Decide takes verbs ("approve", "approve_with_modifications",
+	// "reject"). The SPA's ReviewDecision type uses the past-tense forms that
+	// match medical.ReviewStatus constants. Translate so both wire formats
+	// work — bodhctl can send the verb form and the SPA can send the status
+	// form interchangeably.
+	decision := body.Decision
+	switch decision {
+	case "approved":
+		decision = "approve"
+	case "approved_with_modifications":
+		decision = "approve_with_modifications"
+	case "rejected":
+		decision = "reject"
+	}
+	decided, ok := s.reviews.Decide(r.PathValue("id"), body.ReviewerID, decision, body.Reason, body.Modification)
 	if !ok {
-		http.Error(w, "not found", http.StatusNotFound)
+		http.Error(w, "not found or invalid decision", http.StatusNotFound)
 		return
 	}
 	if decided.Status == medical.ReviewApproved || decided.Status == medical.ReviewModified {
