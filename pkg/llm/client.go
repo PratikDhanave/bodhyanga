@@ -46,12 +46,46 @@ type Request struct {
 	// CacheSystem hints that the system prompt is reused across many calls
 	// and should be eligible for prompt caching where supported.
 	CacheSystem bool
+
+	// Tools, when non-empty, advertises tools the model may call. The
+	// model's choice (if any) shows up in Response.ToolCalls. When both
+	// Tools and JSONSchema are set, providers that cannot combine them
+	// (Anthropic) prefer JSONSchema and silently ignore Tools.
+	Tools []Tool
 }
 
 // Message is one turn in the conversation.
 type Message struct {
 	Role    Role
 	Content string
+
+	// Images, when non-empty, attaches one or more images to this message.
+	// Only meaningful for user messages with vision-capable models.
+	Images []Image
+}
+
+// Image is an inline image attached to a Message. Data is the raw bytes
+// (not base64) and MediaType is the MIME type, e.g. "image/png" or
+// "image/jpeg". Adapters base64-encode Data themselves.
+type Image struct {
+	MediaType string
+	Data      []byte
+}
+
+// Tool advertises a function the model may call. Schema is the JSON
+// Schema document describing its input arguments.
+type Tool struct {
+	Name        string
+	Description string
+	Schema      json.RawMessage
+}
+
+// ToolCall is one function invocation produced by the model. Arguments
+// is the raw JSON the provider returned (OpenAI sends a string, Anthropic
+// and Ollama send an object — adapters normalize both to JSON bytes).
+type ToolCall struct {
+	Name      string
+	Arguments json.RawMessage
 }
 
 // Role is "user" or "assistant".
@@ -101,6 +135,11 @@ type Response struct {
 	// StopReason is the provider's stop reason ("end_turn", "max_tokens",
 	// "tool_use", "stop", etc.).
 	StopReason string
+
+	// ToolCalls is populated when the model invoked one or more advertised
+	// Tools. Empty when no tool was called or when JSONSchema-style
+	// structured output was used instead.
+	ToolCalls []ToolCall
 }
 
 // ErrNoMessages is returned when Complete is called with an empty Messages

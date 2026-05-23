@@ -10,10 +10,17 @@
 //   delegates to the Fallback agent so the pipeline always finalises.
 //
 // Key declarations:
-//   - LLMDiagnostician: struct with Client, Fallback, Timeout, MaxTokens, MinConfidence
+//   - LLMDiagnostician: struct with Client, Fallback, Timeout, MaxTokens,
+//     MinConfidence, Knowledge (optional knowledge.Store for RAG), RetrievalK
 //   - LLMDiagnostician.HandleMessage: agent entry point
-//   - diagnosticianSystemPrompt: cached system prompt sent on every call
-//   - diagnosisSchema: JSON Schema for DiagnosisProposal
+//   - LLMDiagnostician.buildRequest / completeAndDecode: split helpers reused
+//     by the vision variant
+//   - buildRetrievalQuery: composes presentation + condition + test results +
+//     hypotheses into a single retrieval query string
+//   - diagnosticianSystemPrompt / diagnosticianSystemPromptRAG: cached system
+//     prompts (non-RAG vs RAG-enabled)
+//   - diagnosisSchema / diagnosisSchemaRAG: JSON Schemas (with and without
+//     optional citations)
 //
 // See doc.go for package-level documentation.
 
