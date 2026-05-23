@@ -8,6 +8,12 @@ Go · MARA · Medical AI · Sequential Diagnosis · FHIR · HL7 v2 · HIPAA-awar
 
 **Architecture diagrams:** [Architecture.png](Architecture.png) (MARA platform) · [architectureflow.png](architectureflow.png) (sequential diagnosis flow) · [docs/diagrams.md](docs/diagrams.md) (25 mermaid views)
 
+<p align="center">
+  <img src="./architectureflow.png" alt="Bodh sequential diagnosis flow — virtual physician panel" width="820"/>
+  <br/>
+  <em>Clinical flow — sequential diagnosis (<a href="architectureflow.png">architectureflow.png</a>)</em>
+</p>
+
 ---
 
 ## ⚠️ Research disclaimer (read first)
