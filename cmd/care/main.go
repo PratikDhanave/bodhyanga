@@ -226,10 +226,55 @@ func main() {
 		writeJSON(w, req)
 	})
 
+	// /api/* routes + SSE + go:embed SPA for the clinician console.
+	traces := newLLMTraceBuffer(500)
+	// Capture every LLMTrace into the buffer so the SPA can show recent calls.
+	// The observability hook only fires when BODH_OTEL_ENABLED=1, so set it
+	// here unconditionally — cmd/care's hook just goes to the in-process
+	// buffer (no external OTel collector required).
+	_ = os.Setenv("BODH_OTEL_ENABLED", "1")
+	observability.SetLLMOTelHook(traces.record)
+
+	rm := newRunManager(bus)
+	api := &apiServer{
+		bus:         bus,
+		reg:         reg,
+		queue:       queue,
+		reviews:     reviews,
+		patients:    patients,
+		notifier:    notifier,
+		traces:      traces,
+		runs:        rm,
+		fixturesDir: envDefault("BODH_FIXTURES_DIR", "data/cases"),
+		provider:    *provider,
+	}
+	api.mount(mux)
+
+	if h, ok := spaHandler(); ok {
+		mux.Handle("/ui/", h)
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/" {
+				http.Redirect(w, r, "/ui/", http.StatusFound)
+				return
+			}
+			http.NotFound(w, r)
+		})
+		logger.Printf("clinician console (SPA) served at /ui/")
+	} else {
+		logger.Printf("clinician console NOT embedded — run `npm run build` in cmd/care/web/")
+	}
+
 	logger.Printf("care HTTP API listening on %s", *addr)
 	if err := http.ListenAndServe(*addr, mux); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func envDefault(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
 }
 
 // forward returns an http.HandlerFunc that decodes the request body to a

@@ -1,0 +1,9 @@
+node_modules/
+*.log
+.DS_Store
+.vite/
+tsconfig.tsbuildinfo
+
+# dist/ is NOT ignored — go:embed needs it at build time, so the committed
+# tree always carries the latest SPA build. Re-run `npm run build` after
+# changing src/ and commit the dist/ delta.

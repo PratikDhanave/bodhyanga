@@ -1,0 +1,126 @@
+[
+  {
+    "id": "rev-cap-001",
+    "kind": "diagnosis_review",
+    "status": "approved",
+    "patient_id": "pt-001",
+    "case_id": "demo-case-001",
+    "priority": "normal",
+    "subject": "Diagnosis review: Community-acquired pneumonia",
+    "detail": "58M, 5d productive cough, fever 38.9C, SpO2 94% RA. CXR: RLL infiltrate. WBC 14.2K with neutrophil predominance.",
+    "next_to": "diagnostic_supervisor",
+    "next_type": "diagnosis_proposal",
+    "payload": "{\"diagnosis\":\"Community-acquired pneumonia\",\"confidence\":0.87,\"differential\":[\"Community-acquired pneumonia\",\"Viral lower respiratory tract infection\",\"Influenza pneumonitis\"],\"rationale\":\"Productive cough with fever, SpO2 94% on RA, neutrophilic leukocytosis on CBC, and RLL consolidation on CXR are consistent with bacterial CAP.\"}",
+    "meta": {
+      "case_state": "{\"case_id\":\"demo-case-001\",\"presentation\":\"58M, 5d productive cough, fever 38.9C, SpO2 94% RA\",\"vitals\":\"T 38.9C, HR 98, RR 22, SpO2 94%\",\"test_results\":{\"complete_blood_count\":\"WBC 14.2K, neutrophil predominance\",\"chest_xray\":\"RLL infiltrate / consolidation\"},\"hypotheses\":[\"CAP\",\"viral URI\",\"PE\"]}"
+    },
+    "submitted_at": "2026-05-23T09:00:00Z",
+    "submitted_by": "diagnostician",
+    "reviewer_id": "dr-alice",
+    "decided_at": "2026-05-23T09:05:00Z",
+    "reason": "Diagnosis and rationale align with CXR and CBC findings."
+  },
+  {
+    "id": "rev-chf-001",
+    "kind": "diagnosis_review",
+    "status": "approved_with_modifications",
+    "patient_id": "pt-002",
+    "case_id": "demo-case-chf-001",
+    "priority": "high",
+    "subject": "Diagnosis review: Heart failure exacerbation",
+    "detail": "72F HFrEF, 4d progressive dyspnea, 6 lb weight gain, BP 168/94, SpO2 91% RA, BNP elevated.",
+    "next_to": "diagnostic_supervisor",
+    "next_type": "diagnosis_proposal",
+    "payload": "{\"diagnosis\":\"Heart failure exacerbation\",\"confidence\":0.78,\"differential\":[\"Heart failure exacerbation\",\"Pneumonia\",\"PE\"],\"rationale\":\"Progressive dyspnea, weight gain, orthopnea, hypoxia in known HFrEF patient.\"}",
+    "modification": "{\"diagnosis\":\"Acute decompensated heart failure (ADHF)\",\"confidence\":0.88,\"differential\":[\"Acute decompensated heart failure\",\"Pneumonia\",\"Pulmonary embolism\"],\"rationale\":\"Known HFrEF with 4d progressive dyspnea, 6 lb weight gain, orthopnea, hypertension to 168/94, SpO2 91% RA, and elevated BNP fit acute decompensated heart failure. Severity is moderate; outpatient diuresis vs. admission depends on response.\"}",
+    "meta": {
+      "case_state": "{\"case_id\":\"demo-case-chf-001\",\"presentation\":\"72F HFrEF, 4d progressive dyspnea, 6 lb weight gain\",\"vitals\":\"BP 168/94, HR 108, RR 24, SpO2 91%\",\"test_results\":{\"bnp\":\"elevated\",\"chest_xray\":\"pulmonary congestion\"}}"
+    },
+    "submitted_at": "2026-05-23T10:00:00Z",
+    "submitted_by": "diagnostician",
+    "reviewer_id": "dr-bob",
+    "decided_at": "2026-05-23T10:07:00Z",
+    "reason": "Sharpened working label to ADHF and added BNP/orthopnea citations."
+  },
+  {
+    "id": "rev-pe-001",
+    "kind": "diagnosis_review",
+    "status": "rejected",
+    "patient_id": "pt-003",
+    "case_id": "demo-case-pe-001",
+    "priority": "urgent",
+    "subject": "Diagnosis review: ? Pulmonary embolism",
+    "detail": "45F oral contraceptive use, sudden pleuritic chest pain, tachycardia HR 118, SpO2 92% RA. D-dimer pending; no CTPA yet.",
+    "next_to": "diagnostic_supervisor",
+    "next_type": "diagnosis_proposal",
+    "payload": "{\"diagnosis\":\"Anxiety\",\"confidence\":0.6,\"differential\":[\"Anxiety\",\"Panic attack\"],\"rationale\":\"Young female with chest pain and tachycardia; likely anxiety.\"}",
+    "meta": {
+      "case_state": "{\"case_id\":\"demo-case-pe-001\",\"presentation\":\"45F OCP, sudden pleuritic chest pain, HR 118, SpO2 92%\",\"vitals\":\"HR 118, RR 22, SpO2 92%\"}"
+    },
+    "submitted_at": "2026-05-23T11:00:00Z",
+    "submitted_by": "diagnostician",
+    "reviewer_id": "dr-alice",
+    "decided_at": "2026-05-23T11:04:00Z",
+    "reason": "Anxiety diagnosis ignores OCP, pleuritic pain, tachycardia, and hypoxia — high PE pretest probability. Re-run after D-dimer and consider CTPA."
+  },
+  {
+    "id": "rev-pe-002",
+    "kind": "diagnosis_review",
+    "status": "approved",
+    "patient_id": "pt-003",
+    "case_id": "demo-case-pe-001",
+    "priority": "urgent",
+    "subject": "Diagnosis review: Pulmonary embolism (revised)",
+    "detail": "Revised proposal: PE pre-test probability high; D-dimer 1840 ng/mL; CTPA shows segmental defect in right lower lobe.",
+    "next_to": "diagnostic_supervisor",
+    "next_type": "diagnosis_proposal",
+    "payload": "{\"diagnosis\":\"Pulmonary embolism\",\"confidence\":0.92,\"differential\":[\"Pulmonary embolism\",\"Pneumonia\",\"Pericarditis\"],\"rationale\":\"OCP use, sudden pleuritic chest pain, tachycardia, hypoxia, D-dimer 1840 ng/mL, and CTPA with segmental defect confirm PE.\"}",
+    "meta": {
+      "case_state": "{\"case_id\":\"demo-case-pe-001\",\"presentation\":\"45F OCP, sudden pleuritic chest pain, HR 118, SpO2 92%\",\"vitals\":\"HR 118, RR 22, SpO2 92%\",\"test_results\":{\"d_dimer\":\"1840 ng/mL\",\"ctpa\":\"segmental defect RLL\"}}"
+    },
+    "submitted_at": "2026-05-23T11:30:00Z",
+    "submitted_by": "diagnostician",
+    "reviewer_id": "dr-alice",
+    "decided_at": "2026-05-23T11:34:00Z",
+    "reason": "CTPA confirms PE; matches pre-test probability."
+  },
+  {
+    "id": "rev-pneumonia-vague",
+    "kind": "diagnosis_review",
+    "status": "pending",
+    "patient_id": "pt-004",
+    "case_id": "demo-case-uri-001",
+    "priority": "normal",
+    "subject": "Diagnosis review: Upper respiratory complaint",
+    "detail": "29M low-grade fever, sore throat, dry cough, no SOB, vitals normal.",
+    "next_to": "diagnostic_supervisor",
+    "next_type": "diagnosis_proposal",
+    "payload": "{\"diagnosis\":\"Viral upper respiratory infection\",\"confidence\":0.7,\"differential\":[\"Viral URI\",\"Streptococcal pharyngitis\"],\"rationale\":\"Mild self-limited symptoms with normal vitals.\"}",
+    "meta": {
+      "case_state": "{\"case_id\":\"demo-case-uri-001\",\"presentation\":\"29M low-grade fever, sore throat, dry cough\",\"vitals\":\"normal\"}"
+    },
+    "submitted_at": "2026-05-23T12:00:00Z",
+    "submitted_by": "diagnostician"
+  },
+  {
+    "id": "rev-cap-002",
+    "kind": "diagnosis_review",
+    "status": "approved",
+    "patient_id": "pt-005",
+    "case_id": "demo-case-cap-002",
+    "priority": "normal",
+    "subject": "Diagnosis review: Community-acquired pneumonia (CURB-65 0)",
+    "detail": "34F productive cough, fever 38.4C, focal crackles LLL. CXR: LLL infiltrate. CURB-65 = 0.",
+    "next_to": "diagnostic_supervisor",
+    "next_type": "diagnosis_proposal",
+    "payload": "{\"diagnosis\":\"Community-acquired pneumonia\",\"confidence\":0.84,\"differential\":[\"Community-acquired pneumonia\",\"Acute bronchitis\",\"Influenza\"],\"rationale\":\"Productive cough, fever, focal crackles, and LLL infiltrate consistent with CAP. CURB-65 of 0 supports outpatient management.\"}",
+    "meta": {
+      "case_state": "{\"case_id\":\"demo-case-cap-002\",\"presentation\":\"34F productive cough, fever 38.4C, focal crackles LLL\",\"vitals\":\"T 38.4C, HR 92, RR 18, SpO2 96%\",\"test_results\":{\"chest_xray\":\"LLL infiltrate\",\"curb_65\":\"0\"}}"
+    },
+    "submitted_at": "2026-05-23T13:00:00Z",
+    "submitted_by": "diagnostician",
+    "reviewer_id": "dr-bob",
+    "decided_at": "2026-05-23T13:03:00Z",
+    "reason": "Clean CAP presentation; outpatient management appropriate."
+  }
+]
