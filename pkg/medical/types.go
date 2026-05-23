@@ -52,10 +52,21 @@ type PatientPresentation struct {
 
 // DiagnosisProposal is emitted when the virtual panel is ready to diagnose.
 type DiagnosisProposal struct {
-	Diagnosis    string   `json:"diagnosis"`
-	Confidence   float64  `json:"confidence"`
-	Differential []string `json:"differential,omitempty"`
-	Rationale    string   `json:"rationale"`
+	Diagnosis    string              `json:"diagnosis"`
+	Confidence   float64             `json:"confidence"`
+	Differential []string            `json:"differential,omitempty"`
+	Rationale    string              `json:"rationale"`
+	Citations    []DiagnosisCitation `json:"citations,omitempty"`
+}
+
+// DiagnosisCitation captures one piece of supporting evidence retrieved from
+// the knowledge corpus and surfaced on a DiagnosisProposal. Populated only on
+// the RAG-enabled LLM diagnostician path; absent on rule-based / non-RAG output.
+type DiagnosisCitation struct {
+	Source  string  `json:"source"`
+	Title   string  `json:"title"`
+	Snippet string  `json:"snippet"`
+	Score   float64 `json:"score,omitempty"`
 }
 
 // EncodeState serializes case state into message Content.

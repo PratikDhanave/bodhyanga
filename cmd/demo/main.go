@@ -12,6 +12,7 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/agent"
 	"github.com/PratikDhanave/bodh/pkg/comm"
 	"github.com/PratikDhanave/bodh/pkg/governance"
+	"github.com/PratikDhanave/bodh/pkg/knowledge"
 	"github.com/PratikDhanave/bodh/pkg/medical"
 	"github.com/PratikDhanave/bodh/pkg/observability"
 	"github.com/PratikDhanave/bodh/pkg/orchestration"
@@ -31,7 +32,11 @@ func main() {
 		"diagnostician backend: rule | llm-anthropic | llm-openai | llm-ollama")
 	flag.Parse()
 
-	diag, err := agents.NewDiagnostician(*provider)
+	ctx := context.Background()
+
+	store := loadRAGStore(ctx, *provider)
+
+	diag, err := agents.NewDiagnosticianWithKnowledge(*provider, store)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "diagnostician: %v\n", err)
 		os.Exit(2)
@@ -51,8 +56,6 @@ func main() {
 		governance.MaxDiagnosticCostPolicy{},
 		governance.ResearchDisclaimerPolicy{},
 	)
-
-	ctx := context.Background()
 
 	agentList := []agent.Agent{
 		&agents.IntakeAgent{},
@@ -134,6 +137,37 @@ func pneumoniaDefault() medical.PatientPresentation {
 		Vitals:         "T 38.9°C, HR 98, RR 22, SpO2 94% on room air",
 		Condition:      "cap",
 	}
+}
+
+// loadRAGStore builds the knowledge.Store used by the diagnostician when
+// BODH_KNOWLEDGE_CORPUS is set and an embedder credential is available for
+// the supplied provider. Prints a one-line startup log either way.
+func loadRAGStore(ctx context.Context, provider string) knowledge.Store {
+	corpus := os.Getenv("BODH_KNOWLEDGE_CORPUS")
+	if corpus == "" {
+		fmt.Println("[demo] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)")
+		return nil
+	}
+	embedder, err := agents.DefaultEmbedderForProvider(provider)
+	if err != nil {
+		fmt.Printf("[demo] RAG disabled (embedder for %s: %v)\n", provider, err)
+		return nil
+	}
+	if embedder == nil {
+		fmt.Printf("[demo] RAG disabled (no embedder credential for %s)\n", provider)
+		return nil
+	}
+	store, err := agents.LoadDefaultKnowledge(ctx, embedder)
+	if err != nil {
+		fmt.Printf("[demo] RAG disabled (corpus load failed: %v)\n", err)
+		return nil
+	}
+	if store == nil {
+		fmt.Println("[demo] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)")
+		return nil
+	}
+	fmt.Printf("[demo] RAG enabled with %d docs\n", store.Size())
+	return store
 }
 
 func pneumoniaMeta() map[string]any {
