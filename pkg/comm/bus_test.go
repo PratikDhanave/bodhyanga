@@ -198,10 +198,46 @@ func TestInMemoryBus_PublishIsAsync(t *testing.T) {
 }
 
 func TestInMemoryBus_HandlerPanicDoesNotKillBus(t *testing.T) {
-	// The current InMemoryBus does NOT recover panics in handlers; a panic in a
-	// goroutine spawned by Publish would crash the test process. Skip until the
-	// bus grows panic-recovery semantics.
-	t.Skip("InMemoryBus does not recover handler panics; see pkg/comm/bus.go Publish")
+	bus := NewInMemoryBus()
+
+	panics := make(chan any, 1)
+	t.Cleanup(func() { SetPanicHook(nil) })
+	SetPanicHook(func(r any, _ []byte, _ protocol.Message) {
+		select {
+		case panics <- r:
+		default:
+		}
+	})
+
+	// One panicking handler and one well-behaved handler on the same agent.
+	bus.Subscribe("agent-1", func(_ context.Context, _ protocol.Message) {
+		panic("boom")
+	})
+	survived := make(chan struct{}, 4)
+	bus.Subscribe("agent-1", func(_ context.Context, _ protocol.Message) {
+		survived <- struct{}{}
+	})
+
+	bus.Publish(context.Background(), newMsg("agent-1"))
+
+	select {
+	case <-panics:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("PanicHook never fired; recover() did not run")
+	}
+	select {
+	case <-survived:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("sibling handler never ran; bus did not isolate the panic")
+	}
+
+	// A second publish must still be delivered.
+	bus.Publish(context.Background(), newMsg("agent-1"))
+	select {
+	case <-survived:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("subsequent publish was lost after panic; pump died")
+	}
 }
 
 func TestInMemoryBus_PublishWithContextDoneSkipsDelivery(t *testing.T) {

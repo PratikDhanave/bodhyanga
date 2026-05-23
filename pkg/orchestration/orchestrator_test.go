@@ -309,12 +309,9 @@ func TestOrchestrator_UnknownAgentIDIsHandledGracefully(t *testing.T) {
 }
 
 func TestOrchestrator_StartIsIdempotent(t *testing.T) {
-	// Per the implementation, Start subscribes every registered agent to the
-	// bus on each call without de-duplication. Two calls will therefore
-	// register two subscribers, yielding two invocations per Publish. This
-	// test documents that current behaviour with t.Skip; if Start becomes
-	// idempotent the skip should be removed and the assertion below will
-	// validate the contract.
+	// Start is wrapped in sync.Once: a second invocation must not
+	// double-subscribe agents. With two Starts and one Publish, the worker
+	// should record exactly one HandleMessage call.
 	worker := &stubAgent{
 		id:    "worker",
 		name:  "worker",
@@ -324,11 +321,13 @@ func TestOrchestrator_StartIsIdempotent(t *testing.T) {
 	o.Start(context.Background())
 	o.Start(context.Background())
 
-	t.Skip("Start is documented as wiring all agents on each invocation; no idempotency guarantee currently — skipping until Start tracks subscribed agents.")
-
 	bus.Publish(context.Background(), agent.NewMessage("user", "worker", agent.RoleUser, "task", "once", nil))
 
-	// Give the bus a brief window to deliver any duplicate sends.
+	// Wait for delivery, then give the bus extra grace to surface a
+	// spurious second delivery if double-subscription occurred.
+	if _, ok := waitFor(worker.inbox, 500*time.Millisecond); !ok {
+		t.Fatal("worker never received the publish")
+	}
 	time.Sleep(150 * time.Millisecond)
 
 	if got := worker.callCount(); got != 1 {

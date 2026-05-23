@@ -2,6 +2,9 @@ package comm
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"runtime/debug"
 	"sync"
 
 	"github.com/PratikDhanave/bodh/pkg/protocol"
@@ -95,10 +98,9 @@ func (b *InMemoryBus) Subscribe(agentID string, h Handler) (unsubscribe func()) 
 // and avoids accidental deadlocks (e.g., a handler that publishes another
 // message while holding locks).
 //
-// In a production bus you'd typically:
-// - capture panics in handlers
-// - propagate context deadlines/cancellation
-// - implement buffering/backpressure strategies
+// Handler panics are recovered to stderr so one buggy subscriber cannot
+// crash the whole process. Other concerns (context propagation, buffering,
+// backpressure) are still left to a production bus implementation.
 func (b *InMemoryBus) Publish(ctx context.Context, msg protocol.Message) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
@@ -107,7 +109,7 @@ func (b *InMemoryBus) Publish(ctx context.Context, msg protocol.Message) {
 	if msg.To != "" {
 		for _, h := range b.subs[msg.To] {
 			if h != nil {
-				go h(ctx, msg)
+				go safeHandle(ctx, msg, h)
 			}
 		}
 	}
@@ -115,9 +117,49 @@ func (b *InMemoryBus) Publish(ctx context.Context, msg protocol.Message) {
 	// Broadcast subscribers see all messages.
 	for _, h := range b.broadcast {
 		if h != nil {
-			go h(ctx, msg)
+			go safeHandle(ctx, msg, h)
 		}
 	}
+}
+
+// panicHookMu guards access to the package-level panic hook so concurrent
+// handler goroutines never race with SetPanicHook callers (notably tests
+// resetting the hook in t.Cleanup).
+var (
+	panicHookMu sync.Mutex
+	panicHook   func(recovered any, stack []byte, msg protocol.Message)
+)
+
+// SetPanicHook installs a function called whenever a subscriber's handler
+// panics. It is invoked with the panic value, the goroutine's stack trace
+// at the point of recovery, and the message that triggered the panic.
+// Tests use this to assert the recovery path; production code can wire it
+// to OTel / Sentry. Pass nil to clear.
+func SetPanicHook(fn func(recovered any, stack []byte, msg protocol.Message)) {
+	panicHookMu.Lock()
+	panicHook = fn
+	panicHookMu.Unlock()
+}
+
+func currentPanicHook() func(recovered any, stack []byte, msg protocol.Message) {
+	panicHookMu.Lock()
+	defer panicHookMu.Unlock()
+	return panicHook
+}
+
+func safeHandle(ctx context.Context, msg protocol.Message, h Handler) {
+	defer func() {
+		if r := recover(); r != nil {
+			stack := debug.Stack()
+			if fn := currentPanicHook(); fn != nil {
+				fn(r, stack, msg)
+			}
+			fmt.Fprintf(os.Stderr,
+				"comm.InMemoryBus: handler panic for msg %s -> %s (type %s): %v\n%s",
+				msg.ID, msg.To, msg.Type, r, stack)
+		}
+	}()
+	h(ctx, msg)
 }
 
 var _ Bus = (*InMemoryBus)(nil)
