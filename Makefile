@@ -80,6 +80,13 @@ help:
 	@echo "  make web-dev         npm run dev (Vite hot-reload on :5173)"
 	@echo "  make web-clean       remove node_modules / dist / tsbuildinfo"
 	@echo ""
+	@echo "SPA tests"
+	@echo "  make test-web        Vitest component tests (jsdom, headless, ~1s)"
+	@echo "  make test-web-watch  Vitest watch mode"
+	@echo "  make test-e2e        Playwright browser e2e (boots cmd/care + Chromium)"
+	@echo "  make test-e2e-install  one-time: download Chromium (~200MB)"
+	@echo "  make test-all        go test + Vitest (e2e separate, needs browser)"
+	@echo ""
 	@echo "Container"
 	@echo "  make docker          docker build -t $(IMG_TAG)"
 	@echo "  make docker-run      run container on :8088"
@@ -191,6 +198,26 @@ web-dev:
 .PHONY: web-clean
 web-clean:
 	rm -rf $(WEB)/node_modules $(WEB)/dist $(WEB)/tsconfig.tsbuildinfo
+
+.PHONY: test-web
+test-web:
+	cd $(WEB) && $(NPM) test
+
+.PHONY: test-web-watch
+test-web-watch:
+	cd $(WEB) && $(NPM) run test:watch
+
+.PHONY: test-e2e
+test-e2e:
+	cd $(WEB) && $(NPM) run test:e2e
+
+.PHONY: test-e2e-install
+test-e2e-install:
+	cd $(WEB) && $(NPM) run test:e2e:install
+
+.PHONY: test-all
+test-all: test test-web
+	@echo "(run 'make test-e2e' separately — needs Chromium installed via test-e2e-install)"
 
 # ----- Container -----------------------------------------------------------
 

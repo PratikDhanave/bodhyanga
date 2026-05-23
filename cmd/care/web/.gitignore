@@ -4,6 +4,11 @@ node_modules/
 .vite/
 tsconfig.tsbuildinfo
 
+# Playwright test artifacts (traces, screenshots, HTML report).
+playwright-report/
+test-results/
+playwright/.cache/
+
 # dist/ is NOT ignored — go:embed needs it at build time, so the committed
 # tree always carries the latest SPA build. Re-run `npm run build` after
 # changing src/ and commit the dist/ delta.
