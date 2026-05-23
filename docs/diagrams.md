@@ -809,4 +809,245 @@ flowchart LR
 
 ---
 
+## G. AI subsystem
+
+The LLM-specific view of Bodh. Every diagram here corresponds to code in `pkg/llm`, `pkg/embeddings`, `pkg/knowledge`, `pkg/safety`, `pkg/observability`, `pkg/eval`, and the LLM-backed agents under `agents/`. See [ai-features.md](ai-features.md) for the prose walk-through.
+
+### 26. LLM provider abstraction — Client interface + adapters + Mock
+
+`pkg/llm.Client` is the single contract every chat adapter implements. Agents take `Client` by interface so swapping providers is a flag, not a refactor.
+
+```mermaid
+flowchart TB
+    subgraph Agents[LLM-backed agents]
+        D[LLMDiagnostician]
+        Q[LLMQuestioner]
+        I[LLMInboxTriage]
+        V[LLMReasoningVerifier]
+        J[eval.Judge]
+        Vis[LLMDiagnosticianVision]
+        Cas[CascadeDiagnostician]
+        Deb[DebateDiagnostician]
+        Ref[ReflexionDiagnostician]
+    end
+    Iface(["llm.Client interface<br/>Provider() · Model() · Complete()"])
+    Anth["anthropicClient<br/>NewAnthropic(key, model)"]
+    OAI["openaiClient<br/>NewOpenAI(key, model)"]
+    Oll["ollamaClient<br/>NewOllama(host, model)"]
+    Mock["llm.Mock<br/>(tests)"]
+    AnthAPI[("api.anthropic.com<br/>/v1/messages")]
+    OAIAPI[("api.openai.com<br/>/v1/chat/completions")]
+    OllAPI[("localhost:11434<br/>/api/chat")]
+    Trace["pkg/observability<br/>LLMTrace"]
+
+    D --> Iface
+    Q --> Iface
+    I --> Iface
+    V --> Iface
+    J --> Iface
+    Vis --> D
+    Cas --> Iface
+    Deb --> Iface
+    Ref --> Iface
+    Iface --> Anth
+    Iface --> OAI
+    Iface --> Oll
+    Iface --> Mock
+    Anth -->|x-api-key + anthropic-version| AnthAPI
+    OAI -->|Bearer + JSON Schema strict| OAIAPI
+    Oll -->|stream=false + format=schema| OllAPI
+    Iface -.records.-> Trace
+```
+
+### 27. LLM diagnostician with rule-based fallback
+
+The full happy- and sad-path sequence — the LLM call is wrapped in a timeout, and any failure (transport, parse, low confidence) routes through the rule-based fallback so the case always finalises.
+
+```mermaid
+sequenceDiagram
+    participant Sup as diagnostic_supervisor
+    participant LLMD as LLMDiagnostician
+    participant Cli as llm.Client
+    participant API as Provider API
+    participant Rule as DiagnosticianAgent (fallback)
+    participant Obs as observability.LLMTrace
+    participant Ver as reasoning_verifier
+
+    Sup->>LLMD: case_state
+    LLMD->>LLMD: DecodeState · buildRequest<br/>(system cached, JSONSchema)
+    LLMD->>Cli: Complete(req) (ctx WithTimeout)
+    Cli->>API: HTTP POST
+    alt 2xx
+        API-->>Cli: response payload
+        Cli-->>LLMD: Response{Content, tokens, stop}
+        LLMD->>Obs: RecordLLMCall(LLMTrace)
+        LLMD->>LLMD: Unmarshal → DiagnosisProposal<br/>check Confidence ≥ MinConfidence (0.3)
+        alt confidence ok
+            LLMD->>Ver: diagnosis_proposal (LLM output)
+        else low confidence
+            LLMD->>Rule: HandleMessage (fallback)
+            Rule-->>Ver: diagnosis_proposal (rule)
+        end
+    else error / non-2xx / timeout
+        Cli-->>LLMD: err
+        LLMD->>Obs: RecordLLMCall(LLMTrace with Error)
+        LLMD->>Rule: HandleMessage (fallback)
+        Rule-->>Ver: diagnosis_proposal (rule)
+    end
+```
+
+### 28. RAG retrieval pipeline
+
+When `BODH_KNOWLEDGE_CORPUS` is set, the LLM diagnostician prepends an "Evidence:" block to the user message and propagates the retrieved Citations onto the final proposal.
+
+```mermaid
+flowchart TB
+    Case[CaseState] --> Build[buildRetrievalQuery<br/>presentation + condition +<br/>test results + hypotheses]
+    Build --> Q{query empty?}
+    Q -->|yes| Skip[Skip retrieval]
+    Q -->|no| Emb[embeddings.Embed(query)]
+    Emb --> Search[knowledge.Store.Search k=4]
+    Search --> Top[Top-K Citations<br/>by cosine (or RRF in hybrid)]
+    Top --> Inject[Prepend 'Evidence:' block<br/>on user message]
+    Inject --> Sys[Use RAG system prompt +<br/>extended JSON schema with citations]
+    Sys --> Call[llm.Client.Complete]
+    Call --> Decode[Unmarshal DiagnosisProposal]
+    Decode --> Recon{Model returned<br/>citations?}
+    Recon -->|yes| Keep[Keep model's citations]
+    Recon -->|no| Prop[Propagate retrieved citations<br/>for provenance]
+    Skip --> NoRAG[Run text-only path]
+    Keep --> Out[Emit diagnosis_proposal<br/>with Citations]
+    Prop --> Out
+    NoRAG --> Out
+```
+
+### 29. Vision diagnostician
+
+Wraps the LLM diagnostician — same prompt, same RAG, same fallback. The only addition is reading the image file and attaching it to the user message.
+
+```mermaid
+sequenceDiagram
+    participant Sup as diagnostic_supervisor
+    participant Vis as LLMDiagnosticianVision
+    participant Base as LLMDiagnostician (Base)
+    participant FS as Filesystem
+    participant Cli as llm.Client (vision model)
+    participant API as Provider API
+    participant Ver as reasoning_verifier
+
+    Sup->>Vis: case_state (msg.Metadata.image_path)
+    alt no image_path
+        Vis->>Base: HandleMessage (text-only)
+        Base-->>Ver: diagnosis_proposal
+    else image_path present
+        Vis->>FS: os.ReadFile(path)
+        alt read failed / unsupported MIME
+            Vis->>Base: HandleMessage (fall through)
+            Base-->>Ver: diagnosis_proposal (text-only)
+        else PNG / JPEG ok
+            Vis->>Base: buildRequest(state)<br/>(reuses prompt + RAG)
+            Vis->>Vis: req.Messages[0].Images = append(..., img)<br/>+ append image-attached hint to System
+            Vis->>Cli: Complete(req)
+            Cli->>API: base64-inline image block
+            API-->>Cli: structured DiagnosisProposal
+            Cli-->>Vis: Response
+            Vis->>Ver: diagnosis_proposal
+        end
+    end
+```
+
+### 30. LLM-as-judge grading pipeline
+
+Used by CI gates and batch evaluation. The rubric system prompt is `CacheSystem: true` so large batches pay only cache-read tokens after the first item.
+
+```mermaid
+flowchart TB
+    Item[GradeItem<br/>scenario, expected, actual, context] --> Build[buildJudgePrompt]
+    Build --> Cli["llm.Client.Complete<br/>System=JudgeSystemPrompt (cached)<br/>JSONSchema=judgeSchema<br/>Temperature=0.0"]
+    Cli --> API[(Provider API)]
+    API --> Resp[Response{Content: JSON}]
+    Resp --> Decode[json.Unmarshal raw]
+    Decode --> Clamp[clamp01 each<br/>dimensional_score]
+    Clamp --> Recompute[Pass := score >= 0.6<br/>model can't lie about Pass]
+    Recompute --> Grade[Grade{Score, Pass, Rationale,<br/>DimensionalScores,<br/>Provider, Model}]
+    Grade --> CI[CI / report / Pareto plot]
+
+    subgraph Batch[BatchGrade · 4-worker pool]
+        Items[[items]]
+        Items --> Grade
+    end
+```
+
+### 31. Safety guard layering
+
+Defence in depth: inputs are redacted *before* the LLM call; outputs are scanned *after*. Refusal detection short-circuits to the rule-based fallback.
+
+```mermaid
+flowchart TB
+    Input[Agent input<br/>case content + metadata] --> Redact[pkg/phi.Redact<br/>strip SSN / MRN / DOB / phone]
+    Redact --> LLM[llm.Client.Complete]
+    LLM --> Resp[Response.Content]
+    Resp --> Refuse{safety.IsRefusal?}
+    Refuse -->|yes| FB[Fall back to rule-based]
+    Refuse -->|no| Hall{RAG enabled?}
+    Hall -->|yes| Check[safety.CheckHallucination<br/>claim vs citations]
+    Check -->|low grounding| FB
+    Check -->|grounded| PHI{safety.ContainsPHIPatterns?}
+    Hall -->|no| PHI
+    PHI -->|matched| Reject[Reject + log + fallback]
+    PHI -->|clean| Emit[Emit diagnosis_proposal]
+```
+
+### 32. LLM call tracing — JSON log + optional OTel
+
+Every Complete()/Embed() call yields one `LLMTrace`. The stdout line is the default sink; OTLP forwarding is opt-in via env var and hook.
+
+```mermaid
+flowchart TB
+    Agent[LLM-backed agent] --> Call[llm.Complete or<br/>embeddings.Embed]
+    Call --> Build[Build LLMTrace<br/>provider · model · duration_ms<br/>input/output/cached tokens<br/>stop_reason · agent_id<br/>case_id · trace_id · kind]
+    Build --> Log["StdLogger.RecordLLMCall<br/>emit '[llm-trace] {json}' line"]
+    Log --> Sink1[(stdout log<br/>Loki / Cloud Logging)]
+    Log --> Gate{BODH_OTEL_ENABLED=1<br/>AND otelHook set?}
+    Gate -->|yes| Hook["otelHook(LLMTrace)<br/>SetLLMOTelHook(fn)"]
+    Hook --> OTLP[(OTLP exporter)]
+    OTLP --> Collector[(OTel collector)]
+    Gate -->|no| Done[no-op]
+
+    style Sink1 fill:#dfd,stroke:#070
+    style Collector fill:#ddf,stroke:#007
+```
+
+### 33. Provider matrix decision tree
+
+Which adapter pair to choose, in one diagram.
+
+```mermaid
+flowchart TB
+    Start([Pick a stack]) --> Goal{Goal}
+    Goal -->|Best clinical quality, cloud OK| Anth[ANTHROPIC_API_KEY<br/>claude-sonnet-4-6]
+    Goal -->|One key for everything cloud| OAI[OPENAI_API_KEY<br/>gpt-4o + text-embedding-3-small]
+    Goal -->|Local / private / free| Oll[Ollama<br/>llama3.2 + nomic-embed-text]
+
+    Anth --> Vision1{Need vision?}
+    Vision1 -->|yes| AnthVis[Use Sonnet 4.6 or Opus<br/>PNG / JPEG inline]
+    Vision1 -->|no| AnthRAG{Need RAG?}
+    AnthRAG -->|yes| Voy[+ VOYAGE_API_KEY<br/>voyage-3 embeddings]
+    AnthRAG -->|no| AnthDone([Chat only])
+
+    OAI --> Vision2{Need vision?}
+    Vision2 -->|yes| OAIVis[gpt-4o inline image_url]
+    Vision2 -->|no| OAIRAG{Need RAG?}
+    OAIRAG -->|yes| OAIEmb[Same key,<br/>text-embedding-3-small]
+    OAIRAG -->|no| OAIDone([Chat only])
+
+    Oll --> Vision3{Need vision?}
+    Vision3 -->|yes| OllVis[ollama pull llama3.2-vision<br/>or bakllava]
+    Vision3 -->|no| OllRAG{Need RAG?}
+    OllRAG -->|yes| OllEmb[ollama pull nomic-embed-text<br/>or mxbai-embed-large]
+    OllRAG -->|no| OllDone([Chat only])
+```
+
+---
+
 > The two PNG references — [Architecture.png](../Architecture.png) (MARA platform) and [architectureflow.png](../architectureflow.png) (sequential diagnosis flow) — are the original Microsoft-style platform views. The mermaid diagrams above are the in-code interactive index that stays in sync with the source tree.

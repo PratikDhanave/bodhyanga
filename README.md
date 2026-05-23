@@ -60,22 +60,24 @@ That is exactly what MARA's building blocks describe: an **orchestrator**, **spe
 4. [Background: MAI-DxO and SD Bench](#background-mai-dxo-and-sd-bench)
 5. [Why MARA (and not one big LLM call)](#why-mara-and-not-one-big-llm-call)
 6. [Care-services catalog](#care-services-catalog)
-7. [MARA concepts → Go packages](#mara-concepts--go-packages)
-8. [Virtual physician panel](#virtual-physician-panel-mai-dxo-mapping)
-9. [Human-in-the-loop (HITL) gate](#human-in-the-loop-hitl--clinical-oversight-gate)
-10. [Care-services workflows](#care-services-workflows)
-11. [Clinical message protocol](#clinical-message-protocol)
-12. [Domain model and package guide](#domain-model-pkgmedical)
-13. [Walkthroughs](#walkthrough-cmddemo)
-14. [Healthcare standards](#healthcare-standards--interoperability) · [Security & HIPAA compliance](#security--hipaa-compliance) · [Regulatory pathway](#regulatory-pathway)
-15. [Operations](#operations) · [Quality & evaluation](#quality--evaluation) · [Develop](#develop)
-16. [Reference](#reference)
+7. [AI features](#ai-features) — providers, RAG, vision, judge, safety, tracing
+8. [MARA concepts → Go packages](#mara-concepts--go-packages)
+9. [Virtual physician panel](#virtual-physician-panel-mai-dxo-mapping)
+10. [Human-in-the-loop (HITL) gate](#human-in-the-loop-hitl--clinical-oversight-gate)
+11. [Care-services workflows](#care-services-workflows)
+12. [Clinical message protocol](#clinical-message-protocol)
+13. [Domain model and package guide](#domain-model-pkgmedical)
+14. [Walkthroughs](#walkthrough-cmddemo)
+15. [Healthcare standards](#healthcare-standards--interoperability) · [Security & HIPAA compliance](#security--hipaa-compliance) · [Regulatory pathway](#regulatory-pathway)
+16. [Operations](#operations) · [Quality & evaluation](#quality--evaluation) · [Develop](#develop)
+17. [Reference](#reference)
 
 <details>
-<summary>Full section index (71 anchors)</summary>
+<summary>Full section index</summary>
 
-- Quick start · Architecture at a glance · Repository layout
+- Quick start (Setup steps) · Architecture at a glance · Repository layout
 - Background: MAI-DxO and SD Bench · Why MARA · Care-services catalog
+- **AI features:** Provider matrix · Setup walkthroughs · LLM-backed diagnostician · RAG · Vision · LLM-as-judge · Safety guardrails · LLM tracing · Other LLM agents · Agentic patterns · Env vars reference
 - MARA concepts → Go packages · Virtual physician panel · HITL gate
 - Care-services workflows · Clinical message protocol · Domain model
 - Package guide · Walkthrough: cmd/demo · Walkthrough: cmd/caredemo
@@ -87,12 +89,25 @@ That is exactly what MARA's building blocks describe: an **orchestrator**, **spe
 - Add your first agent · Design rules · Testing · Contributing
 - HTTP API · Message types · Agent reference · Implemented vs planned
 - Roadmap · MARA chapter mapping · Glossary · References · License
+- **Companion docs:** [docs/setup.md](docs/setup.md) · [docs/ai-features.md](docs/ai-features.md) · [docs/diagrams.md](docs/diagrams.md)
 
 </details>
 
 ---
 
 ## Quick start
+
+### Setup (5 steps)
+
+1. **Install Go 1.22+** — verify with `go version`.
+2. **Clone the repo:** `git clone https://github.com/PratikDhanave/bodh.git && cd bodh`.
+3. **Pick a provider.** The rule-based agents work with no setup. To enable the LLM-backed diagnostician, follow one of the three walkthroughs in [docs/setup.md](docs/setup.md): Anthropic, OpenAI, or Ollama (local).
+4. **(Optional) Enable RAG** by pointing at the shipped 15-doc demo corpus: `export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json`. Anthropic users also need `VOYAGE_API_KEY` for embeddings; OpenAI / Ollama users already have an embedder.
+5. **Run an entry point** — `go run ./cmd/demo` (diagnostic flow), `go run ./cmd/caredemo` (care services), or `go run ./cmd/care -addr=:8088` (HTTP API).
+
+Deep dive: [docs/setup.md](docs/setup.md) for provider account creation, smoke tests, and cost notes; [docs/ai-features.md](docs/ai-features.md) for what each LLM feature does and how it's wired.
+
+### Commands
 
 ```bash
 git clone https://github.com/PratikDhanave/bodh.git
@@ -346,6 +361,388 @@ Each service is one or more Bodh agents subscribing to specific message types, s
 | Readmission tracking | `readmission_tracker` (ADT feed + transparent risk score) | Done |
 | EHR integration | `pkg/fhir` (Patient / Observation / Encounter / Condition) | FHIR done · HL7 v2 planned |
 | Analytics / outcomes | `pkg/eval` + `pkg/analytics` | Done |
+
+---
+
+## AI features
+
+Bodh ships a complete LLM stack alongside the rule-based agents: provider-agnostic chat / embeddings / vision clients, an in-process knowledge store for RAG, an LLM-as-judge for evaluation, lightweight safety guardrails, and structured per-call tracing. Every LLM-backed agent has a rule-based fallback — failures don't break the pipeline, they just degrade to deterministic behaviour.
+
+For depth on each subsection, see the companion [docs/ai-features.md](docs/ai-features.md). For account creation and smoke tests, see [docs/setup.md](docs/setup.md). For interactive diagrams, see [docs/diagrams.md § G. AI subsystem](docs/diagrams.md#g-ai-subsystem).
+
+### Provider matrix
+
+| Provider | Chat | Embeddings | Vision | API key env | Default chat model |
+|----------|------|-----------|--------|-------------|--------------------|
+| Anthropic | yes | (via Voyage) | yes (Sonnet, Opus) | `ANTHROPIC_API_KEY` | `claude-sonnet-4-6` |
+| Voyage | — | yes | — | `VOYAGE_API_KEY` | `voyage-3` |
+| OpenAI | yes | yes | yes (`gpt-4o`) | `OPENAI_API_KEY` | `gpt-4o` |
+| Ollama (local) | yes | yes | yes (`llama3.2-vision`, `bakllava`) | (none) | `llama3.2` / `nomic-embed-text` |
+
+Embedding adapters live in [`pkg/embeddings`](pkg/embeddings/); chat clients in [`pkg/llm`](pkg/llm/). The factory ([`agents/diagnostician_factory.go`](agents/diagnostician_factory.go)) picks the pair from the `-diagnostician` flag and the env vars above.
+
+### Setup walkthroughs
+
+#### Anthropic Claude
+
+1. Sign up at <https://console.anthropic.com/> and create an API key.
+2. Export the key and run a demo:
+
+   ```bash
+   export ANTHROPIC_API_KEY=sk-ant-...
+   # Optional: export BODH_ANTHROPIC_MODEL=claude-sonnet-4-6
+   go run ./cmd/demo -diagnostician=llm-anthropic
+   ```
+
+3. Expected first few log lines:
+
+   ```
+   [demo] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)
+   [bodh] [intake] case=demo-case-001 chief_complaint="Cough and fever"
+   [bodh] [diagnostician/llm] provider=anthropic model=claude-sonnet-4-6 diagnosis="Community-acquired pneumonia" confidence=87%
+   [bodh] [diagnostician/llm] tokens in=812 out=146 cached=0 stop=tool_use
+   ```
+
+If the LLM call fails, the agent transparently falls back to the deterministic rule-based diagnostician — the case always finalises.
+
+#### OpenAI
+
+1. Sign up at <https://platform.openai.com/> and create a key at <https://platform.openai.com/api-keys>.
+2. Export and run:
+
+   ```bash
+   export OPENAI_API_KEY=sk-...
+   # Optional: export BODH_OPENAI_MODEL=gpt-4o
+   go run ./cmd/demo -diagnostician=llm-openai
+   ```
+
+3. Expected first few log lines:
+
+   ```
+   [bodh] [diagnostician/llm] provider=openai model=gpt-4o diagnosis="Community-acquired pneumonia" confidence=86%
+   [bodh] [diagnostician/llm] tokens in=798 out=142 cached=0 stop=stop
+   ```
+
+If the LLM call fails, the agent transparently falls back to the deterministic rule-based diagnostician — the case always finalises.
+
+#### Ollama (local)
+
+1. Install Ollama from <https://ollama.com/download>.
+2. Pull the chat model, the embedding model, and start the server (if not auto-started):
+
+   ```bash
+   ollama pull llama3.2          # chat
+   ollama pull nomic-embed-text  # embeddings (RAG)
+   # For vision: ollama pull llama3.2-vision (or bakllava / llava:13b)
+   ollama serve                  # if not already running
+   export OLLAMA_HOST=http://localhost:11434   # optional, this is the default
+   go run ./cmd/demo -diagnostician=llm-ollama
+   ```
+
+3. Expected first few log lines:
+
+   ```
+   [bodh] [diagnostician/llm] provider=ollama model=llama3.2 diagnosis="Community-acquired pneumonia" confidence=72%
+   [bodh] [diagnostician/llm] tokens in=842 out=156 cached=0 stop=stop
+   ```
+
+For vision use `BODH_OLLAMA_MODEL=llama3.2-vision` (or `bakllava`); for embeddings stick with `nomic-embed-text` or `mxbai-embed-large`. If the LLM call fails, the agent transparently falls back to the deterministic rule-based diagnostician — the case always finalises.
+
+### LLM-backed diagnostician
+
+[`LLMDiagnostician`](agents/diagnostician_llm.go) is a drop-in replacement for the rule-based [`DiagnosticianAgent`](agents/diagnostician.go). It builds the same `DiagnosisProposal` JSON shape from the same `CaseState` input, so the cost guardian, reasoning verifier, HITL gate, and supervisor logic are unchanged. On any failure (timeout, JSON parse, transport error, confidence below `MinConfidence`) it falls back to the rule-based agent.
+
+```mermaid
+sequenceDiagram
+    participant Sup as diagnostic_supervisor
+    participant LLMD as LLMDiagnostician
+    participant Cli as llm.Client
+    participant API as Provider API
+    participant Rule as DiagnosticianAgent (fallback)
+    participant Ver as reasoning_verifier
+
+    Sup->>LLMD: case_state
+    LLMD->>Cli: Complete(Request{System cached, JSONSchema})
+    Cli->>API: POST /messages or /chat/completions or /api/chat
+    alt success
+        API-->>Cli: structured DiagnosisProposal
+        Cli-->>LLMD: Response{Content: JSON, tokens}
+        LLMD->>Ver: diagnosis_proposal
+    else error / low confidence
+        Cli-->>LLMD: error or low Confidence
+        LLMD->>Rule: HandleMessage(ctx, msg, env)
+        Rule-->>Ver: diagnosis_proposal (rule-based)
+    end
+```
+
+**CLI:**
+
+```bash
+go run ./cmd/demo -diagnostician=llm-anthropic
+go run ./cmd/demo -diagnostician=llm-openai
+go run ./cmd/demo -diagnostician=llm-ollama
+
+go run ./cmd/care  -diagnostician=llm-openai -addr=:8088
+go run ./cmd/bench -providers=rule,llm-anthropic,llm-openai,llm-ollama
+```
+
+**Example log output:**
+
+```
+[bodh] [diagnostician/llm] provider=anthropic model=claude-sonnet-4-6 diagnosis="Community-acquired pneumonia" confidence=87%
+[bodh] [diagnostician/llm] rationale: Productive cough with fever, neutrophilic leukocytosis, and RLL consolidation on CXR are consistent with bacterial CAP.
+[bodh] [diagnostician/llm] tokens in=812 out=146 cached=624 stop=tool_use
+[llm-trace] {"started_at":"2026-05-23T09:14:21Z","duration_ms":2438,"provider":"anthropic","model":"claude-sonnet-4-6","agent_id":"diagnostician","case_id":"demo-case-001","input_tokens":812,"output_tokens":146,"cached_tokens":624,"stop_reason":"tool_use","kind":"completion"}
+```
+
+**Prompt caching.** On Anthropic and OpenAI, the system prompt is marked cacheable (`CacheSystem: true`) — repeated calls within the cache TTL pay only for incremental tokens. The `cached_tokens` field on `[llm-trace]` reports cache hits per call.
+
+### Retrieval-Augmented Generation (RAG)
+
+Set `BODH_KNOWLEDGE_CORPUS` to a JSON corpus, configure an embedder credential for your provider, and the diagnostician runs RAG: it composes a query from the CaseState, retrieves the top-k matching documents, prepends them as an `Evidence:` block, and surfaces them as `Citations[]` on the final `DiagnosisProposal`.
+
+```mermaid
+flowchart TB
+    Case[CaseState] --> Build[buildRetrievalQuery<br/>presentation + condition +<br/>test results + hypotheses]
+    Build --> Emb[embeddings.Embed]
+    Emb --> Search[knowledge.Store.Search k=4]
+    Search --> Top[Top-K Citations]
+    Top --> Inject[Prepend Evidence block<br/>to user message]
+    Inject --> LLM[llm.Client.Complete<br/>RAG system prompt + extended schema]
+    LLM --> Decode[Unmarshal DiagnosisProposal]
+    Decode --> Out[Emit diagnosis_proposal<br/>with Citations]
+```
+
+**CLI:**
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+export VOYAGE_API_KEY=pa-...      # for Anthropic, embeddings come from Voyage
+export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
+go run ./cmd/demo -diagnostician=llm-anthropic
+# [demo] RAG enabled with 15 docs
+# [diagnostician/llm] rag retrieved 4 citations
+```
+
+For OpenAI both chat and embeddings use the same key:
+
+```bash
+export OPENAI_API_KEY=sk-...
+export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
+go run ./cmd/demo -diagnostician=llm-openai
+```
+
+For Ollama everything is local:
+
+```bash
+ollama pull llama3.2 && ollama pull nomic-embed-text
+export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
+go run ./cmd/demo -diagnostician=llm-ollama
+```
+
+**Citation shape** (see [`medical.DiagnosisCitation`](pkg/medical/types.go)):
+
+```json
+{
+  "citations": [
+    {
+      "source": "demo-synth",
+      "title": "Community-Acquired Pneumonia — Diagnosis & Severity (CURB-65)",
+      "snippet": "Suspect CAP in adults with new cough, fever, pleuritic chest pain, or focal crackles...",
+      "score": 0.81
+    }
+  ]
+}
+```
+
+The shipped corpus ([`data/knowledge/corpus.json`](data/knowledge/corpus.json)) is 15 synthetic teaching documents tagged `demo-synth`. Swap to your own corpus by changing the env-var path — no rebuild required.
+
+**HybridStore.** [`knowledge.NewHybridStore(embedder)`](pkg/knowledge/hybrid.go) blends vector cosine with Okapi BM25 lexical scoring using reciprocal-rank fusion (k=60). Useful when rare clinical terms (drug names, ICD codes, acronyms like `BNP` or `LACE`) need to win on lexical match even when vector similarity is lukewarm.
+
+### Vision diagnostician
+
+[`LLMDiagnosticianVision`](agents/diagnostician_vision.go) wraps the LLM diagnostician with image attachment. When an `image_path` appears in `msg.Metadata`, the agent reads the file, sniffs PNG/JPEG, and attaches it as `Message.Images[0]`. All other behaviour (RAG, fallback, citation reconciliation) is inherited.
+
+```mermaid
+sequenceDiagram
+    participant Sup as diagnostic_supervisor
+    participant Vis as LLMDiagnosticianVision
+    participant Base as LLMDiagnostician (Base)
+    participant FS as Filesystem
+    participant Cli as llm.Client (vision model)
+    participant Ver as reasoning_verifier
+
+    Sup->>Vis: case_state (msg.Metadata.image_path)
+    Vis->>FS: os.ReadFile + sniff MIME (PNG/JPEG)
+    Vis->>Base: buildRequest(state) (reuses prompt + RAG)
+    Vis->>Vis: req.Messages[0].Images = append(..., img)<br/>append image-attached hint to System
+    Vis->>Cli: Complete (image inline)
+    Cli-->>Vis: structured DiagnosisProposal
+    Vis->>Ver: diagnosis_proposal
+```
+
+**CLI example** — pass `image_path` via case JSON (loaded by `cmd/demo`) or HTTP API metadata:
+
+```json
+{
+  "case_id": "demo-img-001",
+  "image_path": "/Users/me/cxr_rll_infiltrate.png",
+  "chief_complaint": "Cough and fever",
+  "condition": "cap",
+  "max_cost_usd": 500
+}
+```
+
+**Provider support:**
+
+| Provider | Vision models |
+|---|---|
+| Anthropic | `claude-sonnet-4-6`, `claude-opus-4-x` |
+| OpenAI | `gpt-4o`, `gpt-4o-mini` |
+| Ollama | `llama3.2-vision`, `bakllava`, `llava:13b` (must explicitly pull) |
+
+Read failures and unsupported MIMEs fall through to text-only — they never error out the case.
+
+### LLM-as-judge (`pkg/eval`)
+
+[`eval.NewLLMJudge(client)`](pkg/eval/judge.go) grades a candidate diagnosis against a gold-standard reference using a structured rubric. Useful as a CI gate or in batch eval runs.
+
+```mermaid
+flowchart TB
+    Item[GradeItem<br/>scenario, expected, actual, context] --> Call[Judge.Grade]
+    Call --> LLM[llm.Client.Complete<br/>System=JudgeSystemPrompt (cached)<br/>JSONSchema strict · Temp 0.0]
+    LLM --> Out[Grade{score, pass, rationale,<br/>dimensional_scores, provider, model}]
+    Out --> CI[CI gate / report / Pareto plot]
+```
+
+**Rubric dimensions** (each scored 0.0–1.0):
+
+- `correctness` — does the working diagnosis match the gold standard (synonyms count)?
+- `specificity` — is the diagnosis actionable, not a vague catch-all?
+- `safety` — does the rationale stay within evidence?
+- `differential_quality` — did the output include a plausible differential?
+
+**Sample Go usage:**
+
+```go
+import (
+    "github.com/PratikDhanave/bodh/pkg/eval"
+    "github.com/PratikDhanave/bodh/pkg/llm"
+)
+
+client := llm.NewAnthropic(os.Getenv("ANTHROPIC_API_KEY"), "claude-sonnet-4-6")
+judge  := eval.NewLLMJudge(client)
+grade, err := judge.Grade(ctx, eval.GradeItem{
+    Scenario: "demo-case-001",
+    Expected: "Community-acquired pneumonia",
+    Actual:   diagnosis,
+    Context:  "CXR showed RLL infiltrate; WBC 14.2K",
+})
+```
+
+For many items in parallel: `grades, errs := eval.BatchGrade(ctx, judge, items)` (fixed 4-worker pool).
+
+`Pass` is **always recomputed** from `score >= PassThreshold` (0.6) — the model can't lie about passing.
+
+### Safety guardrails (`pkg/safety`)
+
+Three deterministic checks run AFTER the LLM returns and BEFORE the agent emits its message — defence in depth, not a replacement for the HITL gate.
+
+```mermaid
+flowchart TB
+    Resp[LLM Response] --> Refuse{safety.IsRefusal?}
+    Refuse -->|yes| FB[Fall back to rule-based]
+    Refuse -->|no| Hall{safety.CheckHallucination<br/>(when RAG enabled)}
+    Hall -->|low grounding| FB
+    Hall -->|grounded| PHI{safety.ContainsPHIPatterns?}
+    PHI -->|matched| Reject[Reject + log + fallback]
+    PHI -->|clean| Emit[Emit diagnosis_proposal]
+
+    Input[Agent input] -.redact first.-> Phi[pkg/phi.Redact] -.-> LLM
+```
+
+- **`IsRefusal`** — substring-matches common refusal phrases (`"I cannot provide..."`, `"as an AI language model..."`); used to short-circuit to the rule-based fallback.
+- **`CheckHallucination(claim, citations)`** — splits the claim into significant terms (length ≥ 4, non-stopword) and asserts that at least half appear in the supplied citations' snippets/titles. Threshold is configurable.
+- **`ContainsPHIPatterns(text)`** — conservative regex set for SSN, MRN, and US phone shapes in model output. Primary PHI defence is [`pkg/phi.Redact`](pkg/phi/) applied to inputs BEFORE the LLM call.
+
+### LLM call tracing (`pkg/observability`)
+
+Every `llm.Complete` (and embedding) call produces a structured `LLMTrace` record — one JSON line on stdout, prefixed `[llm-trace]`. Optional OTel forwarding sends the same record to an OTLP exporter.
+
+```mermaid
+flowchart TB
+    Agent[LLM-backed agent] --> Call[llm.Complete]
+    Call --> Build[Build LLMTrace<br/>provider · model · duration_ms<br/>input/output/cached tokens<br/>stop_reason · agent_id<br/>case_id · trace_id · tool_calls]
+    Build --> Log["StdLogger.RecordLLMCall<br/>'[llm-trace] {json}' line"]
+    Log --> Gate{BODH_OTEL_ENABLED=1<br/>AND otelHook set?}
+    Gate -->|yes| Hook["otelHook(LLMTrace)<br/>SetLLMOTelHook(fn)"]
+    Hook --> OTLP[(OTLP collector)]
+    Gate -->|no| Done[no-op]
+```
+
+Wire OTel export in `cmd/*/main.go`:
+
+```go
+otel := observability.NewOTLPLLMExporter("http://localhost:4318")
+observability.SetLLMOTelHook(otel.Record)
+defer otel.Shutdown(ctx)
+```
+
+```bash
+BODH_OTEL_ENABLED=1 go run ./cmd/care
+```
+
+Default builds do **not** link the OTel SDK; tracing is opt-in to keep the dependency graph minimal.
+
+### LLM variants of other agents
+
+Three more agents have drop-in LLM variants. Each is a struct that wraps an `llm.Client` and falls back to its rule-based equivalent on any per-call failure.
+
+| Agent | LLM type | Factory | Env vars |
+|---|---|---|---|
+| Questioner | [`LLMQuestioner`](agents/questioner_llm.go) | `agents.NewQuestioner(provider)` | `*_API_KEY`, `BODH_*_MODEL`, `OLLAMA_HOST` |
+| Inbox Triage | [`LLMInboxTriage`](agents/inbox_triage_llm.go) | `agents.NewInboxTriage(provider, taskQueue)` | same |
+| Reasoning Verifier | [`LLMReasoningVerifier`](agents/reasoning_verifier_llm.go) | `agents.NewReasoningVerifier(provider, hitl)` | same |
+
+- **Questioner** — produces 3–5 context-relevant history questions with simulated patient answers plus 3 starting hypotheses.
+- **Inbox triage** — classifies a patient message into `refill | prior_auth | urgent_clinical | general` and extracts the medication or procedure code. Conservative: prefers `urgent_clinical` when in doubt.
+- **Reasoning verifier** — judges whether a `DiagnosisProposal`'s rationale is grounded in the supplied `CaseState` and the confidence isn't over-stated. Routes through `human_review` when `HITL: true`.
+
+### Agentic patterns: Debate, Reflexion, Cascade
+
+Three multi-call patterns ship alongside the single-call diagnostician — all share the same fallback contract and the same factory (`agents/diagnostician_factory.go`).
+
+```mermaid
+flowchart LR
+    Single["Single LLM call<br/>LLMDiagnostician"]
+    Debate["Multi-expert<br/>DebateDiagnostician<br/>(specialists + chair)"]
+    Reflexion["Self-critique loop<br/>ReflexionDiagnostician<br/>(max N rounds)"]
+    Cascade["Small → Large<br/>CascadeDiagnostician<br/>(escalate on low conf)"]
+    Single --> Debate
+    Single --> Reflexion
+    Single --> Cascade
+```
+
+The struct types and factory functions ship today (`agents/diagnostician_{debate,reflexion,cascade}.go`). End-to-end CLI flags, comparative bench output, and Pareto plots are **Phase 3 — in flight**. Future MCP tool use across agents (lab feeds, imaging AI, FHIR write-back) is **Phase 4 — planned**. LLM HITL audit export is **Phase 5 — planned**.
+
+### Environment variables reference
+
+| Variable | Used by | Default | Description |
+|---|---|---|---|
+| `ANTHROPIC_API_KEY` | `-diagnostician=llm-anthropic` | (none) | Anthropic Messages API key |
+| `BODH_ANTHROPIC_MODEL` | factory | `claude-sonnet-4-6` | Override Anthropic chat model |
+| `OPENAI_API_KEY` | `-diagnostician=llm-openai`, OpenAI embeddings | (none) | OpenAI API key |
+| `BODH_OPENAI_MODEL` | factory | `gpt-4o` | Override OpenAI chat model |
+| `BODH_OPENAI_EMBED_MODEL` | RAG embedder | `text-embedding-3-small` | Override OpenAI embedding model |
+| `OLLAMA_HOST` | Ollama chat + embeddings | `http://localhost:11434` | Local Ollama URL |
+| `BODH_OLLAMA_MODEL` | factory | `llama3.2` | Override Ollama chat model |
+| `BODH_OLLAMA_EMBED_MODEL` | RAG embedder | `nomic-embed-text` | Override Ollama embedding model |
+| `VOYAGE_API_KEY` | Anthropic-path RAG embeddings | (none) | Voyage key for embeddings (Anthropic + Voyage pairing) |
+| `BODH_VOYAGE_EMBED_MODEL` | Voyage embedder | `voyage-3` | Override Voyage embedding model |
+| `BODH_KNOWLEDGE_CORPUS` | RAG | (unset) | Path to corpus JSON. Unset disables RAG entirely. |
+| `BODH_OTEL_ENABLED` | observability | (unset) | `1` forwards `LLMTrace` records to the installed OTel hook |
+
+Full deep-dive: [docs/ai-features.md](docs/ai-features.md). Provider setup: [docs/setup.md](docs/setup.md). Diagrams: [docs/diagrams.md § G](docs/diagrams.md#g-ai-subsystem).
 
 ---
 
