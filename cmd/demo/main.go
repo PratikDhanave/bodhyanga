@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"os"
 	"time"
 
@@ -26,7 +27,15 @@ import (
 
 func main() {
 	casePath := flag.String("case", "", "path to case JSON (e.g. data/cases/demo_chf.json)")
+	provider := flag.String("diagnostician", agents.ProviderRule,
+		"diagnostician backend: rule | llm-anthropic | llm-openai | llm-ollama")
 	flag.Parse()
+
+	diag, err := agents.NewDiagnostician(*provider)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "diagnostician: %v\n", err)
+		os.Exit(2)
+	}
 
 	logger := observability.NewStdLogger()
 	env := &orchestration.SimpleEnvironment{
@@ -52,7 +61,7 @@ func main() {
 		&agents.QuestionerAgent{},
 		&agents.TestPlannerAgent{},
 		&agents.CostGuardianAgent{},
-		&agents.DiagnosticianAgent{},
+		diag,
 		&agents.ReasoningVerifierAgent{},
 	}
 	for _, a := range agentList {
