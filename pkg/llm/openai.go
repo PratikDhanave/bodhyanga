@@ -3,6 +3,7 @@ package llm
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -62,6 +63,27 @@ func (c *openaiClient) buildPayload(req Request) (map[string]any, error) {
 		})
 	}
 	for _, m := range req.Messages {
+		if len(m.Images) > 0 {
+			parts := make([]map[string]any, 0, len(m.Images)+1)
+			if m.Content != "" {
+				parts = append(parts, map[string]any{
+					"type": "text",
+					"text": m.Content,
+				})
+			}
+			for _, img := range m.Images {
+				url := "data:" + img.MediaType + ";base64," + base64.StdEncoding.EncodeToString(img.Data)
+				parts = append(parts, map[string]any{
+					"type":      "image_url",
+					"image_url": map[string]any{"url": url},
+				})
+			}
+			msgs = append(msgs, map[string]any{
+				"role":    string(m.Role),
+				"content": parts,
+			})
+			continue
+		}
 		msgs = append(msgs, map[string]any{
 			"role":    string(m.Role),
 			"content": m.Content,
@@ -91,6 +113,25 @@ func (c *openaiClient) buildPayload(req Request) (map[string]any, error) {
 				"strict":      true,
 			},
 		}
+	}
+
+	if len(req.Tools) > 0 {
+		tools := make([]map[string]any, 0, len(req.Tools))
+		for _, t := range req.Tools {
+			var schema map[string]any
+			if err := json.Unmarshal(t.Schema, &schema); err != nil {
+				return nil, fmt.Errorf("openai: bad tool schema for %q: %w", t.Name, err)
+			}
+			tools = append(tools, map[string]any{
+				"type": "function",
+				"function": map[string]any{
+					"name":        t.Name,
+					"description": t.Description,
+					"parameters":  schema,
+				},
+			})
+		}
+		payload["tools"] = tools
 	}
 	return payload, nil
 }
@@ -128,7 +169,15 @@ func (c *openaiClient) parseResponse(body []byte, expectJSON bool) (*Response, e
 		Model   string `json:"model"`
 		Choices []struct {
 			Message struct {
-				Content string `json:"content"`
+				Content   string `json:"content"`
+				ToolCalls []struct {
+					ID       string `json:"id"`
+					Type     string `json:"type"`
+					Function struct {
+						Name      string `json:"name"`
+						Arguments string `json:"arguments"`
+					} `json:"function"`
+				} `json:"tool_calls"`
 			} `json:"message"`
 			FinishReason string `json:"finish_reason"`
 		} `json:"choices"`
@@ -146,11 +195,22 @@ func (c *openaiClient) parseResponse(body []byte, expectJSON bool) (*Response, e
 	if len(parsed.Choices) == 0 {
 		return nil, fmt.Errorf("openai: no choices in response")
 	}
-	content := parsed.Choices[0].Message.Content
-	if expectJSON && content == "" {
-		return nil, ErrInvalidJSON
+	choice := parsed.Choices[0]
+	content := choice.Message.Content
+
+	var toolCalls []ToolCall
+	for _, tc := range choice.Message.ToolCalls {
+		args := json.RawMessage(tc.Function.Arguments)
+		if len(args) == 0 {
+			args = json.RawMessage("{}")
+		}
+		toolCalls = append(toolCalls, ToolCall{Name: tc.Function.Name, Arguments: args})
 	}
+
 	if expectJSON {
+		if content == "" {
+			return nil, ErrInvalidJSON
+		}
 		var tmp any
 		if err := json.Unmarshal([]byte(content), &tmp); err != nil {
 			return nil, ErrInvalidJSON
@@ -163,6 +223,7 @@ func (c *openaiClient) parseResponse(body []byte, expectJSON bool) (*Response, e
 		CachedTokens: parsed.Usage.PromptTokensDetails.CachedTokens,
 		Model:        parsed.Model,
 		Provider:     "openai",
-		StopReason:   parsed.Choices[0].FinishReason,
+		StopReason:   choice.FinishReason,
+		ToolCalls:    toolCalls,
 	}, nil
 }

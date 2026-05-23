@@ -9,6 +9,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/PratikDhanave/bodh/agents"
@@ -18,6 +19,7 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/fhir"
 	"github.com/PratikDhanave/bodh/pkg/governance"
 	"github.com/PratikDhanave/bodh/pkg/hitl"
+	"github.com/PratikDhanave/bodh/pkg/knowledge"
 	"github.com/PratikDhanave/bodh/pkg/medical"
 	"github.com/PratikDhanave/bodh/pkg/observability"
 	"github.com/PratikDhanave/bodh/pkg/orchestration"
@@ -31,7 +33,11 @@ func main() {
 		"diagnostician backend: rule | llm-anthropic | llm-openai | llm-ollama")
 	flag.Parse()
 
-	diag, err := agents.NewDiagnostician(*provider)
+	ctx := context.Background()
+
+	store := loadRAGStore(ctx, *provider)
+
+	diag, err := agents.NewDiagnosticianWithKnowledge(*provider, store)
 	if err != nil {
 		log.Fatalf("diagnostician: %v", err)
 	}
@@ -53,7 +59,6 @@ func main() {
 	reviews := hitl.NewQueue()
 	reviewAgent := &agents.HumanReviewAgent{Queue: reviews}
 
-	ctx := context.Background()
 	for _, a := range []agent.Agent{
 		&agents.IntakeAgent{},
 		&agents.RPMMonitorAgent{},
@@ -291,6 +296,37 @@ func metaFromBody(body string) map[string]any {
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+// loadRAGStore builds the knowledge.Store used by the diagnostician when
+// BODH_KNOWLEDGE_CORPUS is set and an embedder credential is available for
+// the supplied provider. Prints a one-line startup log either way.
+func loadRAGStore(ctx context.Context, provider string) knowledge.Store {
+	corpus := os.Getenv("BODH_KNOWLEDGE_CORPUS")
+	if corpus == "" {
+		log.Println("[care] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)")
+		return nil
+	}
+	embedder, err := agents.DefaultEmbedderForProvider(provider)
+	if err != nil {
+		log.Printf("[care] RAG disabled (embedder for %s: %v)", provider, err)
+		return nil
+	}
+	if embedder == nil {
+		log.Printf("[care] RAG disabled (no embedder credential for %s)", provider)
+		return nil
+	}
+	store, err := agents.LoadDefaultKnowledge(ctx, embedder)
+	if err != nil {
+		log.Printf("[care] RAG disabled (corpus load failed: %v)", err)
+		return nil
+	}
+	if store == nil {
+		log.Println("[care] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)")
+		return nil
+	}
+	log.Printf("[care] RAG enabled with %d docs", store.Size())
+	return store
 }
 
 func appendUnique(list []string, v string) []string {

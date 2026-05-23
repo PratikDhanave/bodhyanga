@@ -3,6 +3,7 @@ package llm
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -59,6 +60,30 @@ func (c *anthropicClient) Complete(ctx context.Context, req Request) (*Response,
 func (c *anthropicClient) buildPayload(req Request) (map[string]any, error) {
 	msgs := make([]map[string]any, 0, len(req.Messages))
 	for _, m := range req.Messages {
+		if len(m.Images) > 0 {
+			blocks := make([]map[string]any, 0, len(m.Images)+1)
+			for _, img := range m.Images {
+				blocks = append(blocks, map[string]any{
+					"type": "image",
+					"source": map[string]any{
+						"type":       "base64",
+						"media_type": img.MediaType,
+						"data":       base64.StdEncoding.EncodeToString(img.Data),
+					},
+				})
+			}
+			if m.Content != "" {
+				blocks = append(blocks, map[string]any{
+					"type": "text",
+					"text": m.Content,
+				})
+			}
+			msgs = append(msgs, map[string]any{
+				"role":    string(m.Role),
+				"content": blocks,
+			})
+			continue
+		}
 		msgs = append(msgs, map[string]any{
 			"role":    string(m.Role),
 			"content": m.Content,
@@ -100,6 +125,20 @@ func (c *anthropicClient) buildPayload(req Request) (map[string]any, error) {
 			"type": "tool",
 			"name": req.JSONSchema.Name,
 		}
+	} else if len(req.Tools) > 0 {
+		tools := make([]map[string]any, 0, len(req.Tools))
+		for _, t := range req.Tools {
+			var schema map[string]any
+			if err := json.Unmarshal(t.Schema, &schema); err != nil {
+				return nil, fmt.Errorf("anthropic: bad tool schema for %q: %w", t.Name, err)
+			}
+			tools = append(tools, map[string]any{
+				"name":         t.Name,
+				"description":  t.Description,
+				"input_schema": schema,
+			})
+		}
+		payload["tools"] = tools
 	}
 	return payload, nil
 }
@@ -155,6 +194,7 @@ func (c *anthropicClient) parseResponse(body []byte, expectJSON bool) (*Response
 	}
 
 	content := ""
+	var toolCalls []ToolCall
 	for _, b := range parsed.Content {
 		switch b.Type {
 		case "text":
@@ -162,11 +202,22 @@ func (c *anthropicClient) parseResponse(body []byte, expectJSON bool) (*Response
 		case "tool_use":
 			if expectJSON && len(b.Input) > 0 {
 				content = string(b.Input)
+				continue
 			}
+			args := b.Input
+			if len(args) == 0 {
+				args = json.RawMessage("{}")
+			}
+			toolCalls = append(toolCalls, ToolCall{Name: b.Name, Arguments: args})
 		}
 	}
 	if expectJSON && content == "" {
 		return nil, ErrInvalidJSON
+	}
+
+	stop := parsed.StopReason
+	if len(toolCalls) > 0 {
+		stop = "tool_use"
 	}
 
 	return &Response{
@@ -176,6 +227,7 @@ func (c *anthropicClient) parseResponse(body []byte, expectJSON bool) (*Response
 		CachedTokens: parsed.Usage.CacheReadInputTokens,
 		Model:        parsed.Model,
 		Provider:     "anthropic",
-		StopReason:   parsed.StopReason,
+		StopReason:   stop,
+		ToolCalls:    toolCalls,
 	}, nil
 }
