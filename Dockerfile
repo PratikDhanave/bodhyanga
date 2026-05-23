@@ -4,7 +4,7 @@
 # the binary on top of distroless/static-debian12:nonroot) and runs as a
 # non-root user with a read-only root filesystem.
 
-FROM golang:1.22-alpine AS build
+FROM golang:1.26-alpine AS build
 WORKDIR /src
 
 # Cache module downloads.
