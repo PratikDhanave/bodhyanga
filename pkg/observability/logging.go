@@ -1,6 +1,7 @@
 package observability
 
 import (
+	"io"
 	"log"
 	"os"
 	"time"
@@ -18,8 +19,14 @@ type StdLogger struct {
 
 // NewStdLogger constructs a logger that writes to stdout with timestamps.
 func NewStdLogger() *StdLogger {
+	return NewLoggerTo(os.Stdout)
+}
+
+// NewLoggerTo constructs a StdLogger that writes to the given writer. Exposed
+// primarily for tests that want to capture output into a bytes.Buffer.
+func NewLoggerTo(w io.Writer) *StdLogger {
 	return &StdLogger{
-		l: log.New(os.Stdout, "[bodh] ", log.LstdFlags|log.Lmicroseconds),
+		l: log.New(w, "[bodh] ", log.LstdFlags|log.Lmicroseconds),
 	}
 }
 

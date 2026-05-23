@@ -1,0 +1,185 @@
+{
+  "_notice": "demo-synth — these documents are synthetic teaching prose written for the Bodh demo. They are NOT real clinical guidelines and must not be used for patient care. Each document's metadata.source is 'demo-synth'.",
+  "documents": [
+    {
+      "id": "cap-001",
+      "source": "demo-synth",
+      "title": "Community-Acquired Pneumonia — Diagnosis & Severity (CURB-65)",
+      "content": "Suspect CAP in adults with new cough, fever, pleuritic chest pain, or focal crackles, supported by a new infiltrate on chest radiograph. Stratify severity with CURB-65: Confusion, Urea >7 mmol/L (BUN >19 mg/dL), Respiratory rate >=30, Blood pressure systolic <90 or diastolic <=60, and Age >=65. Each criterion scores 1 point. Score 0-1 suggests outpatient management is reasonable; 2 implies admission consideration; 3-5 indicates inpatient or ICU-level care. Recommended workup: CBC, BMP, lactate if ill-appearing, sputum and blood cultures for inpatients, and SARS-CoV-2/influenza testing during respiratory season. Pulse oximetry on room air anchors triage; SpO2 <=92% on room air warrants admission. Document an objective severity score in the note.",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "cap",
+        "year": "2024",
+        "tags": "cap,respiratory,severity,curb65"
+      }
+    },
+    {
+      "id": "cap-002",
+      "source": "demo-synth",
+      "title": "Community-Acquired Pneumonia — Outpatient Treatment",
+      "content": "For previously healthy adults with mild CAP and no comorbidities, empirical outpatient therapy is amoxicillin 1 g three times daily for 5 days, or doxycycline 100 mg twice daily as an alternative when penicillin-allergic. For patients with comorbidities (chronic heart, lung, liver, or renal disease, diabetes, alcohol use disorder, malignancy, or asplenia), use combination amoxicillin-clavulanate or a cephalosporin plus a macrolide, or monotherapy with a respiratory fluoroquinolone (levofloxacin 750 mg daily). Duration is 5 days when clinically improving and afebrile for 48 hours. Schedule a 48-72 hour telehealth or clinic follow-up. Counsel on red-flag symptoms (worsening dyspnea, persistent fever, confusion).",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "cap",
+        "year": "2024",
+        "tags": "cap,respiratory,treatment,antibiotics"
+      }
+    },
+    {
+      "id": "chf-001",
+      "source": "demo-synth",
+      "title": "Acute Decompensated Heart Failure — Initial Workup",
+      "content": "In a patient with dyspnea, orthopnea, lower-extremity edema, or jugular venous distension, obtain BNP or NT-proBNP, basic metabolic panel, troponin, CBC, TSH, and a 12-lead ECG. A chest radiograph documents cardiomegaly, pulmonary venous congestion, Kerley B lines, or effusions. Bedside lung ultrasound showing diffuse B-lines supports pulmonary congestion. BNP <100 pg/mL (or NT-proBNP <300 pg/mL) makes ADHF unlikely; BNP >=400 (or NT-proBNP age-adjusted thresholds: >450 if <50y, >900 if 50-75y, >1800 if >75y) makes ADHF likely. Obtain a transthoracic echocardiogram to classify HFrEF (LVEF <=40%), HFmrEF (41-49%), or HFpEF (>=50%) when not already documented.",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "chf",
+        "year": "2024",
+        "tags": "chf,heart-failure,bnp,workup"
+      }
+    },
+    {
+      "id": "chf-002",
+      "source": "demo-synth",
+      "title": "ADHF — Diuretic Guidance",
+      "content": "For congestion in ADHF, give intravenous loop diuretic. Loop-naive patients: furosemide 20-40 mg IV bolus. For patients already on an oral loop, the initial IV dose should be 1-2.5x the total daily oral dose, given IV. Reassess urine output and symptoms at 2 hours; if response is inadequate (UOP <100 mL/h or persistent symptoms), double the dose or convert to continuous infusion (5-20 mg/h). Target net negative 1-2 L per day in volume overload while monitoring daily weights, strict ins/outs, basic metabolic panel for hypokalemia or rising creatinine, and orthostatics before discharge. Restart guideline-directed medical therapy (ARNI/ACEi/ARB, beta blocker, MRA, SGLT2 inhibitor) before discharge when hemodynamically stable.",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "chf",
+        "year": "2024",
+        "tags": "chf,heart-failure,diuretic,furosemide"
+      }
+    },
+    {
+      "id": "pe-001",
+      "source": "demo-synth",
+      "title": "Pulmonary Embolism — Wells Score & D-dimer",
+      "content": "In a hemodynamically stable patient with possible PE, compute the Wells score: clinical signs of DVT (3), PE the most likely diagnosis (3), heart rate >100 (1.5), immobilization or surgery in the prior 4 weeks (1.5), prior DVT/PE (1.5), hemoptysis (1), and active malignancy (1). Score <=4 is PE-unlikely: obtain a high-sensitivity D-dimer; if below the age-adjusted threshold (age x 10 ng/mL for patients >50y, otherwise <500 ng/mL), PE is excluded. Score >4 is PE-likely: proceed directly to CT pulmonary angiography. If contrast or radiation is contraindicated, V/Q scan is an alternative. Pregnancy: use lower-extremity ultrasound first.",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "pe",
+        "year": "2024",
+        "tags": "pe,pulmonary-embolism,wells,d-dimer,ctpa"
+      }
+    },
+    {
+      "id": "pe-002",
+      "source": "demo-synth",
+      "title": "Pulmonary Embolism — Anticoagulation",
+      "content": "For confirmed acute PE without hemodynamic instability, start a direct oral anticoagulant: apixaban 10 mg twice daily for 7 days then 5 mg twice daily, or rivaroxaban 15 mg twice daily for 21 days then 20 mg daily. Alternatives include dabigatran or edoxaban after a 5-10 day lead-in of parenteral anticoagulation. For active cancer-associated PE, apixaban, edoxaban, or low-molecular-weight heparin are all reasonable. Minimum duration is 3 months; extend indefinitely for unprovoked PE or persistent risk factors. For massive PE with shock or arrest, escalate to systemic thrombolysis or catheter-directed therapy and engage critical care urgently.",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "pe",
+        "year": "2024",
+        "tags": "pe,pulmonary-embolism,anticoagulation,doac"
+      }
+    },
+    {
+      "id": "uri-001",
+      "source": "demo-synth",
+      "title": "Upper Respiratory Infection — Antibiotic Stewardship",
+      "content": "Most acute URIs are viral and self-limited. Do not prescribe antibiotics for the common cold, acute bronchitis in otherwise healthy adults, or viral pharyngitis. Educate on expected duration (cough up to 3 weeks), symptomatic care (acetaminophen or NSAIDs, fluids, saline nasal rinses), and red flags warranting reassessment: persistent fever beyond 3 days, focal chest findings, ear pain with discharge, unilateral facial pain or swelling, or symptoms worsening after initial improvement (the classic 'double-sickening' pattern of bacterial sinusitis). Apply the Centor criteria for pharyngitis before testing for group A strep. Document the stewardship rationale for declining antibiotics in the note.",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "uri",
+        "year": "2024",
+        "tags": "uri,respiratory,antibiotic-stewardship,viral"
+      }
+    },
+    {
+      "id": "dm-001",
+      "source": "demo-synth",
+      "title": "Type 2 Diabetes — HbA1c Targets & First-Line Therapy",
+      "content": "Screen adults age 35-70 with overweight or obesity using HbA1c, fasting plasma glucose, or 75 g OGTT. Diagnose diabetes at HbA1c >=6.5%, fasting glucose >=126 mg/dL, 2-hour OGTT >=200 mg/dL, or random glucose >=200 with symptoms (confirmed on a repeat unless unequivocal hyperglycemia). For most non-pregnant adults, target HbA1c <7%. For older adults with multiple comorbidities or limited life expectancy, individualise to 7.5-8%. First-line pharmacotherapy is metformin titrated to 2 g/day if tolerated, combined with lifestyle modification (>=150 min/week of moderate aerobic activity, dietary counselling, smoking cessation). Add an SGLT2 inhibitor or GLP-1 receptor agonist when ASCVD, heart failure, or CKD is present, regardless of A1c.",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "diabetes",
+        "year": "2024",
+        "tags": "diabetes,a1c,metformin,sglt2,glp1"
+      }
+    },
+    {
+      "id": "dm-002",
+      "source": "demo-synth",
+      "title": "Hypoglycemia in Diabetes — Recognition & Treatment",
+      "content": "Define hypoglycemia by the three-level framework: Level 1 alert value at glucose <70 mg/dL, Level 2 clinically important at <54 mg/dL, Level 3 severe at any value requiring external assistance. Patients on sulfonylureas or insulin are highest risk. Conscious patients should consume 15 g of fast-acting carbohydrate (glucose tabs, juice), retest after 15 minutes, and repeat if still <70. Severe hypoglycemia: intramuscular or intranasal glucagon, or IV dextrose if access is established. After resolution, review the precipitating cause (missed meal, dose error, new drug, illness, exercise) and adjust the regimen. Document hypoglycemia episodes; recurrent events should prompt CGM consideration and de-intensification of therapy.",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "diabetes",
+        "year": "2024",
+        "tags": "diabetes,hypoglycemia,glucagon,safety"
+      }
+    },
+    {
+      "id": "htn-001",
+      "source": "demo-synth",
+      "title": "Hypertension — Targets & First-Line Agents",
+      "content": "Confirm hypertension with multiple office or out-of-office readings. Target office blood pressure <130/80 mmHg for most adults, including those with diabetes, chronic kidney disease, or established ASCVD. For adults 65 and older without significant frailty, the same <130/80 target applies. First-line agents are a thiazide-type diuretic (chlorthalidone preferred), a long-acting calcium channel blocker (amlodipine), or an ACE inhibitor or ARB. In Black adults without HF or CKD, start with a thiazide or CCB. Avoid ACEi + ARB combinations. Reassess in 2-4 weeks after each titration. Counsel on the DASH dietary pattern, sodium <2.3 g/day, weight loss in overweight patients, and limiting alcohol to <=1-2 drinks/day.",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "hypertension",
+        "year": "2024",
+        "tags": "htn,hypertension,blood-pressure,acei,arb,thiazide"
+      }
+    },
+    {
+      "id": "copd-001",
+      "source": "demo-synth",
+      "title": "COPD Exacerbation — Management",
+      "content": "Treat an acute COPD exacerbation with short-acting bronchodilators (albuterol with or without ipratropium, nebulised or via MDI with spacer) every 1-4 hours, a 5-day course of oral prednisone 40 mg daily, and antibiotics when at least two of three cardinal features are present (increased dyspnea, increased sputum volume, increased sputum purulence) or the patient requires ventilatory support. Empirical antibiotic choice is amoxicillin-clavulanate, doxycycline, or a macrolide; cover Pseudomonas in patients with prior isolation, recent hospitalization, or frequent antibiotic exposure. Provide controlled oxygen targeting SpO2 88-92% to avoid hypercapnia. Consider noninvasive ventilation for hypercapnic respiratory failure (pH <=7.35). Arrange pulmonary follow-up and reinforce smoking cessation and inhaler technique before discharge.",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "copd",
+        "year": "2024",
+        "tags": "copd,exacerbation,steroids,bronchodilator"
+      }
+    },
+    {
+      "id": "hedis-001",
+      "source": "demo-synth",
+      "title": "HEDIS — Adult Annual Wellness Visit (Care Gap)",
+      "content": "Close the annual wellness gap by completing within the measurement year: a documented preventive visit, BMI calculation with counselling if outside the healthy range, blood pressure measurement, age-appropriate cancer screening (colorectal, breast, cervical, lung), immunizations (influenza annually; pneumococcal and zoster per age and risk; COVID-19 per current guidance), tobacco use screening with cessation counselling for users, depression screening (PHQ-2 or PHQ-9), and review of advance care planning. Code the visit with the appropriate G or CPT preventive code so the care gap closes in claims-derived HEDIS reports. Pair the visit with messaging through patient portal reminders 14 and 3 days before the appointment to reduce no-shows.",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "hedis",
+        "year": "2024",
+        "tags": "hedis,care-gap,wellness,preventive"
+      }
+    },
+    {
+      "id": "hedis-002",
+      "source": "demo-synth",
+      "title": "HEDIS — Comprehensive Diabetes Care (A1c Monitoring)",
+      "content": "For members 18-75 with diabetes, the Glycemic Status Assessment measure (formerly HbA1c control) requires at least one HbA1c result within the measurement year. Submeasures grade control as poor (>9.0% or no test, which counts as poor), <8%, and <7%. Workflow: flag patients without an A1c in the past 11 months on the daily huddle; offer point-of-care testing or a standing order. Document the result with a discrete LOINC-coded value (4548-4) so the measure closes electronically. Combine with annual eye exam (CPT II 2022F-2024F or 2026F) and kidney health evaluation (eGFR plus uACR). Care-gap messages should be reading-grade 6 and culturally adapted.",
+      "metadata": {
+        "source": "demo-synth",
+        "condition": "hedis",
+        "year": "2024",
+        "tags": "hedis,care-gap,diabetes,a1c,monitoring"
+      }
+    },
+    {
+      "id": "cost-001",
+      "source": "demo-synth",
+      "title": "Procedure Cost Note — Common Outpatient Labs",
+      "content": "Indicative cash-pay rates at the demo network laboratory. Complete Blood Count (CBC with differential, CPT 85025) — $45. Comprehensive Metabolic Panel (CMP, CPT 80053) — $55. Hemoglobin A1c (CPT 83036) — $40. Lipid panel (CPT 80061) — $50. Basic Metabolic Panel (CPT 80048) — $45. Urinalysis with microscopy (CPT 81001) — $25. BNP (CPT 83880) — $90. D-dimer (CPT 85379) — $60. Troponin I (CPT 84484) — $65. These are demo prices for ROI modelling; real prices vary by payer contract and region. Use them only inside the Bodh simulator.",
+      "metadata": {
+        "source": "demo-synth",
+        "category": "cost",
+        "year": "2024",
+        "tags": "cost,lab,procedure"
+      }
+    },
+    {
+      "id": "cost-002",
+      "source": "demo-synth",
+      "title": "Procedure Cost Note — Imaging",
+      "content": "Indicative cash-pay rates at the demo imaging centre. Chest X-ray, two views (CPT 71046) — $120. CT chest without contrast (CPT 71250) — $320. CT pulmonary angiography (CPT 71275) — $520. Transthoracic echocardiogram, complete (CPT 93306) — $410. Bedside lung ultrasound, limited (CPT 76604-26) — $95. Lower-extremity venous duplex (CPT 93971) — $260. Demo numbers for the Bodh ROI agent — substitute the real payer contract when wiring into production.",
+      "metadata": {
+        "source": "demo-synth",
+        "category": "cost",
+        "year": "2024",
+        "tags": "cost,imaging,procedure"
+      }
+    }
+  ]
+}

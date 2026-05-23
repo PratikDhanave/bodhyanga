@@ -2,6 +2,7 @@ package llm
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -243,6 +244,325 @@ func TestNewOllamaFillsDefaultHost(t *testing.T) {
 	c := NewOllama("", "llama3.2").(*ollamaClient)
 	if c.host != OllamaDefaultHost {
 		t.Fatalf("expected default host %q, got %q", OllamaDefaultHost, c.host)
+	}
+}
+
+func TestAnthropicImageMessageEncodesContentBlocks(t *testing.T) {
+	imgBytes := []byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a}
+	wantB64 := base64.StdEncoding.EncodeToString(imgBytes)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var sent map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&sent); err != nil {
+			t.Fatalf("decode req: %v", err)
+		}
+		msgs, _ := sent["messages"].([]any)
+		if len(msgs) != 1 {
+			t.Fatalf("expected 1 message, got %d", len(msgs))
+		}
+		m0, _ := msgs[0].(map[string]any)
+		blocks, ok := m0["content"].([]any)
+		if !ok {
+			t.Fatalf("content not a list: %T %v", m0["content"], m0["content"])
+		}
+		if len(blocks) != 2 {
+			t.Fatalf("expected 2 blocks, got %d", len(blocks))
+		}
+		b0, _ := blocks[0].(map[string]any)
+		if b0["type"] != "image" {
+			t.Fatalf("block 0 type: %v", b0["type"])
+		}
+		src, _ := b0["source"].(map[string]any)
+		if src["media_type"] != "image/png" {
+			t.Fatalf("media_type: %v", src["media_type"])
+		}
+		if src["data"] != wantB64 {
+			t.Fatalf("data: %v want %v", src["data"], wantB64)
+		}
+		b1, _ := blocks[1].(map[string]any)
+		if b1["type"] != "text" || b1["text"] != "what is this" {
+			t.Fatalf("text block: %+v", b1)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"content":[{"type":"text","text":"a logo"}],"stop_reason":"end_turn","model":"claude-test","usage":{"input_tokens":1,"output_tokens":1}}`))
+	}))
+	defer srv.Close()
+
+	c := &anthropicClient{apiKey: "k", model: "claude-test", endpoint: srv.URL, http: http.DefaultClient}
+	_, err := c.Complete(context.Background(), Request{
+		Messages: []Message{{
+			Role:    RoleUser,
+			Content: "what is this",
+			Images:  []Image{{MediaType: "image/png", Data: imgBytes}},
+		}},
+		MaxTokens: 16,
+	})
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+}
+
+func TestAnthropicToolUseRoundTrip(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var sent map[string]any
+		_ = json.NewDecoder(r.Body).Decode(&sent)
+		tools, _ := sent["tools"].([]any)
+		if len(tools) != 1 {
+			t.Fatalf("expected 1 tool, got %d", len(tools))
+		}
+		t0, _ := tools[0].(map[string]any)
+		if t0["name"] != "get_weather" {
+			t.Fatalf("tool name: %v", t0["name"])
+		}
+		if _, ok := t0["input_schema"]; !ok {
+			t.Fatalf("missing input_schema on tool")
+		}
+		if _, ok := sent["tool_choice"]; ok {
+			t.Fatalf("tool_choice should not be forced when not using JSONSchema")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"content":[
+				{"type":"text","text":"let me check"},
+				{"type":"tool_use","name":"get_weather","input":{"city":"sf"}}
+			],
+			"stop_reason":"tool_use",
+			"model":"claude-test",
+			"usage":{"input_tokens":5,"output_tokens":2}
+		}`))
+	}))
+	defer srv.Close()
+
+	c := &anthropicClient{apiKey: "k", model: "claude-test", endpoint: srv.URL, http: http.DefaultClient}
+	got, err := c.Complete(context.Background(), Request{
+		Messages:  []Message{{Role: RoleUser, Content: "weather in sf?"}},
+		MaxTokens: 32,
+		Tools: []Tool{{
+			Name:        "get_weather",
+			Description: "fetch the weather",
+			Schema:      json.RawMessage(`{"type":"object","properties":{"city":{"type":"string"}}}`),
+		}},
+	})
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+	if got.StopReason != "tool_use" {
+		t.Fatalf("stop_reason: %s", got.StopReason)
+	}
+	if len(got.ToolCalls) != 1 {
+		t.Fatalf("expected 1 tool call, got %d", len(got.ToolCalls))
+	}
+	if got.ToolCalls[0].Name != "get_weather" {
+		t.Fatalf("tool name: %s", got.ToolCalls[0].Name)
+	}
+	var args map[string]string
+	if err := json.Unmarshal(got.ToolCalls[0].Arguments, &args); err != nil {
+		t.Fatalf("args parse: %v", err)
+	}
+	if args["city"] != "sf" {
+		t.Fatalf("args: %v", args)
+	}
+	if got.Content != "let me check" {
+		t.Fatalf("content: %q", got.Content)
+	}
+}
+
+func TestOpenAIImageEmbedsDataURL(t *testing.T) {
+	imgBytes := []byte{0xff, 0xd8, 0xff, 0xe0}
+	wantB64 := base64.StdEncoding.EncodeToString(imgBytes)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var sent map[string]any
+		_ = json.NewDecoder(r.Body).Decode(&sent)
+		msgs, _ := sent["messages"].([]any)
+		// system + user
+		if len(msgs) != 1 {
+			t.Fatalf("expected 1 message, got %d", len(msgs))
+		}
+		m0, _ := msgs[0].(map[string]any)
+		parts, ok := m0["content"].([]any)
+		if !ok {
+			t.Fatalf("content not a list: %T", m0["content"])
+		}
+		if len(parts) != 2 {
+			t.Fatalf("expected 2 parts, got %d", len(parts))
+		}
+		// part 0 is text, part 1 is image_url
+		p1, _ := parts[1].(map[string]any)
+		if p1["type"] != "image_url" {
+			t.Fatalf("part 1 type: %v", p1["type"])
+		}
+		urlObj, _ := p1["image_url"].(map[string]any)
+		got, _ := urlObj["url"].(string)
+		wantPrefix := "data:image/jpeg;base64,"
+		if !strings.HasPrefix(got, wantPrefix) {
+			t.Fatalf("url prefix: %q", got)
+		}
+		if !strings.HasSuffix(got, wantB64) {
+			t.Fatalf("url payload: %q", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"model":"gpt-test","choices":[{"message":{"content":"a cat"},"finish_reason":"stop"}],"usage":{}}`))
+	}))
+	defer srv.Close()
+
+	c := &openaiClient{apiKey: "k", model: "gpt-test", endpoint: srv.URL, http: http.DefaultClient}
+	_, err := c.Complete(context.Background(), Request{
+		Messages: []Message{{
+			Role:    RoleUser,
+			Content: "describe this",
+			Images:  []Image{{MediaType: "image/jpeg", Data: imgBytes}},
+		}},
+		MaxTokens: 16,
+	})
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+}
+
+func TestOpenAIToolCallParsed(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var sent map[string]any
+		_ = json.NewDecoder(r.Body).Decode(&sent)
+		tools, _ := sent["tools"].([]any)
+		if len(tools) != 1 {
+			t.Fatalf("expected 1 tool, got %d", len(tools))
+		}
+		t0, _ := tools[0].(map[string]any)
+		if t0["type"] != "function" {
+			t.Fatalf("tool type: %v", t0["type"])
+		}
+		fn, _ := t0["function"].(map[string]any)
+		if fn["name"] != "lookup" {
+			t.Fatalf("function name: %v", fn["name"])
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"model":"gpt-test",
+			"choices":[{"message":{"content":"","tool_calls":[{"id":"call_1","type":"function","function":{"name":"lookup","arguments":"{\"q\":\"x\"}"}}]},"finish_reason":"tool_calls"}],
+			"usage":{}
+		}`))
+	}))
+	defer srv.Close()
+
+	c := &openaiClient{apiKey: "k", model: "gpt-test", endpoint: srv.URL, http: http.DefaultClient}
+	got, err := c.Complete(context.Background(), Request{
+		Messages:  []Message{{Role: RoleUser, Content: "look it up"}},
+		MaxTokens: 16,
+		Tools: []Tool{{
+			Name:        "lookup",
+			Description: "look something up",
+			Schema:      json.RawMessage(`{"type":"object","properties":{"q":{"type":"string"}}}`),
+		}},
+	})
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+	if len(got.ToolCalls) != 1 {
+		t.Fatalf("expected 1 tool call, got %d", len(got.ToolCalls))
+	}
+	if got.ToolCalls[0].Name != "lookup" {
+		t.Fatalf("name: %s", got.ToolCalls[0].Name)
+	}
+	var args map[string]string
+	if err := json.Unmarshal(got.ToolCalls[0].Arguments, &args); err != nil {
+		t.Fatalf("args parse: %v (%s)", err, got.ToolCalls[0].Arguments)
+	}
+	if args["q"] != "x" {
+		t.Fatalf("args: %v", args)
+	}
+}
+
+func TestOllamaImageRoundTrip(t *testing.T) {
+	imgBytes := []byte{0x01, 0x02, 0x03, 0x04}
+	wantB64 := base64.StdEncoding.EncodeToString(imgBytes)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var sent map[string]any
+		_ = json.NewDecoder(r.Body).Decode(&sent)
+		msgs, _ := sent["messages"].([]any)
+		if len(msgs) != 1 {
+			t.Fatalf("expected 1 message, got %d", len(msgs))
+		}
+		m0, _ := msgs[0].(map[string]any)
+		imgs, ok := m0["images"].([]any)
+		if !ok {
+			t.Fatalf("images missing or wrong type: %T %v", m0["images"], m0["images"])
+		}
+		if len(imgs) != 1 {
+			t.Fatalf("expected 1 image, got %d", len(imgs))
+		}
+		if imgs[0] != wantB64 {
+			t.Fatalf("image b64: %v want %v", imgs[0], wantB64)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"model":"llava","message":{"role":"assistant","content":"a logo"},"done_reason":"stop"}`))
+	}))
+	defer srv.Close()
+
+	c := &ollamaClient{host: srv.URL, model: "llava", http: http.DefaultClient}
+	_, err := c.Complete(context.Background(), Request{
+		Messages: []Message{{
+			Role:    RoleUser,
+			Content: "what is this",
+			Images:  []Image{{MediaType: "image/png", Data: imgBytes}},
+		}},
+		MaxTokens: 16,
+	})
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+}
+
+func TestOllamaToolCallParsed(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var sent map[string]any
+		_ = json.NewDecoder(r.Body).Decode(&sent)
+		tools, _ := sent["tools"].([]any)
+		if len(tools) != 1 {
+			t.Fatalf("expected 1 tool, got %d", len(tools))
+		}
+		t0, _ := tools[0].(map[string]any)
+		if t0["type"] != "function" {
+			t.Fatalf("tool type: %v", t0["type"])
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"model":"llama3.1",
+			"message":{"role":"assistant","content":"","tool_calls":[{"function":{"name":"lookup","arguments":{"q":"x"}}}]},
+			"done_reason":"stop"
+		}`))
+	}))
+	defer srv.Close()
+
+	c := &ollamaClient{host: srv.URL, model: "llama3.1", http: http.DefaultClient}
+	got, err := c.Complete(context.Background(), Request{
+		Messages:  []Message{{Role: RoleUser, Content: "look it up"}},
+		MaxTokens: 16,
+		Tools: []Tool{{
+			Name:        "lookup",
+			Description: "look something up",
+			Schema:      json.RawMessage(`{"type":"object","properties":{"q":{"type":"string"}}}`),
+		}},
+	})
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+	if got.StopReason != "tool_use" {
+		t.Fatalf("stop_reason: %s", got.StopReason)
+	}
+	if len(got.ToolCalls) != 1 {
+		t.Fatalf("expected 1 tool call, got %d", len(got.ToolCalls))
+	}
+	if got.ToolCalls[0].Name != "lookup" {
+		t.Fatalf("name: %s", got.ToolCalls[0].Name)
+	}
+	var args map[string]string
+	if err := json.Unmarshal(got.ToolCalls[0].Arguments, &args); err != nil {
+		t.Fatalf("args parse: %v (%s)", err, got.ToolCalls[0].Arguments)
+	}
+	if args["q"] != "x" {
+		t.Fatalf("args: %v", args)
 	}
 }
 
