@@ -4,9 +4,9 @@
     {
       "provider": "rule",
       "cases": 7,
-      "accuracy_pct": 42.857142857142854,
-      "mean_cost_usd": 220,
-      "recorded_at": "2026-05-24T05:53:25Z"
+      "accuracy_pct": 85.71428571428571,
+      "mean_cost_usd": 242.85714285714286,
+      "recorded_at": "2026-05-24T07:33:10Z"
     }
   ]
 }
