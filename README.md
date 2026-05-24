@@ -929,7 +929,7 @@ Bodh implements a care-services layer as additional agents on the same bus. They
 
 ### Care-plan templates
 
-`medical.BuildCarePlan(caseID, patientID, condition, now)` returns a deterministic plan. Condition keys: `htn`, `dm`, `chf`, `ckd`, `copd`. Each plan has:
+`medical.BuildCarePlan(caseID, patientID, condition, now)` returns a deterministic plan. Condition keys: `htn`, `dm`, `chf`, `ckd`, `copd`, `asthma`. Each plan has:
 
 - **Goals** (SMART-style — metric, target, unit, window)
 - **Medications** (name, dose, frequency, class)
@@ -950,6 +950,8 @@ Bodh implements a care-services layer as additional agents on the same bus. They
 | `annual_visit_due` | No encounter in 365 d | info |
 | `chf_weight_alert` | CHF patient weight ≥ 190 lb | urgent |
 | `tcm_followup_open` | Discharged 7–30 d ago with no post-discharge visit | urgent |
+| `no_controller_persistent_asthma` | Asthma patient with no `inhaled_corticosteroid` on med list | urgent |
+| `act_overdue` | Asthma patient with no ACT score in last 180 d | warn |
 
 ### Readmission risk
 
