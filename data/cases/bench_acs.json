@@ -1,0 +1,10 @@
+{
+  "case_id": "bench-001",
+  "chief_complaint": "Crushing substernal chest pain",
+  "hpi": "61-year-old with hypertension and tobacco use presents with 45 minutes of substernal pressure radiating to the left arm, associated with diaphoresis and nausea",
+  "demographics": "61M",
+  "vitals": "T 36.8°C, HR 96, RR 20, SpO2 96% on room air, BP 152/94",
+  "gold_diagnosis": "Acute coronary syndrome (NSTEMI)",
+  "max_cost_usd": 800,
+  "notes": "Synthetic teaching case (ACS / cardiology). Not derived from any real patient or NEJM content."
+}
