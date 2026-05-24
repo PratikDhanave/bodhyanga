@@ -3,7 +3,7 @@
 // Overview:
 //   Defines the CarePlan structure emitted by the chronic-disease-management
 //   (CDM) agent along with deterministic builders for common conditions
-//   (HTN, DM, CHF, CKD, COPD). Provides JSON encoding helpers so plans can
+//   (HTN, DM, CHF, CKD, COPD, asthma). Provides JSON encoding helpers so plans can
 //   travel across the agent message bus.
 //
 // Key declarations:
