@@ -88,6 +88,32 @@ func BuildCarePlan(caseID, patientID, condition string, now time.Time) CarePlan 
 		plan.Monitoring = []MonitoringEntry{{Metric: "spo2", Cadence: "daily", Source: "rpm", ThresholdMin: 90}}
 		plan.Education = []string{"Smoking cessation", "Inhaler technique"}
 		plan.NextReview = now.AddDate(0, 1, 0)
+	case "asthma":
+		// Illustrative thresholds only — educational demo, not clinical guideline.
+		// ACT score target 20 is the commonly cited "well-controlled" cutoff.
+		plan.Goals = []GoalEntry{
+			{Metric: "act_score", Target: 20, Unit: "score", Window: "90d"},
+			{Metric: "peak_flow_zone", Target: 1, Unit: "personal_best_zone", Window: "90d"},
+			{Metric: "exacerbations", Target: 0, Unit: "count", Window: "90d"},
+		}
+		plan.Medications = []MedicationEntry{
+			{Name: "Fluticasone", Dose: "110 mcg", Frequency: "BID", Class: "inhaled_corticosteroid"},
+			{Name: "Albuterol", Dose: "90 mcg", Frequency: "PRN", Class: "bronchodilator_short_acting"},
+		}
+		plan.Monitoring = []MonitoringEntry{
+			{Metric: "act_score", Cadence: "quarterly", Source: "self_report"},
+			// Peak flow daily for first 30 d then PRN — represented as "daily" here
+			// because MonitoringEntry has no phased-cadence field in the demo schema.
+			{Metric: "peak_flow", Cadence: "daily", Source: "rpm"},
+			{Metric: "exacerbation_count", Cadence: "monthly", Source: "lab"},
+		}
+		plan.Education = []string{
+			"Trigger avoidance",
+			"Inhaler technique",
+			"Asthma action plan",
+			"When to seek emergency care",
+		}
+		plan.NextReview = now.AddDate(0, 3, 0)
 	default:
 		plan.Goals = []GoalEntry{{Metric: "encounter_followup", Target: 1, Unit: "visit", Window: "30d"}}
 		plan.NextReview = now.AddDate(0, 1, 0)

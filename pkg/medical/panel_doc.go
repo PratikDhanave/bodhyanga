@@ -2,9 +2,10 @@
 //
 // Overview:
 //   Provides the demo rule set for the panel manager: A1c overdue/uncontrolled,
-//   uncontrolled BP, annual-visit due, CHF weight trend, and post-discharge
-//   transitional-care follow-up. BuildPanelReport runs every rule across
-//   every patient and rolls up condition counts plus care gaps.
+//   uncontrolled BP, annual-visit due, CHF weight trend, post-discharge
+//   transitional-care follow-up, persistent asthma without a controller, and
+//   overdue ACT score. BuildPanelReport runs every rule across every patient
+//   and rolls up condition counts plus care gaps.
 //
 // Key declarations:
 //   - CareGap: single open quality/preventive-care issue

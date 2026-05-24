@@ -19,6 +19,8 @@ type PatientRecord struct {
 	LastBPDate      time.Time          `json:"last_bp_date,omitempty"`
 	LastWeightLb    float64            `json:"last_weight_lb,omitempty"`
 	LastSpO2        float64            `json:"last_spo2,omitempty"`
+	LastACTScore    float64            `json:"last_act_score,omitempty"`
+	LastACTDate     time.Time          `json:"last_act_date,omitempty"`
 	Medications     []MedicationEntry  `json:"medications,omitempty"`
 	RPMEnrolled     bool               `json:"rpm_enrolled,omitempty"`
 	DischargedAt    time.Time          `json:"discharged_at,omitempty"`
