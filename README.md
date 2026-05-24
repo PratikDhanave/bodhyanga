@@ -1459,13 +1459,31 @@ Recommended SLIs / SLOs:
 
 ### Audit logging
 
-`pkg/orchestration.Orchestrator` logs at four key points: policy evaluation (`allow`/`deny`), agent invocation, agent errors, each emitted output.
+`pkg/orchestration.Orchestrator` now writes `audit.Event` records via the optional `audit.Recorder` wired in by `Orchestrator.SetAuditRecorder` (set by `cmd/care` at boot). Four hooks fire per agent hop:
+
+| Hook | `Kind` | When | Notes |
+|------|--------|------|-------|
+| Policy deny | `policy_decision` | governance rejects a message | always recorded; agent never invoked |
+| Policy allow (clinical) | `policy_decision` | governance allows a clinical type | recorded only for the `RequireCaseIDPolicy` clinical types (`presentation`, `case_state`, `ask_question`, `order_test`, `diagnosis`, `verify_reasoning`) — keeps the log signal-rich |
+| Agent invocation | `message` | the handler is about to run | one row per agent hop |
+| Agent error | `agent_error` | `HandleMessage` returns an error | `ErrorText` is `err.Error()` — **never** `msg.Content` |
+
+Every event copies the opaque correlators `tenant_id` / `case_id` / `patient_id` / `trace_id` from `msg.Metadata`. Field selection in `pkg/audit/recorder.go` is deliberately narrow ("enough to reconstruct, never enough to leak"). `msg.Content` (PHI) is never written.
+
+Records are **fail-open**: a recorder error is logged via `env.Logf` and the pipeline continues. Blocking the diagnostic flow because the audit sink is down is the wrong trade-off.
+
+`cmd/care` exposes the log at `GET /audit?kind=<filter>&limit=<N>` (default 100) for development visibility — reads from whichever backend is wired:
+
+- `BODH_DB_DSN` unset → in-memory `audit.NewInMemory()` (demo path).
+- `BODH_DB_DSN` set → Postgres-backed `*Store.AuditRecorder(tenant)` scoped via row-level security to `BODH_TENANT_ID`.
+
+`cmd/care` also mirrors completed diagnostic cases into `eval.Store` (in-memory or Postgres) via `Orchestrator.SetEvalStore` so SD-Bench replay and post-hoc audits share one source of truth.
 
 Production audit-log requirements for HIPAA / 21 CFR Part 11 / SOC 2:
 
-- **Append-only** — write-once / immutable sink (S3 Object Lock, Azure Immutable Blob, Loki + retention lock).
+- **Append-only** — write-once / immutable sink (S3 Object Lock, Azure Immutable Blob, Loki + retention lock). The Postgres backend's `audit_events` table is enforced append-only via `GRANT SELECT, INSERT` only.
 - **Time-synced** — NTP / chrony required; log `monotonic` source if possible.
-- **Tenant-segregated** — `tenant_id` field; cross-tenant query forbidden.
+- **Tenant-segregated** — `tenant_id` field; cross-tenant query forbidden. The Postgres backend enforces this via row-level security (`SET LOCAL app.tenant_id`).
 - **PHI-redacted** — narrative removed before persisting beyond the regulated boundary.
 - **Tamper-evident** — periodic chain hash (Merkle / hash-linked).
 - **Retention** — 6 years for HIPAA; longer for some state laws and trials.
@@ -1822,7 +1840,7 @@ See [Virtual physician panel](#virtual-physician-panel-mai-dxo-mapping) and [Car
 | Human-in-the-loop gate | Done | `agents/human_review.go`, `pkg/hitl`, `pkg/medical/review.go` |
 | Cost-rework on budget deny | Done | `cost_guardian` → `tests_revise` → `supervisor.reviseTests` |
 | PHI redaction (logs) | Done | `pkg/phi` |
-| HIPAA audit log | Done | `pkg/audit` (in-memory + file-backed append-only JSON-lines) |
+| HIPAA audit log | Wired | `pkg/audit` (in-memory + file + Postgres) — orchestrator records every message / policy decision / agent error; `cmd/care` exposes `GET /audit` |
 | Multi-tenant + scope policies | Done | `governance.RequireTenantPolicy`, `RequireScopePolicy` |
 | SD-Bench runner | Done | `cmd/bench` |
 | Operator CLI | Done | `cmd/bodhctl` |
