@@ -163,6 +163,34 @@ func NewDiagnosticianSelfConsistency(provider string, store knowledge.Store, sam
 	return &SelfConsistencyDiagnostician{Base: llmBase, Samples: samples}, nil
 }
 
+// NewDiagnosticianActiveLearning builds an ActiveLearningDiagnostician
+// that runs both the LLM diagnostician and the rule-based one, emits the
+// LLM's proposal as the primary, and (when hitl=true) routes any
+// significant disagreement into the HITL review queue as a labelled
+// training-data candidate.
+//
+// The rule provider is a no-op for active learning and returns the
+// rule-based agent unchanged. agreementThreshold <= 0 defaults to 0.6.
+func NewDiagnosticianActiveLearning(provider string, store knowledge.Store, hitl bool, agreementThreshold float64) (agent.Agent, error) {
+	if provider == "" || provider == ProviderRule {
+		return &DiagnosticianAgent{}, nil
+	}
+	base, err := buildDiagnostician(provider, store)
+	if err != nil {
+		return nil, err
+	}
+	llmBase, ok := base.(*LLMDiagnostician)
+	if !ok {
+		return base, nil
+	}
+	return &ActiveLearningDiagnostician{
+		LLM:                llmBase,
+		Rule:               &DiagnosticianAgent{},
+		HITL:               hitl,
+		AgreementThreshold: agreementThreshold,
+	}, nil
+}
+
 // NewDiagnosticianReflexion builds the Reflexion / Chain-of-Verification
 // diagnostician for the given provider. The rule provider has no LLM to
 // critique with and returns the rule-based agent. The supplied store, when

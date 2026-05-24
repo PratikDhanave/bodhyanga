@@ -57,6 +57,7 @@ type DiagnosisProposal struct {
 	Differential []string            `json:"differential,omitempty"`
 	Rationale    string              `json:"rationale"`
 	Citations    []DiagnosisCitation `json:"citations,omitempty"`
+	Provenance   *Provenance         `json:"provenance,omitempty"`
 }
 
 // DiagnosisCitation captures one piece of supporting evidence retrieved from

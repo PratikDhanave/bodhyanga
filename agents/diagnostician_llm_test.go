@@ -283,6 +283,83 @@ func TestLLMDiagnosticianWithoutKnowledgeKeepsExistingBehaviour(t *testing.T) {
 	}
 }
 
+func TestLLMDiagnostician_PopulatesProvenance(t *testing.T) {
+	state, encoded := newCaseStateJSON(t)
+	respJSON := `{"diagnosis":"Community-acquired pneumonia","confidence":0.91,"rationale":"r"}`
+	mock := &llm.Mock{Resp: &llm.Response{Content: respJSON}}
+	d := &LLMDiagnostician{Client: mock, Fallback: &DiagnosticianAgent{}}
+
+	msg := agent.NewMessage("supervisor", "diagnostician", agent.RoleAgent, "case_state", encoded, map[string]any{"case_id": state.CaseID})
+	out, err := d.HandleMessage(context.Background(), msg, newFakeEnv())
+	if err != nil {
+		t.Fatalf("HandleMessage: %v", err)
+	}
+	if len(out) != 1 {
+		t.Fatalf("expected 1 message, got %d", len(out))
+	}
+
+	var p medical.DiagnosisProposal
+	if err := json.Unmarshal([]byte(out[0].Content), &p); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if p.Provenance == nil {
+		t.Fatalf("expected Provenance to be populated, got nil")
+	}
+	if p.Provenance.Provider != "mock" {
+		t.Errorf("Provider=%q want mock", p.Provenance.Provider)
+	}
+	if p.Provenance.Model != "mock-model" {
+		t.Errorf("Model=%q want mock-model", p.Provenance.Model)
+	}
+	if p.Provenance.PromptHash == "" {
+		t.Errorf("PromptHash empty")
+	}
+	if len(p.Provenance.PromptHash) != 64 {
+		t.Errorf("PromptHash length=%d want 64", len(p.Provenance.PromptHash))
+	}
+	if p.Provenance.AgentID != "diagnostician" {
+		t.Errorf("AgentID=%q want diagnostician", p.Provenance.AgentID)
+	}
+	if p.Provenance.Variant != "llm" {
+		t.Errorf("Variant=%q want llm", p.Provenance.Variant)
+	}
+	if p.Provenance.Timestamp == "" {
+		t.Errorf("Timestamp empty")
+	}
+}
+
+func TestLLMDiagnostician_ProvenanceIncludesCitationIDs(t *testing.T) {
+	state, encoded := newCaseStateJSON(t)
+	respJSON := `{"diagnosis":"Community-acquired pneumonia","confidence":0.9,"rationale":"r"}`
+	mock := &llm.Mock{Resp: &llm.Response{Content: respJSON}}
+	store := &fakeKnowledge{
+		Resp: []knowledge.Citation{
+			{Source: "IDSA 2019", Title: "CAP", Snippet: "infiltrate"},
+			{Source: "USPSTF 2024", Title: "Cough", Snippet: "fever"},
+		},
+	}
+	d := &LLMDiagnostician{Client: mock, Fallback: &DiagnosticianAgent{}, Knowledge: store}
+
+	msg := agent.NewMessage("supervisor", "diagnostician", agent.RoleAgent, "case_state", encoded, map[string]any{"case_id": state.CaseID})
+	out, err := d.HandleMessage(context.Background(), msg, newFakeEnv())
+	if err != nil {
+		t.Fatalf("HandleMessage: %v", err)
+	}
+	var p medical.DiagnosisProposal
+	if err := json.Unmarshal([]byte(out[0].Content), &p); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if p.Provenance == nil {
+		t.Fatalf("Provenance nil")
+	}
+	if len(p.Provenance.CitationIDs) != 2 {
+		t.Fatalf("expected 2 citation IDs, got %v", p.Provenance.CitationIDs)
+	}
+	if p.Provenance.CitationIDs[0] != "IDSA 2019" {
+		t.Errorf("CitationIDs[0]=%q", p.Provenance.CitationIDs[0])
+	}
+}
+
 func containsLog(env *fakeEnv, want string) bool {
 	for _, l := range env.logs {
 		if containsSubstring(l, want) {

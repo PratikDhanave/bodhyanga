@@ -12,6 +12,8 @@
 //   - TestLLMDiagnosticianFallsBackOnLLMError
 //   - TestLLMDiagnosticianFallsBackOnBadJSON
 //   - TestLLMDiagnosticianFallsBackOnLowConfidence
+//   - TestLLMDiagnostician_PopulatesProvenance
+//   - TestLLMDiagnostician_ProvenanceIncludesCitationIDs
 //
 // See doc.go for package-level documentation.
 

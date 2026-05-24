@@ -15,6 +15,11 @@
 //   - LLMDiagnostician.HandleMessage: agent entry point
 //   - LLMDiagnostician.buildRequest / completeAndDecode: split helpers reused
 //     by the vision variant
+//   - completeAndDecode also stamps a medical.Provenance watermark
+//     (provider, model, prompt hash, citation IDs, timestamp, agent ID,
+//     variant="llm") onto every successful proposal
+//   - collectSources: private helper that maps DiagnosisCitations to
+//     []Source strings for inclusion in the Provenance block
 //   - buildRetrievalQuery: composes presentation + condition + test results +
 //     hypotheses into a single retrieval query string
 //   - diagnosticianSystemPrompt / diagnosticianSystemPromptRAG: cached system

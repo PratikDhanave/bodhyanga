@@ -202,9 +202,43 @@ func (a *LLMDiagnostician) completeAndDecode(ctx context.Context, req llm.Reques
 		p.Citations = retrieved
 	}
 
+	// Stamp a provenance watermark so downstream consumers (audit log,
+	// eval, replay) can attribute the proposal to (provider, model,
+	// prompt, citations, agent, variant) without re-running the call.
+	userContent := ""
+	if len(req.Messages) > 0 {
+		userContent = req.Messages[0].Content
+	}
+	prov := medical.MakeProvenance(
+		a.Client.Provider(),
+		a.Client.Model(),
+		req.System,
+		userContent,
+		p.Citations,
+		a.ID(),
+		"llm",
+	)
+	p.Provenance = &prov
+
 	env.Logf("[diagnostician/llm] tokens in=%d out=%d cached=%d stop=%s",
 		resp.InputTokens, resp.OutputTokens, resp.CachedTokens, resp.StopReason)
 	return p, nil
+}
+
+// collectSources extracts the Source field from each citation. Helper kept
+// private to this package so callers can build Provenance with the same
+// shape the LLM diagnostician uses.
+func collectSources(citations []medical.DiagnosisCitation) []string {
+	if len(citations) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(citations))
+	for _, c := range citations {
+		if c.Source != "" {
+			out = append(out, c.Source)
+		}
+	}
+	return out
 }
 
 func (a *LLMDiagnostician) runFallback(ctx context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {
