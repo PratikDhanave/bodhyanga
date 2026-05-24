@@ -19,6 +19,7 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/fhir"
 	"github.com/PratikDhanave/bodh/pkg/governance"
 	"github.com/PratikDhanave/bodh/pkg/hitl"
+	"github.com/PratikDhanave/bodh/pkg/hl7v2"
 	"github.com/PratikDhanave/bodh/pkg/knowledge"
 	"github.com/PratikDhanave/bodh/pkg/medical"
 	"github.com/PratikDhanave/bodh/pkg/observability"
@@ -127,6 +128,46 @@ func main() {
 			agent.RoleUser, "adt_event", medical.EncodeADT(e),
 			map[string]any{"patient_id": e.PatientID}))
 		writeJSON(w, map[string]string{"status": "queued"})
+	})
+
+	// HL7 v2.x ADT ingress — the "front door" used by most US hospital
+	// integrations. Accepts pipe-delimited messages with either Content-Type
+	// "application/hl7-v2" or "text/plain". Publishes adt_event onto the bus
+	// and responds with an HL7 ACK in the body (AA for accepted, AE for
+	// parse/business errors, HTTP 200 / 400 respectively). No PHI in logs:
+	// we log only the message control id and event type.
+	mux.HandleFunc("/hl7/adt", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "POST only", http.StatusMethodNotAllowed)
+			return
+		}
+		raw, err := readBody(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/hl7-v2")
+		msg, err := hl7v2.ParseMessage(raw)
+		if err != nil {
+			logger.Printf("hl7 adt parse error: %v", err)
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(hl7v2.BuildACK(hl7v2.MSH{}, "AE", err.Error())))
+			return
+		}
+		ev, err := hl7v2.MessageToADTEvent(msg)
+		if err != nil {
+			logger.Printf("hl7 adt map error: control_id=%s trigger=%s err=%v",
+				msg.Header.ControlID, msg.Header.TriggerEvent, err)
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(hl7v2.BuildACK(msg.Header, "AE", err.Error())))
+			return
+		}
+		bus.Publish(r.Context(), agent.NewMessage("user", "readmission_tracker",
+			agent.RoleUser, "adt_event", medical.EncodeADT(ev),
+			map[string]any{"patient_id": ev.PatientID, "hl7_control_id": msg.Header.ControlID}))
+		logger.Printf("hl7 adt accepted: control_id=%s trigger=%s type=%s",
+			msg.Header.ControlID, msg.Header.TriggerEvent, ev.Type)
+		_, _ = w.Write([]byte(hl7v2.BuildACK(msg.Header, "AA", "")))
 	})
 
 	mux.HandleFunc("/rpm/observation", func(w http.ResponseWriter, r *http.Request) {
