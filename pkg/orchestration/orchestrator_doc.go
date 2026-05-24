@@ -9,9 +9,11 @@
 //   hand to each HandleMessage call.
 //
 // Key declarations:
-//   - Orchestrator: coordinator holding registry, bus, policy, and environment.
+//   - Orchestrator: coordinator holding registry, bus, policy, environment, and optional audit/eval sinks.
 //   - NewOrchestrator: dependency-injection constructor.
-//   - Orchestrator.Start: subscribes every registered agent to the bus and applies policy on each hop.
+//   - Orchestrator.SetAuditRecorder: optional HIPAA §164.312(b) audit sink wired before Start. Fail-open on Record errors.
+//   - Orchestrator.SetEvalStore: optional eval.Store mirror for completed diagnostic cases.
+//   - Orchestrator.Start: subscribes every registered agent to the bus, applies policy on each hop, records audit events, and mirrors terminal supervisor hops to eval.
 //   - SimpleEnvironment: Logger + Clock-backed agent.Environment implementation.
 //   - SimpleEnvironment.Now / SimpleEnvironment.Logf: environment methods.
 //
