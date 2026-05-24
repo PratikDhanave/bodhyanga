@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/PratikDhanave/bodh/agents"
 	"github.com/PratikDhanave/bodh/pkg/agent"
@@ -274,7 +275,29 @@ func main() {
 	// here unconditionally — cmd/care's hook just goes to the in-process
 	// buffer (no external OTel collector required).
 	_ = os.Setenv("BODH_OTEL_ENABLED", "1")
-	observability.SetLLMOTelHook(traces.record)
+	hook := traces.record
+	// Opt-in OTLP export: when BODH_OTEL_EXPORT=1 (and the binary was built
+	// with -tags otel) ship every LLMTrace to an OTLP/HTTP collector in
+	// addition to the in-process buffer. Endpoint defaults to localhost:4318.
+	if os.Getenv("BODH_OTEL_EXPORT") == "1" {
+		endpoint := envDefault("BODH_OTEL_ENDPOINT", "http://localhost:4318")
+		exp, err := observability.NewOTLPLLMExporter(ctx, endpoint)
+		if err != nil {
+			logger.Printf("[care] OTLP exporter disabled: %v", err)
+		} else {
+			logger.Printf("[care] OTLP exporter enabled → %s", endpoint)
+			hook = func(t observability.LLMTrace) {
+				traces.record(t)
+				exp.Record(t)
+			}
+			defer func() {
+				shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				_ = exp.Shutdown(shutdownCtx)
+			}()
+		}
+	}
+	observability.SetLLMOTelHook(hook)
 
 	rm := newRunManager(bus)
 	api := &apiServer{
