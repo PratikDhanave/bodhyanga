@@ -7,16 +7,20 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/PratikDhanave/bodh/agents"
 	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodh/pkg/audit"
 	"github.com/PratikDhanave/bodh/pkg/comm"
 	"github.com/PratikDhanave/bodh/pkg/engagement"
+	"github.com/PratikDhanave/bodh/pkg/eval"
 	"github.com/PratikDhanave/bodh/pkg/fhir"
 	"github.com/PratikDhanave/bodh/pkg/governance"
 	"github.com/PratikDhanave/bodh/pkg/hitl"
@@ -88,7 +92,16 @@ func main() {
 	} {
 		_ = reg.Register(ctx, a)
 	}
-	orchestration.NewOrchestrator(reg, bus, policy, env).Start(ctx)
+	// HIPAA §164.312(b) audit + eval mirror. Defaults are in-memory so the
+	// demo path stays self-contained; when BODH_DB_DSN is set the Postgres
+	// adapters (RLS-scoped to BODH_TENANT_ID) replace them. The recorders
+	// must be wired BEFORE Start — subscriptions capture them at subscribe
+	// time and a post-Start swap is silently ignored.
+	auditRec, evalStore := selectBackends(pg, logger)
+	orch := orchestration.NewOrchestrator(reg, bus, policy, env)
+	orch.SetAuditRecorder(auditRec)
+	orch.SetEvalStore(evalStore)
+	orch.Start(ctx)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/patients", func(w http.ResponseWriter, r *http.Request) {
@@ -278,6 +291,17 @@ func main() {
 		writeJSON(w, req)
 	})
 
+	// Audit log read endpoint. Developer / operator visibility into the
+	// HIPAA §164.312(b) sink — reads from whichever Recorder was wired at
+	// boot (in-memory or Postgres-backed via tenant adapter). Query params:
+	//
+	//   ?kind=message|policy_decision|review_decision|agent_error  filter
+	//   ?limit=N                                                   cap (default 100)
+	//
+	// For Postgres-backed deployments tenant scoping is fixed at startup
+	// (BODH_TENANT_ID); a true multi-tenant binary would route per-request.
+	mux.HandleFunc("GET /audit", auditListHandler(auditRec))
+
 	// /api/* routes + SSE + go:embed SPA for the clinician console.
 	traces := newLLMTraceBuffer(500)
 	// Capture every LLMTrace into the buffer so the SPA can show recent calls.
@@ -465,6 +489,65 @@ func defaultTenant() string {
 		return v
 	}
 	return "default"
+}
+
+// selectBackends returns the audit.Recorder and eval.Store the orchestrator
+// should use. When pg is non-nil (BODH_DB_DSN set) the Postgres adapters
+// scoped to the default tenant are returned; otherwise the in-memory
+// implementations are used. The chosen backends are logged at startup so
+// operators can see at a glance whether they're on the demo or production
+// data path.
+func selectBackends(pg *pgstore.Store, logger interface{ Printf(string, ...any) }) (audit.Recorder, eval.Store) {
+	if pg != nil {
+		tenant := defaultTenant()
+		logger.Printf("[care] audit backend: postgres (tenant=%s)", tenant)
+		logger.Printf("[care] eval backend: postgres (tenant=%s)", tenant)
+		return pg.AuditRecorder(tenant), pg.EvalStore(tenant)
+	}
+	logger.Printf("[care] audit backend: in-memory")
+	logger.Printf("[care] eval backend: in-memory")
+	return audit.NewInMemory(), eval.NewInMemoryStore()
+}
+
+// auditListHandler returns a GET /audit handler that reads from rec, applies
+// the optional ?kind= filter, and caps at ?limit= (default 100). Pulling
+// this out of the main.go inline closure makes it directly testable.
+func auditListHandler(rec audit.Recorder) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		events := rec.List()
+		kindFilter := r.URL.Query().Get("kind")
+		limit := 100
+		if v := r.URL.Query().Get("limit"); v != "" {
+			if n, err := parseLimit(v); err == nil {
+				limit = n
+			}
+		}
+		out := make([]audit.Event, 0, len(events))
+		for _, e := range events {
+			if kindFilter != "" && string(e.Kind) != kindFilter {
+				continue
+			}
+			out = append(out, e)
+			if len(out) >= limit {
+				break
+			}
+		}
+		writeJSON(w, out)
+	}
+}
+
+// parseLimit converts the ?limit=N query parameter; returns an error on a
+// bad value (non-numeric, zero, or negative) so the caller can fall back
+// to the default rather than blowing up the request.
+func parseLimit(v string) (int, error) {
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return 0, err
+	}
+	if n <= 0 {
+		return 0, fmt.Errorf("limit must be positive, got %d", n)
+	}
+	return n, nil
 }
 
 // loadPostgresStore opens the Postgres backend when BODH_DB_DSN is set,
