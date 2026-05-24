@@ -23,6 +23,55 @@ Go · MARA · Medical AI · Sequential Diagnosis · FHIR · HL7 v2 · HIPAA-awar
 
 ---
 
+## 🆕 What's new (May 2026)
+
+Seven PRs merged in the latest sprint move Bodh from "demo with good bones" to "credible production-ready substrate":
+
+| PR | Track | Highlight |
+|---|---|---|
+| [#6](https://github.com/PratikDhanave/bodh/pull/6) | Clinical | **Asthma** care plan + 2 panel rules (`no_controller_persistent_asthma`, `act_overdue`); proves the composition pattern — zero platform changes |
+| [#7](https://github.com/PratikDhanave/bodh/pull/7) | Production | **OpenTelemetry OTLP exporter** for `LLMTrace`, build-tag isolated (`-tags otel`); sha256-hashed `case_id` in spans (never raw MRN) |
+| [#8](https://github.com/PratikDhanave/bodh/pull/8) | Standards | **HL7 v2 ADT parser** + `POST /hl7/adt` endpoint; supports MSH/EVN/PID/PV1/DG1, ADT^A01/A02/A03/A04/A08, custom delimiters per MSH-1/MSH-2 |
+| [#9](https://github.com/PratikDhanave/bodh/pull/9) | Eval | **SD-Bench manifest runner** in `cmd/bench` with baseline regression gating (`-fail-on-regression`, `-update-baseline`) and 4 new synthetic fixtures (ACS, septic UTI, DKA, elderly CAP) |
+| [#10](https://github.com/PratikDhanave/bodh/pull/10) | Production | **PostgreSQL persistence** with **tenant row-level security**; `audit_events` table is append-only enforced at DB grants (SELECT+INSERT only) |
+| [#11](https://github.com/PratikDhanave/bodh/pull/11) | Clinical | **Rule-path specialty rules** for ACS / sepsis / DKA / CHF — bench moved from **42.9% → 85.7%** accuracy; 5 new TestCatalog entries (BNP, troponin, lactate, urine ketones, procalcitonin) |
+| [#12](https://github.com/PratikDhanave/bodh/pull/12) | Compliance | **Orchestrator audit + eval wiring** — every clinical message produces an `audit.Event`; **HIPAA §164.312(b) audit controls moves from "partial" → "wired"** |
+
+### Headline numbers
+
+- **Rule-provider bench accuracy:** 85.7% (was 42.9%) across 7 synthetic SD-Bench cases
+- **Test coverage:** 30/30 packages pass on `go test ./...`
+- **HIPAA §164.312(b) audit controls:** wired end-to-end
+- **17+ agents** on one MARA bus
+- **Postgres-backed multi-tenant** with RLS enforcement
+- **HL7 v2 ADT** + FHIR R4 + native JSON ingest
+
+---
+
+## 📚 Documentation hub
+
+Beyond this README, the [docs/](docs/) tree has deep dives for each subsystem:
+
+| Doc | What it covers |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) | Deep MARA mapping — five core interfaces, orchestrator closure (the 30-line one), bus semantics, registry, HITL pattern, LLM fallback contract, agentic patterns, audit pipeline, persistence, concurrency, design rules |
+| [docs/agents.md](docs/agents.md) | Every agent's contract — ID, capabilities, input/output types, shared state, HITL gate, failure modes; full panel + care services + HITL |
+| [docs/api.md](docs/api.md) | Every HTTP endpoint — patient registry, care services, events, FHIR, HL7 v2, HITL reviews, audit, reads; full message-type catalog and metadata key reference |
+| [docs/governance.md](docs/governance.md) | Every policy (shipped + planned), composition model, audit event schema with field-selection rationale, PHI redaction, stateful-policy design |
+| [docs/data-model.md](docs/data-model.md) | Every clinical type in `pkg/medical` — diagnostic, care services, test catalog, HITL, provenance; condition-addition walkthrough |
+| [docs/deployment.md](docs/deployment.md) | Local → single binary + Postgres → K8s → multi-tenant cells; environment variables, backup/DR, scaling, HIPAA BAA chain |
+| [docs/operations.md](docs/operations.md) | Logs, metrics, OTel, LLM tracing, audit pipeline, bus implementations, LLM reliability SLOs, runbooks |
+| [docs/evaluation.md](docs/evaluation.md) | SD-Bench manifest runner, baseline regression gating, Pareto frontier, LLM-as-judge, red-team eval, cohort analytics, what to measure |
+| [docs/setup.md](docs/setup.md) | LLM provider account creation + smoke tests + cost notes |
+| [docs/ai-features.md](docs/ai-features.md) | What each LLM feature does and how it's wired |
+| [docs/compliance.md](docs/compliance.md) | HIPAA / GDPR / 42 CFR Part 2 / state laws / certifications / de-identification |
+| [docs/healthcare-standards.md](docs/healthcare-standards.md) | FHIR / HL7 v2 / SMART / X12 / NCPDP / DICOM / CDA |
+| [docs/diagrams.md](docs/diagrams.md) | 25 mermaid views grouped A–F |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Workflow, design rules, adding an agent / policy / condition, commit conventions |
+| [ROADMAP.md](ROADMAP.md) | 10-phase plan with status, decision log |
+
+---
+
 ## What is Bodh?
 
 Bodh is two things in one repository:
@@ -129,7 +178,10 @@ go run ./cmd/caredemo -workflow=adt
 go run ./cmd/care -addr=:8088
 
 # SD-Bench runner — loads every case fixture, prints accuracy/cost table
-go run ./cmd/bench
+go run ./cmd/bench                                            # rule provider, default manifest
+go run ./cmd/bench -manifest=data/cases/manifest.json         # explicit manifest
+go run ./cmd/bench -providers=rule -fail-on-regression        # CI gate against baseline
+go run ./cmd/bench -providers=rule -update-baseline           # refresh after intentional changes
 
 # LLM-backed diagnostician (Claude / GPT / local Ollama) with rule-based fallback
 export ANTHROPIC_API_KEY=sk-...          # or OPENAI_API_KEY=sk-...
@@ -239,57 +291,99 @@ bodh/
 ├── Architecture.png             # MARA platform map
 ├── architectureflow.png         # Sequential diagnosis flow
 ├── architectureflow.webp        # WebP source for the flow diagram
+├── CONTRIBUTING.md              # Workflow, design rules, agent/policy walkthroughs
+├── ROADMAP.md                   # 10-phase plan with status + decision log
 ├── docs/
-│   ├── diagrams.md              # 25 mermaid architecture diagrams
-│   ├── healthcare-standards.md  # FHIR, HL7v2, SMART, X12, NCPDP, ...
-│   └── compliance.md            # HIPAA, HITECH, GDPR, governance policies
+│   ├── architecture.md          # Deep MARA mapping, interfaces, state machines
+│   ├── agents.md                # Per-agent contracts (17+ agents)
+│   ├── api.md                   # HTTP surface + message-type catalog
+│   ├── governance.md            # Every policy + audit pipeline + PHI redaction
+│   ├── data-model.md            # pkg/medical types + condition-addition walkthrough
+│   ├── deployment.md            # Local → K8s → multi-tenant cells
+│   ├── operations.md            # Audit, OTel, SLOs, runbooks
+│   ├── evaluation.md            # SD-Bench, judge, red-team, Pareto
+│   ├── setup.md                 # LLM provider account setup
+│   ├── ai-features.md           # LLM feature wiring detail
+│   ├── compliance.md            # HIPAA, HITECH, GDPR, certifications
+│   ├── healthcare-standards.md  # FHIR, HL7v2, SMART, X12, NCPDP, DICOM, CDA
+│   └── diagrams.md              # 25 mermaid architecture diagrams
 ├── cmd/
 │   ├── demo/                    # Sequential diagnosis entrypoint
 │   ├── caredemo/                # Care-services workflows
-│   ├── care/                    # HTTP API
-│   ├── bench/                   # SD-Bench fixture runner
-│   └── bodhctl/                 # Operator CLI
-├── agents/                      # Virtual physician panel + care services
+│   ├── care/                    # HTTP API (POST /hl7/adt, GET /audit, ...)
+│   ├── bench/                   # SD-Bench manifest runner with baseline gating
+│   ├── bodhctl/                 # Operator CLI
+│   └── export-hitl-feedback/    # HITL feedback export
+├── agents/                      # Virtual physician panel + care services (17+ agents)
 │   ├── intake.go
 │   ├── supervisor.go            # diagnostic_supervisor (MAI-DxO-style)
-│   ├── questioner.go
-│   ├── test_planner.go
+│   ├── questioner.go            # + questioner_llm.go
+│   ├── test_planner.go          # condition-aware dispatch (PR #11)
 │   ├── cost_guardian.go
-│   ├── diagnostician.go
-│   ├── reasoning_verifier.go
+│   ├── diagnostician.go         # specialty rules: ACS/sepsis/DKA/CHF/CAP (PR #11)
+│   ├── diagnostician_llm.go     # LLM variant with rule-based fallback
+│   ├── diagnostician_debate.go  # multi-expert debate pattern
+│   ├── diagnostician_reflexion.go # self-critique loop
+│   ├── diagnostician_cascade.go # small→large escalation
+│   ├── diagnostician_vision.go  # image-attached LLM
+│   ├── diagnostician_tools.go   # tool-use (MCP-style)
+│   ├── reasoning_verifier.go    # + reasoning_verifier_llm.go
 │   ├── rpm_monitor.go
 │   ├── cdm_planner.go           # Chronic Disease Management
 │   ├── tcm_coordinator.go       # Transitional Care Management
-│   ├── panel_manager.go         # Panel Management / gap-in-care
+│   ├── panel_manager.go         # Panel Management / gap-in-care (9 rules)
 │   ├── pre_visit_prep.go        # Virtual Office: pre-visit prep
-│   ├── inbox_triage.go          # Virtual Office: inbox
+│   ├── inbox_triage.go          # + inbox_triage_llm.go
 │   ├── refill_manager.go        # Virtual Office: refills
 │   ├── prior_auth.go            # Virtual Office: prior auth
 │   ├── engagement.go            # Patient outreach
-│   └── readmission_tracker.go   # ADT + risk
+│   ├── readmission_tracker.go   # ADT + transparent risk
+│   └── human_review.go          # HITL gate
 ├── pkg/
 │   ├── protocol/                # Message schema (shared wire format)
 │   ├── agent/                   # Agent + Environment interfaces
 │   ├── registry/                # Agent discovery
 │   ├── comm/                    # Bus (in-memory; swappable)
-│   ├── orchestration/           # Platform orchestrator
+│   ├── orchestration/           # Platform orchestrator + audit + eval wiring (PR #12)
 │   ├── governance/              # Policies + medical_policy.go
-│   ├── medical/                 # CaseState, CarePlan, Panel, ADT, RPM, ...
+│   ├── medical/                 # CaseState, CarePlan, Panel, ADT, RPM, Provenance, ...
 │   ├── tasks/                   # Nurse work queue
 │   ├── engagement/              # SMS/email/IVR notifier
 │   ├── fhir/                    # Minimal FHIR R4 adapter
+│   ├── hl7v2/                   # HL7 v2 ADT parser (PR #8) — MSH/EVN/PID/PV1/DG1
 │   ├── analytics/               # Cohort metrics
-│   ├── persistence/             # JSON file store
+│   ├── persistence/             # JSON file store + Postgres backend
+│   │   └── postgres/            # PostgreSQL with tenant RLS (PR #10)
 │   ├── memory/                  # KV store
-│   ├── observability/           # Logger + Clock
-│   ├── eval/                    # InteractionRecord, CaseMetrics
+│   ├── observability/           # Logger + Clock + LLMTrace + OTLP (PR #7, build-tag)
+│   ├── eval/                    # InteractionRecord, CaseMetrics, LLMJudge, redteam
 │   ├── hitl/                    # Human-in-the-loop review queue
-│   ├── phi/                     # PHI redaction
-│   └── audit/                   # Append-only HIPAA audit log
+│   ├── phi/                     # PHI redaction (Safe Harbor patterns)
+│   ├── audit/                   # Append-only HIPAA audit log
+│   ├── llm/                     # Provider-agnostic LLM client (Anthropic/OpenAI/Ollama)
+│   ├── embeddings/              # Embedding adapters (Voyage/OpenAI/Ollama)
+│   ├── knowledge/               # RAG store (HybridStore = vector + BM25 + RRF)
+│   ├── safety/                  # Refusal / hallucination / PHI-pattern guardrails
+│   └── tools/                   # MCP-style tools for tool-using agents
+├── db/migrations/               # Postgres schema + RLS policies (PR #10)
+│   ├── 0001_init.sql
+│   └── 0002_rls.sql
 ├── data/
-│   └── cases/
-│       ├── demo_pneumonia.json
-│       └── demo_chf.json
+│   ├── cases/
+│   │   ├── demo_pneumonia.json  # legacy CAP
+│   │   ├── demo_chf.json        # legacy CHF + RPM
+│   │   ├── demo_pe.json         # coverage gap (no rule)
+│   │   ├── demo_uri.json        # verifier-reject edge case (deferred)
+│   │   ├── bench_acs.json       # NSTEMI (PR #9)
+│   │   ├── bench_septic_uti.json # urosepsis (PR #9)
+│   │   ├── bench_dka.json       # diabetic ketoacidosis (PR #9)
+│   │   ├── bench_cap_elderly.json # elderly CAP (PR #9)
+│   │   ├── manifest.json        # schema v2 (PR #9) — authoritative case index
+│   │   └── baseline.json        # regression gating thresholds
+│   ├── eval/
+│   │   └── redteam.json         # adversarial case catalog
+│   └── knowledge/
+│       └── corpus.json          # 15-doc RAG demo corpus
 ├── go.mod
 ├── go.sum
 └── README.md
@@ -314,13 +408,17 @@ MAI-DxO paired with OpenAI's **o3** reportedly reached **~85.5%** accuracy on th
 | SD Bench / MAI-DxO idea | Bodh status |
 |-------------------------|-------------|
 | Sequential ask → test → diagnose | Done — demo workflow |
-| Virtual cost per test | Done — `medical.TestCatalog` |
+| Virtual cost per test | Done — `medical.TestCatalog`, 13 tests (PR #11 added 5) |
 | Cost budget / guardian | Done — `cost_guardian` + `MaxDiagnosticCostPolicy` |
 | Self-verification before final diagnosis | Done — `reasoning_verifier` |
-| Virtual physician panel | Done — 8 agents |
-| NEJM case loader / 304 cases | Planned |
-| LLM-backed agents | Planned |
-| Public benchmark runner | Planned |
+| Virtual physician panel | Done — 8 agents (plus LLM variants: Debate / Reflexion / Cascade / Vision / Tools) |
+| Specialty inference (ACS / sepsis / DKA / CHF / CAP) | Done (PR #11) — rule provider at 85.7% bench accuracy |
+| Manifest-driven case runner with Pareto column | Done (PR #9) — `cmd/bench -manifest=...` |
+| Baseline regression gating | Done (PR #9) — `-fail-on-regression`, `-update-baseline` |
+| Synthetic teaching fixtures | Done — 4 new cases via PR #9 (ACS, septic UTI, DKA, elderly CAP); plus existing CAP, CHF, PE, URI |
+| LLM-backed diagnostician | Done — Anthropic, OpenAI, Ollama with rule-based fallback |
+| NEJM case loader / 304 cases | Planned (license question first) |
+| Pareto plot export | Planned |
 
 ---
 
@@ -1636,16 +1734,23 @@ Planned `cmd/bench` metrics:
 
 Defined in [pkg/medical/types.go](pkg/medical/types.go) (illustrative USD, research demo):
 
-| Test key | Virtual cost (USD) | Demo result summary |
-|----------|-------------------|---------------------|
-| `complete_blood_count` | 45 | WBC 14.2 K, neutrophil predominance |
-| `basic_metabolic_panel` | 55 | Within normal limits |
-| `chest_xray` | 120 | RLL infiltrate / consolidation |
-| `ecg` | 80 | (not used in default demo) |
-| `urinalysis` | 35 | — |
-| `ct_chest` | 850 | High cost — use when budget allows |
-| `blood_culture` | 95 | — |
-| `arterial_blood_gas` | 75 | — |
+| Test key | Cost (USD) | Indication |
+|----------|------------|------------|
+| `complete_blood_count` | 45 | infection, anemia |
+| `basic_metabolic_panel` | 55 | electrolytes, renal, glucose |
+| `chest_xray` | 120 | pulmonary infiltrate, CHF |
+| `ecg` | 80 | cardiac (ACS, arrhythmia) |
+| `urinalysis` | 35 | UTI, glycosuria, ketones |
+| `ct_chest` | 850 | high cost — PE, complex CAP |
+| `blood_culture` | 95 | sepsis |
+| `arterial_blood_gas` | 75 | DKA, respiratory failure |
+| `troponin_i` | 55 | ACS *(PR #11)* |
+| `bnp` | 95 | CHF *(PR #11)* |
+| `lactate` | 35 | sepsis *(PR #11)* |
+| `urine_ketones` | 15 | DKA *(PR #11)* |
+| `procalcitonin` | 75 | sepsis — bacterial vs viral *(PR #11)* |
+
+After PR #11, `test_planner` dispatches the appropriate workup per condition (CAP → CBC+CXR+BMP; CHF → BNP+CXR+ECG+BMP; ACS → troponin+ECG+BMP+CBC; sepsis → blood_culture+lactate+CBC+BMP+urinalysis; DKA → BMP+urine_ketones+ABG+CBC). See [docs/agents.md § test_planner](docs/agents.md#test_planner) and [docs/data-model.md § Test catalog](docs/data-model.md#test-catalog).
 
 **MAI-DxO insight:** the best agents sit on the **Pareto frontier** — high accuracy, **lower** average test cost than humans who may over-order.
 
@@ -1655,6 +1760,14 @@ Defined in [pkg/medical/types.go](pkg/medical/types.go) (illustrative USD, resea
 |------|-------------|
 | [`data/cases/demo_pneumonia.json`](data/cases/demo_pneumonia.json) | 58M cough/fever; gold CAP; $500 budget |
 | [`data/cases/demo_chf.json`](data/cases/demo_chf.json) | 72F CHF with RPM observations; gold ADHF; $600 budget |
+| [`data/cases/demo_pe.json`](data/cases/demo_pe.json) | PE presentation — currently a documented coverage gap (no rule yet) |
+| [`data/cases/demo_uri.json`](data/cases/demo_uri.json) | URI — exercises the verifier-reject edge case (deferred fix) |
+| [`data/cases/bench_acs.json`](data/cases/bench_acs.json) | 62M NSTEMI; gold NSTEMI; $600 budget *(PR #9)* |
+| [`data/cases/bench_septic_uti.json`](data/cases/bench_septic_uti.json) | Urosepsis in elderly; gold Urosepsis; $600 budget *(PR #9)* |
+| [`data/cases/bench_dka.json`](data/cases/bench_dka.json) | DKA presentation; gold DKA; $500 budget *(PR #9)* |
+| [`data/cases/bench_cap_elderly.json`](data/cases/bench_cap_elderly.json) | Elderly CAP variant; gold CAP; $500 budget *(PR #9)* |
+
+The manifest (`data/cases/manifest.json`) is the authoritative case index — `gold_diagnosis`, `max_cost_usd`, and `condition` declared there override per-fixture values so bench expectations live in one place.
 
 Future layout:
 
@@ -1798,7 +1911,7 @@ All endpoints accept and return JSON. **No authentication is enforced today; do 
 | `POST` | `/adt` | `medical.ADTEvent` | Admit / discharge / transfer |
 | `POST` | `/rpm/observation` | `medical.RPMObservation` | Single RPM reading → returns alerts |
 
-#### FHIR
+#### FHIR R4
 
 | Method | Path | Body | Description |
 |--------|------|------|-------------|
@@ -1806,12 +1919,38 @@ All endpoints accept and return JSON. **No authentication is enforced today; do 
 | `POST` | `/fhir/Encounter` | FHIR R4 Encounter | Map to ADT event |
 | `POST` | `/fhir/Condition` | FHIR R4 Condition | Append condition code |
 
-#### Read
+#### HL7 v2 (PR #8)
+
+| Method | Path | Body | Description |
+|--------|------|------|-------------|
+| `POST` | `/hl7/adt` | Raw HL7 v2 pipe-delimited message (`application/hl7-v2` or `text/plain`) | Parse ADT^A01/A02/A03/A04/A08 → publish `adt_event`; returns AA / AE ACK in response body |
+
+See [pkg/hl7v2/](pkg/hl7v2/) for segment support, custom-delimiter handling, and the ACK format. Full reference in [docs/api.md § HL7 v2](docs/api.md#hl7-v2).
+
+#### Audit (PR #12)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/audit` | Read the audit log. `?kind=message\|policy_decision\|review_decision\|agent_error`, `?limit=N` (default 100). |
+
+The event schema is deliberately narrow ("enough to reconstruct, never enough to leak") — see [docs/governance.md § Audit events](docs/governance.md#audit-events).
+
+#### HITL reviews
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET`  | `/reviews` | All reviews. `?status=pending` to filter |
+| `GET`  | `/reviews/{id}` | Single review |
+| `POST` | `/reviews/{id}/decide` | `{reviewer_id, decision, reason, modification}` — see [Human-in-the-loop](#human-in-the-loop-hitl--clinical-oversight-gate) |
+
+#### Reads
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET`  | `/tasks` | Nurse work queue (TCM / refills / PAs / inbox) |
 | `GET`  | `/notifications` | Outreach log + adherence |
+| `GET`  | `/healthz` | Liveness probe |
+| `GET`  | `/readyz` | Readiness probe (checks backends) |
 
 ### Message-type reference
 
@@ -1823,56 +1962,77 @@ See [Virtual physician panel](#virtual-physician-panel-mai-dxo-mapping) and [Car
 
 ### What is implemented today vs planned
 
+For the full status with phase grouping and decision log, see [ROADMAP.md](ROADMAP.md). Summary:
+
 | Layer | Status | Where |
 |-------|--------|-------|
 | MARA platform | Done | `pkg/protocol`, `pkg/agent`, `pkg/registry`, `pkg/comm`, `pkg/orchestration`, `pkg/governance`, `pkg/observability`, `pkg/memory`, `pkg/eval` |
 | Architecture diagrams | Done | `Architecture.png`, `architectureflow.png`, `docs/diagrams.md` |
-| Medical domain | Done | `pkg/medical` |
+| Medical domain | Done | `pkg/medical` (HTN / DM / CHF / CKD / COPD / **asthma**) |
 | Medical governance | Done | `pkg/governance/medical_policy.go` |
-| Virtual physician panel | Done — rule-based | `agents/*.go` |
+| Virtual physician panel | Done — rule-based + LLM variants | `agents/*.go` |
+| Specialty diagnosis rules | Done (PR #11) — ACS / sepsis / DKA / CHF / CAP | `agents/diagnostician.go` |
+| Condition-aware test dispatch | Done (PR #11) | `agents/test_planner.go` |
 | Sequential diagnosis demo | Done | `cmd/demo` |
 | Chronic Disease Management | Done | `agents/cdm_planner.go`, `pkg/medical/careplan.go` |
 | Transitional Care Management | Done | `agents/tcm_coordinator.go`, `pkg/medical/discharge.go`, `pkg/tasks` |
-| Panel Management + care gaps | Done | `agents/panel_manager.go`, `pkg/medical/panel.go` |
+| Panel Management + care gaps | Done | `agents/panel_manager.go`, `pkg/medical/panel.go` (9 rules) |
 | Virtual Office | Done | `pre_visit_prep`, `inbox_triage`, `refill_manager`, `prior_auth` |
 | Patient engagement | Done | `agents/engagement.go`, `pkg/engagement` |
 | Readmission tracker | Done | `agents/readmission_tracker.go`, `pkg/medical/adt.go` |
 | Human-in-the-loop gate | Done | `agents/human_review.go`, `pkg/hitl`, `pkg/medical/review.go` |
 | Cost-rework on budget deny | Done | `cost_guardian` → `tests_revise` → `supervisor.reviseTests` |
 | PHI redaction (logs) | Done | `pkg/phi` |
-| HIPAA audit log | Wired | `pkg/audit` (in-memory + file + Postgres) — orchestrator records every message / policy decision / agent error; `cmd/care` exposes `GET /audit` |
+| **HIPAA §164.312(b) audit log** | **Wired (PR #12)** | `pkg/audit` (in-memory + file + Postgres) — orchestrator records every message / policy decision / agent error; `cmd/care` exposes `GET /audit` |
 | Multi-tenant + scope policies | Done | `governance.RequireTenantPolicy`, `RequireScopePolicy` |
-| SD-Bench runner | Done | `cmd/bench` |
+| **SD-Bench manifest runner + baseline gating** | **Done (PR #9)** | `cmd/bench -manifest=... -fail-on-regression` — rule provider at 85.7% |
+| Synthetic bench fixtures | Done (PR #9) — 4 new: ACS, septic UTI, DKA, elderly CAP | `data/cases/bench_*.json` |
 | Operator CLI | Done | `cmd/bodhctl` |
 | FHIR R4 adapter | Done — minimal | `pkg/fhir` |
+| **HL7 v2 ADT adapter** | **Done (PR #8)** | `pkg/hl7v2` + `POST /hl7/adt` — MSH/EVN/PID/PV1/DG1; ADT^A01/A02/A03/A04/A08 |
 | Cohort analytics | Done | `pkg/analytics` |
-| Persistence | Done — JSON file | `pkg/persistence` |
+| **PostgreSQL persistence + tenant RLS** | **Done (PR #10)** | `pkg/persistence/postgres` — append-only audit at DB grants, RLS-enforced isolation |
+| Persistence (file backend) | Done — JSON file | `pkg/persistence` |
 | HTTP API | Done | `cmd/care` |
 | Care-services demo | Done | `cmd/caredemo` |
+| LLM-backed agents | Done | Anthropic / OpenAI / Ollama with rule-based fallback |
+| Agentic patterns (Debate / Reflexion / Cascade / Tools) | Done | `agents/diagnostician_{debate,reflexion,cascade,tools}.go` |
+| Vision diagnostician | Done | `agents/diagnostician_vision.go` (Claude Sonnet / gpt-4o / llama3.2-vision) |
+| RAG (vector + BM25 hybrid) | Done | `pkg/knowledge.HybridStore` |
+| LLM-as-judge | Done | `pkg/eval.LLMJudge` (4-dimensional rubric) |
+| Red-team eval catalog | Done | `pkg/eval/redteam` + `data/eval/redteam.json` |
+| Safety guardrails | Done | `pkg/safety` (refusal / hallucination / PHI patterns) |
+| **OpenTelemetry export** | **Done (PR #7)** | `pkg/observability` + `BODH_OTEL_EXPORT=1` (`-tags otel`) — sha256-hashed `case_id` in spans |
+| Provenance type for diagnoses | Done | `pkg/medical/provenance.go` |
 | Project infra | Done | `Makefile`, `Dockerfile`, `.github/workflows/ci.yml` |
-| LLM-backed agents | Planned | Per-agent prompts + tool use |
-| HL7 v2 adapter | Planned | `pkg/hl7v2` |
-| SMART on FHIR auth | Planned | `pkg/auth/smart` |
+| Column-level encryption (PHI columns) | Planned | pgcrypto / KMS envelope on `*_ct BYTEA` columns; no schema migration needed |
+| Output-fanout audit hooks | Planned | only inbound hop audited today |
+| SMART on FHIR auth (server side) | Planned | `pkg/auth/smart` — scope policy shipped, auth server integration pending |
 | FHIR Bulk Data | Planned | `$export` + NDJSON pipeline |
-| NEJM / SD Bench loader | Planned | `cmd/bench`, `data/cases/` |
-| OpenTelemetry | Planned | `pkg/observability` extension |
-| PostgreSQL persistence | Planned | Replace JSON file store |
-| Dashboard | Planned | Case timeline UI |
-| HIPAA audit pipeline | Planned | Append-only sink + retention |
-| 21 CFR Part 11 e-signature | Planned | Required for trial deployments |
-| ONC Certification artifacts | Planned | USCDI conformance |
+| NEJM / SD Bench loader (real cases) | Planned | license question first |
+| Per-tenant request routing on `/audit` | Planned | single-tenant binary today |
+| Immutable audit pipeline (WORM) | Planned | S3 Object Lock / Azure Immutable Blob + Merkle chain-hash |
+| Dashboard / clinician UI | Planned | case timeline, HITL queue, panel report viewer |
+| 21 CFR Part 11 e-signature | Planned | required for trial deployments |
+| ONC Certification artifacts | Planned | USCDI conformance, SMART App Launch test suite, Bulk Data conformance |
+| HITRUST CSF / SOC 2 evidence | Planned | auditor-ready control mapping |
 
 ### Roadmap
 
-| Phase | Goal | Deliverables |
-|-------|------|--------------|
-| 1 (done) | MARA platform + diagnostic panel + RPM/CHF | `cmd/demo`, 8 agents, `pkg/eval`, governance tests |
-| 2 (done) | Care services layer | 9 additional agents, `pkg/tasks`/`engagement`/`fhir`/`analytics`/`persistence`, `cmd/caredemo`, `cmd/care` |
-| 3 | Authentication + multi-tenancy | SMART on FHIR, `RequireScopePolicy`, tenant isolation |
-| 4 | LLM integration | `Environment` with model router; prompt templates per agent; safety harness |
-| 5 | SD-Bench evaluation | Case manifest, accuracy + cost report, Pareto plots |
-| 6 | EHR integration | HL7 v2, FHIR Bulk Data, ADT pipelines |
-| 7 | Production hardening | Postgres persistence, OTel, immutable audit, BAA-eligible deployments |
+See [ROADMAP.md](ROADMAP.md) for the full 10-phase plan with status, decision log, and per-item links. Summary:
+
+| Phase | Goal | Status |
+|-------|------|--------|
+| 1 | MARA platform + diagnostic panel | 🟢 Done |
+| 2 | Care services layer | 🟢 Done |
+| 3 | AI infrastructure & agentic patterns | 🟢 Done |
+| 4 | Compliance & production infra (audit, RLS, OTel, HITL, redaction) | 🟢 Done — major beats |
+| 5 | Healthcare interop expansion (HL7 v2, SMART, Bulk Data, DICOM, X12) | 🟡 HL7 v2 ADT done; rest planned |
+| 6 | Clinical breadth (specialty agents, more conditions, more rules) | 🟡 5 specialty rules + asthma done; PE/PEDS/etc planned |
+| 7 | Evaluation & research (Pareto, NEJM, equity audit, IRB protocol) | 🟡 SD-Bench manifest + red-team done; rest planned |
+| 8 | Production hardening (column encryption, Kafka/NATS, WORM audit, K8s) | 🟡 Postgres + OTel done; rest planned |
+| 9 | Compliance maturity (Part 2, break-glass, 21 CFR Part 11, ONC, HITRUST) | ⚪ Planned |
+| 10 | UX (clinician dashboard, patient portal, ambient scribe) | ⚪ Planned |
 | 8 | Clinical partnerships | Validation protocol, IRB-approved pilot |
 
 ### MARA chapters — what to read and when
