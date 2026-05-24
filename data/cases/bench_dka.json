@@ -1,0 +1,10 @@
+{
+  "case_id": "bench-003",
+  "chief_complaint": "Polyuria, polydipsia, and abdominal pain",
+  "hpi": "24-year-old with type 1 diabetes who ran out of insulin three days ago, now with nausea, vomiting, deep labored breathing, and fruity breath",
+  "demographics": "24F",
+  "vitals": "T 37.1°C, HR 124, RR 28, SpO2 99% on room air, BP 104/68",
+  "gold_diagnosis": "Diabetic ketoacidosis",
+  "max_cost_usd": 600,
+  "notes": "Synthetic teaching case (DKA / endocrine emergency). Not derived from any real patient."
+}
