@@ -25,6 +25,7 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/medical"
 	"github.com/PratikDhanave/bodh/pkg/observability"
 	"github.com/PratikDhanave/bodh/pkg/orchestration"
+	pgstore "github.com/PratikDhanave/bodh/pkg/persistence/postgres"
 	"github.com/PratikDhanave/bodh/pkg/registry"
 	"github.com/PratikDhanave/bodh/pkg/tasks"
 )
@@ -56,6 +57,10 @@ func main() {
 	)
 
 	patients := medical.NewPatientRegistry()
+	pg := loadPostgresStore(ctx, logger, patients)
+	if pg != nil {
+		defer pg.Close()
+	}
 	queue := tasks.NewQueue()
 	notifier := engagement.NewInMemory()
 	reviews := hitl.NewQueue()
@@ -95,6 +100,11 @@ func main() {
 				return
 			}
 			patients.Upsert(p)
+			if pg != nil {
+				if err := pg.UpsertPatient(r.Context(), defaultTenant(), p); err != nil {
+					logger.Printf("[care] postgres upsert failed: %v", err)
+				}
+			}
 			writeJSON(w, map[string]string{"status": "ok", "patient_id": p.PatientID})
 		case http.MethodGet:
 			writeJSON(w, patients.List())
@@ -445,4 +455,51 @@ func appendUnique(list []string, v string) []string {
 		}
 	}
 	return append(list, v)
+}
+
+// defaultTenant returns the operator-supplied tenant ID. cmd/care is a
+// single-tenant binary today; multi-tenant routing belongs in a future PR
+// that reads tenant_id from request metadata (auth header / JWT claim).
+func defaultTenant() string {
+	if v := os.Getenv("BODH_TENANT_ID"); v != "" {
+		return v
+	}
+	return "default"
+}
+
+// loadPostgresStore opens the Postgres backend when BODH_DB_DSN is set,
+// hydrates the in-memory patients registry from it, and returns the *Store
+// for mirror-writes. When the DSN is empty the file/in-memory backends
+// continue to drive the demo unchanged. A failure to connect logs the error
+// and returns nil — the demo path is always available as a fallback.
+func loadPostgresStore(ctx context.Context, logger interface{ Printf(string, ...any) }, patients *medical.PatientRegistry) *pgstore.Store {
+	dsn := os.Getenv("BODH_DB_DSN")
+	if dsn == "" {
+		logger.Printf("[care] persistence backend: in-memory + file (BODH_DB_DSN not set)")
+		return nil
+	}
+	store, err := pgstore.New(ctx, dsn)
+	if err != nil {
+		logger.Printf("[care] persistence backend: in-memory fallback (postgres open failed: %v)", err)
+		return nil
+	}
+	tenant := defaultTenant()
+	store.SetDefaultTenant(tenant)
+	logger.Printf("[care] persistence backend: postgres (tenant=%s)", tenant)
+
+	// Warm the in-memory registry from Postgres so agents (which hold the
+	// concrete *medical.PatientRegistry) see existing rows on first request.
+	// Mirror-writes back to Postgres happen on the /patients POST handler.
+	rows, err := store.ListPatients(ctx, tenant)
+	if err != nil {
+		logger.Printf("[care] hydrate patients from postgres failed: %v", err)
+		return store
+	}
+	for _, p := range rows {
+		patients.Upsert(p)
+	}
+	if len(rows) > 0 {
+		logger.Printf("[care] hydrated %d patients from postgres", len(rows))
+	}
+	return store
 }
