@@ -29,6 +29,8 @@ type DiagnosticTest struct {
 }
 
 // Common test catalog with illustrative USD costs (research demo values).
+// All cost values are illustrative only and are NOT clinical guidelines or
+// reflective of real-world billing.
 var TestCatalog = map[string]float64{
 	"complete_blood_count":     45,
 	"basic_metabolic_panel":    55,
@@ -38,6 +40,13 @@ var TestCatalog = map[string]float64{
 	"ct_chest":                 850,
 	"blood_culture":            95,
 	"arterial_blood_gas":       75,
+	// Specialty additions for SD-Bench cardiac/sepsis/endocrine cases.
+	// Illustrative values only — not clinical guidelines.
+	"troponin_i":               55,  // ACS marker
+	"bnp":                      95,  // CHF marker
+	"lactate":                  35,  // sepsis severity marker
+	"urine_ketones":            15,  // DKA marker
+	"procalcitonin":            75,  // bacterial sepsis marker (optional)
 }
 
 // PatientPresentation is the initial case intake payload.
