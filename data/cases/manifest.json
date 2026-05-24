@@ -1,10 +1,70 @@
 {
-  "version": 1,
-  "description": "Bodh case fixture index — used by cmd/bench to enumerate SD-Bench style demo cases.",
+  "version": 2,
+  "description": "SD-Bench style case manifest for cmd/bench. Synthetic teaching cases only — no real patient data, no NEJM content.",
   "cases": [
-    {"file": "demo_pneumonia.json", "label": "Community-acquired pneumonia"},
-    {"file": "demo_chf.json",       "label": "Acute decompensated heart failure (RPM + ADHF)"},
-    {"file": "demo_uri.json",       "label": "Viral upper respiratory infection (negative case)"},
-    {"file": "demo_pe.json",        "label": "Pulmonary embolism (out-of-rule miss)"}
+    {
+      "id": "demo-case-001",
+      "path": "data/cases/demo_pneumonia.json",
+      "gold_diagnosis": "Community-acquired pneumonia",
+      "max_cost_usd": 500,
+      "condition": "cap",
+      "tags": ["respiratory", "infectious"]
+    },
+    {
+      "id": "demo-case-chf-001",
+      "path": "data/cases/demo_chf.json",
+      "gold_diagnosis": "Acute decompensated heart failure",
+      "max_cost_usd": 600,
+      "condition": "chf",
+      "tags": ["cardiology", "rpm", "chronic-care"]
+    },
+    {
+      "id": "demo-case-pe-001",
+      "path": "data/cases/demo_pe.json",
+      "gold_diagnosis": "Pulmonary embolism",
+      "max_cost_usd": 1200,
+      "condition": "pe",
+      "tags": ["respiratory", "vascular", "acute"]
+    },
+    {
+      "id": "demo-case-uri-001",
+      "path": "data/cases/demo_uri.json",
+      "gold_diagnosis": "Viral upper respiratory infection",
+      "max_cost_usd": 200,
+      "condition": "uri",
+      "tags": ["respiratory", "infectious", "negative-case"]
+    },
+    {
+      "id": "bench-001",
+      "path": "data/cases/bench_acs.json",
+      "gold_diagnosis": "Acute coronary syndrome (NSTEMI)",
+      "max_cost_usd": 800,
+      "condition": "acs",
+      "tags": ["cardiology", "acute"]
+    },
+    {
+      "id": "bench-002",
+      "path": "data/cases/bench_septic_uti.json",
+      "gold_diagnosis": "Urosepsis",
+      "max_cost_usd": 700,
+      "condition": "sepsis",
+      "tags": ["infectious", "geriatrics", "acute"]
+    },
+    {
+      "id": "bench-003",
+      "path": "data/cases/bench_dka.json",
+      "gold_diagnosis": "Diabetic ketoacidosis",
+      "max_cost_usd": 600,
+      "condition": "dka",
+      "tags": ["endocrine", "acute"]
+    },
+    {
+      "id": "bench-004",
+      "path": "data/cases/bench_cap_elderly.json",
+      "gold_diagnosis": "Community-acquired pneumonia",
+      "max_cost_usd": 550,
+      "condition": "cap",
+      "tags": ["respiratory", "infectious", "geriatrics"]
+    }
   ]
 }

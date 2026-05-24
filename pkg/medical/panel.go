@@ -25,7 +25,8 @@ type PanelReport struct {
 type PanelRule func(p PatientRecord, now time.Time) []CareGap
 
 // DefaultPanelRules returns the demo rule set: A1c overdue, BP uncontrolled,
-// no recent visit, RPM weight trend for CHF, post-discharge follow-up window.
+// no recent visit, RPM weight trend for CHF, post-discharge follow-up window,
+// asthma without a controller, and overdue ACT score.
 func DefaultPanelRules() []PanelRule {
 	return []PanelRule{
 		a1cOverdueRule,
@@ -33,6 +34,8 @@ func DefaultPanelRules() []PanelRule {
 		annualVisitRule,
 		chfWeightRule,
 		postDischargeFollowUpRule,
+		noControllerPersistentAsthmaRule,
+		actOverdueRule,
 	}
 }
 
@@ -111,6 +114,33 @@ func postDischargeFollowUpRule(p PatientRecord, now time.Time) []CareGap {
 	return nil
 }
 
+func noControllerPersistentAsthmaRule(p PatientRecord, _ time.Time) []CareGap {
+	if !hasCondition(p, "asthma") {
+		return nil
+	}
+	if hasMedClass(p, "inhaled_corticosteroid") {
+		return nil
+	}
+	return []CareGap{{
+		PatientID: p.PatientID, Rule: "no_controller_persistent_asthma", Severity: "urgent",
+		Detail: "Asthma patient with no inhaled corticosteroid controller on med list",
+	}}
+}
+
+func actOverdueRule(p PatientRecord, now time.Time) []CareGap {
+	if !hasCondition(p, "asthma") {
+		return nil
+	}
+	// Illustrative 180-day window — educational demo, not a clinical guideline.
+	if p.LastACTDate.IsZero() || now.Sub(p.LastACTDate) > 180*24*time.Hour {
+		return []CareGap{{
+			PatientID: p.PatientID, Rule: "act_overdue", Severity: "warn",
+			Detail: "Asthma patient with no ACT score in last 180 days",
+		}}
+	}
+	return nil
+}
+
 // BuildPanelReport runs every rule over every patient and aggregates.
 func BuildPanelReport(patients []PatientRecord, rules []PanelRule, now time.Time) PanelReport {
 	rep := PanelReport{
@@ -132,6 +162,15 @@ func BuildPanelReport(patients []PatientRecord, rules []PanelRule, now time.Time
 func hasCondition(p PatientRecord, code string) bool {
 	for _, c := range p.Conditions {
 		if c == code {
+			return true
+		}
+	}
+	return false
+}
+
+func hasMedClass(p PatientRecord, class string) bool {
+	for _, m := range p.Medications {
+		if m.Class == class {
 			return true
 		}
 	}

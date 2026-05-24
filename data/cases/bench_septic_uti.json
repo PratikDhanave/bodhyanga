@@ -1,0 +1,10 @@
+{
+  "case_id": "bench-002",
+  "chief_complaint": "Confusion and fever in elderly patient",
+  "hpi": "82-year-old nursing-home resident with new-onset altered mental status, dysuria, suprapubic tenderness; fever to 38.7°C and rigors over the past 12 hours",
+  "demographics": "82F",
+  "vitals": "T 38.7°C, HR 112, RR 22, SpO2 95% on room air, BP 96/58",
+  "gold_diagnosis": "Urosepsis",
+  "max_cost_usd": 700,
+  "notes": "Synthetic teaching case (septic UTI in elderly). Not derived from any real patient."
+}

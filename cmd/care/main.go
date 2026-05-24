@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/PratikDhanave/bodh/agents"
 	"github.com/PratikDhanave/bodh/pkg/agent"
@@ -19,6 +20,7 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/fhir"
 	"github.com/PratikDhanave/bodh/pkg/governance"
 	"github.com/PratikDhanave/bodh/pkg/hitl"
+	"github.com/PratikDhanave/bodh/pkg/hl7v2"
 	"github.com/PratikDhanave/bodh/pkg/knowledge"
 	"github.com/PratikDhanave/bodh/pkg/medical"
 	"github.com/PratikDhanave/bodh/pkg/observability"
@@ -139,6 +141,46 @@ func main() {
 		writeJSON(w, map[string]string{"status": "queued"})
 	})
 
+	// HL7 v2.x ADT ingress — the "front door" used by most US hospital
+	// integrations. Accepts pipe-delimited messages with either Content-Type
+	// "application/hl7-v2" or "text/plain". Publishes adt_event onto the bus
+	// and responds with an HL7 ACK in the body (AA for accepted, AE for
+	// parse/business errors, HTTP 200 / 400 respectively). No PHI in logs:
+	// we log only the message control id and event type.
+	mux.HandleFunc("/hl7/adt", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "POST only", http.StatusMethodNotAllowed)
+			return
+		}
+		raw, err := readBody(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/hl7-v2")
+		msg, err := hl7v2.ParseMessage(raw)
+		if err != nil {
+			logger.Printf("hl7 adt parse error: %v", err)
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(hl7v2.BuildACK(hl7v2.MSH{}, "AE", err.Error())))
+			return
+		}
+		ev, err := hl7v2.MessageToADTEvent(msg)
+		if err != nil {
+			logger.Printf("hl7 adt map error: control_id=%s trigger=%s err=%v",
+				msg.Header.ControlID, msg.Header.TriggerEvent, err)
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(hl7v2.BuildACK(msg.Header, "AE", err.Error())))
+			return
+		}
+		bus.Publish(r.Context(), agent.NewMessage("user", "readmission_tracker",
+			agent.RoleUser, "adt_event", medical.EncodeADT(ev),
+			map[string]any{"patient_id": ev.PatientID, "hl7_control_id": msg.Header.ControlID}))
+		logger.Printf("hl7 adt accepted: control_id=%s trigger=%s type=%s",
+			msg.Header.ControlID, msg.Header.TriggerEvent, ev.Type)
+		_, _ = w.Write([]byte(hl7v2.BuildACK(msg.Header, "AA", "")))
+	})
+
 	mux.HandleFunc("/rpm/observation", func(w http.ResponseWriter, r *http.Request) {
 		var obs medical.RPMObservation
 		if err := json.NewDecoder(r.Body).Decode(&obs); err != nil {
@@ -243,7 +285,29 @@ func main() {
 	// here unconditionally — cmd/care's hook just goes to the in-process
 	// buffer (no external OTel collector required).
 	_ = os.Setenv("BODH_OTEL_ENABLED", "1")
-	observability.SetLLMOTelHook(traces.record)
+	hook := traces.record
+	// Opt-in OTLP export: when BODH_OTEL_EXPORT=1 (and the binary was built
+	// with -tags otel) ship every LLMTrace to an OTLP/HTTP collector in
+	// addition to the in-process buffer. Endpoint defaults to localhost:4318.
+	if os.Getenv("BODH_OTEL_EXPORT") == "1" {
+		endpoint := envDefault("BODH_OTEL_ENDPOINT", "http://localhost:4318")
+		exp, err := observability.NewOTLPLLMExporter(ctx, endpoint)
+		if err != nil {
+			logger.Printf("[care] OTLP exporter disabled: %v", err)
+		} else {
+			logger.Printf("[care] OTLP exporter enabled → %s", endpoint)
+			hook = func(t observability.LLMTrace) {
+				traces.record(t)
+				exp.Record(t)
+			}
+			defer func() {
+				shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				_ = exp.Shutdown(shutdownCtx)
+			}()
+		}
+	}
+	observability.SetLLMOTelHook(hook)
 
 	rm := newRunManager(bus)
 	api := &apiServer{

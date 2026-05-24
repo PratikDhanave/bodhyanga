@@ -683,16 +683,29 @@ flowchart TB
 Wire OTel export in `cmd/*/main.go`:
 
 ```go
-otel := observability.NewOTLPLLMExporter("http://localhost:4318")
-observability.SetLLMOTelHook(otel.Record)
-defer otel.Shutdown(ctx)
+exp, err := observability.NewOTLPLLMExporter(ctx, "http://localhost:4318")
+if err == nil {
+    observability.SetLLMOTelHook(exp.Record)
+    defer exp.Shutdown(context.Background())
+}
 ```
+
+`cmd/care` already does the wiring — flip on OTLP export with two env vars and the `otel` build tag:
 
 ```bash
-BODH_OTEL_ENABLED=1 go run ./cmd/care
+# 1. populate go.sum with the OTel SDK (one-time, needs network)
+go mod tidy
+
+# 2. run a local collector (any image that listens on :4318/v1/traces works)
+docker run -p 4318:4318 otel/opentelemetry-collector:latest
+
+# 3. launch care with OTLP export on
+BODH_OTEL_EXPORT=1 \
+  BODH_OTEL_ENDPOINT=http://localhost:4318 \
+  go run -tags otel ./cmd/care
 ```
 
-Default builds do **not** link the OTel SDK; tracing is opt-in to keep the dependency graph minimal.
+Default builds do **not** link the OTel SDK — the real exporter lives in `pkg/observability/otlp.go` behind `//go:build otel`; a no-op stub takes its place when the tag is off. `BODH_OTEL_EXPORT` enables OTLP shipping; `BODH_OTEL_ENABLED` (set internally by `cmd/care`) gates the dispatch from `RecordLLMCall` to the installed hook. PHI is never attached to spans — `case_id` is sha256-hashed before becoming a span attribute.
 
 ### LLM variants of other agents
 
@@ -740,7 +753,9 @@ The struct types and factory functions ship today (`agents/diagnostician_{debate
 | `VOYAGE_API_KEY` | Anthropic-path RAG embeddings | (none) | Voyage key for embeddings (Anthropic + Voyage pairing) |
 | `BODH_VOYAGE_EMBED_MODEL` | Voyage embedder | `voyage-3` | Override Voyage embedding model |
 | `BODH_KNOWLEDGE_CORPUS` | RAG | (unset) | Path to corpus JSON. Unset disables RAG entirely. |
-| `BODH_OTEL_ENABLED` | observability | (unset) | `1` forwards `LLMTrace` records to the installed OTel hook |
+| `BODH_OTEL_ENABLED` | observability | (unset) | `1` forwards `LLMTrace` records to the installed OTel hook (set automatically by `cmd/care`) |
+| `BODH_OTEL_EXPORT` | observability | (unset) | `1` enables real OTLP/HTTP export from `cmd/care` (requires `-tags otel` build) |
+| `BODH_OTEL_ENDPOINT` | observability | `http://localhost:4318` | OTLP/HTTP collector endpoint used when `BODH_OTEL_EXPORT=1` |
 
 Full deep-dive: [docs/ai-features.md](docs/ai-features.md). Provider setup: [docs/setup.md](docs/setup.md). Diagrams: [docs/diagrams.md § G](docs/diagrams.md#g-ai-subsystem).
 
@@ -929,7 +944,7 @@ Bodh implements a care-services layer as additional agents on the same bus. They
 
 ### Care-plan templates
 
-`medical.BuildCarePlan(caseID, patientID, condition, now)` returns a deterministic plan. Condition keys: `htn`, `dm`, `chf`, `ckd`, `copd`. Each plan has:
+`medical.BuildCarePlan(caseID, patientID, condition, now)` returns a deterministic plan. Condition keys: `htn`, `dm`, `chf`, `ckd`, `copd`, `asthma`. Each plan has:
 
 - **Goals** (SMART-style — metric, target, unit, window)
 - **Medications** (name, dose, frequency, class)
@@ -950,6 +965,8 @@ Bodh implements a care-services layer as additional agents on the same bus. They
 | `annual_visit_due` | No encounter in 365 d | info |
 | `chf_weight_alert` | CHF patient weight ≥ 190 lb | urgent |
 | `tcm_followup_open` | Discharged 7–30 d ago with no post-discharge visit | urgent |
+| `no_controller_persistent_asthma` | Asthma patient with no `inhaled_corticosteroid` on med list | urgent |
+| `act_overdue` | Asthma patient with no ACT score in last 180 d | warn |
 
 ### Readmission risk
 
