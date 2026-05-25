@@ -302,6 +302,12 @@ func main() {
 	// (BODH_TENANT_ID); a true multi-tenant binary would route per-request.
 	mux.HandleFunc("GET /audit", auditListHandler(auditRec))
 
+	// Right-to-explanation endpoint. Returns a structured, PHI-free
+	// explanation of every agent invocation, every governance decision,
+	// every human review, and the final metrics for a given case.
+	// Aligns with GDPR Article 22(3) + Article 15. See cmd/care/explain.go.
+	mux.HandleFunc("GET /explain/{case_id}", explainHandler(defaultTenant(), auditRec, evalStore, reviews))
+
 	// /api/* routes + SSE + go:embed SPA for the clinician console.
 	traces := newLLMTraceBuffer(500)
 	// Capture every LLMTrace into the buffer so the SPA can show recent calls.
