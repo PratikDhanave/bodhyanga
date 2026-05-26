@@ -10,6 +10,8 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/embeddings"
 	"github.com/PratikDhanave/bodh/pkg/knowledge"
 	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodh/pkg/llm/kronk"
+	"github.com/PratikDhanave/bodh/pkg/observability"
 	"github.com/PratikDhanave/bodh/pkg/tasks"
 	"github.com/PratikDhanave/bodh/pkg/tools"
 )
@@ -20,15 +22,25 @@ const (
 	ProviderLLMAnthropic = "llm-anthropic"
 	ProviderLLMOpenAI    = "llm-openai"
 	ProviderLLMOllama    = "llm-ollama"
+	// ProviderLLMKronk runs Ardan Labs' kronk (in-process llama.cpp) — local
+	// inference, no network egress, no API keys. The package is build-tag
+	// gated (`-tags=kronk`); the default binary's New constructor returns an
+	// error directing the operator to rebuild with the tag.
+	ProviderLLMKronk = "llm-kronk"
 )
 
 // Default model identifiers per provider. Override with BODH_ANTHROPIC_MODEL,
-// BODH_OPENAI_MODEL, or BODH_OLLAMA_MODEL env vars. The Ollama host defaults
-// to llm.OllamaDefaultHost; override with OLLAMA_HOST.
+// BODH_OPENAI_MODEL, BODH_OLLAMA_MODEL, or BODH_KRONK_MODEL env vars. The
+// Ollama host defaults to llm.OllamaDefaultHost; override with OLLAMA_HOST.
 const (
 	DefaultAnthropicModel = "claude-sonnet-4-6"
 	DefaultOpenAIModel    = "gpt-4o"
 	DefaultOllamaModel    = "llama3.2"
+	// DefaultKronkModel matches the example at
+	// https://github.com/ardanlabs/kronk/blob/main/examples/chat/main.go .
+	// Override via BODH_KRONK_MODEL; any kronk-compatible model source id
+	// works (Qwen, Llama, Phi, etc.).
+	DefaultKronkModel = "unsloth/Qwen3-0.6B-Q8_0"
 )
 
 // Default embedding model identifiers used by DefaultEmbedderForProvider and
@@ -200,8 +212,27 @@ func buildDiagnostician(provider string, store knowledge.Store) (agent.Agent, er
 			Knowledge: store,
 		}, nil
 
+	case ProviderLLMKronk:
+		// kronk runs llama.cpp in-process. The package is build-tag gated
+		// (`-tags=kronk`); in the default build the stub constructor below
+		// returns an error and the factory surfaces it — callers either
+		// rebuild with the tag or accept the error and fall back to the
+		// rule path themselves. Either way, the case finalizes (AGENTS.md
+		// invariant #3 — the fallback IS the contract).
+		model := envDefault("BODH_KRONK_MODEL", DefaultKronkModel)
+		logger := observability.NewStdLogger()
+		client, err := kronk.New(model, logger, logger)
+		if err != nil {
+			return nil, fmt.Errorf("kronk diagnostician: %w", err)
+		}
+		return &LLMDiagnostician{
+			Client:    client,
+			Fallback:  &DiagnosticianAgent{},
+			Knowledge: store,
+		}, nil
+
 	default:
-		return nil, fmt.Errorf("unknown diagnostician provider %q (expected rule|llm-anthropic|llm-openai|llm-ollama)", provider)
+		return nil, fmt.Errorf("unknown diagnostician provider %q (expected rule|llm-anthropic|llm-openai|llm-ollama|llm-kronk)", provider)
 	}
 }
 
@@ -253,6 +284,11 @@ func DefaultEmbedderForProvider(provider string) (embeddings.Embedder, error) {
 			return nil, nil
 		}
 		return embeddings.NewVoyage(key, envDefault("BODH_VOYAGE_EMBED_MODEL", DefaultVoyageEmbedModel)), nil
+	case ProviderLLMKronk:
+		// kronk runs llama.cpp in-process and ships no first-class embedding
+		// adapter today. The diagnostician still works without RAG; the
+		// follow-up "kronk embeddings" track will wire this when available.
+		return nil, nil
 	default:
 		return nil, fmt.Errorf("unknown diagnostician provider %q", provider)
 	}
@@ -305,8 +341,18 @@ func llmClientForProviderModel(provider, model string) (llm.Client, error) {
 			model = envDefault("BODH_OLLAMA_MODEL", DefaultOllamaModel)
 		}
 		return llm.NewOllama(host, model), nil
+	case ProviderLLMKronk:
+		// kronk has no API key. In the default build the stub constructor
+		// returns a "requires build tag" error and the questioner / triage
+		// / verifier callers handle the error like any other provider
+		// startup failure.
+		if model == "" {
+			model = envDefault("BODH_KRONK_MODEL", DefaultKronkModel)
+		}
+		logger := observability.NewStdLogger()
+		return kronk.New(model, logger, logger)
 	default:
-		return nil, fmt.Errorf("unknown LLM provider %q (expected llm-anthropic|llm-openai|llm-ollama)", provider)
+		return nil, fmt.Errorf("unknown LLM provider %q (expected llm-anthropic|llm-openai|llm-ollama|llm-kronk)", provider)
 	}
 }
 
@@ -396,7 +442,7 @@ func NewQuestioner(provider string) (agent.Agent, error) {
 	switch provider {
 	case "", ProviderRule:
 		return &QuestionerAgent{}, nil
-	case ProviderLLMAnthropic, ProviderLLMOpenAI, ProviderLLMOllama:
+	case ProviderLLMAnthropic, ProviderLLMOpenAI, ProviderLLMOllama, ProviderLLMKronk:
 		client, err := llmClientForProvider(provider)
 		if err != nil {
 			return nil, err
@@ -406,7 +452,7 @@ func NewQuestioner(provider string) (agent.Agent, error) {
 			Fallback: &QuestionerAgent{},
 		}, nil
 	default:
-		return nil, fmt.Errorf("unknown questioner provider %q (expected rule|llm-anthropic|llm-openai|llm-ollama)", provider)
+		return nil, fmt.Errorf("unknown questioner provider %q (expected rule|llm-anthropic|llm-openai|llm-ollama|llm-kronk)", provider)
 	}
 }
 
@@ -419,7 +465,7 @@ func NewInboxTriage(provider string, taskQueue *tasks.Queue) (agent.Agent, error
 	switch provider {
 	case "", ProviderRule:
 		return &InboxTriageAgent{Tasks: taskQueue}, nil
-	case ProviderLLMAnthropic, ProviderLLMOpenAI, ProviderLLMOllama:
+	case ProviderLLMAnthropic, ProviderLLMOpenAI, ProviderLLMOllama, ProviderLLMKronk:
 		client, err := llmClientForProvider(provider)
 		if err != nil {
 			return nil, err
@@ -430,7 +476,7 @@ func NewInboxTriage(provider string, taskQueue *tasks.Queue) (agent.Agent, error
 			Tasks:    taskQueue,
 		}, nil
 	default:
-		return nil, fmt.Errorf("unknown inbox_triage provider %q (expected rule|llm-anthropic|llm-openai|llm-ollama)", provider)
+		return nil, fmt.Errorf("unknown inbox_triage provider %q (expected rule|llm-anthropic|llm-openai|llm-ollama|llm-kronk)", provider)
 	}
 }
 
@@ -444,7 +490,7 @@ func NewReasoningVerifier(provider string, hitl bool) (agent.Agent, error) {
 	switch provider {
 	case "", ProviderRule:
 		return &ReasoningVerifierAgent{HITL: hitl}, nil
-	case ProviderLLMAnthropic, ProviderLLMOpenAI, ProviderLLMOllama:
+	case ProviderLLMAnthropic, ProviderLLMOpenAI, ProviderLLMOllama, ProviderLLMKronk:
 		client, err := llmClientForProvider(provider)
 		if err != nil {
 			return nil, err
@@ -455,6 +501,6 @@ func NewReasoningVerifier(provider string, hitl bool) (agent.Agent, error) {
 			HITL:     hitl,
 		}, nil
 	default:
-		return nil, fmt.Errorf("unknown reasoning_verifier provider %q (expected rule|llm-anthropic|llm-openai|llm-ollama)", provider)
+		return nil, fmt.Errorf("unknown reasoning_verifier provider %q (expected rule|llm-anthropic|llm-openai|llm-ollama|llm-kronk)", provider)
 	}
 }

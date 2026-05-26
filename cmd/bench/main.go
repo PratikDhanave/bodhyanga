@@ -9,7 +9,7 @@
 //
 //	go run ./cmd/bench
 //	go run ./cmd/bench -manifest=data/cases/manifest.json
-//	go run ./cmd/bench -providers=rule,llm-anthropic,llm-openai,llm-ollama
+//	go run ./cmd/bench -providers=rule,llm-anthropic,llm-openai,llm-ollama,llm-kronk
 //	go run ./cmd/bench -fail-on-regression
 //	go run ./cmd/bench -update-baseline
 //	go run ./cmd/bench -json   # machine-readable output
@@ -138,7 +138,7 @@ func main() {
 	outJSON := flag.Bool("json", false, "emit JSON report on stdout instead of the table")
 	timeout := flag.Duration("timeout", 5*time.Second, "wait per case for the pipeline to finalize")
 	providersFlag := flag.String("providers", agents.ProviderRule,
-		"comma-separated diagnostician providers: rule | llm-anthropic | llm-openai | llm-ollama")
+		"comma-separated diagnostician providers: rule | llm-anthropic | llm-openai | llm-ollama | llm-kronk")
 	baselinePath := flag.String("baseline", "data/cases/baseline.json", "path to per-provider baseline thresholds")
 	failOnRegression := flag.Bool("fail-on-regression", false, "exit non-zero when any provider falls below its baseline")
 	updateBaseline := flag.Bool("update-baseline", false, "overwrite -baseline with current results and exit 0")

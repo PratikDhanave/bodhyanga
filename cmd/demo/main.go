@@ -29,7 +29,7 @@ import (
 func main() {
 	casePath := flag.String("case", "", "path to case JSON (e.g. data/cases/demo_chf.json)")
 	provider := flag.String("diagnostician", agents.ProviderRule,
-		"diagnostician backend: rule | llm-anthropic | llm-openai | llm-ollama")
+		"diagnostician backend: rule | llm-anthropic | llm-openai | llm-ollama | llm-kronk")
 	flag.Parse()
 
 	ctx := context.Background()
