@@ -188,11 +188,12 @@ go run ./cmd/bench -manifest=data/cases/manifest.json         # explicit manifes
 go run ./cmd/bench -providers=rule -fail-on-regression        # CI gate against baseline
 go run ./cmd/bench -providers=rule -update-baseline           # refresh after intentional changes
 
-# LLM-backed diagnostician (Claude / GPT / local Ollama) with rule-based fallback
+# LLM-backed diagnostician (Claude / GPT / local Ollama / in-process kronk) with rule-based fallback
 export ANTHROPIC_API_KEY=sk-...          # or OPENAI_API_KEY=sk-...
 go run ./cmd/demo  -diagnostician=llm-anthropic
 go run ./cmd/care  -diagnostician=llm-openai -addr=:8088
 ollama pull llama3.2 && go run ./cmd/demo -diagnostician=llm-ollama
+go run -tags kronk ./cmd/demo -diagnostician=llm-kronk    # in-process llama.cpp via Ardan Labs kronk; no daemon, no network
 go run ./cmd/bench -providers=rule,llm-anthropic,llm-openai,llm-ollama  # side-by-side compare
 
 # Operator CLI — manage reviews / tasks / notifications against a running cmd/care
@@ -225,13 +226,14 @@ You should see logs like:
 [bodh] [supervisor] gold standard: Community-acquired pneumonia | match=true
 ```
 
-**LLM diagnostician.** Pass `-diagnostician=llm-anthropic`, `-diagnostician=llm-openai`, or `-diagnostician=llm-ollama` to `cmd/demo`, `cmd/care`, or `cmd/bench` to route the diagnosis step through an LLM. The agent emits a structured `DiagnosisProposal` matching the same JSON shape as the rule-based one, so the rest of the pipeline (cost guardian, reasoning verifier, HITL) is unchanged. If the LLM call fails (timeout, bad JSON, low confidence, transport error), the agent falls back to the rule-based diagnostician — the case always finalizes.
+**LLM diagnostician.** Pass `-diagnostician=llm-anthropic`, `-diagnostician=llm-openai`, `-diagnostician=llm-ollama`, or `-diagnostician=llm-kronk` (build with `-tags=kronk` for the in-process llama.cpp provider via [Ardan Labs kronk](https://github.com/ardanlabs/kronk) — no daemon, no API call, no PHI leaves the box) to `cmd/demo`, `cmd/care`, or `cmd/bench` to route the diagnosis step through an LLM. The agent emits a structured `DiagnosisProposal` matching the same JSON shape as the rule-based one, so the rest of the pipeline (cost guardian, reasoning verifier, HITL) is unchanged. If the LLM call fails (timeout, bad JSON, low confidence, transport error), the agent falls back to the rule-based diagnostician — the case always finalizes.
 
 Required env vars:
 
 - `ANTHROPIC_API_KEY` — for `llm-anthropic`
 - `OPENAI_API_KEY` — for `llm-openai`
 - (no key) — for `llm-ollama`; uses the local Ollama server, set `OLLAMA_HOST` to override `http://localhost:11434`
+- (no key, build tag `kronk`) — for `llm-kronk`; pulls the model into the kronk cache on first run, set `BODH_KRONK_MODEL` to override `unsloth/Qwen3-0.6B-Q8_0`
 
 Optional model overrides: `BODH_ANTHROPIC_MODEL` (default `claude-sonnet-4-6`), `BODH_OPENAI_MODEL` (default `gpt-4o`), `BODH_OLLAMA_MODEL` (default `llama3.2`). See `.env.example`.
 
