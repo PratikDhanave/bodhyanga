@@ -54,6 +54,11 @@ Beyond this README, the [docs/](docs/) tree has deep dives for each subsystem:
 
 | Doc | What it covers |
 |---|---|
+| **[docs/aigp-governance-mapping.md](docs/aigp-governance-mapping.md)** | **NEW** — IAPP AIGP body-of-knowledge mapping with practice scenarios, gap analysis, and a cross-reference index from AIGP codes to Bodh files. |
+| **[docs/agent-interop.md](docs/agent-interop.md)** | **NEW** — MCP / A2A / token-exchange / SPIFFE proposals informed by *Generative AI on Kubernetes* Ch. 9. |
+| **[docs/aiia-template.md](docs/aiia-template.md)** | **NEW** — Fillable AI Impact Assessment template for clinically-consequential PRs. |
+| **[docs/incident-playbook.md](docs/incident-playbook.md)** | **NEW** — Six AI-specific incident runbooks (clinically dangerous output, prompt injection, RAG poisoning, silent model change, audit integrity, tenant isolation breach). |
+| **[docs/model-cards/](docs/model-cards/)** | **NEW** — Per Mitchell et al. (2018). One card per LLM-backed agent variant + rule-based diagnostician. |
 | [docs/architecture.md](docs/architecture.md) | Deep MARA mapping — five core interfaces, orchestrator closure (the 30-line one), bus semantics, registry, HITL pattern, LLM fallback contract, agentic patterns, audit pipeline, persistence, concurrency, design rules |
 | [docs/agents.md](docs/agents.md) | Every agent's contract — ID, capabilities, input/output types, shared state, HITL gate, failure modes; full panel + care services + HITL |
 | [docs/api.md](docs/api.md) | Every HTTP endpoint — patient registry, care services, events, FHIR, HL7 v2, HITL reviews, audit, reads; full message-type catalog and metadata key reference |
@@ -1927,13 +1932,14 @@ All endpoints accept and return JSON. **No authentication is enforced today; do 
 
 See [pkg/hl7v2/](pkg/hl7v2/) for segment support, custom-delimiter handling, and the ACK format. Full reference in [docs/api.md § HL7 v2](docs/api.md#hl7-v2).
 
-#### Audit (PR #12)
+#### Audit (PR #12) + Right-to-explanation
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/audit` | Read the audit log. `?kind=message\|policy_decision\|review_decision\|agent_error`, `?limit=N` (default 100). |
+| `GET` | `/explain/{case_id}` | **NEW** — Structured PHI-free explanation of every agent hop, policy decision, human review, and final metrics for a given case. Aligns with GDPR Article 22(3) + Article 15. |
 
-The event schema is deliberately narrow ("enough to reconstruct, never enough to leak") — see [docs/governance.md § Audit events](docs/governance.md#audit-events).
+The event schema is deliberately narrow ("enough to reconstruct, never enough to leak") — see [docs/governance.md § Audit events](docs/governance.md#audit-events). The right-to-explanation endpoint is derived purely from `audit.Recorder` + `eval.Store` — it inherits the same PHI-free guarantee.
 
 #### HITL reviews
 
