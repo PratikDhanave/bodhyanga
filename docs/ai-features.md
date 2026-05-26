@@ -85,6 +85,61 @@ flowchart TB
 
 ---
 
+## Multi-model pool (`pkg/llm/pool`)
+
+### Purpose
+Bodh on-premise deployments commonly need several models resident at once — a chat diagnostician, a vision diagnostician, and an embedding model — on a single, finite GPU. The `pkg/llm/pool` package keeps `llm.Client` instances in a refcounted, LRU + TTL-evicted cache keyed by `ModelSpec{Provider, Model, Tag}`. It is the foundation for the kronk on-prem track (#21).
+
+The pool is provider-agnostic. The same shape works for cloud providers (where eviction is a no-op) and for kronk (where eviction unloads the model from GPU memory).
+
+### How to enable
+
+```bash
+# Opt-in. With BODH_LLM_POOL unset, cmd/care uses the existing
+# single-client path and the pool is never constructed.
+export BODH_LLM_POOL=1
+
+# Bound the number of resident clients. 0 = unbounded (cloud default).
+export BODH_LLM_POOL_MAX=3
+
+# Idle TTL — refcount==0 entries older than this are evicted.
+# 0 disables TTL eviction (default).
+export BODH_LLM_POOL_TTL=15m
+
+go run ./cmd/care -diagnostician=llm-anthropic
+```
+
+Operator-tuning notes live in [operations.md](operations.md#multi-model-pool).
+
+### Internals
+- `ModelSpec{Provider, Model, Tag}` is the cache key. `Tag` is the per-checkpoint hash (kronk's `Q4_K_M`, `Q8_0`, etc.) — for cloud providers it can stay empty.
+- `Factory func(ctx, spec) (llm.Client, io.Closer, error)` is what the caller supplies. The `Closer` is what the pool invokes when it evicts.
+- `Get(ctx, spec)` returns the cached client or constructs one via the factory. Each `Get` increments a refcount; the caller pairs it with `Release(spec)`. Pinned (refcount>0) entries are never evicted.
+- `MaxResident` bounds the cache size. When the pool is full of refcount-0 entries, the LRU entry is evicted to make room. When every entry is pinned, `Get` blocks on `sync.Cond` until a `Release` fires or `ctx` is cancelled.
+- `TTL > 0` starts a background sweeper goroutine that evicts idle entries older than the TTL. `SweepInterval` defaults to `TTL / 4`.
+- `Stats()` returns hit / miss / eviction counters and a hit rate — wired to the bench reporter and to `/healthz` in cmd/care.
+- The pool's factory routes by `ModelSpec.Provider`. `"anthropic"` / `"openai"` / `"ollama"` go through the standard cloud constructors with a no-op closer; `"kronk"` goes through `pool.NewKronkFactory(...)`.
+
+### PHI surface
+The pool only sees `ModelSpec` (provider + model + tag). It never sees message content, never logs prompts, never persists requests. This is the AGENTS.md PHI-free-audit invariant applied to the shared-infra layer.
+
+### Kronk integration
+
+The kronk Factory lives behind `//go:build kronk` so default builds and CI do not pull kronk's GPU bindings. With the default build, `pool.NewKronkFactory(...)` returns a Factory that errors with `pool.ErrKronkNotBuilt`. Rebuild with:
+
+```bash
+go build -tags kronk ./cmd/care
+```
+
+to enable on-prem kronk routing.
+
+### Caveats
+- The pool itself is concurrency-safe but the underlying `llm.Client` implementations are expected to be safe for concurrent `Complete` calls (they all use `http.Client`, which is). For kronk handles the same contract applies — one resident handle serves all concurrent agents on that spec.
+- Eviction calls `Closer.Close()` under the pool lock. Closers are expected to be fast (kronk's `Unload` returns once GPU memory is released). A slow closer holds the lock and blocks every other `Get`.
+- The pool is not a load balancer. One spec maps to one resident client; sharding across multiple instances of the same model belongs at a layer above.
+
+---
+
 ## LLM-backed diagnostician
 
 ### Purpose
