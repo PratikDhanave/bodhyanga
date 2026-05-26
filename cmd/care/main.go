@@ -40,7 +40,7 @@ import (
 func main() {
 	addr := flag.String("addr", ":8088", "HTTP listen address")
 	provider := flag.String("diagnostician", agents.ProviderRule,
-		"diagnostician backend: rule | llm-anthropic | llm-openai | llm-ollama")
+		"diagnostician backend: rule | llm-anthropic | llm-openai | llm-ollama | llm-kronk")
 	flag.Parse()
 
 	ctx := context.Background()
