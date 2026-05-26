@@ -361,6 +361,47 @@ If you want cross-provider failover (Anthropic outage → OpenAI), implement a `
 
 ---
 
+## Multi-model pool
+
+When Bodh runs on-premise with kronk (local llama.cpp), several models share one GPU — typically a chat diagnostician, a vision diagnostician, and an embedding model. The pool in `pkg/llm/pool` keeps clients resident, with LRU + TTL eviction so idle models release their GPU slots. The pool is opt-in and provider-agnostic; with the default `BODH_LLM_POOL` unset, cmd/care uses the existing single-client path unchanged. See [ai-features.md § Multi-model pool](ai-features.md#multi-model-pool-pkgllmpool) for the design.
+
+### Environment variables
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `BODH_LLM_POOL` | unset | Set to `1` to enable the pool in `cmd/care`. |
+| `BODH_LLM_POOL_MAX` | `0` (unbounded) | Maximum resident clients. For kronk, set to the number of model slots the GPU can hold simultaneously (typically 2–4 on a 24 GB card). |
+| `BODH_LLM_POOL_TTL` | `0` (no TTL) | Idle-eviction interval, parsed by `time.ParseDuration` (e.g. `15m`, `1h`). For kronk, a TTL of 10–30 minutes is typical so a model used for one care episode releases its slot before the next shift. |
+| `BODH_KRONK_MODELS_DIR` | unset | Directory containing the `.gguf` checkpoint files. The pool loads `<spec.Tag>.gguf` from this directory. |
+| `BODH_KRONK_CTX` | `0` (runtime default) | Max context tokens for kronk-loaded models. |
+| `BODH_KRONK_GPU_LAYERS` | `-1` (all) | Number of model layers offloaded to GPU. `0` runs entirely on CPU. |
+
+### MaxResident sizing for GPU
+
+A reasonable starting point on a single-GPU host:
+
+| GPU memory | Suggested `BODH_LLM_POOL_MAX` | Notes |
+|---|---|---|
+| 12 GB (consumer) | `1` | Run one model at a time; rely on TTL eviction to swap. |
+| 24 GB (RTX 4090 / A10) | `2` | Chat + embeddings comfortably; vision must swap in. |
+| 40 GB (A100 40 GB) | `3` | Chat + vision + embeddings resident; TTL of 30 min is fine. |
+| 80 GB (A100 / H100 80 GB) | `4`–`6` | Multi-tier cascade resident; TTL becomes optional. |
+
+The exact number depends on model size and quantization. Q4_K_M weights run roughly 0.6× the FP16 footprint; Q8_0 is roughly 1.1×. Always leave headroom for the KV cache (a 32k context on a 70B model is its own ~3 GB).
+
+### Operational signals
+
+The pool exposes `Stats()` (resident count, hits, misses, evictions, last-eviction time, hit rate). When the rate of evictions stays high under steady load, `BODH_LLM_POOL_MAX` is too small for the workload — either raise it or accept the slowdown. When hit rate stays below 80%, the workload is touching more distinct specs than the pool can keep; consider sharding by tenant or by case-type.
+
+### Failure modes
+
+- **Factory error on miss** — `Get` returns the wrapped error. The pool does not retry; the caller (typically `LLMDiagnostician`) falls through to the rule-based agent per the LLM fallback contract.
+- **`pool.ErrKronkNotBuilt`** — the binary was not compiled with `-tags kronk` but a kronk spec was requested. Operator action: rebuild with the tag, or remove the `"kronk"` route from the deployment.
+- **Slow `Closer.Close()`** — closers are called under the pool lock. A kronk Unload that takes 5+ seconds will visibly block other `Get` calls. Tune kronk's `unload_timeout` to fail fast and log the orphaned GPU slot.
+- **`Get` blocked on full pool** — every entry is pinned. Usually means every agent thread is holding a `Client` without `Release`; check for missing `defer pool.Release(spec)` in custom factories.
+
+---
+
 ## SLI / SLO recommendations
 
 Beyond the LLM-specific SLOs above, for the platform layer:
