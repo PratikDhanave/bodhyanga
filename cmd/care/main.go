@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -26,6 +27,8 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/hitl"
 	"github.com/PratikDhanave/bodh/pkg/hl7v2"
 	"github.com/PratikDhanave/bodh/pkg/knowledge"
+	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodh/pkg/llm/pool"
 	"github.com/PratikDhanave/bodh/pkg/medical"
 	"github.com/PratikDhanave/bodh/pkg/observability"
 	"github.com/PratikDhanave/bodh/pkg/orchestration"
@@ -43,6 +46,16 @@ func main() {
 	ctx := context.Background()
 
 	store := loadRAGStore(ctx, *provider)
+
+	// Multi-model pool. Opt-in via BODH_LLM_POOL=1. The pool sits beside the
+	// existing per-agent llm.Client construction — it's the foundation for
+	// the kronk on-prem track (#21), where several models share one GPU and
+	// need refcounted, TTL-evicted residency. With BODH_LLM_POOL unset, the
+	// existing single-client path is unchanged.
+	llmPool := maybeStartLLMPool()
+	if llmPool != nil {
+		defer llmPool.Close()
+	}
 
 	diag, err := agents.NewDiagnosticianWithKnowledge(*provider, store)
 	if err != nil {
@@ -445,6 +458,96 @@ func metaFromBody(body string) map[string]any {
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+// noopCloser is what the pool gets back for cloud-provider clients: nothing
+// to release on eviction, since the underlying http.Client is GC-managed.
+// Kept as a named type (rather than io.NopCloser, which is for ReadClosers)
+// so the intent is clear at call sites.
+type noopCloser struct{}
+
+func (noopCloser) Close() error { return nil }
+
+// maybeStartLLMPool constructs a pool when BODH_LLM_POOL=1 and returns it
+// (or nil). The pool routes by ModelSpec.Provider: "kronk" specs go through
+// the kronk Factory (which errors with ErrKronkNotBuilt unless the binary
+// was built with -tags kronk); cloud specs go through the standard llm
+// constructors. TTL and MaxResident come from env vars so operators can
+// tune GPU sizing without recompiling.
+//
+// See docs/operations.md ("Multi-model pool") for the env vars and tuning
+// notes; see docs/ai-features.md for the design.
+func maybeStartLLMPool() *pool.Pool {
+	if os.Getenv("BODH_LLM_POOL") != "1" {
+		return nil
+	}
+	maxResident := envInt("BODH_LLM_POOL_MAX", 0)
+	ttl := envDuration("BODH_LLM_POOL_TTL", 0)
+	logger := observability.NewStdLogger()
+	kronkFactory := pool.NewKronkFactory(pool.KronkOptions{
+		ModelsDir:        os.Getenv("BODH_KRONK_MODELS_DIR"),
+		MaxContextTokens: envInt("BODH_KRONK_CTX", 0),
+		GPULayers:        envInt("BODH_KRONK_GPU_LAYERS", -1),
+	})
+	factory := func(ctx context.Context, spec pool.ModelSpec) (llm.Client, io.Closer, error) {
+		switch spec.Provider {
+		case "kronk":
+			return kronkFactory(ctx, spec)
+		case "anthropic":
+			key := os.Getenv("ANTHROPIC_API_KEY")
+			if key == "" {
+				return nil, nil, fmt.Errorf("pool: ANTHROPIC_API_KEY not set")
+			}
+			return llm.NewAnthropic(key, spec.Model), noopCloser{}, nil
+		case "openai":
+			key := os.Getenv("OPENAI_API_KEY")
+			if key == "" {
+				return nil, nil, fmt.Errorf("pool: OPENAI_API_KEY not set")
+			}
+			return llm.NewOpenAI(key, spec.Model), noopCloser{}, nil
+		case "ollama":
+			return llm.NewOllama(os.Getenv("OLLAMA_HOST"), spec.Model), noopCloser{}, nil
+		default:
+			return nil, nil, fmt.Errorf("pool: unknown provider %q", spec.Provider)
+		}
+	}
+	p := pool.NewPool(factory, pool.Options{
+		MaxResident: maxResident,
+		TTL:         ttl,
+		Logger:      logger,
+	})
+	logger.Printf("[care] llm pool: enabled (max_resident=%d ttl=%s)", maxResident, ttl)
+	return p
+}
+
+// envInt reads an integer-valued env var, returning the default when unset
+// or unparseable. Kept here rather than in a shared util because it's only
+// used by the pool wiring.
+func envInt(key string, def int) int {
+	v := os.Getenv(key)
+	if v == "" {
+		return def
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return def
+	}
+	return n
+}
+
+// envDuration reads a duration env var (e.g. "5m", "30s"). Returns the
+// default on missing or malformed values — failing soft is correct here,
+// the pool just falls back to no-TTL behaviour.
+func envDuration(key string, def time.Duration) time.Duration {
+	v := os.Getenv(key)
+	if v == "" {
+		return def
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil {
+		return def
+	}
+	return d
 }
 
 // loadRAGStore builds the knowledge.Store used by the diagnostician when
