@@ -1,5 +1,29 @@
 package agents
 
+// File diagnostician.go: the rule-based diagnostician agent — the
+// deterministic floor under every LLM-backed diagnostic variant. Every
+// LLMDiagnostician / DebateDiagnostician / ReflexionDiagnostician /
+// CascadeDiagnostician in agents/*.go falls back to inferDiagnosis here
+// on timeout, malformed JSON, low confidence, hallucination check
+// failure, or refusal phrase (see docs/architecture.md § LLM agent
+// fallback contract). So this floor IS the SLO — if this file's
+// accuracy drops, every degraded clinical case lands in a worse place.
+//
+// History: PR #11 lifted the bench-suite accuracy from 42.9% → 85.7% by
+// adding the specialty rules below (ACS, sepsis, DKA, CHF) plus the
+// "marker-after" semantics fix in extractFirstNumber. See
+// bodh-linkedin/01-bench-42-to-85.md for the full field report —
+// essential reading before touching any threshold here.
+//
+// **Every numeric threshold in this file is illustrative — educational
+// demo, not a clinical guideline.** The textbook-reasonable cutoffs
+// (troponin > 0.04 ng/mL, BNP > 400, lactate > 2, glucose > 250, bicarb
+// < 18, WBC > 12K) all elide real clinical context: Sepsis-3 + qSOFA,
+// the Fourth Universal Definition of MI, ADA DKA criteria, Framingham
+// CHF criteria. This file is intentionally simple so it can be reasoned
+// about; a clinical-grade engine would be 100× larger and require
+// formal validation per FDA SaMD guidance.
+
 import (
 	"context"
 	"encoding/json"
@@ -11,18 +35,37 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/medical"
 )
 
-// DiagnosticianAgent implements MAI-DxO "Provide Diagnosis" from accumulated evidence.
+// DiagnosticianAgent implements MAI-DxO "Provide Diagnosis" from
+// accumulated evidence.
+//
+// Zero-value-usable: no fields, no construction. The LLM-backed variants
+// (e.g. agents/diagnostician_llm.go) hold a *DiagnosticianAgent as their
+// Fallback so they can call into this rule engine when the model path
+// fails. Hence the methods here are all on a pointer receiver and the
+// inferDiagnosis function is package-level — both shapes are reused by
+// the fallback path.
 type DiagnosticianAgent struct{}
 
+// ID matches what test_planner / supervisor route to. Hard-coded peer
+// references in agents/supervisor.go routeNext use this exact string.
 func (a *DiagnosticianAgent) ID() string   { return "diagnostician" }
 func (a *DiagnosticianAgent) Name() string { return "Diagnostician" }
 func (a *DiagnosticianAgent) Capabilities() []string {
 	return []string{"provide_diagnosis", "differential_diagnosis"}
 }
 
+// HandleMessage runs the rule engine over the accumulated CaseState and
+// sends a DiagnosisProposal to reasoning_verifier — never directly to
+// the supervisor. The verifier's HITL gate (when HITL=true) is what
+// expresses 21 CFR §3060 criterion 4 in code; routing through verifier
+// preserves that contract on the rule path too.
 func (a *DiagnosticianAgent) HandleMessage(ctx context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {
 	state, err := medical.DecodeState(msg.Content)
 	if err != nil {
+		// Malformed case_state JSON. Returning the error here lets
+		// the orchestrator emit a KindAgentError audit event so a
+		// human can investigate; the alternative (swallow + Undiff)
+		// would silently degrade the case without operator signal.
 		return nil, err
 	}
 
@@ -31,10 +74,21 @@ func (a *DiagnosticianAgent) HandleMessage(ctx context.Context, msg agent.Messag
 	env.Logf("[diagnostician] diagnosis=%q confidence=%.0f%%", proposal.Diagnosis, proposal.Confidence*100)
 	env.Logf("[diagnostician] rationale: %s", proposal.Rationale)
 
+	// The proposal is the verifier's input; the case state goes along
+	// for the ride in metadata so the verifier can ground its judgement
+	// against the same facts the diagnostician reasoned from.
 	content, _ := json.Marshal(proposal)
 	stateContent := medical.EncodeState(state)
 
 	// Verify reasoning before finalizing (MAI-DxO self-check).
+	// Two concerns this routing solves:
+	//   1) The reasoning_verifier (with HITL=true wiring) is what
+	//      gates the diagnosis for clinical review — the 21 CFR §3060
+	//      criterion 4 enforcement seam.
+	//   2) Self-verification surfaces obvious contradictions (low
+	//      confidence + sweeping diagnosis, empty rationale,
+	//      rationale-doesn't-match-state) before the supervisor logs
+	//      a final answer.
 	verify := agent.NewMessage(
 		a.ID(),
 		"reasoning_verifier",
@@ -46,12 +100,53 @@ func (a *DiagnosticianAgent) HandleMessage(ctx context.Context, msg agent.Messag
 	return []agent.Message{verify}, nil
 }
 
-// inferDiagnosis applies specialty rules in order of clinical specificity. The
-// first matching rule wins. Confidence values and numeric thresholds (BNP>400,
-// lactate>2, glucose>250, bicarb<18, troponin>0.04) are textbook-illustrative
-// only — NOT clinical guidelines and not intended to drive real care.
+// inferDiagnosis applies specialty rules in order of clinical specificity.
+// The first matching rule wins. Confidence values and numeric thresholds
+// (BNP>400, lactate>2, glucose>250, bicarb<18, troponin>0.04, WBC>12K)
+// are textbook-illustrative only — NOT clinical guidelines and not
+// intended to drive real care.
+//
+// Why ordered-first-wins rather than a scoring engine: keeps the engine
+// trivially auditable. The orchestrator's audit log records the message
+// hop; this function's per-branch Rationale string is the human-readable
+// "why" attached to the proposal; together they reconstruct the
+// reasoning. A confidence-weighted scoring engine would obscure that
+// trace for marginal accuracy gain at the demo's stakes.
+//
+// Order rationale (high-specificity-first to avoid false fires from the
+// CAP catch-all):
+//
+//	1) ACS    — troponin is highly specific; if it's elevated, fire first.
+//	2) DKA    — triple-criteria (glucose + bicarb + ketones) is hard to
+//	            false-fire from other conditions.
+//	3) Sepsis — lactate + WBC; common signals so guarded by condition tag.
+//	4) CHF    — BNP threshold OR RPM-alert pattern.
+//	5) CAP    — leukocytosis + infiltrate; the legacy default rule and
+//	            the easiest to false-fire, so last.
+//	6) (fall) — low-confidence Undifferentiated; verifier may reject.
 func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
 	// 1. ACS — elevated troponin on the order.
+	//
+	// Trigger: state.TestResults["troponin_i"] contains "elevated" OR
+	// a numeric value > 0.04 ng/mL.
+	//
+	// **Illustrative threshold only:** 0.04 ng/mL is the textbook
+	// "above 99th percentile of healthy reference" cutoff for
+	// non-contemporary troponin assays. Real clinical use requires
+	// the Fourth Universal Definition of MI (high-sensitivity
+	// troponin trends, rise-and-fall pattern, ECG changes, clinical
+	// context). Not a clinical guideline.
+	//
+	// Signal source: test_planner.simulatedTestResult("troponin_i",
+	// "acs") returns "elevated 5.2 ng/mL" when state.Condition=="acs"
+	// (see bodh-linkedin/01-bench-42-to-85.md § Step 3 for the
+	// rationale on condition-aware simulated labs). Real lab feeds
+	// replace this in production.
+	//
+	// Returns Confidence=0.85 — chosen so the reasoning_verifier's
+	// 0.5 demo threshold passes comfortably, leaving the HITL gate
+	// (criterion 4) as the safety net for the actual clinical
+	// decision.
 	if isTroponinElevated(state) {
 		return medical.DiagnosisProposal{
 			Diagnosis:    "Acute coronary syndrome (NSTEMI)",
@@ -62,9 +157,33 @@ func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
 	}
 
 	// 2. DKA — hyperglycemia + low bicarb + positive ketones.
-	// Thresholds glucose>250 and bicarb<18 are illustrative cutoffs only.
+	//
+	// All three criteria must hold:
+	//   - glucose  > 250 mg/dL    (illustrative cutoff; ADA uses >250)
+	//   - bicarb   < 18 mEq/L     (illustrative; ADA uses <18 for
+	//                              moderate DKA, <10 severe)
+	//   - urine ketones large / 2+ / 3+ (qualitative result string)
+	//
+	// **Illustrative thresholds only.** Real ADA DKA diagnosis also
+	// requires anion gap > 10–12, serum / urine ketones positive,
+	// and clinical context (insulin deficiency state). NOT a
+	// clinical guideline.
+	//
+	// Signal source: test_planner orders BMP, urine_ketones, ABG for
+	// the "dka" condition; simulatedTestResult populates "Glucose
+	// 412 mg/dL ... bicarbonate 12" in BMP text, "ketones 3+ large"
+	// in urine. Extraction relies on the **marker-after semantics**
+	// in extractFirstNumber — see that function's comment for the
+	// PR #11 bug fix.
+	//
+	// Returns Confidence=0.88 (slightly higher than ACS because the
+	// triple-criteria match is rare on false-positive).
 	if glucose, ok := extractFirstNumber(state.TestResults["basic_metabolic_panel"], "glucose"); ok && glucose > 250 {
 		if bicarb, ok := extractFirstNumber(state.TestResults["basic_metabolic_panel"], "bicarbonate"); ok && bicarb < 18 {
+			// Qualitative match on urine ketones; we accept "3+",
+			// "large", or "ketones 2+" as positive. Case-insensitive
+			// because the simulator and any future lab feed adapter
+			// may format differently.
 			if ket := state.TestResults["urine_ketones"]; strings.Contains(strings.ToLower(ket), "3+") ||
 				strings.Contains(strings.ToLower(ket), "large") || strings.Contains(strings.ToLower(ket), "ketones 2+") {
 				return medical.DiagnosisProposal{
@@ -77,8 +196,28 @@ func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
 		}
 	}
 
-	// 3. Sepsis — lactate > 2 mmol/L + leukocytosis WBC > 12K. Thresholds are
-	// illustrative; Surviving Sepsis Campaign uses lactate >2 as a screen.
+	// 3. Sepsis — lactate > 2 mmol/L + leukocytosis WBC > 12K.
+	//
+	// **Illustrative thresholds only.** The Surviving Sepsis Campaign
+	// (Sepsis-3) uses lactate > 2 mmol/L as a screening criterion in
+	// the presence of suspected infection AND qSOFA ≥ 2 — not as a
+	// standalone rule. WBC > 12K is one criterion of SIRS, which
+	// Sepsis-3 explicitly de-emphasised. This rule fires on a
+	// simplified two-criteria match and would not be appropriate
+	// for real clinical use. NOT a clinical guideline.
+	//
+	// Signal source: test_planner orders lactate, CBC, blood_culture
+	// for the "sepsis" condition; simulatedTestResult populates
+	// "lactate 4.2 mmol/L — elevated" + "WBC 18.4 K" when the case
+	// is tagged sepsis.
+	//
+	// Manifest-string subtlety: bench fixtures tag the gold
+	// diagnosis as "Urosepsis" (no "septic shock" qualifier) so the
+	// returned Diagnosis must match for the eval scorer to credit
+	// the match. The conditional below produces the bench-aligned
+	// string only when state.Condition=="sepsis"; other paths get
+	// the more descriptive "Septic shock / urosepsis" so the demo
+	// log reads sensibly.
 	if lac, ok := extractFirstNumber(state.TestResults["lactate"], "lactate"); ok && lac > 2.0 {
 		if wbc, ok := extractWBC(state.TestResults["complete_blood_count"]); ok && wbc > 12.0 {
 			diag := "Septic shock / urosepsis"
@@ -96,8 +235,26 @@ func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
 		}
 	}
 
-	// 4. CHF — BNP > 400 OR (condition=chf + ≥2 RPM alerts). BNP cutoff is
-	// the textbook decompensated-CHF threshold (illustrative only).
+	// 4. CHF — BNP > 400 pg/mL OR (condition=chf + ≥2 RPM alerts).
+	//
+	// Two independent triggers because CHF presents two ways in this
+	// platform:
+	//
+	//   - As a fresh case ordered through test_planner: BNP is the
+	//     primary marker; > 400 pg/mL is the textbook decompensated-
+	//     CHF threshold (illustrative; real practice uses age- and
+	//     sex-adjusted cutoffs plus NTproBNP variants).
+	//
+	//   - As an RPM-monitored chronic patient: the rpm_monitor agent
+	//     populates state.RPMAlerts from device readings (SBP>=160,
+	//     weight>=185 lb, SpO2<92, HR>=110 — see docs/agents.md
+	//     § rpm_monitor). When two or more alerts fire on a
+	//     CHF-tagged case, decompensation is likely even without a
+	//     fresh BNP draw.
+	//
+	// **Illustrative thresholds only — not clinical guidelines.**
+	//
+	// Returns Confidence=0.84 either way.
 	if bnp, ok := extractFirstNumber(state.TestResults["bnp"], "bnp"); ok && bnp > 400 {
 		return medical.DiagnosisProposal{
 			Diagnosis:    "Acute decompensated heart failure",
@@ -115,7 +272,25 @@ func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
 		}
 	}
 
-	// 5. CAP — leukocytosis + infiltrate on chest X-ray (legacy default rule).
+	// 5. CAP — leukocytosis + infiltrate on chest X-ray.
+	//
+	// **Legacy default rule.** Before PR #11 added the ACS/sepsis/DKA
+	// branches above, this was the ONLY clinical rule — which is why
+	// the bench at 42.9% accuracy was producing "Community-acquired
+	// pneumonia" for every case that had CBC + CXR in the workup
+	// (every case, because the old test_planner ordered CBC+CXR+BMP
+	// for everything). See bodh-linkedin/01-bench-42-to-85.md
+	// § What the bench was telling me.
+	//
+	// **Illustrative threshold only.** Real CAP diagnosis requires
+	// IDSA / ATS clinical criteria (fever, productive cough, focal
+	// auscultation, infiltrate on imaging) plus CURB-65 / PSI for
+	// severity. NOT a clinical guideline.
+	//
+	// Position: LAST among the specialty rules so a true ACS, DKA,
+	// or sepsis case (which may also have leukocytosis + a CXR
+	// finding) doesn't false-fire to CAP. The branch order is
+	// load-bearing.
 	xray, hasInfiltrate := state.TestResults["chest_xray"]
 	cbc, hasLeukocytosis := state.TestResults["complete_blood_count"]
 	if hasInfiltrate && hasLeukocytosis &&
@@ -128,6 +303,23 @@ func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
 		}
 	}
 
+	// Fallback: insufficient signal to fire any specialty rule. We
+	// return a LOW-confidence Undifferentiated proposal rather than
+	// no proposal at all because:
+	//
+	//   - The supervisor's state machine needs a "diagnosis" message
+	//     to finalize the case; absent one, the case would hang
+	//     waiting for input that's not coming.
+	//   - The reasoning_verifier's demo rule (confidence >= 0.5 AND
+	//     non-empty rationale) WILL REJECT this proposal at 0.45 —
+	//     triggering the "Undifferentiated" log path the supervisor
+	//     then finalises on. That reject is intentional and audited
+	//     (the case is recorded as a low-quality outcome, not silently
+	//     buried).
+	//
+	// Confidence value 0.45 sits deliberately just under the demo
+	// verifier threshold (0.5). Adjusting it requires updating both
+	// the verifier and this fallback together.
 	return medical.DiagnosisProposal{
 		Diagnosis:  "Undifferentiated respiratory infection — further workup needed",
 		Confidence: 0.45,
@@ -138,6 +330,16 @@ func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
 // isTroponinElevated returns true when the troponin_i result mentions an
 // "elevated" qualifier or carries a numeric value above the 0.04 ng/mL
 // illustrative reference cutoff.
+//
+// Why two paths: the simulator's text format is the qualitative
+// "elevated 5.2 ng/mL"; a future lab-feed adapter might emit just
+// "5.2 ng/mL" or "Troponin I 0.08 ng/mL". Accept both so the rule
+// engine is robust to format drift.
+//
+// 0.04 ng/mL is the legacy 99th-percentile cutoff for non-high-
+// sensitivity assays — **illustrative only**. Modern hs-cTn uses sex-
+// specific cutoffs in the pg/mL range; real ACS workup uses a 0/1h or
+// 0/3h delta protocol.
 func isTroponinElevated(state medical.CaseState) bool {
 	v, ok := state.TestResults["troponin_i"]
 	if !ok {
@@ -153,24 +355,51 @@ func isTroponinElevated(state medical.CaseState) bool {
 	return false
 }
 
-// numberPattern matches the first float in a string (with optional decimal).
-// Used to lift numeric values out of canned result strings.
+// numberPattern matches the first float in a string (with optional sign
+// and optional decimal). Used to lift numeric values out of canned
+// result strings emitted by simulatedTestResult or by real lab adapters
+// that format as "<analyte> <number> <units>".
 var numberPattern = regexp.MustCompile(`[-+]?\d*\.?\d+`)
 
 // extractFirstNumber pulls the first numeric value out of a result string,
-// optionally requiring a marker substring (case-insensitive) to appear before
-// the number. When marker is empty, the first number in the string is
-// returned. When marker is non-empty, only numbers occurring after the
-// marker's first occurrence are considered — so a string like "Glucose 412
-// mg/dL, bicarbonate 12" returns 12 for marker="bicarbonate" rather than 412.
+// optionally requiring a marker substring (case-insensitive) to appear
+// before the number. When marker is empty, the first number in the string
+// is returned. When marker is non-empty, only numbers occurring **after**
+// the marker's first occurrence are considered.
+//
+// **PR #11 bug fix — "marker-after semantics".** The original version
+// (pre-PR #11) ignored the marker and returned the first number in the
+// whole string regardless of context. That broke the DKA rule above:
+// the BMP result text reads "Glucose 412 mg/dL, sodium 138, potassium
+// 4.1, bicarbonate 12 mEq/L" — both extractFirstNumber(s, "glucose") and
+// extractFirstNumber(s, "bicarbonate") returned 412, so
+// `glucose > 250 && bicarb < 18` was NEVER both-true and DKA cases fell
+// through to CAP. See bodh-linkedin/01-bench-42-to-85.md § Step 4 for
+// the field report.
+//
+// The fix: anchor the search slice to the substring **after** marker's
+// first occurrence, then run the numeric regex against the suffix.
+// "bicarbonate 12 mEq/L" now correctly returns 12 because the search
+// starts after the "bicarbonate" marker.
+//
+// This is the kind of bug unit tests written by the function's author
+// can miss (the tests asserted what the function did, not what the
+// caller needed). The bench surfaced it via the DKA fixture.
 func extractFirstNumber(s, marker string) (float64, bool) {
 	if s == "" {
 		return 0, false
 	}
 	search := s
 	if marker != "" {
+		// Case-insensitive marker match. We use strings.Index on
+		// lowercased copies for the search, then slice the ORIGINAL
+		// string using the discovered byte index — that way we
+		// preserve any case-sensitive content downstream (currently
+		// none, but cheap to keep correct).
 		idx := strings.Index(strings.ToLower(s), strings.ToLower(marker))
 		if idx < 0 {
+			// Marker not present: no answer rather than a wrong
+			// answer. The caller must check the bool.
 			return 0, false
 		}
 		search = s[idx+len(marker):]
@@ -181,13 +410,27 @@ func extractFirstNumber(s, marker string) (float64, bool) {
 	}
 	n, err := strconv.ParseFloat(m, 64)
 	if err != nil {
+		// Regex matched but parse failed — shouldn't happen with
+		// the pattern above, but defend rather than panic.
 		return 0, false
 	}
 	return n, true
 }
 
-// extractWBC pulls the numeric WBC count out of strings like "WBC 14.2 K, ...".
-// Returns the value in K/uL (thousands per microliter).
+// extractWBC pulls the numeric WBC count out of strings like "WBC 14.2 K,
+// neutrophils 78%, ...". Returns the value in K/uL (thousands per
+// microliter) — so the sepsis rule's "> 12.0" compares to a value
+// already in the right units.
+//
+// Why a separate helper rather than extractFirstNumber(s, "wbc"): the
+// CBC result text often starts with "WBC" followed by additional values
+// (RBC, platelets, neutrophil%) where the units shift. Slicing from the
+// "wbc" marker AND running the regex from that slice's start gives a
+// natural single-value extraction. The duplicated logic is ~5 lines and
+// keeping it separate makes the intent obvious.
+//
+// 12 K/uL is **illustrative** — real WBC interpretation requires age,
+// comorbidity, medication, and trend context. Not a clinical guideline.
 func extractWBC(s string) (float64, bool) {
 	if s == "" {
 		return 0, false
@@ -208,6 +451,17 @@ func extractWBC(s string) (float64, bool) {
 	return n, true
 }
 
+// mergeStateMeta attaches the encoded CaseState as metadata key
+// "case_state" so the downstream reasoning_verifier has access to the
+// full state the diagnostician saw, not just the DiagnosisProposal
+// payload. The verifier uses that to check that the proposal's
+// Rationale actually references facts present in state.TestResults or
+// state.Hypotheses — the grounding check that backs the criterion 4
+// "independently review the basis" requirement.
+//
+// Shallow copy via copyMeta first to avoid mutating the caller's
+// metadata map (which is shared with other goroutines under the
+// in-memory bus's async delivery).
 func mergeStateMeta(meta map[string]any, stateJSON string) map[string]any {
 	m := copyMeta(meta)
 	m["case_state"] = stateJSON
