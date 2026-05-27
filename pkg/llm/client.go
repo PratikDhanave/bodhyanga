@@ -52,6 +52,16 @@ type Request struct {
 	// Tools and JSONSchema are set, providers that cannot combine them
 	// (Anthropic) prefer JSONSchema and silently ignore Tools.
 	Tools []Tool
+
+	// Grammar, when non-nil, requests a sampler-level structural guarantee
+	// on the response — providers that support it (llama.cpp-family,
+	// kronk) will refuse any token that breaks the grammar, so the
+	// response is guaranteed well-formed without a retry. Providers that
+	// do not support grammars emit a one-time warning and ignore the
+	// field; the JSONSchema path and the agent's retry-on-bad-JSON
+	// fallback still run. See grammar.go for the spec format and helpers
+	// (GBNFJSONObject, GBNFEnum, GBNFRegex).
+	Grammar *GrammarSpec
 }
 
 // Message is one turn in the conversation.

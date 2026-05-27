@@ -144,6 +144,7 @@ func (a *LLMInboxTriage) callLLM(ctx context.Context, item inboxMessage, env age
 	defer cancel()
 
 	itemJSON, _ := json.MarshalIndent(item, "", "  ")
+	grammar := gbnfForInboxTriage()
 	req := llm.Request{
 		System:      inboxTriageSystemPrompt,
 		CacheSystem: true,
@@ -158,6 +159,7 @@ func (a *LLMInboxTriage) callLLM(ctx context.Context, item inboxMessage, env age
 			Description: "Classify a patient inbox message into refill | prior_auth | urgent_clinical | general and extract entities.",
 			Schema:      json.RawMessage(inboxTriageSchema),
 		},
+		Grammar: &grammar,
 	}
 
 	resp, err := a.Client.Complete(cctx, req)
@@ -205,6 +207,23 @@ Constraints:
   - Be conservative — when in doubt between urgent_clinical and general, prefer urgent_clinical.
   - Do not provide clinical advice or treatment plans.
   - Return ONLY JSON matching the supplied tool schema. No prose outside the schema fields.`
+
+// inboxTriageCategories is the closed vocabulary the LLM may emit for the
+// "category" field. Kept in lockstep with the enum in inboxTriageSchema and
+// the switch statement in HandleMessage. If you add a category here, add it
+// to both the schema and the routing switch.
+var inboxTriageCategories = []string{"refill", "prior_auth", "urgent_clinical", "general"}
+
+// gbnfForInboxTriage returns a sampler-level enum grammar over the inbox
+// triage categories. The agent's wire format is a JSON object — the enum
+// constraint here mirrors the JSON-Schema enum and is the intent expressed
+// to grammar-aware providers (kronk). Providers without sampler-level GBNF
+// (anthropic, openai, ollama) log a one-time warning and ignore the field;
+// the JSONSchema layer + agent-level "unknown category → fallback" path
+// still enforce the closed vocabulary.
+func gbnfForInboxTriage() llm.GrammarSpec {
+	return llm.GBNFEnum(inboxTriageCategories)
+}
 
 // inboxTriageSchema is the JSON Schema for the inbox-triage output.
 const inboxTriageSchema = `{
