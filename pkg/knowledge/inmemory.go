@@ -10,13 +10,25 @@ import (
 	"sync"
 
 	"github.com/PratikDhanave/bodh/pkg/embeddings"
+	"github.com/PratikDhanave/bodh/pkg/knowledge/rerank"
+	"github.com/PratikDhanave/bodh/pkg/observability"
 )
 
 // inMemoryStore is a thread-safe vector store keyed by document ID. It holds
 // every document and its embedding in process memory; Search ranks by cosine
 // similarity against a freshly embedded query.
+//
+// Optional Reranker is the cross-encoder post-stage. When non-nil, Search
+// hands the top-k cosine hits to Reranker.Rerank and uses the returned
+// order. Errors are logged + ignored (cosine order is preserved) so the
+// agent never observes a "rerank failed" — see AGENTS.md invariant #3.
 type inMemoryStore struct {
 	embedder embeddings.Embedder
+
+	// Reranker is the optional post-stage. nil = no reranker = pass-through.
+	Reranker rerank.Reranker
+	// Logger receives rerank failures + timings. nil = silent.
+	Logger observability.Logger
 
 	mu      sync.RWMutex
 	docs    []Document
@@ -32,6 +44,21 @@ func NewInMemoryStore(embedder embeddings.Embedder) Store {
 	}
 	return &inMemoryStore{
 		embedder: embedder,
+		index:    make(map[string]int),
+	}
+}
+
+// NewInMemoryStoreWithReranker is NewInMemoryStore with a configured rerank
+// post-stage. Pass logger=nil to silence rerank failure logs; the failure
+// itself is always non-fatal (Search returns the cosine order on error).
+func NewInMemoryStoreWithReranker(embedder embeddings.Embedder, r rerank.Reranker, logger observability.Logger) Store {
+	if embedder == nil {
+		panic("knowledge: NewInMemoryStoreWithReranker requires a non-nil embedder")
+	}
+	return &inMemoryStore{
+		embedder: embedder,
+		Reranker: r,
+		Logger:   logger,
 		index:    make(map[string]int),
 	}
 }
@@ -129,7 +156,7 @@ func (s *inMemoryStore) Search(ctx context.Context, query string, k int) ([]Cita
 			Metadata:   copyMeta(d.Metadata),
 		})
 	}
-	return out, nil
+	return applyReranker(ctx, s.Reranker, s.Logger, query, out), nil
 }
 
 // Size implements Store.
