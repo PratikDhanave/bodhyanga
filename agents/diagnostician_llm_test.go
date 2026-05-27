@@ -69,6 +69,15 @@ func TestLLMDiagnosticianSuccessEmitsProposalToVerifier(t *testing.T) {
 	if !mock.Calls[0].CacheSystem {
 		t.Fatalf("expected CacheSystem=true on system prompt")
 	}
+	if mock.Calls[0].Grammar == nil {
+		t.Fatalf("expected GBNF grammar to be sent to LLM (sampler-level guarantee)")
+	}
+	if mock.Calls[0].Grammar.Format != llm.GrammarGBNF {
+		t.Fatalf("Grammar.Format=%q want %q", mock.Calls[0].Grammar.Format, llm.GrammarGBNF)
+	}
+	if !strings.Contains(mock.Calls[0].Grammar.Body, "root") {
+		t.Fatalf("grammar body missing root rule:\n%s", mock.Calls[0].Grammar.Body)
+	}
 }
 
 func TestLLMDiagnosticianFallsBackOnLLMError(t *testing.T) {

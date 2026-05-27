@@ -8,14 +8,15 @@ This document is the architectural walkthrough of every AI feature Bodh ships to
 
 1. [Provider matrix](#provider-matrix)
 2. [LLM client abstraction (`pkg/llm`)](#llm-client-abstraction-pkgllm)
-3. [LLM-backed diagnostician](#llm-backed-diagnostician)
-4. [Retrieval-Augmented Generation (RAG)](#retrieval-augmented-generation-rag)
-5. [Vision diagnostician](#vision-diagnostician)
-6. [LLM-as-judge (`pkg/eval`)](#llm-as-judge-pkgeval)
-7. [Safety guardrails (`pkg/safety`)](#safety-guardrails-pkgsafety)
-8. [LLM call tracing (`pkg/observability`)](#llm-call-tracing-pkgobservability)
-9. [Other LLM-backed agents](#other-llm-backed-agents)
-10. [Agentic patterns: Debate, Reflexion, Cascade](#agentic-patterns-debate-reflexion-cascade)
+3. [Grammar-constrained generation](#grammar-constrained-generation)
+4. [LLM-backed diagnostician](#llm-backed-diagnostician)
+5. [Retrieval-Augmented Generation (RAG)](#retrieval-augmented-generation-rag)
+6. [Vision diagnostician](#vision-diagnostician)
+7. [LLM-as-judge (`pkg/eval`)](#llm-as-judge-pkgeval)
+8. [Safety guardrails (`pkg/safety`)](#safety-guardrails-pkgsafety)
+9. [LLM call tracing (`pkg/observability`)](#llm-call-tracing-pkgobservability)
+10. [Other LLM-backed agents](#other-llm-backed-agents)
+11. [Agentic patterns: Debate, Reflexion, Cascade](#agentic-patterns-debate-reflexion-cascade)
 11. [Environment variable reference](#environment-variable-reference)
 
 ---
@@ -78,12 +79,53 @@ flowchart TB
     Oll -->|stream=false + format=schema| OllAPI
 ```
 
-`Request` carries the system prompt (with optional caching), a list of `Message{Role, Content, Images}`, max tokens, temperature, an optional `JSONSchema`, and an optional `Tools` array. `Response` carries the assistant text (or extracted JSON document), input/output/cached token counts, model identifier, stop reason, and any `ToolCalls` the model produced.
+`Request` carries the system prompt (with optional caching), a list of `Message{Role, Content, Images}`, max tokens, temperature, an optional `JSONSchema`, an optional `Tools` array, and an optional `Grammar` (see [Grammar-constrained generation](#grammar-constrained-generation)). `Response` carries the assistant text (or extracted JSON document), input/output/cached token counts, model identifier, stop reason, and any `ToolCalls` the model produced.
 
 **Caveats:**
 - No retry / rate-limit backoff. The `http.Client` has a 60s (Anthropic, OpenAI) or 120s (Ollama) timeout — callers (e.g. `LLMDiagnostician.Timeout`) wrap a shorter context.
 - No streaming. Bus messages are request/response per agent step.
 - When both `Tools` and `JSONSchema` are set, Anthropic prefers `JSONSchema` and silently ignores `Tools`.
+
+---
+
+## Grammar-constrained generation
+
+`Request.Grammar` is the sampler-level structural guarantee. When set, providers that support it (today: kronk via llama.cpp) refuse any token that would break the supplied grammar — the response is **guaranteed** well-formed without a retry. Providers that do not support grammars log a one-time warning and ignore the field; the `JSONSchema` path and the agent-level retry-on-bad-JSON fallback still run as a backstop.
+
+```go
+type GrammarSpec struct {
+    Format GrammarFormat // GrammarGBNF | GrammarJSONSchema
+    Body   string        // GBNF source text, or a JSON Schema document
+}
+```
+
+Helper constructors in [`pkg/llm/grammar.go`](../pkg/llm/grammar.go):
+
+| Helper | Use when |
+|---|---|
+| `llm.GBNFJSONObject()` | The agent emits a JSON object and needs an outer-shape guarantee. Pair with `Request.JSONSchema` for field-level validation. |
+| `llm.GBNFEnum(values []string)` | The agent emits a value drawn from a closed vocabulary (classifier-style — triage categories, verifier verdicts). |
+| `llm.GBNFRegex(pattern string)` | The agent emits a narrow pattern (ICD-10 code, date stamp). GBNF is NOT full regex — see the function doc for the supported subset. |
+
+### Provider support
+
+| Provider | `Grammar` field | Backstop |
+|---|---|---|
+| anthropic | ignored (one-time `log.Printf` warning) | `JSONSchema` (tool-use, `tool_choice: {type: tool}`) |
+| openai | ignored (one-time `log.Printf` warning) | `JSONSchema` (strict `response_format: json_schema`) |
+| ollama | ignored (one-time `log.Printf` warning) | `JSONSchema` (`format` field) |
+| kronk | yes (GBNF, sampler-level) | n/a — guarantee is at the token sampler |
+| mock | recorded on `Mock.Calls[i].Grammar` for tests | n/a |
+
+### Where it's wired today
+
+- **`LLMDiagnostician`** ([agents/diagnostician_llm.go](../agents/diagnostician_llm.go)) — `Request.Grammar = gbnfForDiagnosisProposal()` (alias for `GBNFJSONObject()`). The outer object shape is enforced at the sampler; the existing JSON Schema enforces field types and required fields.
+- **`LLMInboxTriage`** ([agents/inbox_triage_llm.go](../agents/inbox_triage_llm.go)) — `Request.Grammar = gbnfForInboxTriage()` (alias for `GBNFEnum` over `refill | prior_auth | urgent_clinical | general`). The enum is the closed vocabulary the routing switch then dispatches on.
+- **`LLMReasoningVerifier`** ([agents/reasoning_verifier_llm.go](../agents/reasoning_verifier_llm.go)) — `Request.Grammar = gbnfForReasoningVerifier()` (alias for `GBNFEnum` over `approve | reject | defer`). The verifier's wire schema is currently boolean `verified` + free-text `reason`; the GBNF enum documents the 3-way verdict intent and will become the active constraint when the schema migrates in lockstep with kronk support.
+
+### Why both `JSONSchema` and `Grammar`?
+
+GBNF gives a **hard** structural guarantee but is verbose for nested fields. JSON Schema is concise and covers field types but relies on the model behaving (and on the API enforcing it). The two layers compose: send GBNF for the outer shape (object / enum / regex) and JSON Schema for the field-level types and required-fields list. See [`pkg/llm/grammar_doc.go`](../pkg/llm/grammar_doc.go) for the full contract.
 
 ---
 

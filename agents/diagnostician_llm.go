@@ -137,6 +137,7 @@ func (a *LLMDiagnostician) buildRequest(ctx context.Context, state medical.CaseS
 		schema = diagnosisSchemaRAG
 	}
 
+	grammar := gbnfForDiagnosisProposal()
 	req := llm.Request{
 		System:      system,
 		CacheSystem: true,
@@ -151,8 +152,27 @@ func (a *LLMDiagnostician) buildRequest(ctx context.Context, state medical.CaseS
 			Description: "Emit a single working diagnosis with confidence, differential, rationale, and (when evidence supplied) citations.",
 			Schema:      json.RawMessage(schema),
 		},
+		Grammar: &grammar,
 	}
 	return req, retrieved, maxTokens
+}
+
+// gbnfForDiagnosisProposal returns a sampler-level grammar that forces the
+// response to be a syntactically valid JSON object. The JSON Schema (above)
+// still does the field-level work (required fields, enums, value types) —
+// GBNF guarantees the outer structure so even providers that misbehave under
+// JSON Schema cannot emit prose, code fences, or partial objects.
+//
+// We deliberately use the permissive GBNFJSONObject rather than encoding the
+// full DiagnosisProposal shape in GBNF: the schema is non-trivial (nested
+// citations array, optional fields, numeric ranges) and JSON Schema is the
+// right tool for those. GBNF here is "outer shape" insurance.
+//
+// Providers that do not support sampler-level grammars (anthropic, openai,
+// ollama as shipped today) will log a one-time warning and ignore the field;
+// the JSONSchema path and the agent's retry-on-bad-JSON fallback still run.
+func gbnfForDiagnosisProposal() llm.GrammarSpec {
+	return llm.GBNFJSONObject()
 }
 
 func (a *LLMDiagnostician) callLLM(ctx context.Context, state medical.CaseState, msg agent.Message, env agent.Environment) (medical.DiagnosisProposal, error) {

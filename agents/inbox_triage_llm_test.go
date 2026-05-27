@@ -62,6 +62,17 @@ func TestLLMInboxTriageSuccessEmitsExpectedMessage(t *testing.T) {
 	if !mock.Calls[0].CacheSystem {
 		t.Fatalf("expected CacheSystem=true on system prompt")
 	}
+	if mock.Calls[0].Grammar == nil {
+		t.Fatalf("expected GBNF enum grammar over inbox categories")
+	}
+	if mock.Calls[0].Grammar.Format != llm.GrammarGBNF {
+		t.Fatalf("Grammar.Format=%q want gbnf", mock.Calls[0].Grammar.Format)
+	}
+	for _, want := range []string{"refill", "prior_auth", "urgent_clinical", "general"} {
+		if !containsSubstring(mock.Calls[0].Grammar.Body, want) {
+			t.Errorf("grammar body missing category %q:\n%s", want, mock.Calls[0].Grammar.Body)
+		}
+	}
 }
 
 func TestLLMInboxTriageFallsBackOnLLMError(t *testing.T) {

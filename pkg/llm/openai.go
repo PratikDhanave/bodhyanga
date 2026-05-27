@@ -41,6 +41,13 @@ func (c *openaiClient) Complete(ctx context.Context, req Request) (*Response, er
 		return nil, ErrNoMessages
 	}
 
+	// OpenAI has no sampler-level GBNF API. The strict json_schema mode
+	// is the structural guarantee here; if the caller wanted that, they
+	// should use Request.JSONSchema. Warn once and proceed.
+	if req.Grammar != nil {
+		warnGrammarUnsupported(c.Provider())
+	}
+
 	payload, err := c.buildPayload(req)
 	if err != nil {
 		return nil, err
