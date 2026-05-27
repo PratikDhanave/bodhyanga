@@ -52,6 +52,15 @@ func (c *ollamaClient) Complete(ctx context.Context, req Request) (*Response, er
 		return nil, ErrNoMessages
 	}
 
+	// Ollama's /api/chat exposes `format` (either "json" or a JSON Schema in
+	// 0.5+) but no sampler-level GBNF surface today. Some Ollama builds DO
+	// support grammars under the hood — when that lands in the public API
+	// the adapter can wire req.Grammar.Body into `format` for GBNF format
+	// specs. For now: warn once and rely on the JSONSchema + retry path.
+	if req.Grammar != nil {
+		warnGrammarUnsupported(c.Provider())
+	}
+
 	payload, err := c.buildPayload(req)
 	if err != nil {
 		return nil, err

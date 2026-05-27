@@ -118,6 +118,7 @@ func (a *LLMReasoningVerifier) callLLM(ctx context.Context, proposal medical.Dia
 		"\n\nCaseState evidence:\n" + string(stateJSON) +
 		"\n\nVerify whether the rationale is grounded in the supplied evidence and the confidence is not over-stated."
 
+	grammar := gbnfForReasoningVerifier()
 	req := llm.Request{
 		System:      verifierSystemPrompt,
 		CacheSystem: true,
@@ -132,6 +133,7 @@ func (a *LLMReasoningVerifier) callLLM(ctx context.Context, proposal medical.Dia
 			Description: "Decide whether the diagnosis rationale is grounded in the CaseState and is not over-confident.",
 			Schema:      json.RawMessage(verifierSchema),
 		},
+		Grammar: &grammar,
 	}
 
 	resp, err := a.Client.Complete(cctx, req)
@@ -172,6 +174,28 @@ Return a single JSON object with:
 Constraints:
   - This is a research / educational system. Do not propose a different diagnosis; only judge the one supplied.
   - Return ONLY JSON matching the supplied tool schema. No prose outside the schema fields.`
+
+// reasoningVerifierVerdicts is the closed verdict vocabulary for the
+// reasoning verifier when expressed as a 3-way classifier. The current
+// verifierSchema emits a boolean `verified` + free-text `reason`, but the
+// verdict semantics are 3-way (approve / reject / defer for HITL). The
+// constants are kept here so a future schema change to a verdict string
+// (and the matching GBNF enum at the sampler) flips in one place.
+var reasoningVerifierVerdicts = []string{"approve", "reject", "defer"}
+
+// gbnfForReasoningVerifier returns a sampler-level enum grammar over the
+// verifier's verdict vocabulary. NOTE: today's verifier schema uses a
+// boolean `verified` field rather than an enum string, so a strict
+// grammar-honoring provider would over-constrain the output if it actually
+// applied this grammar. In practice the providers shipped today
+// (anthropic, openai, ollama) log a one-time warning and ignore the field —
+// only kronk (parallel track) will honour it, and when that lands the
+// verifier schema will be migrated to a verdict-string field in lockstep.
+// Until then, the GBNF here documents intent and the JSONSchema layer
+// remains the active structural guarantee.
+func gbnfForReasoningVerifier() llm.GrammarSpec {
+	return llm.GBNFEnum(reasoningVerifierVerdicts)
+}
 
 // verifierSchema is the JSON Schema for the verifier output.
 const verifierSchema = `{

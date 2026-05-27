@@ -44,6 +44,14 @@ func (c *anthropicClient) Complete(ctx context.Context, req Request) (*Response,
 		return nil, ErrNoMessages
 	}
 
+	// Anthropic has no sampler-level grammar API; structural guarantees come
+	// through the JSONSchema (tool-use) path instead. If the caller set
+	// Request.Grammar anyway, warn once and proceed — the JSONSchema path
+	// (if set) and the agent retry-on-bad-JSON fallback are the backstops.
+	if req.Grammar != nil {
+		warnGrammarUnsupported(c.Provider())
+	}
+
 	payload, err := c.buildPayload(req)
 	if err != nil {
 		return nil, err
