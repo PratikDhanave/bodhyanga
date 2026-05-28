@@ -130,6 +130,13 @@ func main() {
 	orch.Start(ctx)
 
 	mux := http.NewServeMux()
+
+	// Kubernetes liveness + readiness probes. These must be registered before
+	// any middleware chain so they are reachable even when the application is
+	// partially initialised. /healthz is always 200; /readyz pings Postgres.
+	mux.HandleFunc("GET /healthz", livenessHandler())
+	mux.HandleFunc("GET /readyz", readinessHandler(pg))
+
 	mux.HandleFunc("/patients", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:

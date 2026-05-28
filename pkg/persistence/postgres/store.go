@@ -109,6 +109,16 @@ func (s *Store) Close() {
 	}
 }
 
+// Ping performs a cheap round-trip to Postgres. It is called by the cmd/care
+// /readyz handler to confirm the database is reachable; it is not called on
+// the hot path. A nil receiver is always healthy (in-memory path).
+func (s *Store) Ping(ctx context.Context) error {
+	if s == nil || s.pool == nil {
+		return nil
+	}
+	return s.pool.Ping(ctx)
+}
+
 // CurrentRoleHasBypassRLS reports whether the connected role would silently
 // skip every row-level-security policy. The application role MUST return
 // false; if a test sees true, RLS is not being enforced and any subsequent
