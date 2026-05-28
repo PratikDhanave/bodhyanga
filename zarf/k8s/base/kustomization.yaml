@@ -1,0 +1,35 @@
+# Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/base/sales/kustomization.yaml
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+#
+# Base Kustomize layer for the Bodh care HTTP API (cmd/care). The base ships
+# the strict shape: 2 replicas, PodSecurity restricted, NetworkPolicy egress
+# allow-list, PDB minAvailable=1, Workload Identity ServiceAccount annotation
+# placeholder. Overlays in zarf/k8s/{dev,prod}/ patch from here.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# All resources land in the bodh-system namespace by default. Overlays can
+# rename via `namespace:` if a cell topology needs per-tenant namespaces.
+namespace: bodh-system
+
+# Common labels propagate to every resource so a single selector can target
+# the whole stack (`kubectl get all -l app.kubernetes.io/part-of=bodh`).
+commonLabels:
+  app.kubernetes.io/name: bodh-care
+  app.kubernetes.io/part-of: bodh
+  app.kubernetes.io/component: care-api
+
+resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+  - networkpolicy.yaml
+  - pdb.yaml
+
+# Image placeholder. Overlays pin the actual registry + tag — never use :latest.
+images:
+  - name: bodh-care-image
+    newName: ghcr.io/pratikdhanave/bodh-care
+    newTag: "0.0.0-base" # overlays MUST override.

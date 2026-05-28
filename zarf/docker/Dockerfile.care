@@ -1,0 +1,59 @@
+# syntax=docker/dockerfile:1.7
+#
+# Adapted from https://github.com/ardanlabs/service/blob/master/zarf/docker/dockerfile.sales
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+#
+# Multistage build for cmd/care. The repo-root Dockerfile mirrors this shape
+# so the CI Docker build does not break — this one lives under zarf/docker/
+# for parity with the Ardan Labs / Bill Kennedy layout discipline.
+#
+# Final image: gcr.io/distroless/static-debian12:nonroot — no shell, no
+# package manager, no libc, nothing for an attacker to land on.
+
+FROM golang:1.26-alpine AS build_care
+ENV CGO_ENABLED=0
+ARG BUILD_TAG=dev
+# GO_BUILD_TAGS lets the caller turn on optional features (e.g. otel) without
+# editing this file: docker build --build-arg GO_BUILD_TAGS=otel ...
+ARG GO_BUILD_TAGS=""
+
+WORKDIR /service
+
+# Cache the module graph independently of the source tree so subsequent
+# builds with the same go.mod/go.sum skip the download phase entirely.
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+# Build the care HTTP server.
+WORKDIR /service/cmd/care
+RUN go build \
+      -trimpath \
+      -tags "${GO_BUILD_TAGS}" \
+      -ldflags "-s -w -X main.tag=${BUILD_TAG}" \
+      -o /out/care .
+
+# Distroless static — non-root, no shell, no package manager. The :nonroot
+# tag bakes USER 65532 in, but we set it explicitly for clarity.
+FROM gcr.io/distroless/static-debian12:nonroot
+ARG BUILD_DATE
+ARG BUILD_TAG=dev
+
+COPY --from=build_care --chown=65532:65532 /out/care /care
+# Bundle the shipped RAG corpus + bench manifest. Real deployments mount
+# their own corpus via ConfigMap or PVC and override BODH_KNOWLEDGE_CORPUS.
+COPY --from=build_care --chown=65532:65532 /service/data /data
+
+EXPOSE 8088
+USER 65532:65532
+ENTRYPOINT ["/care"]
+CMD ["-addr=:8088"]
+
+LABEL org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.title="bodh-care" \
+      org.opencontainers.image.description="Bodh care HTTP API + clinician SPA" \
+      org.opencontainers.image.authors="Pratik Dhanave" \
+      org.opencontainers.image.source="https://github.com/PratikDhanave/bodh" \
+      org.opencontainers.image.revision="${BUILD_TAG}" \
+      org.opencontainers.image.licenses="Apache-2.0"

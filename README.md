@@ -151,7 +151,21 @@ That is exactly what MARA's building blocks describe: an **orchestrator**, **spe
 
 ## Quick start
 
-### Setup (5 steps)
+### Fastest path — `docker compose up`
+
+The full local-dev stack (Postgres + care + Ollama + Prometheus + Grafana + Tempo + Loki) boots with one command:
+
+```bash
+git clone https://github.com/PratikDhanave/bodh.git && cd bodh
+docker compose -f zarf/compose/docker_compose.yaml up -d
+docker exec bodh-ollama ollama pull llama3.2       # one-time model pull
+open http://localhost:8088                          # care API
+open http://localhost:3000                          # Grafana (admin / admin)
+```
+
+Deeper setup: [docs/deployment.md](docs/deployment.md) for K8s (kind / GKE) and production Cloud SQL config.
+
+### Setup (5 steps) — running Go binaries directly
 
 1. **Install Go 1.22+** — verify with `go version`.
 2. **Clone the repo:** `git clone https://github.com/PratikDhanave/bodh.git && cd bodh`.

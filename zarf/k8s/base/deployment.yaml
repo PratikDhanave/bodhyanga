@@ -1,0 +1,157 @@
+# Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/base/sales/base-sales.yaml
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+#
+# Bodh care HTTP API Deployment. 2 replicas at base — overlays change.
+# securityContext is the PodSecurity "restricted" profile expressed at the
+# Pod and container level; ServiceAccount is Workload-Identity-bound.
+# Resource requests==limits gives the "Guaranteed" QoS class.
+#
+# Probes:
+#   livenessProbe  -> /healthz on :8088   (restart on hang)
+#   readinessProbe -> /readyz  on :8088   (Service de-routes during boot/drain)
+# NOTE: cmd/care does not currently register these handlers; the deployment
+# guide references them and adding them is tracked as a follow-up. Until then,
+# overlays can swap the probe to a TCP socket probe on :8088 if the cluster
+# pre-rolls the manifest before the binary lands.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bodh-care
+spec:
+  # Two replicas + PDB minAvailable=1 -> tolerate one voluntary disruption
+  # at a time without losing serving capacity. Important for HITL reviews
+  # that may sit in the queue across a node drain.
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bodh-care
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bodh-care
+      annotations:
+        # Prometheus scrape annotations — picked up by managed Prometheus
+        # and most operator-style scrape configs. Port :8088 path /metrics
+        # is the future debug surface; today this is a placeholder.
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8088"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: bodh-care
+      automountServiceAccountToken: false
+      # Grace period covers the longest reasonable in-flight HITL submit +
+      # DB transaction. Aligned with the ardanlabs/service default (60s).
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        # PodSecurity "restricted" profile — Pod-level controls.
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: care
+          image: bodh-care-image # kustomize images: pins this.
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8088
+              protocol: TCP
+          env:
+            # Go runtime sizing keyed off the container limits — same idiom
+            # as ardanlabs/service. GOMEMLIMIT lets the GC pace against the
+            # cgroup memory ceiling and avoid OOMKill thrash.
+            - name: GOMAXPROCS
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.cpu
+            - name: GOMEMLIMIT
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.memory
+            - name: GOGC
+              value: "100"
+            # Pod self-identification (audit / tracing).
+            - name: KUBERNETES_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: KUBERNETES_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: KUBERNETES_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: KUBERNETES_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          envFrom:
+            - configMapRef:
+                name: bodh-care-config
+            # Overlays add a secretRef for BODH_DB_DSN + provider API keys.
+          # Liveness: a hard hang (no GC, deadlocked goroutines) trips this
+          # and the kubelet restarts the container. Tolerate a brief blip
+          # (failureThreshold=3) so a single slow GC pass doesn't bounce
+          # the Pod.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # Readiness: detached from liveness so a temporary dependency
+          # outage (Postgres restart, LLM provider timeout cascade) takes
+          # the Pod out of rotation without restarting it.
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 2
+          resources:
+            # request==limit -> Guaranteed QoS class. Tune in overlays.
+            requests:
+              cpu: "500m"
+              memory: "256Mi"
+              ephemeral-storage: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+              ephemeral-storage: "1Gi"
+          securityContext:
+            # Container-level restricted profile.
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            # /tmp must be writable when readOnlyRootFilesystem=true.
+            - name: tmp
+              mountPath: /tmp
+            # Audit log target — emptyDir at base. Production overlay
+            # mounts a PVC or forwards via stdout to a log shipper.
+            - name: audit
+              mountPath: /var/lib/bodh
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+        - name: audit
+          emptyDir:
+            sizeLimit: 256Mi
