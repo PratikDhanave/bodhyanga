@@ -1,0 +1,40 @@
+# syntax=docker/dockerfile:1.7
+#
+# Adapted from https://github.com/ardanlabs/service/blob/master/zarf/docker/dockerfile.sales
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+#
+# bodhctl — operator CLI. Stdlib-only Go binary. Targets a running cmd/care
+# API; useful as a one-shot container in a CI job or a kubectl exec target.
+
+FROM golang:1.26-alpine AS build_bodhctl
+ENV CGO_ENABLED=0
+ARG BUILD_TAG=dev
+WORKDIR /service
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+WORKDIR /service/cmd/bodhctl
+RUN go build \
+      -trimpath \
+      -ldflags "-s -w -X main.tag=${BUILD_TAG}" \
+      -o /out/bodhctl .
+
+FROM gcr.io/distroless/static-debian12:nonroot
+ARG BUILD_DATE
+ARG BUILD_TAG=dev
+
+COPY --from=build_bodhctl --chown=65532:65532 /out/bodhctl /bodhctl
+
+USER 65532:65532
+ENTRYPOINT ["/bodhctl"]
+
+LABEL org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.title="bodh-bodhctl" \
+      org.opencontainers.image.description="Bodh operator CLI" \
+      org.opencontainers.image.authors="Pratik Dhanave" \
+      org.opencontainers.image.source="https://github.com/PratikDhanave/bodh" \
+      org.opencontainers.image.revision="${BUILD_TAG}" \
+      org.opencontainers.image.licenses="Apache-2.0"

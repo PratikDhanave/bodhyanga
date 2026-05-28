@@ -30,6 +30,30 @@ ardanlabs/service
                       embed.FS-backed numeric-prefix migrator with
                       schema_migrations bookkeeping and a per-migration
                       audit_events row (HIPAA §164.312(b)).
+    pkg/errs/         adapts app/sdk/errs (ErrCode, Error, FieldErrors)
+                      with Bodh-specific codes: HITLPending (202),
+                      SafetyRefusal (422), PolicyDenied (403).
+    pkg/web/          adapts foundation/web (App, HandlerFunc, Middleware)
+                      for the Bodh HTTP surface.
+    pkg/mid/          adapts foundation/web/middleware (Errors, Logger,
+                      Metrics, Panics, Otel) plus authen.go / authorize.go
+                      for JWT + OPA auth middleware.
+    pkg/auth/         adapts app/sdk/auth (Authenticator, KeyStore, Claims,
+                      OPA Rego policies) for RS256 JWT + OPA authorization.
+    zarf/k8s/         adapts zarf/k8s/base/sales/ + dev/sales/ + prod
+                      overlay pattern; Bodh deltas: PodSecurity restricted,
+                      Workload Identity SA seam, default-deny NetworkPolicy,
+                      PDB minAvailable=1, Cloud SQL Auth Proxy in prod.
+    zarf/compose/     adapts zarf/compose/docker_compose.yaml +
+                      pg_hba.conf for the Bodh local-dev stack (care +
+                      Ollama + Prometheus + Grafana + Tempo + Loki).
+    zarf/docker/      adapts zarf/docker/dockerfile.sales for
+                      Dockerfile.care, Dockerfile.bodhctl,
+                      Dockerfile.bodhadmin (distroless final stage).
+    zarf/keys/        adapts the zarf/keys/ layout + naming convention
+                      (UUID-keyed PEM files for JWT key rotation).
+    cmd/bodhadmin/    adapts app/tooling/auth/ (keys + token subcommands)
+                      for RSA keypair generation + dev/test JWT minting.
 
   The Apache 2.0 license text is reproduced where the source files
   originated; see each adapted file's header for the per-file copy.

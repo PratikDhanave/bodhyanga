@@ -1,0 +1,21 @@
+# Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/base/sales/base-sales.yaml
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+#
+# Namespace pre-labelled with PodSecurity admission "restricted" — every Pod
+# scheduled into this namespace must satisfy the restricted profile (no
+# privilege escalation, non-root, seccomp RuntimeDefault, capabilities=ALL
+# dropped). See https://kubernetes.io/docs/concepts/security/pod-security-admission/
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bodh-system
+  labels:
+    # enforce = reject Pods that violate restricted; audit + warn surface
+    # violations in API responses + audit log even when a different profile
+    # ends up enforced by an admission controller upstream.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest

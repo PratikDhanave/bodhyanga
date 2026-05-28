@@ -1,0 +1,25 @@
+# Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/dev/sales/kustomization.yaml
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+#
+# Production overlay — 3 replicas, strict resource caps, external Cloud SQL
+# via the Cloud SQL Auth Proxy sidecar (see GKE topology in
+# bodh-linkedin/09-gke-ai-infra-medical-multiagent.md), Workload Identity
+# binding pinned, NetworkPolicy egress narrowed to provider CIDRs in the
+# adjacent overlay-networkpolicy patch.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../base
+
+patches:
+  - path: patch-deployment.yaml
+  - path: patch-configmap.yaml
+  - path: patch-serviceaccount.yaml
+
+# Production images MUST be a pinned digest in real deployments. The newTag
+# here is a placeholder — CI replaces it with the immutable digest.
+images:
+  - name: bodh-care-image
+    newName: ghcr.io/pratikdhanave/bodh-care
+    newTag: "0.1.0"
