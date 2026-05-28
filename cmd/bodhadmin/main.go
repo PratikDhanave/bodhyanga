@@ -7,25 +7,27 @@
 //     http://www.apache.org/licenses/LICENSE-2.0
 
 // Command bodhadmin is the operator CLI for the Bodh control plane.
-// It is intentionally minimal: subcommands run discrete jobs that
-// would otherwise be one-off psql scripts or in-process API calls.
+// Subcommands run discrete jobs that would otherwise be one-off psql
+// scripts or in-process API calls.
 //
 // Subcommands (one per file in this directory):
 //
-//	migrate    Apply pending schema migrations.
+//	migrate    Apply pending schema migrations (idempotent).
+//	keys       Generate and list RSA 2048 JWT signing keypairs.
+//	token      Mint a signed JWT for dev/testing (NOT for production).
 //
 // Usage:
 //
 //	bodhadmin migrate [-dsn=...]
+//	bodhadmin keys generate [-out <dir>] [-kid <name>]
+//	bodhadmin keys list [-dir <dir>]
+//	bodhadmin token issue -kid <name> -dir <dir> -role <role> [...]
 //
-// The binary is stdlib-only at the cmd/ layer (it imports pkg/migrate
-// + pkg/sqldb, both of which already depend on pgx/v5 — no new deps).
 // Operators run it from CI / a bastion / a sidecar; cmd/care also
 // runs migrations on boot as a defence in depth.
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 )
@@ -40,6 +42,10 @@ func main() {
 	switch cmd {
 	case "migrate":
 		os.Exit(runMigrate(args))
+	case "keys":
+		runKeys(args)
+	case "token":
+		runToken(args)
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -58,11 +64,12 @@ usage:
 
 subcommands:
   migrate    Apply pending schema migrations (idempotent).
+  keys       Generate and list RSA 2048 JWT signing keypairs.
+  token      Mint a signed JWT for dev / testing.
 
 environment:
-  BODH_DB_DSN   Postgres DSN (overridden by -dsn).
+  BODH_DB_DSN          Postgres DSN (overridden by migrate -dsn).
+  BODH_AUTH_KEYS_DIR   Directory of <kid>.pem files (overridden by -dir).
 
 `)
-	// Per-subcommand flag help is reachable via "bodhadmin migrate -h".
-	_ = flag.CommandLine
 }
