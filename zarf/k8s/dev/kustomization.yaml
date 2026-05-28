@@ -1,0 +1,22 @@
+# Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/dev/sales/kustomization.yaml
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+#
+# Dev overlay — single replica, in-cluster Postgres, debug log level, Ollama
+# as the LLM provider. Mirrors what `docker compose up` gives locally, but
+# in a kind / minikube cluster so the K8s contract is exercised.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../base
+  - postgres.yaml
+
+patches:
+  - path: patch-deployment.yaml
+  - path: patch-configmap.yaml
+
+# Dev image — locally built via `docker build -t localhost/bodh-care:dev ...`.
+images:
+  - name: bodh-care-image
+    newName: localhost/bodh-care
+    newTag: "dev"

@@ -1,0 +1,37 @@
+# Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/dev/sales/dev-sales-patch-deploy.yaml
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+#
+# Dev patch — single replica, Recreate strategy (one Pod at a time, no
+# parallel old+new), unconstrained resource limits so a laptop kind cluster
+# can run the binary without GC thrash, and a Postgres DSN pointed at the
+# in-cluster Postgres Service.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bodh-care
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+    # `null` clears the rolling-update sub-fields the base sets — required
+    # for the strategy switch since Recreate forbids rollingUpdate.
+    rollingUpdate: null
+  template:
+    spec:
+      containers:
+        - name: care
+          env:
+            - name: BODH_DB_DSN
+              value: "postgres://postgres:postgres@postgres:5432/bodh?sslmode=disable"
+            - name: BODH_TENANT_ID
+              value: "dev"
+          resources:
+            # Looser than base — dev clusters tolerate burst.
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+              ephemeral-storage: "128Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+              ephemeral-storage: "1Gi"

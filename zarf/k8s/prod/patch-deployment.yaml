@@ -1,0 +1,73 @@
+# Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/dev/sales/dev-sales-patch-deploy.yaml
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+#
+# Production patch:
+#   - 3 replicas (rolling update with maxSurge=1, maxUnavailable=0)
+#   - Cloud SQL Auth Proxy sidecar — bodh-care talks to localhost:5432
+#   - secretRef wired into envFrom for BODH_DB_DSN + provider API keys
+#   - topologySpreadConstraints across zones for AZ-level resilience
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bodh-care
+spec:
+  replicas: 3
+  template:
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: bodh-care
+      containers:
+        - name: care
+          envFrom:
+            - configMapRef:
+                name: bodh-care-config
+            - secretRef:
+                name: bodh-care-secrets # CI / SealedSecret / ExternalSecret.
+          env:
+            - name: BODH_DB_DSN
+              # cloudsqlproxy sidecar terminates the TCP — bodh-care talks
+              # to localhost; the proxy authenticates upstream via Workload
+              # Identity + Cloud SQL IAM.
+              value: "postgres://bodh_app@localhost:5432/bodh?sslmode=disable"
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "512Mi"
+              ephemeral-storage: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+              ephemeral-storage: "1Gi"
+        # Cloud SQL Auth Proxy sidecar — the GCP-recommended pattern for
+        # Workload Identity → Cloud SQL IAM auth, no static credentials.
+        # https://cloud.google.com/sql/docs/postgres/connect-auth-proxy
+        - name: cloudsqlproxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.13.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "REPLACE-PROJECT:REPLACE-REGION:REPLACE-INSTANCE"
+          ports:
+            - name: cloudsql
+              containerPort: 5432
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            capabilities:
+              drop: ["ALL"]

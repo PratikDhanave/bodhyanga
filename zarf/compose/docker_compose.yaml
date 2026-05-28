@@ -1,0 +1,210 @@
+# Adapted from https://github.com/ardanlabs/service/blob/master/zarf/compose/docker_compose.yaml
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+#
+# Local-dev stack. `docker compose up` launches:
+#   - postgres       — durable Bodh DB (RLS-bound bodh_app role)
+#   - bodh-care      — HTTP API (cmd/care) on :8088
+#   - bodh-ollama    — local LLM provider for llm-ollama
+#   - prometheus     — metrics scrape
+#   - grafana        — dashboards (admin/admin out of the box)
+#   - tempo          — distributed tracing backend for OTLP exports
+#   - loki           — logs aggregation
+#   - bodh-kronk     — optional admin tool, commented out by default
+#                      (needs `-tags=kronk`; uncomment after the binary lands)
+services:
+  postgres:
+    # Pinned minor — never use :latest. Bump deliberately.
+    image: postgres:16.4-alpine
+    container_name: bodh-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bodh
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    command: ["postgres", "-c", "hba_file=/etc/postgresql/pg_hba.conf"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U postgres -d bodh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      bodh-net:
+        ipv4_address: 10.6.0.2
+
+  bodh-ollama:
+    # ollama/ollama publishes per-version tags. Pin to a known minor.
+    image: ollama/ollama:0.5.4
+    container_name: bodh-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      # Ollama exposes /api/tags as a cheap liveness check.
+      test: ["CMD-SHELL", "wget -qO- http://localhost:11434/api/tags >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      bodh-net:
+        ipv4_address: 10.6.0.3
+
+  bodh-care:
+    # Built from zarf/docker/Dockerfile.care. The tag matches `make docker`.
+    image: localhost/bodh-care:dev
+    pull_policy: never
+    build:
+      context: ../..
+      dockerfile: zarf/docker/Dockerfile.care
+    container_name: bodh-care
+    ports:
+      - "8088:8088"
+    environment:
+      BODH_LISTEN_ADDR: ":8088"
+      BODH_DB_DSN: "postgres://postgres:postgres@postgres:5432/bodh?sslmode=disable"
+      BODH_TENANT_ID: "compose-dev"
+      BODH_DIAGNOSTICIAN: "llm-ollama"
+      OLLAMA_HOST: "http://bodh-ollama:11434"
+      BODH_KNOWLEDGE_CORPUS: "/data/knowledge/corpus.json"
+      BODH_AUDIT_SINK: "/var/lib/bodh/audit.log"
+      BODH_LOG_LEVEL: "debug"
+    volumes:
+      - audit-data:/var/lib/bodh
+    healthcheck:
+      # cmd/care does not yet register /healthz — once it does, swap this
+      # to `wget -qO- http://localhost:8088/healthz`. TCP probe holds the
+      # line until then.
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8088/ >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      bodh-ollama:
+        condition: service_started
+    networks:
+      bodh-net:
+        ipv4_address: 10.6.0.10
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: bodh-prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/-/ready >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      bodh-net:
+        ipv4_address: 10.6.0.20
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: bodh-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+    networks:
+      bodh-net:
+        ipv4_address: 10.6.0.21
+
+  tempo:
+    image: grafana/tempo:2.6.1
+    container_name: bodh-tempo
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "3200:3200" # tempo HTTP
+    command: ["-config.file=/etc/tempo.yaml"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3200/ready >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      bodh-net:
+        ipv4_address: 10.6.0.22
+
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: bodh-loki
+    ports:
+      - "3100:3100"
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3100/ready >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      bodh-net:
+        ipv4_address: 10.6.0.23
+
+  # ----------------------------------------------------------------------
+  # OPTIONAL — bodh-kronk admin tool. Uncomment after the binary ships and
+  # the Dockerfile.bodhadmin build context is wired into CI. The image must
+  # be built with `-tags=kronk` (see zarf/docker/Dockerfile.bodhadmin).
+  # ----------------------------------------------------------------------
+  # bodh-kronk:
+  #   image: localhost/bodh-kronk:dev
+  #   pull_policy: never
+  #   build:
+  #     context: ../..
+  #     dockerfile: zarf/docker/Dockerfile.bodhadmin
+  #   container_name: bodh-kronk
+  #   environment:
+  #     BODH_API: "http://bodh-care:8088"
+  #   depends_on:
+  #     bodh-care:
+  #       condition: service_healthy
+  #   networks:
+  #     bodh-net:
+  #       ipv4_address: 10.6.0.30
+
+volumes:
+  postgres-data: {}
+  ollama-data: {}
+  audit-data: {}
+
+networks:
+  bodh-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.6.0.0/24

@@ -22,3 +22,7 @@ node_modules/
 *.sqlite
 
 test-results/
+
+# JWT signing keys — never commit real keys; the example placeholder is
+# tracked but real *.pem files must stay local.
+zarf/keys/*.pem
