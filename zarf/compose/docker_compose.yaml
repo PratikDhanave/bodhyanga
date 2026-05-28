@@ -78,10 +78,10 @@ services:
     volumes:
       - audit-data:/var/lib/bodh
     healthcheck:
-      # cmd/care does not yet register /healthz — once it does, swap this
-      # to `wget -qO- http://localhost:8088/healthz`. TCP probe holds the
-      # line until then.
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8088/ >/dev/null 2>&1 || exit 1"]
+      # /healthz is the cmd/care liveness endpoint registered in
+      # cmd/care/health.go — always 200 while the process is running.
+      # /readyz also pings Postgres; the compose probe uses /healthz (lighter).
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8088/healthz >/dev/null 2>&1 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
