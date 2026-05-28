@@ -1,0 +1,44 @@
+Bodh
+Copyright 2025 The Bodh Authors
+
+This product includes software developed at The Bodh Authors
+(https://github.com/PratikDhanave/bodh).
+
+------------------------------------------------------------------------
+Third-party attributions
+------------------------------------------------------------------------
+
+ardanlabs/service
+  https://github.com/ardanlabs/service
+  Copyright Ardan Labs, Bill Kennedy
+  Licensed under the Apache License, Version 2.0
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  The following Bodh packages are adapted from ardanlabs/service:
+
+    pkg/sqldb/        adapts business/sdk/sqldb (sqldb.go, tran.go) to a
+                      pgx/v5 pgxpool-backed wrapper that preserves the
+                      Beginner / CommitRollbacker transaction seam.
+    pkg/sqldb/dialect adapts business/sdk/sqldb/dialect/ (the Dialect
+                      interface + Postgres pagination helper).
+    pkg/sqldb/dbarray adapts business/sdk/sqldb/dbarray/ (pgx-friendly
+                      Postgres array Scanner/Valuer). That file itself
+                      was originally taken from github.com/lib/pq (MIT)
+                      and that nested attribution is preserved in the
+                      file headers.
+    pkg/migrate/      adapts business/sdk/migrate/migrate.go to an
+                      embed.FS-backed numeric-prefix migrator with
+                      schema_migrations bookkeeping and a per-migration
+                      audit_events row (HIPAA §164.312(b)).
+
+  The Apache 2.0 license text is reproduced where the source files
+  originated; see each adapted file's header for the per-file copy.
+
+github.com/lib/pq
+  https://github.com/lib/pq
+  Copyright 2011-2013, 'pq' Contributors
+  Portions Copyright (C) 2011 Blake Mizerany
+  Licensed under the MIT License
+
+  pkg/sqldb/dbarray/ carries code originally from lib/pq via
+  ardanlabs/service. The MIT notice is preserved in each adapted file.
