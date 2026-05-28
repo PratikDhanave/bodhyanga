@@ -109,6 +109,29 @@ func (s *Store) Close() {
 	}
 }
 
+// CurrentRoleHasBypassRLS reports whether the connected role would silently
+// skip every row-level-security policy. The application role MUST return
+// false; if a test sees true, RLS is not being enforced and any subsequent
+// tenant-isolation assertion is a false positive.
+//
+// Exposed as a public method on Store so test packages outside the
+// postgres package (e.g. pkg/dbtest) can re-use the same invariant check
+// without reaching into the unexported pool. The query is read-only and
+// runs outside any tenant-scoped transaction.
+func (s *Store) CurrentRoleHasBypassRLS(ctx context.Context) (bool, error) {
+	conn, err := s.pool.Acquire(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer conn.Release()
+	var bypass bool
+	if err := conn.QueryRow(ctx,
+		`SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user`).Scan(&bypass); err != nil {
+		return false, err
+	}
+	return bypass, nil
+}
+
 // SetDefaultTenant configures the tenant used by interface-conforming
 // adapters that can't accept a tenantID parameter (e.g. eval.Store.Save).
 // Pass an empty string to clear it.
