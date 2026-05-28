@@ -18,6 +18,7 @@ import (
 
 	"github.com/PratikDhanave/bodh/agents"
 	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodh/pkg/audio"
 	"github.com/PratikDhanave/bodh/pkg/audit"
 	"github.com/PratikDhanave/bodh/pkg/comm"
 	"github.com/PratikDhanave/bodh/pkg/engagement"
@@ -83,6 +84,14 @@ func main() {
 	reviews := hitl.NewQueue()
 	reviewAgent := &agents.HumanReviewAgent{Queue: reviews}
 
+	// Audio transcription. The default build links the MockTranscriber
+	// (no model runtime); `-tags kronk` swaps in the on-prem Whisper
+	// backend via pkg/audio/kronk. The agent's Audit field is set
+	// later once selectBackends has returned the operator's recorder.
+	audioTranscriber := &agents.AudioTranscriberAgent{
+		Transcriber: audio.NewMock(),
+	}
+
 	for _, a := range []agent.Agent{
 		&agents.IntakeAgent{},
 		&agents.RPMMonitorAgent{},
@@ -102,6 +111,7 @@ func main() {
 		&agents.EngagementAgent{Notifier: notifier},
 		&agents.ReadmissionTrackerAgent{Registry: patients, HITL: true},
 		reviewAgent,
+		audioTranscriber,
 	} {
 		_ = reg.Register(ctx, a)
 	}
@@ -111,6 +121,9 @@ func main() {
 	// must be wired BEFORE Start — subscriptions capture them at subscribe
 	// time and a post-Start swap is silently ignored.
 	auditRec, evalStore := selectBackends(pg, logger)
+	// Now that the audit recorder is chosen, attach it to the audio
+	// transcriber so per-call PHI-free events flow into the same sink.
+	audioTranscriber.Audit = auditRec
 	orch := orchestration.NewOrchestrator(reg, bus, policy, env)
 	orch.SetAuditRecorder(auditRec)
 	orch.SetEvalStore(evalStore)
@@ -303,6 +316,12 @@ func main() {
 		}
 		writeJSON(w, req)
 	})
+
+	// Audio transcription endpoint. Multipart upload → transcribed
+	// text on the response. The agent runs synchronously here (see
+	// cmd/care/audio.go for the rationale); the audit event the agent
+	// records is correlated back via audit_event_id in the response.
+	mux.HandleFunc("POST /api/transcribe", transcribeHandler(audioTranscriber, env, auditRec))
 
 	// Audit log read endpoint. Developer / operator visibility into the
 	// HIPAA §164.312(b) sink — reads from whichever Recorder was wired at
