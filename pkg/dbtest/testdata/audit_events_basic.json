@@ -1,0 +1,34 @@
+{
+  "_comment": "Synthetic audit-event fixture for pkg/dbtest. IDs follow event_test_NNN; cases follow case_test_NNN; patients follow patient_test_NNN. The reason and decision fields hold synthetic strings only — never reviewer free-text from a real case.",
+  "_synthetic": true,
+  "events": [
+    {
+      "id": "event_test_010",
+      "kind": "message",
+      "agent_id": "diagnostician",
+      "message_id": "msg_test_010",
+      "case_id": "case_test_010",
+      "patient_id": "patient_test_010",
+      "type": "case_state"
+    },
+    {
+      "id": "event_test_011",
+      "kind": "policy_decision",
+      "agent_id": "orchestrator",
+      "message_id": "msg_test_011",
+      "case_id": "case_test_010",
+      "decision": "allow",
+      "reason": "synthetic allow reason"
+    },
+    {
+      "id": "event_test_012",
+      "kind": "review_decision",
+      "agent_id": "human_review",
+      "message_id": "msg_test_012",
+      "case_id": "case_test_010",
+      "decision": "approve",
+      "reviewer_id": "reviewer_test_001",
+      "reason": "synthetic reviewer rationale"
+    }
+  ]
+}

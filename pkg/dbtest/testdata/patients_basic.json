@@ -1,0 +1,28 @@
+{
+  "_comment": "Synthetic test fixture for pkg/dbtest. All IDs follow the patient_test_NNN pattern and contain no realistic PHI. Demographics are bucketed at policy-relevant resolution only.",
+  "_synthetic": true,
+  "patients": [
+    {
+      "patient_id": "patient_test_010",
+      "age": 45,
+      "sex": "M",
+      "conditions": ["E11.9"],
+      "last_a1c": 7.8
+    },
+    {
+      "patient_id": "patient_test_011",
+      "age": 62,
+      "sex": "F",
+      "conditions": ["I10", "I50.9"],
+      "last_systolic_bp": 158
+    },
+    {
+      "patient_id": "patient_test_012",
+      "age": 70,
+      "sex": "M",
+      "conditions": ["J44.9"],
+      "rpm_enrolled": true,
+      "last_spo2": 91
+    }
+  ]
+}
