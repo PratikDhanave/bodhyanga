@@ -137,6 +137,11 @@ func main() {
 	mux.HandleFunc("GET /healthz", livenessHandler())
 	mux.HandleFunc("GET /readyz", readinessHandler(pg))
 
+	// Prometheus scrape endpoint. Exposes Go runtime metrics + bodh_http_*
+	// and bodh_llm_* families. No auth — the NetworkPolicy restricts ingress
+	// to the API gateway / monitoring namespace in Kubernetes.
+	mux.Handle("GET /metrics", observability.PrometheusHandler())
+
 	mux.HandleFunc("/patients", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -407,8 +412,19 @@ func main() {
 		logger.Printf("clinician console NOT embedded — run `npm run build` in cmd/care/web/")
 	}
 
+	// Wrap the mux with:
+	//   1. Prometheus HTTP middleware — records bodh_http_* metrics for every
+	//      request (always active, no build tag required).
+	//   2. OTel HTTP trace handler — adds an OTel span per request (active only
+	//      when built with -tags otel AND NewOTLPLLMExporter was called above
+	//      to set the global TracerProvider).
+	handler := observability.TraceHandler(
+		observability.PromMiddleware(mux),
+		"bodh-care",
+	)
+
 	logger.Printf("care HTTP API listening on %s", *addr)
-	if err := http.ListenAndServe(*addr, mux); err != nil {
+	if err := http.ListenAndServe(*addr, handler); err != nil {
 		log.Fatal(err)
 	}
 }

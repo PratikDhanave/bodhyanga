@@ -58,6 +58,9 @@ func (l *StdLogger) RecordLLMCall(t LLMTrace) {
 	t.normalise()
 	b, _ := json.Marshal(t)
 	l.Printf("[llm-trace] %s", string(b))
+	// Prometheus counters — always active, no build tag required.
+	RecordLLMMetrics(t)
+	// OTLP span export — opt-in (BODH_OTEL_ENABLED=1 + hook installed).
 	if otelHook != nil && os.Getenv("BODH_OTEL_ENABLED") == "1" {
 		otelHook(t)
 	}
