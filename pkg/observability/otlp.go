@@ -29,8 +29,10 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
@@ -83,6 +85,15 @@ func NewOTLPLLMExporter(ctx context.Context, endpoint string) (*OTLPLLMExporter,
 		),
 		sdktrace.WithResource(res),
 	)
+
+	// Set as the process-wide global so that otelhttp (TraceHandler) and any
+	// otel.Tracer() call elsewhere in the binary can use the same provider
+	// without needing a reference threaded through the call stack.
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
 
 	return &OTLPLLMExporter{
 		tp:     tp,
