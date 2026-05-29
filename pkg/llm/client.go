@@ -72,6 +72,26 @@ type Message struct {
 	// Images, when non-empty, attaches one or more images to this message.
 	// Only meaningful for user messages with vision-capable models.
 	Images []Image
+
+	// ToolCalls is set on assistant-role messages when the model invoked
+	// one or more tools. Callers running a multi-turn tool loop must carry
+	// these forward in the next request so the provider sees the full
+	// conversation history (Anthropic requires this for tool_result
+	// correlation). Populated from Response.ToolCalls.
+	ToolCalls []ToolCall
+
+	// ToolResults is set on user-role messages that return tool outputs
+	// to the model. Each entry must correlate (via ToolUseID) to a
+	// ToolCall.ID in the preceding assistant message.
+	ToolResults []ToolResult
+}
+
+// ToolResult carries the output of a single tool call. ToolUseID must
+// match the ToolCall.ID that triggered the invocation; providers use this
+// to correlate the result with the tool_use content block.
+type ToolResult struct {
+	ToolUseID string // matches ToolCall.ID (e.g. "toolu_xxxx" for Anthropic)
+	Content   string // return value: JSON string or plain text
 }
 
 // Image is an inline image attached to a Message. Data is the raw bytes
@@ -93,7 +113,10 @@ type Tool struct {
 // ToolCall is one function invocation produced by the model. Arguments
 // is the raw JSON the provider returned (OpenAI sends a string, Anthropic
 // and Ollama send an object — adapters normalize both to JSON bytes).
+// ID is the provider-generated correlation identifier (e.g. "toolu_xxxx"
+// for Anthropic) used to match tool_result content blocks in the next turn.
 type ToolCall struct {
+	ID        string          // provider-generated correlation ID; empty for providers that omit it
 	Name      string
 	Arguments json.RawMessage
 }
