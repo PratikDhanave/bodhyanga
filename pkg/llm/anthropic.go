@@ -68,6 +68,59 @@ func (c *anthropicClient) Complete(ctx context.Context, req Request) (*Response,
 func (c *anthropicClient) buildPayload(req Request) (map[string]any, error) {
 	msgs := make([]map[string]any, 0, len(req.Messages))
 	for _, m := range req.Messages {
+		// --- user message returning tool results ---------------------
+		// Serialize as a content array of tool_result blocks (Anthropic
+		// requires these to be the sole content of a user message turn).
+		if len(m.ToolResults) > 0 {
+			blocks := make([]map[string]any, 0, len(m.ToolResults))
+			for _, tr := range m.ToolResults {
+				blocks = append(blocks, map[string]any{
+					"type":        "tool_result",
+					"tool_use_id": tr.ToolUseID,
+					"content":     tr.Content,
+				})
+			}
+			msgs = append(msgs, map[string]any{
+				"role":    string(m.Role),
+				"content": blocks,
+			})
+			continue
+		}
+
+		// --- assistant message that called tools ---------------------
+		// Serialize text + tool_use blocks so the next user turn can
+		// include matching tool_result blocks.
+		if len(m.ToolCalls) > 0 {
+			blocks := make([]map[string]any, 0, len(m.ToolCalls)+1)
+			if m.Content != "" {
+				blocks = append(blocks, map[string]any{
+					"type": "text",
+					"text": m.Content,
+				})
+			}
+			for _, tc := range m.ToolCalls {
+				var input any
+				if len(tc.Arguments) > 0 {
+					_ = json.Unmarshal(tc.Arguments, &input)
+				}
+				if input == nil {
+					input = map[string]any{}
+				}
+				blocks = append(blocks, map[string]any{
+					"type":  "tool_use",
+					"id":    tc.ID,
+					"name":  tc.Name,
+					"input": input,
+				})
+			}
+			msgs = append(msgs, map[string]any{
+				"role":    string(m.Role),
+				"content": blocks,
+			})
+			continue
+		}
+
+		// --- user message with images --------------------------------
 		if len(m.Images) > 0 {
 			blocks := make([]map[string]any, 0, len(m.Images)+1)
 			for _, img := range m.Images {
@@ -92,6 +145,8 @@ func (c *anthropicClient) buildPayload(req Request) (map[string]any, error) {
 			})
 			continue
 		}
+
+		// --- plain text message -------------------------------------
 		msgs = append(msgs, map[string]any{
 			"role":    string(m.Role),
 			"content": m.Content,
@@ -185,7 +240,8 @@ func (c *anthropicClient) parseResponse(body []byte, expectJSON bool) (*Response
 		Content []struct {
 			Type  string          `json:"type"`
 			Text  string          `json:"text,omitempty"`
-			Name  string          `json:"name,omitempty"`
+			ID    string          `json:"id,omitempty"`   // tool_use correlation ID
+			Name  string          `json:"name,omitempty"` // tool_use function name
 			Input json.RawMessage `json:"input,omitempty"`
 		} `json:"content"`
 		StopReason string `json:"stop_reason"`
@@ -216,7 +272,9 @@ func (c *anthropicClient) parseResponse(body []byte, expectJSON bool) (*Response
 			if len(args) == 0 {
 				args = json.RawMessage("{}")
 			}
-			toolCalls = append(toolCalls, ToolCall{Name: b.Name, Arguments: args})
+			// Capture the provider-generated ID so callers can correlate
+			// tool_result blocks in the next conversation turn.
+			toolCalls = append(toolCalls, ToolCall{ID: b.ID, Name: b.Name, Arguments: args})
 		}
 	}
 	if expectJSON && content == "" {
