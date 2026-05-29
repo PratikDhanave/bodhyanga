@@ -1,0 +1,135 @@
+[
+  {
+    "data": {
+      "prompt": "Read the config.json file and tell me the API endpoint",
+      "mockTools": {
+        "readFile": {
+          "description": "Read file contents. Args: path (string).",
+          "result": "{\"apiEndpoint\": \"https://api.example.com/v1\", \"apiVersion\": \"1.0\"}"
+        },
+        "writeFile": {
+          "description": "Write content to a file. Args: path (string), content (string).",
+          "result": "Written successfully"
+        },
+        "deleteFile": {
+          "description": "Delete a file. Args: path (string).",
+          "result": "Deleted"
+        }
+      }
+    },
+    "target": {
+      "expectedToolOrder": ["readFile"],
+      "forbiddenTools": ["writeFile", "deleteFile"],
+      "originalTask": "Read config.json and report the API endpoint",
+      "mockToolResults": {
+        "readFile": "{\"apiEndpoint\": \"https://api.example.com/v1\", \"apiVersion\": \"1.0\"}"
+      }
+    }
+  },
+  {
+    "data": {
+      "messages": [
+        {
+          "role": "user",
+          "content": "I need to update a config file"
+        },
+        {
+          "role": "assistant",
+          "content": "Sure, I can help with that. Which file and what changes would you like to make?"
+        },
+        {
+          "role": "user",
+          "content": "Change the port to 3000 in config.json"
+        }
+      ],
+      "mockTools": {
+        "readFile": {
+          "description": "Read file contents. Args: path (string).",
+          "result": "{\"host\": \"localhost\", \"port\": 8080, \"debug\": false}"
+        },
+        "writeFile": {
+          "description": "Write content to a file. Args: path (string), content (string).",
+          "result": "Written successfully"
+        }
+      }
+    },
+    "target": {
+      "expectedToolOrder": ["readFile", "writeFile"],
+      "originalTask": "Update port to 3000 in config.json — mid-conversation continuation",
+      "mockToolResults": {
+        "readFile": "{\"host\": \"localhost\", \"port\": 8080, \"debug\": false}",
+        "writeFile": "Written successfully"
+      }
+    }
+  },
+  {
+    "data": {
+      "prompt": "What is 2 + 2? Just do the math, no need for files or commands.",
+      "mockTools": {
+        "readFile": {
+          "description": "Read file contents. Args: path (string).",
+          "result": ""
+        },
+        "runCommand": {
+          "description": "Run a shell command. Args: command (string).",
+          "result": ""
+        },
+        "writeFile": {
+          "description": "Write content to a file. Args: path (string), content (string).",
+          "result": ""
+        }
+      }
+    },
+    "target": {
+      "forbiddenTools": ["readFile", "runCommand", "writeFile"],
+      "originalTask": "Simple arithmetic question — agent should answer directly without calling any tools",
+      "mockToolResults": {}
+    }
+  },
+  {
+    "data": {
+      "prompt": "Read the database config and then write a summary file at summary.txt",
+      "mockTools": {
+        "readFile": {
+          "description": "Read file contents. Args: path (string).",
+          "result": "{\"db_host\": \"db.internal\", \"db_port\": 5432, \"db_name\": \"bodh\"}"
+        },
+        "writeFile": {
+          "description": "Write content to a file. Args: path (string), content (string).",
+          "result": "Written 67 bytes to summary.txt"
+        }
+      }
+    },
+    "target": {
+      "expectedToolOrder": ["readFile", "writeFile"],
+      "originalTask": "Read database config and write a summary to summary.txt",
+      "mockToolResults": {
+        "readFile": "{\"db_host\": \"db.internal\", \"db_port\": 5432, \"db_name\": \"bodh\"}",
+        "writeFile": "Written 67 bytes to summary.txt"
+      }
+    }
+  },
+  {
+    "data": {
+      "prompt": "List all files in the /data directory",
+      "mockTools": {
+        "listDir": {
+          "description": "List files in a directory. Args: path (string).",
+          "result": "[\"cases/demo_001.json\",\"cases/demo_002.json\",\"cases/bench_001.json\",\"knowledge/corpus.json\"]"
+        },
+        "runCommand": {
+          "description": "Run a shell command. Args: command (string).",
+          "result": ""
+        }
+      }
+    },
+    "target": {
+      "expectedToolOrder": ["listDir"],
+      "forbiddenTools": ["runCommand"],
+      "originalTask": "List files in /data directory without running shell commands",
+      "mockToolResults": {
+        "listDir": "[\"cases/demo_001.json\",\"cases/demo_002.json\",\"cases/bench_001.json\",\"knowledge/corpus.json\"]"
+      }
+    }
+  }
+]
