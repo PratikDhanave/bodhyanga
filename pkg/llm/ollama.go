@@ -83,6 +83,48 @@ func (c *ollamaClient) buildPayload(req Request) (map[string]any, error) {
 		})
 	}
 	for _, m := range req.Messages {
+		// --- tool result turn (user role, returning tool outputs) ----------
+		// Ollama uses a dedicated "tool" role for each result — one message
+		// per tool call (unlike Anthropic's batched tool_result content blocks).
+		if len(m.ToolResults) > 0 {
+			for _, tr := range m.ToolResults {
+				msgs = append(msgs, map[string]any{
+					"role":    "tool",
+					"content": tr.Content,
+				})
+			}
+			continue
+		}
+
+		// --- assistant turn that called tools ------------------------------
+		// Serialize as an assistant message with a tool_calls array.
+		if len(m.ToolCalls) > 0 {
+			calls := make([]map[string]any, 0, len(m.ToolCalls))
+			for _, tc := range m.ToolCalls {
+				var args any
+				if len(tc.Arguments) > 0 {
+					_ = json.Unmarshal(tc.Arguments, &args)
+				}
+				if args == nil {
+					args = map[string]any{}
+				}
+				calls = append(calls, map[string]any{
+					"function": map[string]any{
+						"name":      tc.Name,
+						"arguments": args,
+					},
+				})
+			}
+			entry := map[string]any{
+				"role":       "assistant",
+				"content":    m.Content,
+				"tool_calls": calls,
+			}
+			msgs = append(msgs, entry)
+			continue
+		}
+
+		// --- plain text / image message ------------------------------------
 		entry := map[string]any{
 			"role":    string(m.Role),
 			"content": m.Content,
