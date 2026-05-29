@@ -157,6 +157,13 @@ help:
 	@echo "  make k8s-logs        kubectl logs for bodh-care pods"
 	@echo "  make k8s-validate    validate kustomize manifests (no cluster needed)"
 	@echo ""
+	@echo "━━━ Observability — Laminar (lmnr.ai) ━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  make test-otel       go test -tags otel ./pkg/observability/... (Laminar + OTLP)"
+	@echo "  Env: LMNR_PROJECT_API_KEY  — Laminar project API key"
+	@echo "       LMNR_BASE_URL         — override endpoint (self-hosted)"
+	@echo "       BODH_SERVICE_NAME     — OTel service.name (default: bodh)"
+	@echo "  Build: go build -tags otel ./cmd/care     enables Laminar export"
+	@echo ""
 	@echo "━━━ Variables ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  DIAGNOSTICIAN    $(DIAGNOSTICIAN)  (rule|llm-ollama|llm-anthropic|llm-openai|llm-kronk)"
 	@echo "  OLLAMA_HOST      $(OLLAMA_HOST)"
@@ -181,6 +188,12 @@ build:
 .PHONY: test
 test:
 	$(GO) test $(PKG)
+
+.PHONY: test-otel
+## Run observability tests that require the OTel SDK (Laminar + OTLP spans).
+## These are excluded from `make test` to keep the default build tag-free.
+test-otel:
+	$(GO) test -tags otel ./pkg/observability/...
 
 .PHONY: race
 race:
