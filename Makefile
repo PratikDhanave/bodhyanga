@@ -98,6 +98,10 @@ help:
 	@echo "  make fmt             go fmt ./..."
 	@echo "  make clean           remove build artifacts"
 	@echo ""
+	@echo "━━━ Lessons (agent course) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  make lesson-01       01-Intro-to-Agents: single LLM call (no tools, no loop)"
+	@echo "  Variables: INTRO_MESSAGE INTRO_MODEL INTRO_PROVIDER"
+	@echo ""
 	@echo "━━━ Runnables ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  make care            HTTP API + SPA at http://localhost:8088"
 	@echo "  make demo            sequential diagnosis (cmd/demo)"
@@ -226,6 +230,35 @@ clean:
 # ===========================================================================
 
 ARGS ?=
+
+# ===========================================================================
+# LESSONS — agent course
+# ===========================================================================
+
+# Lesson 01 variables (all override-able on the command line).
+INTRO_PROVIDER ?= ollama
+INTRO_MODEL    ?=
+INTRO_MESSAGE  ?= What is an AI agent?
+
+.PHONY: lesson-01
+## 01-Intro-to-Agents: the simplest possible agent — a single LLM call.
+## Exercises: change INTRO_MESSAGE, INTRO_MODEL, or INTRO_PROVIDER.
+##   make lesson-01 INTRO_MESSAGE="What is the ReAct pattern?"
+##   make lesson-01 INTRO_MODEL=llama3.2
+##   make lesson-01 INTRO_PROVIDER=anthropic   # needs ANTHROPIC_API_KEY
+lesson-01:
+	OLLAMA_HOST=$(OLLAMA_HOST) INTRO_PROVIDER=$(INTRO_PROVIDER) \
+	$(GO) run ./cmd/intro/... \
+	  -provider=$(INTRO_PROVIDER) \
+	  -ollama-host=$(OLLAMA_HOST) \
+	  $(if $(INTRO_MODEL),-model=$(INTRO_MODEL),) \
+	  -message=$(INTRO_MESSAGE) \
+	  -verbose \
+	  $(ARGS)
+
+# ===========================================================================
+# RUNNABLES
+# ===========================================================================
 
 .PHONY: care
 care:
