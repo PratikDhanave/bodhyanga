@@ -1,0 +1,23 @@
+# Prometheus configuration for the Bodh local-dev compose stack.
+# Mounted into the prometheus container by docker_compose.yaml.
+#
+# Scrape targets:
+#   bodh-care   GET http://bodh-care:8088/metrics   (bodh_http_* + bodh_llm_* + Go runtime)
+#
+# Retention: 7d (set in docker_compose.yaml via --storage.tsdb.retention.time).
+
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  scrape_timeout:      10s
+  external_labels:
+    environment: "compose-dev"
+
+scrape_configs:
+  - job_name: "bodh-care"
+    static_configs:
+      - targets: ["bodh-care:8088"]
+    metrics_path: /metrics
+    scheme: http
+    scrape_interval: 15s
+    scrape_timeout: 10s
