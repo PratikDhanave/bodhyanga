@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -578,5 +579,187 @@ func TestEmptyMessagesReturnsErr(t *testing.T) {
 	c = NewOllama("", "m")
 	if _, err := c.Complete(context.Background(), Request{}); !errors.Is(err, ErrNoMessages) {
 		t.Fatalf("ollama: want ErrNoMessages, got %v", err)
+	}
+}
+
+// TestOllamaMultiTurnToolResultMessages verifies that a multi-turn request
+// (assistant with tool_calls + user with tool_results) is serialised correctly
+// in the Ollama /api/chat wire format.
+func TestOllamaMultiTurnToolResultMessages(t *testing.T) {
+	var capturedBody []byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedBody, _ = io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "application/json")
+		// Return a final text response — no more tool calls.
+		_, _ = w.Write([]byte(`{
+			"model":"llama3.2",
+			"message":{"role":"assistant","content":"The API endpoint is https://api.example.com/v1"},
+			"done_reason":"stop"
+		}`))
+	}))
+	defer srv.Close()
+
+	c := &ollamaClient{host: srv.URL, model: "llama3.2", http: http.DefaultClient}
+	_, err := c.Complete(context.Background(), Request{
+		Messages: []Message{
+			// Turn 1: user asks a question.
+			{Role: RoleUser, Content: "What is the API endpoint in config.json?"},
+			// Turn 2: assistant called readFile (carried from previous response).
+			{
+				Role:    RoleAssistant,
+				Content: "",
+				ToolCalls: []ToolCall{
+					{ID: "toolu_1", Name: "readFile", Arguments: json.RawMessage(`{"path":"config.json"}`)},
+				},
+			},
+			// Turn 3: user returns tool result.
+			{
+				Role: RoleUser,
+				ToolResults: []ToolResult{
+					{ToolUseID: "toolu_1", Content: `{"apiEndpoint":"https://api.example.com/v1"}`},
+				},
+			},
+		},
+		MaxTokens: 256,
+	})
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(capturedBody, &payload); err != nil {
+		t.Fatalf("decode captured body: %v", err)
+	}
+	msgs, _ := payload["messages"].([]any)
+
+	// Expect 3 messages: user, assistant (tool_calls), tool.
+	if len(msgs) != 3 {
+		t.Fatalf("want 3 messages in wire payload, got %d: %v", len(msgs), msgs)
+	}
+
+	// Message 0: user text.
+	m0, _ := msgs[0].(map[string]any)
+	if m0["role"] != "user" {
+		t.Errorf("msg[0] role: want user, got %v", m0["role"])
+	}
+
+	// Message 1: assistant with tool_calls.
+	m1, _ := msgs[1].(map[string]any)
+	if m1["role"] != "assistant" {
+		t.Errorf("msg[1] role: want assistant, got %v", m1["role"])
+	}
+	calls, _ := m1["tool_calls"].([]any)
+	if len(calls) != 1 {
+		t.Fatalf("msg[1] tool_calls: want 1, got %d", len(calls))
+	}
+	call0, _ := calls[0].(map[string]any)
+	fn, _ := call0["function"].(map[string]any)
+	if fn["name"] != "readFile" {
+		t.Errorf("tool call name: want readFile, got %v", fn["name"])
+	}
+
+	// Message 2: tool result (Ollama uses role "tool").
+	m2, _ := msgs[2].(map[string]any)
+	if m2["role"] != "tool" {
+		t.Errorf("msg[2] role: want tool, got %v", m2["role"])
+	}
+	if m2["content"] == "" {
+		t.Error("msg[2] content should not be empty")
+	}
+}
+
+// TestAnthropicMultiTurnToolResultMessages verifies the Anthropic adapter
+// serialises multi-turn tool results as tool_use + tool_result content blocks.
+func TestAnthropicMultiTurnToolResultMessages(t *testing.T) {
+	var capturedBody []byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedBody, _ = io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"content":[{"type":"text","text":"The endpoint is https://api.example.com/v1"}],
+			"stop_reason":"end_turn",
+			"model":"claude-haiku-4-5",
+			"usage":{"input_tokens":10,"output_tokens":20}
+		}`))
+	}))
+	defer srv.Close()
+
+	c := &anthropicClient{
+		apiKey:   "test-key",
+		model:    "claude-haiku-4-5",
+		endpoint: srv.URL,
+		http:     http.DefaultClient,
+	}
+	_, err := c.Complete(context.Background(), Request{
+		Messages: []Message{
+			{Role: RoleUser, Content: "What is the API endpoint?"},
+			// Assistant turn: carried tool_use content blocks.
+			{
+				Role:    RoleAssistant,
+				Content: "I'll read the file.",
+				ToolCalls: []ToolCall{
+					{ID: "toolu_abc", Name: "readFile", Arguments: json.RawMessage(`{"path":"config.json"}`)},
+				},
+			},
+			// User turn: returning tool_result content blocks.
+			{
+				Role: RoleUser,
+				ToolResults: []ToolResult{
+					{ToolUseID: "toolu_abc", Content: `{"apiEndpoint":"https://api.example.com/v1"}`},
+				},
+			},
+		},
+		MaxTokens: 256,
+	})
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(capturedBody, &payload); err != nil {
+		t.Fatalf("decode captured body: %v", err)
+	}
+	msgs, _ := payload["messages"].([]any)
+
+	// Expect 3 messages: user text, assistant content-block array, user tool_result array.
+	if len(msgs) != 3 {
+		t.Fatalf("want 3 messages, got %d: %v", len(msgs), msgs)
+	}
+
+	// Message 1: assistant content blocks must include tool_use.
+	m1, _ := msgs[1].(map[string]any)
+	if m1["role"] != "assistant" {
+		t.Errorf("msg[1] role: want assistant, got %v", m1["role"])
+	}
+	m1content, _ := m1["content"].([]any)
+	var hasToolUse bool
+	for _, blk := range m1content {
+		b, _ := blk.(map[string]any)
+		if b["type"] == "tool_use" {
+			hasToolUse = true
+			if b["id"] != "toolu_abc" {
+				t.Errorf("tool_use id: want toolu_abc, got %v", b["id"])
+			}
+		}
+	}
+	if !hasToolUse {
+		t.Error("msg[1] content must contain a tool_use block")
+	}
+
+	// Message 2: user content blocks must be tool_result blocks.
+	m2, _ := msgs[2].(map[string]any)
+	if m2["role"] != "user" {
+		t.Errorf("msg[2] role: want user, got %v", m2["role"])
+	}
+	m2content, _ := m2["content"].([]any)
+	if len(m2content) == 0 {
+		t.Fatal("msg[2] content must not be empty")
+	}
+	blk0, _ := m2content[0].(map[string]any)
+	if blk0["type"] != "tool_result" {
+		t.Errorf("msg[2] block type: want tool_result, got %v", blk0["type"])
+	}
+	if blk0["tool_use_id"] != "toolu_abc" {
+		t.Errorf("tool_result tool_use_id: want toolu_abc, got %v", blk0["tool_use_id"])
 	}
 }
