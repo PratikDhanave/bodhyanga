@@ -67,11 +67,13 @@ func main() {
 	env := &orchestration.SimpleEnvironment{Logger: logger, Clock: observability.SystemClock{}}
 	reg := registry.NewInMemory()
 	bus := comm.NewInMemoryBus()
+	agentMeshGate := governance.NewAgentMeshGate()
 	policy := governance.NewComposite(
 		governance.MaxContentLengthPolicy{Max: 65536},
 		governance.RequireCaseIDPolicy{},
 		governance.MaxDiagnosticCostPolicy{},
 		governance.ResearchDisclaimerPolicy{},
+		agentMeshGate, // kill-switch + ring + prompt-injection defense
 	)
 
 	patients := medical.NewPatientRegistry()
@@ -328,6 +330,13 @@ func main() {
 		}
 		writeJSON(w, req)
 	})
+
+	// Kill-switch admin endpoints. Operators can halt the entire fleet or
+	// quarantine individual agents without restarting the process. Routes are
+	// under /admin/ which is not exposed outside the internal network by the
+	// Kubernetes NetworkPolicy (zarf/k8s/base/networkpolicy.yaml).
+	ksServer := &killSwitchServer{reg: agentMeshGate.KillSwitches()}
+	ksServer.mount(mux)
 
 	// Audio transcription endpoint. Multipart upload → transcribed
 	// text on the response. The agent runs synchronously here (see
