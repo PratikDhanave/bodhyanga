@@ -35,6 +35,14 @@ ANTHROPIC_MODEL  ?= claude-sonnet-4-6
 OPENAI_MODEL     ?= gpt-4o
 KNOWLEDGE_CORPUS ?= ./data/knowledge/corpus.json
 
+# Lesson defaults (all override-able on the command line).
+INTRO_PROVIDER        ?= ollama
+INTRO_MODEL           ?=
+INTRO_MESSAGE         ?= What is an AI agent?
+TOOLCALLING_PROVIDER  ?= ollama
+TOOLCALLING_MODEL     ?=
+TOOLCALLING_MESSAGE   ?= What time is it?
+
 # Eval defaults (all override-able).
 EVALS_PROVIDER       ?= ollama
 EVALS_AGENT_MODEL    ?=
@@ -84,6 +92,12 @@ WEB := cmd/care/web
 .PHONY: help
 help:
 	@echo "Bodh Makefile  (Go $$($(GO) version | awk '{print $$3}'))"
+	@echo ""
+	@echo "━━━ Lessons (agents-v2 curriculum) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  make lesson-01       01-Intro-to-Agents: single LLM call (no tools, no loop)"
+	@echo "  Variables: INTRO_MESSAGE INTRO_MODEL INTRO_PROVIDER"
+	@echo "  make lesson-02       02-Tool-Calling: advertise tools, observe tool selection"
+	@echo "  Variables: TOOLCALLING_MESSAGE TOOLCALLING_MODEL TOOLCALLING_PROVIDER"
 	@echo ""
 	@echo "━━━ Build & Test ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  make all             vet + test + build"
@@ -220,6 +234,42 @@ fmt:
 clean:
 	$(GO) clean
 	rm -f coverage.out
+
+# ===========================================================================
+# LESSONS — agents-v2 curriculum in Go
+# ===========================================================================
+
+.PHONY: lesson-01
+## 01-Intro-to-Agents: the simplest possible agent — a single LLM call.
+## Exercises: change INTRO_MESSAGE, INTRO_MODEL, or INTRO_PROVIDER.
+##   make lesson-01 INTRO_MESSAGE="What is the ReAct pattern?"
+##   make lesson-01 INTRO_MODEL=llama3.2
+##   make lesson-01 INTRO_PROVIDER=anthropic   # needs ANTHROPIC_API_KEY
+lesson-01:
+	OLLAMA_HOST=$(OLLAMA_HOST) INTRO_PROVIDER=$(INTRO_PROVIDER) \
+	$(GO) run ./cmd/intro/... \
+	  -provider=$(INTRO_PROVIDER) \
+	  -ollama-host=$(OLLAMA_HOST) \
+	  $(if $(INTRO_MODEL),-model=$(INTRO_MODEL),) \
+	  -message=$(INTRO_MESSAGE) \
+	  -verbose \
+	  $(ARGS)
+
+.PHONY: lesson-02
+## 02-Tool-Calling: advertise tools to the LLM; observe which tool it selects.
+## Exercises: change TOOLCALLING_MESSAGE, TOOLCALLING_MODEL, or TOOLCALLING_PROVIDER.
+##   make lesson-02 TOOLCALLING_MESSAGE="What is 2 + 2?"
+##   make lesson-02 TOOLCALLING_MODEL=llama3.2
+##   make lesson-02 TOOLCALLING_PROVIDER=anthropic   # needs ANTHROPIC_API_KEY
+lesson-02:
+	OLLAMA_HOST=$(OLLAMA_HOST) TOOLCALLING_PROVIDER=$(TOOLCALLING_PROVIDER) \
+	$(GO) run ./cmd/toolcalling/... \
+	  -provider=$(TOOLCALLING_PROVIDER) \
+	  -ollama-host=$(OLLAMA_HOST) \
+	  $(if $(TOOLCALLING_MODEL),-model=$(TOOLCALLING_MODEL),) \
+	  -message=$(TOOLCALLING_MESSAGE) \
+	  -verbose \
+	  $(ARGS)
 
 # ===========================================================================
 # RUNNABLES
