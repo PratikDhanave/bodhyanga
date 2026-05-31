@@ -44,6 +44,42 @@ EVALS_PASS_THRESHOLD ?= 0.6
 EVALS_OUTPUT         ?=
 EVALS_NO_JUDGE       ?= 0
 
+# Lesson / tutorial defaults (all override-able).
+INTRO_PROVIDER      ?= ollama
+INTRO_MODEL         ?=
+INTRO_MESSAGE       ?= Hello! What can you help me with?
+
+TOOLCALLING_PROVIDER ?= ollama
+TOOLCALLING_MODEL    ?=
+TOOLCALLING_MESSAGE  ?= What is the weather in San Francisco?
+
+AGENTLOOP_PROVIDER  ?= ollama
+AGENTLOOP_MODEL     ?=
+AGENTLOOP_MESSAGE   ?= What is the weather in London and what time is it?
+
+SINGLETURNEVAL_PROVIDER ?= ollama
+SINGLETURNEVAL_MODEL    ?=
+
+MULTITURNEVAL_PROVIDER  ?= ollama
+MULTITURNEVAL_MODEL     ?=
+
+FILESYSTEMTOOLS_PROVIDER ?= ollama
+FILESYSTEMTOOLS_MODEL    ?=
+
+WEBSEARCHTOOLS_PROVIDER ?= ollama
+WEBSEARCHTOOLS_MODEL    ?=
+WEBSEARCHTOOLS_MESSAGE  ?= What are the latest Go programming language features?
+
+STREAMING_PROVIDER  ?= ollama
+STREAMING_MODEL     ?=
+STREAMING_MESSAGE   ?= Explain the history of Go in 3 paragraphs
+
+HITL_PROVIDER  ?= ollama
+HITL_MODEL     ?=
+
+A2A_ADDR       ?= :8099
+MCPSERVER_ADDR ?= :8097
+
 # ----- Container / Compose --------------------------------------------------
 
 IMG_CARE  ?= localhost/bodh-care:dev
@@ -107,6 +143,21 @@ help:
 	@echo "  make bodhadmin       build + install cmd/bodhadmin"
 	@echo "  make bodhctl         build + install cmd/bodhctl"
 	@echo "  make export-hitl     export HITL feedback to /tmp/bodh-ft"
+	@echo ""
+	@echo "━━━ Lessons (step-by-step tutorials) ━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  make lesson-01       intro — basic agent loop (cmd/intro)"
+	@echo "  make lesson-02       tool-calling — function tools (cmd/toolcalling)"
+	@echo "  make lesson-03       agent loop — multi-step reasoning (cmd/agentloop)"
+	@echo "  make lesson-04       single-turn eval (cmd/singleturneval)"
+	@echo "  make lesson-05       multi-turn eval (cmd/multiturneval)"
+	@echo "  make lesson-06       filesystem tools (cmd/filesystemtools)"
+	@echo "  make lesson-07       web search tools (cmd/websearchtools)"
+	@echo "  make lesson-08       streaming responses (cmd/streaming)"
+	@echo "  make lesson-09       human-in-the-loop (cmd/hitl)"
+	@echo "  make a2aserver       Agent-to-Agent server on A2A_ADDR ($(A2A_ADDR))"
+	@echo "  make mcp-server      MCP server on MCPSERVER_ADDR ($(MCPSERVER_ADDR))"
+	@echo "  make redteam-eval    red-team evaluation (cmd/redteameval)"
+	@echo "  Variables: INTRO_PROVIDER TOOLCALLING_PROVIDER AGENTLOOP_PROVIDER …"
 	@echo ""
 	@echo "━━━ Evals (multi-turn agent evaluation) ━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  make evals           run eval suite (default: Ollama, no API key)"
@@ -258,6 +309,99 @@ bodhctl:
 .PHONY: export-hitl
 export-hitl:
 	$(GO) run ./cmd/export-hitl-feedback -in data/hitl-sample.json -out-dir /tmp/bodh-ft
+
+# ===========================================================================
+# LESSONS — step-by-step tutorials
+# ===========================================================================
+
+.PHONY: lesson-01
+lesson-01:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/intro/... \
+		-provider=$(INTRO_PROVIDER) \
+		$(if $(INTRO_MODEL),-model=$(INTRO_MODEL),) \
+		-message="$(INTRO_MESSAGE)" \
+		-verbose $(ARGS)
+
+.PHONY: lesson-02
+lesson-02:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/toolcalling/... \
+		-provider=$(TOOLCALLING_PROVIDER) \
+		$(if $(TOOLCALLING_MODEL),-model=$(TOOLCALLING_MODEL),) \
+		-message="$(TOOLCALLING_MESSAGE)" \
+		-verbose $(ARGS)
+
+.PHONY: lesson-03
+lesson-03:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/agentloop/... \
+		-provider=$(AGENTLOOP_PROVIDER) \
+		$(if $(AGENTLOOP_MODEL),-model=$(AGENTLOOP_MODEL),) \
+		-message="$(AGENTLOOP_MESSAGE)" \
+		-verbose $(ARGS)
+
+.PHONY: lesson-04
+lesson-04:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/singleturneval/... \
+		-provider=$(SINGLETURNEVAL_PROVIDER) \
+		$(if $(SINGLETURNEVAL_MODEL),-model=$(SINGLETURNEVAL_MODEL),) \
+		$(ARGS)
+
+.PHONY: lesson-05
+lesson-05:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/multiturneval/... \
+		-provider=$(MULTITURNEVAL_PROVIDER) \
+		$(if $(MULTITURNEVAL_MODEL),-model=$(MULTITURNEVAL_MODEL),) \
+		$(ARGS)
+
+.PHONY: lesson-06
+lesson-06:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/filesystemtools/... \
+		-provider=$(FILESYSTEMTOOLS_PROVIDER) \
+		$(if $(FILESYSTEMTOOLS_MODEL),-model=$(FILESYSTEMTOOLS_MODEL),) \
+		$(ARGS)
+
+.PHONY: lesson-07
+lesson-07:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/websearchtools/... \
+		-provider=$(WEBSEARCHTOOLS_PROVIDER) \
+		$(if $(WEBSEARCHTOOLS_MODEL),-model=$(WEBSEARCHTOOLS_MODEL),) \
+		-message="$(WEBSEARCHTOOLS_MESSAGE)" \
+		-verbose $(ARGS)
+
+.PHONY: lesson-08
+lesson-08:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/streaming/... \
+		-provider=$(STREAMING_PROVIDER) \
+		$(if $(STREAMING_MODEL),-model=$(STREAMING_MODEL),) \
+		-message="$(STREAMING_MESSAGE)" \
+		-verbose $(ARGS)
+
+.PHONY: lesson-09
+lesson-09:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/hitl/... \
+		-provider=$(HITL_PROVIDER) \
+		$(if $(HITL_MODEL),-model=$(HITL_MODEL),) \
+		$(ARGS)
+
+.PHONY: a2aserver
+a2aserver:
+	$(GO) run ./cmd/a2aserver/... -addr=$(A2A_ADDR) $(ARGS)
+
+.PHONY: mcp-server
+mcp-server:
+	$(GO) run ./cmd/mcpserver/... -addr=$(MCPSERVER_ADDR) $(ARGS)
+
+.PHONY: redteam-eval
+redteam-eval:
+	$(GO) run ./cmd/redteameval/... $(ARGS)
 
 # ===========================================================================
 # EVALS — multi-turn agent evaluation

@@ -58,6 +58,12 @@ type Queue struct {
 	// Get / Decide are O(1) operations on the hot HTTP path; List does
 	// the O(n) sort itself.
 	requests map[string]medical.ReviewRequest
+
+	// submitHook, when non-nil, is called after every successful Submit.
+	// Used by Checkpointer.AutoFlush to trigger periodic persistence.
+	// Must only be set before the queue is shared across goroutines
+	// (i.e., in Checkpointer.AutoFlush before the queue goes live).
+	submitHook func()
 }
 
 // NewQueue returns an empty queue.
@@ -93,7 +99,6 @@ func NewQueue() *Queue {
 // comes from Decide() or Expire().
 func (q *Queue) Submit(r medical.ReviewRequest) medical.ReviewRequest {
 	q.mu.Lock()
-	defer q.mu.Unlock()
 	if r.ID == "" {
 		// New ID; UUIDv4 is sufficient — the queue does not use IDs as
 		// security tokens (HTTP auth is the reviewer access control).
@@ -108,6 +113,14 @@ func (q *Queue) Submit(r medical.ReviewRequest) medical.ReviewRequest {
 	}
 	r.Status = medical.ReviewPending
 	q.requests[r.ID] = r
+	hook := q.submitHook
+	q.mu.Unlock()
+
+	// Fire the hook outside the lock so it can safely call back into the
+	// queue (e.g. Checkpointer.AutoFlush calls Flush which calls Pending).
+	if hook != nil {
+		hook()
+	}
 	return r
 }
 
