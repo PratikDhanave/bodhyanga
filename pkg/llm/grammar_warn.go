@@ -19,7 +19,8 @@ var (
 // the agent's retry-on-bad-JSON fallback still run as a backstop.
 //
 // Used by provider adapters that do not have a native sampler-level grammar
-// API (anthropic, openai, ollama as shipped today).
+// API (anthropic, openai). Note: ollama now supports GBNF via
+// options.grammar and does NOT call this function.
 func warnGrammarUnsupported(provider string) {
 	grammarWarnMu.Lock()
 	defer grammarWarnMu.Unlock()

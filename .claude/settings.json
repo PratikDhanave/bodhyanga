@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gofmt -l *)",
+      "Bash(go env *)",
+      "Bash(docker compose logs *)",
+      "Bash(docker compose ps *)",
+      "Bash(make smoke *)",
+      "Bash(make eval *)",
+      "Bash(make opa-test *)"
+    ]
+  }
+}
