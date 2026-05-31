@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -52,16 +53,11 @@ func (c *ollamaClient) Complete(ctx context.Context, req Request) (*Response, er
 		return nil, ErrNoMessages
 	}
 
-	// Ollama's /api/chat exposes `format` (either "json" or a JSON Schema in
-	// 0.5+) but no sampler-level GBNF surface today. Some Ollama builds DO
-	// support grammars under the hood — when that lands in the public API
-	// the adapter can wire req.Grammar.Body into `format` for GBNF format
-	// specs. For now: warn once and rely on the JSONSchema + retry path.
-	if req.Grammar != nil {
-		warnGrammarUnsupported(c.Provider())
-	}
+	// Ollama passes grammars directly to llama.cpp via options.grammar.
+	// No warning needed — GBNF is natively supported.
+	// JSON Schema grammars (GrammarJSONSchema) are handled via the format field.
 
-	payload, err := c.buildPayload(req)
+	payload, err := c.buildPayload(req, false /* stream */)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +70,76 @@ func (c *ollamaClient) Complete(ctx context.Context, req Request) (*Response, er
 	return c.parseResponse(body, req.JSONSchema != nil)
 }
 
-func (c *ollamaClient) buildPayload(req Request) (map[string]any, error) {
+// Stream implements the Streamer interface for token-by-token output.
+// Ollama streams newline-delimited JSON objects; each has a message.content
+// delta and a done boolean. The channel is closed after the final chunk.
+func (c *ollamaClient) Stream(ctx context.Context, req Request) (<-chan StreamChunk, error) {
+	if len(req.Messages) == 0 {
+		return nil, ErrNoMessages
+	}
+	payload, err := c.buildPayload(req, true /* stream */)
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		c.host+ollamaChatPath, bytes.NewReader(buf))
+	if err != nil {
+		return nil, err
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.http.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("ollama stream: %w", err)
+	}
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		return nil, fmt.Errorf("ollama stream: http %d: %s", resp.StatusCode, string(body))
+	}
+
+	ch := make(chan StreamChunk, 32)
+	go func() {
+		defer resp.Body.Close()
+		defer close(ch)
+
+		var full strings.Builder
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line == "" {
+				continue
+			}
+			var event struct {
+				Message struct {
+					Content string `json:"content"`
+				} `json:"message"`
+				Done bool `json:"done"`
+			}
+			if err := json.Unmarshal([]byte(line), &event); err != nil {
+				ch <- StreamChunk{Err: fmt.Errorf("ollama stream: decode: %w", err)}
+				return
+			}
+			full.WriteString(event.Message.Content)
+			if event.Done {
+				ch <- StreamChunk{Delta: event.Message.Content, Done: true, FullContent: full.String()}
+				return
+			}
+			ch <- StreamChunk{Delta: event.Message.Content}
+		}
+		if err := scanner.Err(); err != nil {
+			ch <- StreamChunk{Err: fmt.Errorf("ollama stream: scan: %w", err)}
+		}
+	}()
+	return ch, nil
+}
+
+func (c *ollamaClient) buildPayload(req Request, stream bool) (map[string]any, error) {
 	msgs := make([]map[string]any, 0, len(req.Messages)+1)
 	if req.System != "" {
 		msgs = append(msgs, map[string]any{
@@ -147,27 +212,44 @@ func (c *ollamaClient) buildPayload(req Request) (map[string]any, error) {
 		options["num_predict"] = req.MaxTokens
 	}
 
+	// GBNF grammar — Ollama tunnels options.grammar straight to llama.cpp's
+	// sampler, giving a sampler-level guarantee that every token produced
+	// conforms to the grammar. This is the same mechanism as the kronk
+	// (in-process llama.cpp) provider, just accessed over HTTP.
+	// Only GBNF format is wired here; GrammarJSONSchema is handled via the
+	// format field below.
+	if req.Grammar != nil && req.Grammar.Format == GrammarGBNF {
+		options["grammar"] = req.Grammar.Body
+	}
+
 	payload := map[string]any{
 		"model":    c.model,
 		"messages": msgs,
-		"stream":   false,
+		"stream":   stream,
 	}
 	if len(options) > 0 {
 		payload["options"] = options
 	}
 
+	// JSON Schema structured output — Ollama 0.5+ accepts the full JSON Schema
+	// object in the `format` field, giving field-level validation in addition
+	// to the GBNF structural guarantee (when both are set). Older Ollama
+	// servers (0.4.x) only accept format="json"; we send the full schema
+	// since Ollama 0.5 is now long-standing (2026).
 	if req.JSONSchema != nil {
-		// Validate the schema is well-formed JSON, then ask Ollama for a
-		// free-form JSON object. Older Ollama servers (0.4.x and earlier)
-		// only accept format="json"; newer ones (0.5+) accept a JSON Schema
-		// object, but it's not yet universally available. We send "json" for
-		// cross-version compatibility; the schema still lives in the system
-		// prompt so the model knows the expected shape, and the response is
-		// validated client-side in parseResponse.
-		if err := json.Unmarshal(req.JSONSchema.Schema, new(map[string]any)); err != nil {
+		var schema map[string]any
+		if err := json.Unmarshal(req.JSONSchema.Schema, &schema); err != nil {
 			return nil, fmt.Errorf("ollama: bad JSONSchema: %w", err)
 		}
-		payload["format"] = "json"
+		payload["format"] = schema
+	} else if req.Grammar != nil && req.Grammar.Format == GrammarJSONSchema {
+		// JSON Schema grammar passed as a GrammarSpec rather than via
+		// JSONSchema field — honour it the same way.
+		var schema map[string]any
+		if err := json.Unmarshal([]byte(req.Grammar.Body), &schema); err != nil {
+			return nil, fmt.Errorf("ollama: bad GrammarJSONSchema body: %w", err)
+		}
+		payload["format"] = schema
 	}
 
 	if len(req.Tools) > 0 {
@@ -196,7 +278,8 @@ func (c *ollamaClient) post(ctx context.Context, payload map[string]any) ([]byte
 	if err != nil {
 		return nil, err
 	}
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.host+ollamaChatPath, bytes.NewReader(buf))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		c.host+ollamaChatPath, bytes.NewReader(buf))
 	if err != nil {
 		return nil, err
 	}
