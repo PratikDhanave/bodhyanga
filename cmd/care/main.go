@@ -404,6 +404,7 @@ func main() {
 		runs:        rm,
 		fixturesDir: envDefault("BODH_FIXTURES_DIR", "data/cases"),
 		provider:    *provider,
+		auditRec:    auditRec,
 	}
 	api.mount(mux)
 

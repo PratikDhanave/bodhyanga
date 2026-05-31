@@ -2,6 +2,9 @@ import { NavLink, Outlet } from 'react-router-dom';
 
 const nav = [
   { to: '/', label: 'Dashboard' },
+  { to: '/dashboard', label: 'Clinician Dashboard' },
+  { to: '/portal', label: 'Patient Portal' },
+  { to: '/audit', label: 'Audit Log' },
   { to: '/runs', label: 'Case runner' },
   { to: '/reviews', label: 'HITL reviews' },
   { to: '/tasks', label: 'Nurse tasks' },

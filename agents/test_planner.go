@@ -29,6 +29,10 @@ var conditionWorkups = map[string][]string{
 	"acs":    {"troponin_i", "ecg", "basic_metabolic_panel", "complete_blood_count"},
 	"sepsis": {"blood_culture", "lactate", "complete_blood_count", "basic_metabolic_panel", "urinalysis"},
 	"dka":    {"basic_metabolic_panel", "urine_ketones", "arterial_blood_gas", "complete_blood_count"},
+	// PE workup: CT-PA is gold standard; D-dimer drives pre-imaging stratification;
+	// troponin and BNP surface right-heart strain; ECG may show S1Q3T3 pattern.
+	// Illustrative only — not a clinical guideline.
+	"pe": {"ct_pulmonary_angiography", "d_dimer", "troponin", "bnp_pe", "ecg"},
 }
 
 // defaultWorkup is the respiratory workup used when no condition matches.
@@ -134,6 +138,11 @@ func simulatedTestResult(name, condition string) string {
 			return "ST-segment depression V4-V6 with T-wave inversion (no ST elevation)"
 		case "chf":
 			return "Sinus tachycardia, no acute ischemic changes"
+		case "pe":
+			// S1Q3T3 pattern is classic for acute cor pulmonale / PE, though
+			// insensitive (~20% of PE cases). Sinus tachycardia is the most
+			// common ECG finding. Illustrative only.
+			return "Sinus tachycardia HR 116; S1Q3T3 pattern (right-heart strain)"
 		default:
 			return "Normal sinus rhythm"
 		}
@@ -203,6 +212,43 @@ func simulatedTestResult(name, condition string) string {
 			return "Procalcitonin 8.4 ng/mL (markedly elevated; bacterial source likely)"
 		default:
 			return "Procalcitonin 0.1 ng/mL"
+		}
+	// PE-specific tests.
+	// Illustrative result strings tuned so the PE rule in diagnostician.go fires.
+	// NOT clinical guidelines — d_dimer >500 ng/mL FEU is a common screening
+	// threshold; CT-PA "filling defects" is the gold-standard positive; S1Q3T3
+	// is a classic but insensitive ECG finding.
+	case "ct_pulmonary_angiography":
+		switch condition {
+		case "pe":
+			return "Bilateral pulmonary arterial filling defects consistent with pulmonary embolism"
+		default:
+			return "No pulmonary arterial filling defects; lungs clear"
+		}
+	case "d_dimer":
+		switch condition {
+		case "pe":
+			// D-dimer >500 ng/mL FEU exceeds the standard age-adjusted cutoff.
+			// Illustrative threshold only.
+			return "D-dimer 3400 ng/mL FEU (markedly elevated; >500 ng/mL FEU)"
+		default:
+			return "D-dimer 180 ng/mL FEU (within normal range)"
+		}
+	case "troponin":
+		switch condition {
+		case "pe":
+			// Mildly elevated troponin in submassive PE indicates right-heart strain.
+			// Illustrative only.
+			return "Troponin I 0.12 ng/mL (mildly elevated; right-heart strain pattern)"
+		default:
+			return "Troponin I undetectable"
+		}
+	case "bnp_pe":
+		switch condition {
+		case "pe":
+			return "BNP 520 pg/mL (elevated; consistent with right ventricular strain)"
+		default:
+			return "BNP 62 pg/mL (within normal range)"
 		}
 	default:
 		return "Pending"

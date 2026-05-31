@@ -15,6 +15,11 @@ type CaseMetrics struct {
 	MessageSteps       int     `json:"message_steps"`
 	RPMAlertCount      int     `json:"rpm_alert_count"`
 	UnderBudget        bool    `json:"under_budget"`
+	// Metadata carries arbitrary per-case annotations (e.g. demographics for
+	// equity stratification). Keys understood by pkg/eval/equity: "age",
+	// "age_group", "sex", "gender", "race", "ethnicity", "correct",
+	// "diagnosis_match".
+	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
 // ScoreCase computes metrics from a completed case state.

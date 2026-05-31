@@ -26,7 +26,7 @@ type PanelRule func(p PatientRecord, now time.Time) []CareGap
 
 // DefaultPanelRules returns the demo rule set: A1c overdue, BP uncontrolled,
 // no recent visit, RPM weight trend for CHF, post-discharge follow-up window,
-// asthma without a controller, and overdue ACT score.
+// asthma without a controller, overdue ACT score, and PHQ-9 depression screening.
 func DefaultPanelRules() []PanelRule {
 	return []PanelRule{
 		a1cOverdueRule,
@@ -36,6 +36,7 @@ func DefaultPanelRules() []PanelRule {
 		postDischargeFollowUpRule,
 		noControllerPersistentAsthmaRule,
 		actOverdueRule,
+		phq9OverdueRule,
 	}
 }
 
@@ -136,6 +137,22 @@ func actOverdueRule(p PatientRecord, now time.Time) []CareGap {
 		return []CareGap{{
 			PatientID: p.PatientID, Rule: "act_overdue", Severity: "warn",
 			Detail: "Asthma patient with no ACT score in last 180 days",
+		}}
+	}
+	return nil
+}
+
+// phq9OverdueRule fires when a patient has a depression diagnosis and no PHQ-9
+// assessment in the last 90 days. Applicable condition codes: "major_depressive_disorder"
+// or "depression".
+func phq9OverdueRule(p PatientRecord, now time.Time) []CareGap {
+	if !hasCondition(p, "major_depressive_disorder") && !hasCondition(p, "depression") {
+		return nil
+	}
+	if p.LastPHQ9Date.IsZero() || now.Sub(p.LastPHQ9Date) > 90*24*time.Hour {
+		return []CareGap{{
+			PatientID: p.PatientID, Rule: "phq9_overdue", Severity: "warn",
+			Detail: "PHQ-9 depression screening overdue (>90 days)",
 		}}
 	}
 	return nil
