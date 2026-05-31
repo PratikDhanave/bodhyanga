@@ -120,6 +120,12 @@ help:
 	@echo "  make ollama-pull     pull $(OLLAMA_MODEL) + $(OLLAMA_EMBED)"
 	@echo "  make ollama-ps       list running models"
 	@echo ""
+	@echo "━━━ Open Policy Agent (OPA) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  make opa-test        run opa test on embedded Rego policies"
+	@echo "  make opa-fmt         opa fmt --write on all .rego files"
+	@echo "  make opa-check       opa check (parse + type-check) all .rego files"
+	@echo "  (installs opa CLI via go install if not found)"
+	@echo ""
 	@echo "━━━ Clinician console SPA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  make web-install     npm install in $(WEB)"
 	@echo "  make web-build       npm run build (regenerates go:embed dist/)"
@@ -348,6 +354,40 @@ ollama-ps:
 		  [print(f"  {m[\"name\"]} ({m.get(\"size_vram\",0)//1024//1024} MB VRAM)") for m in ms] \
 		  or print("  (no models loaded)")' 2>/dev/null \
 		|| echo "  (ollama not reachable)"
+
+# ===========================================================================
+# OPEN POLICY AGENT (OPA)
+# Rego sources live in pkg/governance/rego/ and pkg/auth/rego/.
+# opa test runs in-process; no OPA server is needed.
+# ===========================================================================
+
+OPA_DIRS := pkg/governance/rego pkg/auth/rego
+
+# Resolve the opa CLI: prefer the one already on PATH; fall back to the
+# binary installed by `go install` in GOPATH/bin.
+OPA ?= $(shell command -v opa 2>/dev/null || echo $(shell $(GO) env GOPATH)/bin/opa)
+
+# _opa_install is an internal helper that installs the opa CLI when missing.
+_opa_install:
+	@if ! command -v opa >/dev/null 2>&1 && [ ! -x "$(shell $(GO) env GOPATH)/bin/opa" ]; then \
+		echo "opa not found — installing via go install ..."; \
+		GOFLAGS="" $(GO) install github.com/open-policy-agent/opa@latest; \
+	fi
+
+.PHONY: opa-test
+## Run opa test on all embedded Rego policies (governance + auth).
+opa-test: _opa_install
+	$(OPA) test --v1-compatible $(OPA_DIRS)
+
+.PHONY: opa-fmt
+## Format all .rego files in-place with opa fmt.
+opa-fmt: _opa_install
+	$(OPA) fmt --write --v1-compatible $(OPA_DIRS)
+
+.PHONY: opa-check
+## Parse + type-check all .rego files (no evaluation).
+opa-check: _opa_install
+	$(OPA) check --v1-compatible $(OPA_DIRS)
 
 # ===========================================================================
 # CLINICIAN CONSOLE SPA
