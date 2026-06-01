@@ -27,7 +27,7 @@ func newOncologyMsg(c OncologyConsult) agent.Message {
 
 // decodeRec is a test helper that decodes an OncologyRecommendation from
 // the first output message's Content.
-func decodeRec(t *testing.T, msgs []agent.Message) OncologyRecommendation {
+func decodeOncRec(t *testing.T, msgs []agent.Message) OncologyRecommendation {
 	t.Helper()
 	if len(msgs) != 1 {
 		t.Fatalf("want 1 output message, got %d", len(msgs))
@@ -90,7 +90,7 @@ func TestOncologistNSCLC(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	rec := decodeRec(t, out)
+	rec := decodeOncRec(t, out)
 
 	if rec.Protocol != "Carboplatin/Paclitaxel" {
 		t.Errorf("Protocol: want Carboplatin/Paclitaxel, got %q", rec.Protocol)
@@ -141,7 +141,7 @@ func TestOncologistNSCLCHighECOGNotSelected(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	rec := decodeRec(t, out)
+	rec := decodeOncRec(t, out)
 	// ECOG 2 falls outside the ≤1 guard, should be supportive care
 	if rec.Protocol == "Carboplatin/Paclitaxel" {
 		t.Errorf("ECOG 2 NSCLC should not receive Carboplatin/Paclitaxel, got %q", rec.Protocol)
@@ -169,7 +169,7 @@ func TestOncologistColonFOLFOX(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	rec := decodeRec(t, out)
+	rec := decodeOncRec(t, out)
 	if rec.Protocol != "FOLFOX" {
 		t.Errorf("Protocol: want FOLFOX, got %q", rec.Protocol)
 	}
@@ -206,7 +206,7 @@ func TestOncologistLymphomaDLBCL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	rec := decodeRec(t, out)
+	rec := decodeOncRec(t, out)
 	if rec.Protocol != "R-CHOP" {
 		t.Errorf("Protocol: want R-CHOP, got %q", rec.Protocol)
 	}
@@ -243,7 +243,7 @@ func TestOncologistDoseReductionECOG3(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	rec := decodeRec(t, out)
+	rec := decodeOncRec(t, out)
 
 	if !rec.Urgent {
 		t.Errorf("Urgent: expected true for ECOG 3, got false")
@@ -291,7 +291,7 @@ func TestOncologistDoseReductionRenalModerate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	rec := decodeRec(t, out)
+	rec := decodeOncRec(t, out)
 
 	reductionMentionsCarboplatin := false
 	for _, dr := range rec.DoseReductions {
@@ -322,7 +322,7 @@ func TestOncologistDoseReductionRenalSevere(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	rec := decodeRec(t, out)
+	rec := decodeOncRec(t, out)
 	if !rec.Urgent {
 		t.Errorf("Urgent: expected true for severe renal + nephrotoxic agent, got false")
 	}
@@ -346,7 +346,7 @@ func TestOncologistUnknownCancerType(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	rec := decodeRec(t, out)
+	rec := decodeOncRec(t, out)
 	if !rec.Urgent {
 		t.Errorf("Urgent: expected true for unknown cancer type")
 	}
@@ -432,7 +432,7 @@ func TestOncologistSupportiveCareContents(t *testing.T) {
 		if err != nil {
 			t.Fatalf("case %s: HandleMessage: %v", c.CaseID, err)
 		}
-		rec := decodeRec(t, out)
+		rec := decodeOncRec(t, out)
 		if len(rec.SupportiveCare) == 0 {
 			t.Errorf("case %s (%s): expected non-empty SupportiveCare", c.CaseID, c.CancerType)
 		}

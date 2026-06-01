@@ -20,7 +20,7 @@ func makeScreenRequest(t *testing.T, req TrialScreenRequest) agent.Message {
 		"trial_screen_request", string(b), nil)
 }
 
-func decodeResult(t *testing.T, msgs []agent.Message) TrialScreenResult {
+func decodeTrialResult(t *testing.T, msgs []agent.Message) TrialScreenResult {
 	t.Helper()
 	if len(msgs) != 1 {
 		t.Fatalf("expected 1 output message, got %d", len(msgs))
@@ -97,7 +97,7 @@ func TestTrialScreener_NSCLCPatientEligibleForBODH001(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	result := decodeResult(t, msgs)
+	result := decodeTrialResult(t, msgs)
 
 	if result.TotalScreened != len(mockTrials) {
 		t.Errorf("TotalScreened=%d, want %d", result.TotalScreened, len(mockTrials))
@@ -134,7 +134,7 @@ func TestTrialScreener_NSCLCWithCheckpointInhibitorExcluded(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	result := decodeResult(t, msgs)
+	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
 		if trial.TrialID == "BODH-001" && trial.MatchScore == 1.0 {
@@ -157,7 +157,7 @@ func TestTrialScreener_HER2BreastCancerEligibleForBODH002(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	result := decodeResult(t, msgs)
+	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
 		if trial.TrialID == "BODH-002" {
@@ -184,7 +184,7 @@ func TestTrialScreener_HER2BreastCancerPoorECOGExcluded(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	result := decodeResult(t, msgs)
+	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
 		if trial.TrialID == "BODH-002" {
@@ -214,7 +214,7 @@ func TestTrialScreener_DiabetesPatientEligibleForBODH003(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	result := decodeResult(t, msgs)
+	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
 		if trial.TrialID == "BODH-003" {
@@ -240,7 +240,7 @@ func TestTrialScreener_DiabetesPatientWithMIExcludedFromBODH003(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	result := decodeResult(t, msgs)
+	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
 		if trial.TrialID == "BODH-003" && trial.MatchScore == 1.0 {
@@ -264,7 +264,7 @@ func TestTrialScreener_SolidTumorEligibleForBODH004(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	result := decodeResult(t, msgs)
+	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
 		if trial.TrialID == "BODH-004" {
@@ -291,7 +291,7 @@ func TestTrialScreener_AnyAdultEligibleForBODH005(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	result := decodeResult(t, msgs)
+	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
 		if trial.TrialID == "BODH-005" {
@@ -316,7 +316,7 @@ func TestTrialScreener_MinorExcludedFromBODH005(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	result := decodeResult(t, msgs)
+	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
 		if trial.TrialID == "BODH-005" && trial.MatchScore == 1.0 {
@@ -341,7 +341,7 @@ func TestTrialScreener_LowScoreTrialsExcluded(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	result := decodeResult(t, msgs)
+	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
 		if trial.MatchScore < 0.5 {
@@ -365,7 +365,7 @@ func TestTrialScreener_ResultsSortedByMatchScoreDescending(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	result := decodeResult(t, msgs)
+	result := decodeTrialResult(t, msgs)
 
 	for i := 1; i < len(result.EligibleTrials); i++ {
 		prev := result.EligibleTrials[i-1].MatchScore
@@ -391,7 +391,7 @@ func TestTrialScreener_TotalScreenedEqualsTrialDBSize(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HandleMessage: %v", err)
 	}
-	result := decodeResult(t, msgs)
+	result := decodeTrialResult(t, msgs)
 	if result.TotalScreened != len(mockTrials) {
 		t.Errorf("TotalScreened=%d, want %d (all mock trials)", result.TotalScreened, len(mockTrials))
 	}
