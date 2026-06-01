@@ -1,0 +1,204 @@
+# Default values for bodh.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- Number of replicas for the care deployment.
+# Two replicas + PDB minAvailable=1 -> tolerate one voluntary disruption
+# without losing serving capacity. Important for HITL reviews.
+replicaCount: 2
+
+image:
+  # -- Container image repository.
+  repository: "localhost/bodh-care"
+  # -- Container image tag.
+  tag: "dev"
+  # -- Image pull policy.
+  pullPolicy: IfNotPresent
+
+# -- Image pull secrets for private registries.
+imagePullSecrets: []
+
+# -- Override the chart name.
+nameOverride: ""
+# -- Override the full release name.
+fullnameOverride: ""
+
+serviceAccount:
+  # -- Specifies whether a ServiceAccount should be created.
+  create: true
+  # -- Annotations to add to the ServiceAccount (e.g., Workload Identity binding).
+  # Example for GKE Workload Identity:
+  #   iam.gke.io/gcp-service-account: "bodh-care@PROJECT.iam.gserviceaccount.com"
+  annotations: {}
+  # -- The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template.
+  name: ""
+
+# -- Pod annotations.
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8088"
+  prometheus.io/path: "/metrics"
+
+# -- Pod-level security context (PodSecurity "restricted" profile).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container-level security context.
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65532
+  capabilities:
+    drop: ["ALL"]
+
+service:
+  # -- Service type.
+  type: ClusterIP
+  # -- Service port. The container listens on 8088; the service maps to this port.
+  port: 8088
+
+ingress:
+  # -- Enable ingress.
+  enabled: false
+  # -- Ingress class name.
+  className: nginx
+  # -- Ingress annotations.
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: bodh.local
+      paths:
+        - path: /
+          pathType: Prefix
+  # -- TLS configuration for ingress.
+  tls: []
+  #  - secretName: bodh-tls
+  #    hosts:
+  #      - bodh.local
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "2"
+    memory: 2Gi
+
+autoscaling:
+  # -- Enable HorizontalPodAutoscaler.
+  enabled: false
+  # -- Minimum number of replicas.
+  minReplicas: 2
+  # -- Maximum number of replicas.
+  maxReplicas: 10
+  # -- Target CPU utilization percentage for autoscaling.
+  targetCPUUtilizationPercentage: 80
+  # -- Target memory utilization percentage for autoscaling (optional).
+  # targetMemoryUtilizationPercentage: 80
+
+podDisruptionBudget:
+  # -- Enable PodDisruptionBudget.
+  enabled: true
+  # -- Minimum number of pods that must be available.
+  minAvailable: 1
+
+networkPolicy:
+  # -- Enable NetworkPolicy (default-deny + explicit allow-list).
+  enabled: true
+
+# -- Liveness probe configuration.
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# -- Readiness probe configuration.
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 2
+
+# -- Rolling update strategy settings.
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
+# -- Termination grace period in seconds.
+terminationGracePeriodSeconds: 60
+
+# -- Revision history limit for the deployment.
+revisionHistoryLimit: 5
+
+# -- Application configuration (non-secret values rendered into a ConfigMap).
+config:
+  # HTTP listen address inside the Pod.
+  BODH_LISTEN_ADDR: ":8088"
+  # Log level.
+  BODH_LOG_LEVEL: "info"
+  # RAG corpus path inside the container.
+  BODH_KNOWLEDGE_CORPUS: "/data/knowledge/corpus.json"
+  # Audit log sink path.
+  BODH_AUDIT_SINK: "/var/lib/bodh/audit.log"
+  # OTel export toggle (requires image built with -tags otel).
+  BODH_OTEL_EXPORT: "0"
+  # OTel collector endpoint.
+  BODH_OTEL_ENDPOINT: "http://otel-collector.observability:4318"
+
+# -- Diagnostician mode: rule | llm-anthropic | llm-openai | llm-ollama
+diagnostician: "rule"
+
+# -- Secret environment variables for development (opaque inline secrets).
+# In production, use existingSecret instead.
+# NEVER commit real keys here. These values are base64-encoded in the Secret.
+env:
+  BODH_DB_DSN: ""
+  ANTHROPIC_API_KEY: ""
+  LMNR_PROJECT_API_KEY: ""
+  OPENAI_API_KEY: ""
+
+# -- Name of an existing Kubernetes Secret containing env vars.
+# When set, the deployment uses envFrom.secretRef pointing to this secret
+# instead of the chart-managed Secret. Set env values to empty strings when
+# using existingSecret.
+existingSecret: ""
+
+# -- Extra environment variables to inject (plain key/value, not secret).
+extraEnv: []
+# - name: BODH_OLLAMA_MODEL
+#   value: "llama3.2"
+
+# -- Volume mounts for additional volumes.
+extraVolumeMounts: []
+
+# -- Additional volumes to attach to the pod.
+extraVolumes: []
+
+# -- Node selector for pod scheduling.
+nodeSelector: {}
+
+# -- Tolerations for pod scheduling.
+tolerations: []
+
+# -- Affinity rules for pod scheduling.
+affinity: {}
+
+# -- Pod topology spread constraints.
+topologySpreadConstraints: []

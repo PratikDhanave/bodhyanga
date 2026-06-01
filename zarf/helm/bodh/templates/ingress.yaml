@@ -1,0 +1,61 @@
+{{- if .Values.ingress.enabled -}}
+# Ingress for the Bodh care HTTP API.
+# Disabled by default — enable by setting ingress.enabled=true and
+# configuring ingress.hosts and optionally ingress.tls.
+#
+# Example for NGINX Ingress + cert-manager:
+#   ingress:
+#     enabled: true
+#     className: nginx
+#     annotations:
+#       cert-manager.io/cluster-issuer: letsencrypt-prod
+#     hosts:
+#       - host: bodh.example.com
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#     tls:
+#       - secretName: bodh-tls
+#         hosts:
+#           - bodh.example.com
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "bodh.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "bodh.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- range .Values.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "bodh.fullname" $ }}
+                port:
+                  name: http
+          {{- end }}
+    {{- end }}
+{{- end }}
