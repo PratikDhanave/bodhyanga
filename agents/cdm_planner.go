@@ -3,6 +3,7 @@ package agents
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/PratikDhanave/bodh/pkg/agent"
@@ -24,9 +25,12 @@ type CDMPlannerAgent struct {
 }
 
 type cdmRequest struct {
-	PatientID string `json:"patient_id"`
-	Condition string `json:"condition"`
-	CaseID    string `json:"case_id,omitempty"`
+	PatientID string  `json:"patient_id"`
+	Condition string  `json:"condition"`
+	CaseID    string  `json:"case_id,omitempty"`
+	// Well-child fields (used when Condition == "well_child").
+	AgeMonths int     `json:"age_months,omitempty"`
+	WeightKg  float64 `json:"weight_kg,omitempty"`
 }
 
 func (a *CDMPlannerAgent) ID() string   { return "cdm_planner" }
@@ -41,7 +45,22 @@ func (a *CDMPlannerAgent) HandleMessage(_ context.Context, msg agent.Message, en
 		env.Logf("[cdm_planner] invalid request: %v", err)
 		return nil, err
 	}
-	plan := medical.BuildCarePlan(req.CaseID, req.PatientID, req.Condition, time.Now())
+	now := time.Now()
+	var plan medical.CarePlan
+	switch strings.ToLower(req.Condition) {
+	case "well_child":
+		plan = medical.BuildPediatricWellChildCarePlan(req.CaseID, req.PatientID, req.AgeMonths, req.WeightKg, now)
+	case "post_mi":
+		plan = medical.BuildPostMICarePlan(req.CaseID, req.PatientID, now)
+	case "post_stroke", "post_stroke_ischemic", "post_stroke_hemorrhagic":
+		strokeType := "ischemic"
+		if strings.Contains(strings.ToLower(req.Condition), "hemorrhagic") {
+			strokeType = "hemorrhagic"
+		}
+		plan = medical.BuildPostStrokeCarePlan(req.CaseID, req.PatientID, strokeType, now)
+	default:
+		plan = medical.BuildCarePlan(req.CaseID, req.PatientID, req.Condition, now)
+	}
 	env.Logf("[cdm_planner] %s", plan.Summary())
 
 	if a.Registry != nil {

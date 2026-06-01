@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodh/pkg/audit"
 	"github.com/PratikDhanave/bodh/pkg/comm"
 	"github.com/PratikDhanave/bodh/pkg/engagement"
 	"github.com/PratikDhanave/bodh/pkg/hitl"
@@ -112,6 +113,7 @@ type apiServer struct {
 	runs        *runManager
 	fixturesDir string
 	provider    string
+	auditRec    audit.Recorder // may be nil; handler guards against nil
 }
 
 func (s *apiServer) mount(mux *http.ServeMux) {
@@ -133,6 +135,10 @@ func (s *apiServer) mount(mux *http.ServeMux) {
 
 	mux.HandleFunc("/api/runs", startRunHandler(s.bus, s.runs, s.fixturesDir, s.provider))
 	mux.HandleFunc("/api/runs/", runEventsHandler(s.runs))
+
+	// Paginated audit log. Requires tenant_id; returns AuditPage JSON.
+	// See pkg/audit.AuditQuery for filter documentation.
+	mux.HandleFunc("GET /api/audit", s.auditPage)
 }
 
 func (s *apiServer) runtime(w http.ResponseWriter, _ *http.Request) {
@@ -370,4 +376,66 @@ func (s *apiServer) reviewDecide(w http.ResponseWriter, r *http.Request) {
 		))
 	}
 	writeJSON(w, decided)
+}
+
+// auditPage handles GET /api/audit.
+//
+// Query parameters:
+//   - tenant_id  (required) — scopes the read to one tenant; 403 if absent
+//   - case_id    (optional) — filter to a specific case
+//   - agent_id   (optional) — filter to a specific agent
+//   - kind       (optional) — filter to a specific event kind
+//   - after      (optional) — opaque cursor from a previous AuditPage.NextCursor
+//   - limit      (optional) — page size; default 50, max 200
+//
+// Returns audit.AuditPage JSON. Requires a non-empty tenant_id to prevent
+// cross-tenant reads (HIPAA §164.312(a)(2)(i) — no unauthorised access to PHI
+// correlation data across tenant boundaries).
+func (s *apiServer) auditPage(w http.ResponseWriter, r *http.Request) {
+	tenantID := r.URL.Query().Get("tenant_id")
+	if tenantID == "" {
+		http.Error(w, "tenant_id is required", http.StatusForbidden)
+		return
+	}
+
+	// Guard against a nil recorder (e.g. if the server is wired without one
+	// in a test fixture that doesn't need audit). Return an empty page rather
+	// than panicking.
+	if s.auditRec == nil {
+		writeJSON(w, audit.AuditPage{Events: []audit.Event{}})
+		return
+	}
+
+	// Validate the cursor early so we can return a 400 before doing any work.
+	afterCursor := r.URL.Query().Get("after")
+	if afterCursor != "" {
+		if _, _, err := audit.DecodeCursor(afterCursor); err != nil {
+			http.Error(w, "invalid cursor: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
+	limit := audit.DefaultAuditPageLimit
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if n, err := parseLimit(v); err == nil {
+			limit = n
+		}
+		// Bad limit value falls back to default — consistent with /audit.
+	}
+
+	q := audit.AuditQuery{
+		TenantID: tenantID,
+		CaseID:   r.URL.Query().Get("case_id"),
+		AgentID:  r.URL.Query().Get("agent_id"),
+		Kind:     r.URL.Query().Get("kind"),
+		After:    afterCursor,
+		Limit:    limit,
+	}
+
+	page := audit.PageFromRecorder(s.auditRec, q)
+	// Ensure Events is never JSON null — an empty slice serialises to [].
+	if page.Events == nil {
+		page.Events = []audit.Event{}
+	}
+	writeJSON(w, page)
 }

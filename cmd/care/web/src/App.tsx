@@ -1,6 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
+import ClinicianDashboard from './pages/ClinicianDashboard';
+import PatientPortal from './pages/PatientPortal';
+import AuditLog from './pages/AuditLog';
 import CaseRunner from './pages/CaseRunner';
 import RunTrace from './pages/RunTrace';
 import Reviews from './pages/Reviews';
@@ -20,6 +23,9 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<ClinicianDashboard />} />
+        <Route path="/portal" element={<PatientPortal />} />
+        <Route path="/audit" element={<AuditLog />} />
         <Route path="/runs" element={<CaseRunner />} />
         <Route path="/runs/:runId" element={<RunTrace />} />
         <Route path="/reviews" element={<Reviews />} />
