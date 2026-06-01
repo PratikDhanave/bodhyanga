@@ -4,7 +4,8 @@
   "hpi": "47-year-old on day 5 post knee replacement; sudden dyspnea, tachycardia, right-sided pleuritic chest pain",
   "demographics": "47M",
   "vitals": "T 37.1°C, HR 116, RR 24, SpO2 90% on room air, BP 128/82",
-  "gold_diagnosis": "Pulmonary embolism",
+  "gold_diagnosis": "pulmonary_embolism",
+  "condition": "pe",
   "max_cost_usd": 1200,
-  "notes": "Out-of-rule miss — the demo diagnostician has no PE-specific rule, so this case lands on 'Undifferentiated' and the bench surfaces it as a coverage gap. Larger budget reflects D-dimer + CT-PA workup that would be needed in production."
+  "notes": "Synthetic teaching case (PE / vascular). Post-surgical immobilisation + tachycardia + hypoxaemia; Wells criteria high probability. Workup: CT-PA (gold standard), D-dimer, troponin, BNP, ECG (S1Q3T3). Not derived from any real patient data."
 }

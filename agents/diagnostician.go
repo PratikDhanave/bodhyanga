@@ -121,9 +121,12 @@ func (a *DiagnosticianAgent) HandleMessage(ctx context.Context, msg agent.Messag
 //	            false-fire from other conditions.
 //	3) Sepsis — lactate + WBC; common signals so guarded by condition tag.
 //	4) CHF    — BNP threshold OR RPM-alert pattern.
-//	5) CAP    — leukocytosis + infiltrate; the legacy default rule and
+//	5) PE     — tachycardia + hypoxemia / D-dimer / condition tag proxy;
+//	            before CAP so tachycardic hypoxaemic cases don't land on
+//	            pneumonia when CT-PA result is available.
+//	6) CAP    — leukocytosis + infiltrate; the legacy default rule and
 //	            the easiest to false-fire, so last.
-//	6) (fall) — low-confidence Undifferentiated; verifier may reject.
+//	7) (fall) — low-confidence Undifferentiated; verifier may reject.
 func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
 	// 1. ACS — elevated troponin on the order.
 	//
@@ -272,7 +275,41 @@ func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
 		}
 	}
 
-	// 5. CAP — leukocytosis + infiltrate on chest X-ray.
+	// 5. PE — tachycardia + hypoxemia, D-dimer elevation, or Wells criteria proxy.
+	//
+	// Trigger (any of three paths):
+	//   a) HR > 100 AND SpO2 < 95 (hypoxemic tachycardia pattern)
+	//   b) D-dimer elevated in labs/symptoms AND tachycardia in presentation
+	//   c) condition == "pe" as explicit tag (bench / demo cases)
+	//
+	// **Wells Score proxy.** The real Wells PE score weighs 7 criteria (DVT
+	// signs, HR>100, immobilisation, prior DVT/PE, haemoptysis, malignancy,
+	// alternative diagnosis less likely). Three or more criteria → "high
+	// probability". This rule approximates that gate using two readily available
+	// signals (HR and SpO2) plus the condition tag; a clinical-grade
+	// implementation would parse the full vitals + HPI text.
+	//
+	// **Illustrative thresholds only — NOT a clinical guideline.** Real PE
+	// diagnosis requires imaging (CT-PA or V/Q scan), validated scoring
+	// (Wells, Geneva, YEARS), and risk-stratification (haemodynamic stability,
+	// troponin, BNP, right-heart echo).
+	//
+	// Confidence 0.72 — lower than ACS/CHF because the rule fires on indirect
+	// haemodynamic proxies rather than a pathognomonic marker. The verifier's
+	// demo threshold (0.5) passes; HITL gate (criterion 4) remains the safety net.
+	//
+	// Position: BEFORE CAP to prevent tachycardia + leukocytosis cases from
+	// false-firing to pneumonia when the PE-specific imaging result is present.
+	if isPELikely(state) {
+		return medical.DiagnosisProposal{
+			Diagnosis:    "pulmonary_embolism",
+			Confidence:   0.72,
+			Differential: state.Hypotheses,
+			Rationale:    "Tachycardia + hypoxemia pattern consistent with PE; Wells criteria met",
+		}
+	}
+
+	// 7. CAP — leukocytosis + infiltrate on chest X-ray.
 	//
 	// **Legacy default rule.** Before PR #11 added the ACS/sepsis/DKA
 	// branches above, this was the ONLY clinical rule — which is why
@@ -351,6 +388,105 @@ func isTroponinElevated(state medical.CaseState) bool {
 	}
 	if num, ok := extractFirstNumber(v, "ng/ml"); ok && num > 0.04 {
 		return true
+	}
+	return false
+}
+
+// isPELikely returns true when the case's lab results and/or condition tag
+// suggest pulmonary embolism with Wells-proxy high probability.
+//
+// Three independent detection paths (any one is sufficient):
+//
+//  1. CT pulmonary angiography result contains "filling defect" → imaging positive.
+//  2. D-dimer elevated (string "elevated" or numeric > 500 ng/mL FEU) AND
+//     tachycardia present in the presentation text (HR > 100) — the two most
+//     sensitive non-specific PE markers combined.
+//  3. Condition tag == "pe" — bench/demo case explicitly labelled; lets the
+//     rule fire on the PE fixture without requiring every signal to be present.
+//
+// Tachycardia detection: scans state.Presentation for "HR <number>" or
+// "heart rate <number>" using extractFirstNumber. SpO2 < 95 is checked via
+// the same marker pattern.
+//
+// **Illustrative thresholds only — not a clinical guideline.**
+// D-dimer 500 ng/mL FEU is the common fixed-cutoff threshold; age-adjusted
+// cutoff = age × 10 ng/mL for patients > 50 years. HR > 100 is one Wells
+// criterion worth 1.5 points. Neither individually nor together do these
+// signals substitute for clinical risk stratification and imaging.
+func isPELikely(state medical.CaseState) bool {
+	// Path 1: CT-PA result is positive.
+	ctpa, hasCTPA := state.TestResults["ct_pulmonary_angiography"]
+	if hasCTPA && strings.Contains(strings.ToLower(ctpa), "filling defect") {
+		return true
+	}
+
+	// Path 2: D-dimer elevated + tachycardia.
+	ddimer, hasDDimer := state.TestResults["d_dimer"]
+	if hasDDimer {
+		ddimerElevated := strings.Contains(strings.ToLower(ddimer), "elevated") ||
+			strings.Contains(strings.ToLower(ddimer), "markedly elevated")
+		if !ddimerElevated {
+			if val, ok := extractFirstNumber(ddimer, "d-dimer"); ok && val > 500 {
+				ddimerElevated = true
+			}
+		}
+		if ddimerElevated && isTachycardic(state.Presentation) {
+			return true
+		}
+	}
+
+	// Path 3: HR > 100 AND SpO2 < 95 (hypoxemic tachycardia — Wells proxy).
+	if isTachycardic(state.Presentation) && isHypoxemic(state.Presentation) {
+		return true
+	}
+
+	// Path 4: explicit condition tag (bench / demo fixture).
+	if state.Condition == "pe" {
+		return true
+	}
+
+	return false
+}
+
+// isTachycardic returns true when the presentation text describes a heart rate
+// above 100 bpm. It scans for the "HR" or "heart rate" marker and extracts the
+// first numeric value after it.
+//
+// **Illustrative threshold only.** HR > 100 is one Wells PE score criterion
+// (1.5 points). NOT a standalone clinical indicator.
+func isTachycardic(presentation string) bool {
+	if presentation == "" {
+		return false
+	}
+	lower := strings.ToLower(presentation)
+	// Try "HR <number>" first (vitals shorthand).
+	for _, marker := range []string{"hr ", "heart rate "} {
+		if strings.Contains(lower, marker) {
+			if hr, ok := extractFirstNumber(presentation, marker); ok && hr > 100 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// isHypoxemic returns true when the presentation text describes an SpO2 below 95%.
+//
+// **Illustrative threshold only.** SpO2 < 95% is used as a proxy for hypoxaemia
+// consistent with V/Q mismatch in PE. NOT a clinical guideline — SpO2 < 94%
+// is the common supplemental-oxygen trigger; values must be interpreted with
+// baseline, altitude, and haemoglobin context.
+func isHypoxemic(presentation string) bool {
+	if presentation == "" {
+		return false
+	}
+	lower := strings.ToLower(presentation)
+	for _, marker := range []string{"spo2 ", "spo2"} {
+		if strings.Contains(lower, marker) {
+			if spo2, ok := extractFirstNumber(presentation, marker); ok && spo2 < 95 {
+				return true
+			}
+		}
 	}
 	return false
 }

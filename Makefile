@@ -85,6 +85,16 @@ STREAMING_MESSAGE   ?= Explain the history of Go in 3 paragraphs
 HITL_PROVIDER  ?= ollama
 HITL_MODEL     ?=
 
+COMPUTERUSE_PROVIDER ?= ollama
+COMPUTERUSE_MODEL    ?=
+COMPUTERUSE_MESSAGE  ?= Take a screenshot and describe what you see
+
+PLANNING_GOAL        ?= Find all .go files and count them
+
+DEBATE_QUESTION      ?= Should we use microservices or a monolith?
+
+SELFCORRECT_TASK     ?= Write a Go function that reverses a string
+
 A2A_ADDR       ?= :8099
 MCPSERVER_ADDR ?= :8097
 
@@ -162,6 +172,11 @@ help:
 	@echo "  make bodhctl         build + install cmd/bodhctl"
 	@echo "  make export-hitl     export HITL feedback to /tmp/bodh-ft"
 	@echo ""
+	@echo "━━━ Analysis & Evaluation tools ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  make hl7-oru         parse HL7 ORU lab result messages (cmd/hl7oru)"
+	@echo "  make equity-eval     stratified equity evaluation (cmd/equity-eval)"
+	@echo "  make drift-monitor   accuracy drift monitoring (cmd/drift-monitor)"
+	@echo ""
 	@echo "━━━ Lessons (step-by-step tutorials) ━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  make lesson-01       intro — basic agent loop (cmd/intro)"
 	@echo "  make lesson-02       tool-calling — function tools (cmd/toolcalling)"
@@ -172,10 +187,14 @@ help:
 	@echo "  make lesson-07       web search tools (cmd/websearchtools)"
 	@echo "  make lesson-08       streaming responses (cmd/streaming)"
 	@echo "  make lesson-09       human-in-the-loop (cmd/hitl)"
+	@echo "  make lesson-10       computer use — GUI automation (cmd/computeruse)"
+	@echo "  make lesson-11       long-horizon planning (cmd/planning)"
+	@echo "  make lesson-12       multi-agent debate (cmd/debate)"
+	@echo "  make lesson-13       self-correction loop (cmd/selfcorrect)"
 	@echo "  make a2aserver       Agent-to-Agent server on A2A_ADDR ($(A2A_ADDR))"
 	@echo "  make mcp-server      MCP server on MCPSERVER_ADDR ($(MCPSERVER_ADDR))"
 	@echo "  make redteam-eval    red-team evaluation (cmd/redteameval)"
-	@echo "  Variables: INTRO_PROVIDER TOOLCALLING_PROVIDER AGENTLOOP_PROVIDER …"
+	@echo "  Variables: INTRO_PROVIDER TOOLCALLING_PROVIDER AGENTLOOP_PROVIDER COMPUTERUSE_PROVIDER …"
 	@echo ""
 	@echo "━━━ Evals (multi-turn agent evaluation) ━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  make evals           run eval suite (default: Ollama, no API key)"
@@ -508,6 +527,42 @@ lesson-09:
 		$(if $(HITL_MODEL),-model=$(HITL_MODEL),) \
 		$(ARGS)
 
+.PHONY: lesson-10
+lesson-10:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/computeruse/... \
+		-provider=$(COMPUTERUSE_PROVIDER) \
+		$(if $(COMPUTERUSE_MODEL),-model=$(COMPUTERUSE_MODEL),) \
+		-message="$(COMPUTERUSE_MESSAGE)" \
+		-verbose $(ARGS)
+
+.PHONY: lesson-11
+lesson-11:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/planning/... \
+		-provider=$(AGENTLOOP_PROVIDER) \
+		$(if $(AGENTLOOP_MODEL),-model=$(AGENTLOOP_MODEL),) \
+		-goal="$(PLANNING_GOAL)" \
+		-verbose $(ARGS)
+
+.PHONY: lesson-12
+lesson-12:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/debate/... \
+		-provider=$(AGENTLOOP_PROVIDER) \
+		$(if $(AGENTLOOP_MODEL),-model=$(AGENTLOOP_MODEL),) \
+		-question="$(DEBATE_QUESTION)" \
+		-verbose $(ARGS)
+
+.PHONY: lesson-13
+lesson-13:
+	OLLAMA_HOST=$(OLLAMA_HOST) \
+	$(GO) run ./cmd/selfcorrect/... \
+		-provider=$(AGENTLOOP_PROVIDER) \
+		$(if $(AGENTLOOP_MODEL),-model=$(AGENTLOOP_MODEL),) \
+		-task="$(SELFCORRECT_TASK)" \
+		-verbose $(ARGS)
+
 .PHONY: a2aserver
 a2aserver:
 	$(GO) run ./cmd/a2aserver/... -addr=$(A2A_ADDR) $(ARGS)
@@ -519,6 +574,25 @@ mcp-server:
 .PHONY: redteam-eval
 redteam-eval:
 	$(GO) run ./cmd/redteameval/... $(ARGS)
+
+.PHONY: hl7-oru
+## Parse HL7 ORU lab result messages (cmd/hl7oru).
+hl7-oru:
+	$(GO) run ./cmd/hl7oru/... $(ARGS)
+
+.PHONY: equity-eval
+## Run stratified equity evaluation against bench results (cmd/equity-eval).
+##   make equity-eval
+##   make equity-eval ARGS="-input data/bench-results.json"
+equity-eval:
+	$(GO) run ./cmd/equity-eval/... -input data/bench-results.json $(ARGS)
+
+.PHONY: drift-monitor
+## Monitor accuracy drift against a baseline (cmd/drift-monitor).
+##   make drift-monitor
+##   make drift-monitor ARGS="-baseline data/baseline.json -results data/bench-results.json"
+drift-monitor:
+	$(GO) run ./cmd/drift-monitor/... -baseline data/baseline.json -results data/bench-results.json $(ARGS)
 
 # ===========================================================================
 # EVALS — multi-turn agent evaluation
