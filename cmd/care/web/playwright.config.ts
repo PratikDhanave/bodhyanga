@@ -23,9 +23,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: 1,
-  reporter: process.env.CI ? 'list' : [['list'], ['html', { open: 'never' }]],
+  reporter: [['html', { open: 'never' }], ['line']],
   use: {
-    baseURL: 'http://localhost:8099',
+    baseURL: 'http://localhost:8088',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
@@ -36,12 +36,12 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command:
-      'cd ../../.. && go run ./cmd/care -addr=:8099 -diagnostician=rule',
-    url: 'http://localhost:8099/api/runtime',
+    command: 'make care',
+    url: 'http://localhost:8088/healthz',
     timeout: 120_000,
     reuseExistingServer: !!process.env.BODH_E2E_REUSE_SERVER,
     stdout: 'pipe',
     stderr: 'pipe',
+    cwd: '../../..',
   },
 });

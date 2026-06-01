@@ -1,0 +1,22 @@
+{{- if .Values.podDisruptionBudget.enabled -}}
+# PodDisruptionBudget — keep at least minAvailable Bodh care Pods available
+# during voluntary disruptions (node drains, autoscaler scaledown, rolling
+# updates). This is important for HITL reviews that may sit in the queue
+# across a drain window.
+#
+# With 2 replicas and minAvailable=1: one voluntary disruption at a time
+# is tolerated without losing serving capacity.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "bodh.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "bodh.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "bodh.selectorLabels" . | nindent 6 }}
+  unhealthyPodEvictionPolicy: AlwaysAllow
+{{- end }}

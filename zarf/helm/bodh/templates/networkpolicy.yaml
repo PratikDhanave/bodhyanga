@@ -1,0 +1,98 @@
+{{- if .Values.networkPolicy.enabled -}}
+# NetworkPolicy: default-deny + explicit allow-list.
+#
+# Ingress: only from the ingress controller namespace (ingress-system) on port 8088.
+#
+# Egress allow-list:
+#   1. DNS (kube-system / kube-dns) UDP+TCP :53
+#   2. PostgreSQL TCP :5432  (in-cluster dev OR Cloud SQL Auth Proxy sidecar)
+#   3. Ollama TCP :11434     (local LLM inference)
+#   4. LLM provider HTTPS TCP :443 — public internet (non-RFC1918) only.
+#      Overlays should tighten to provider-specific CIDRs in production.
+#   5. OTel collector TCP :4317/:4318 (observability namespace)
+#
+# PHI: raw MRNs must never appear in egress payloads. The application layer
+# enforces sha256(caseID)[:8] on all telemetry spans (see CLAUDE.md).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "bodh.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "bodh.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "bodh.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow traffic from the ingress controller namespace only.
+    # Adjust namespaceSelector label if your ingress controller lives in a
+    # differently labelled namespace (e.g., ingress-nginx).
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-system
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8088
+  egress:
+    # 1. DNS — must come first so all subsequent hostname lookups work.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # 2. PostgreSQL — in-cluster dev pod OR Cloud SQL Auth Proxy sidecar in prod.
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    # 3. Ollama local LLM inference server.
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ollama
+      ports:
+        - protocol: TCP
+          port: 11434
+    # 4. LLM provider HTTPS (Anthropic, OpenAI, etc.) — public internet only.
+    #    RFC1918 + link-local ranges are excluded to prevent SSRF into cluster
+    #    or cloud metadata endpoints. Tighten to provider CIDRs in production.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+    # 5. OTel collector for distributed traces (otel tag builds only).
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+      ports:
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 4317
+{{- end }}

@@ -1,0 +1,147 @@
+# Deployment for the Bodh care HTTP API + Vue SPA.
+#
+# Security posture (PodSecurity "restricted" profile):
+#   - runAsNonRoot, runAsUser 65532 (nonroot from distroless image)
+#   - readOnlyRootFilesystem: true  -> /tmp and /var/lib/bodh are emptyDir mounts
+#   - allowPrivilegeEscalation: false
+#   - capabilities: drop ALL
+#   - seccompProfile: RuntimeDefault
+#
+# Probes:
+#   livenessProbe  -> GET /healthz :8088  (restart on deadlock/hang)
+#   readinessProbe -> GET /readyz  :8088  (remove from LB during startup/drain)
+#
+# Go runtime sizing:
+#   GOMAXPROCS and GOMEMLIMIT are derived from container limits via
+#   resourceFieldRef so the runtime adapts to the cgroup ceiling automatically.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bodh.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "bodh.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "bodh.selectorLabels" . | nindent 6 }}
+  strategy:
+    {{- toYaml .Values.strategy | nindent 4 }}
+  template:
+    metadata:
+      labels:
+        {{- include "bodh.selectorLabels" . | nindent 8 }}
+      annotations:
+        # Force pod restart when ConfigMap content changes.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        # Force pod restart when Secret content changes (only when chart-managed).
+        {{- if not .Values.existingSecret }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "bodh.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: care
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8088
+              protocol: TCP
+          env:
+            # Go runtime sizing — derive from cgroup limits so GC paces correctly.
+            - name: GOMAXPROCS
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.cpu
+            - name: GOMEMLIMIT
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.memory
+            - name: GOGC
+              value: "100"
+            # Pod self-identification for audit log and distributed tracing.
+            - name: KUBERNETES_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: KUBERNETES_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: KUBERNETES_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: KUBERNETES_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "bodh.configMapName" . }}
+            - secretRef:
+                name: {{ include "bodh.secretName" . }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            # /tmp must be writable when readOnlyRootFilesystem=true.
+            - name: tmp
+              mountPath: /tmp
+            # HIPAA append-only audit log target.
+            # Production: mount a PVC or forward via stdout to a log shipper.
+            - name: audit
+              mountPath: /var/lib/bodh
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+        - name: audit
+          emptyDir:
+            sizeLimit: 256Mi
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
