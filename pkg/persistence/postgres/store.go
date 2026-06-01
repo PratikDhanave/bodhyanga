@@ -35,6 +35,7 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/audit"
 	"github.com/PratikDhanave/bodh/pkg/eval"
 	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodh/pkg/persistence"
 )
 
 // Store is the multi-tenant PostgreSQL backend.
@@ -44,8 +45,14 @@ import (
 // tenantID is propagated into the session via SET LOCAL app.tenant_id inside
 // a one-statement transaction (a "session" in pgx terms is one pooled conn,
 // and SET LOCAL is scoped to the surrounding tx).
+//
+// PHI column encryption: the enc field wraps AES-256-GCM authenticated
+// encryption for all bytea payload_ct columns. When enc is nil (BODH_ENCRYPTION_KEY
+// unset) the store operates in plaintext passthrough mode, which is safe for
+// local development but must not be used in production.
 type Store struct {
 	pool *pgxpool.Pool
+	enc  *persistence.Encryptor
 
 	// cachedTenant lets the eval/audit recorder-style adapters (which don't
 	// take a tenant in their interface) still know which tenant to scope to.
@@ -99,7 +106,16 @@ func New(ctx context.Context, dsn string) (*Store, error) {
 		return nil, migrationErr
 	}
 
-	return &Store{pool: pool}, nil
+	// Load the column-level encryptor from the environment. A missing key is
+	// allowed (returns nil enc) for local development; production deployments
+	// must set BODH_ENCRYPTION_KEY.
+	enc, err := persistence.NewEncryptorFromEnv()
+	if err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("postgres: load encryptor: %w", err)
+	}
+
+	return &Store{pool: pool, enc: enc}, nil
 }
 
 // Close releases the underlying pool.
@@ -279,12 +295,17 @@ func (a *evalAdapter) List() []eval.InteractionRecord {
 // =============================================================================
 
 // UpsertPatient inserts or replaces a patient record for tenantID. The full
-// medical.PatientRecord is JSON-encoded into payload_ct (bytea) so a future
-// pgcrypto/KMS PR can wrap it as ciphertext without changing the schema.
+// medical.PatientRecord is JSON-encoded and then encrypted with AES-256-GCM
+// before being stored in payload_ct (bytea). When the encryptor is disabled
+// (dev mode) the JSON bytes are written verbatim — no schema change required.
 func (s *Store) UpsertPatient(ctx context.Context, tenantID string, p medical.PatientRecord) error {
-	payload, err := json.Marshal(p)
+	raw, err := json.Marshal(p)
 	if err != nil {
 		return err
+	}
+	payload, err := s.enc.Encrypt(raw)
+	if err != nil {
+		return fmt.Errorf("postgres: encrypt patient payload: %w", err)
 	}
 	var dischargedAt *time.Time
 	if !p.DischargedAt.IsZero() {
@@ -319,16 +340,20 @@ func (s *Store) GetPatient(ctx context.Context, tenantID, patientID string) (med
 		ok  bool
 	)
 	err := s.withTenant(ctx, tenantID, func(tx pgx.Tx) error {
-		var payload []byte
+		var sealed []byte
 		err := tx.QueryRow(ctx, `
 			SELECT payload_ct FROM patient_records
 			WHERE tenant_id = $1 AND patient_id = $2
-		`, tenantID, patientID).Scan(&payload)
+		`, tenantID, patientID).Scan(&sealed)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil
 		}
 		if err != nil {
 			return err
+		}
+		payload, err := s.enc.Decrypt(sealed)
+		if err != nil {
+			return fmt.Errorf("postgres: decrypt patient payload: %w", err)
 		}
 		if err := json.Unmarshal(payload, &rec); err != nil {
 			return err
@@ -349,9 +374,13 @@ func (s *Store) ListPatients(ctx context.Context, tenantID string) ([]medical.Pa
 		}
 		defer rows.Close()
 		for rows.Next() {
-			var payload []byte
-			if err := rows.Scan(&payload); err != nil {
+			var sealed []byte
+			if err := rows.Scan(&sealed); err != nil {
 				return err
+			}
+			payload, err := s.enc.Decrypt(sealed)
+			if err != nil {
+				return fmt.Errorf("postgres: decrypt patient payload: %w", err)
 			}
 			var rec medical.PatientRecord
 			if err := json.Unmarshal(payload, &rec); err != nil {
@@ -380,9 +409,13 @@ func (s *Store) FilterPatientsByCondition(ctx context.Context, tenantID, code st
 		}
 		defer rows.Close()
 		for rows.Next() {
-			var payload []byte
-			if err := rows.Scan(&payload); err != nil {
+			var sealed []byte
+			if err := rows.Scan(&sealed); err != nil {
 				return err
+			}
+			payload, err := s.enc.Decrypt(sealed)
+			if err != nil {
+				return fmt.Errorf("postgres: decrypt patient payload: %w", err)
 			}
 			var rec medical.PatientRecord
 			if err := json.Unmarshal(payload, &rec); err != nil {
@@ -461,6 +494,11 @@ func (a *PatientRegistryAdapter) FilterByCondition(code string) []medical.Patien
 // RLS policy + GRANT SELECT, INSERT enforce append-only semantics; if you
 // ever see this method behind an UPDATE statement, the migration grants are
 // wrong.
+//
+// When the column-level encryptor is enabled, the full event is also
+// serialised to JSON, sealed with AES-256-GCM, and stored in payload_ct for
+// SIEM / compliance archive consumers. The structured text columns are always
+// written regardless so existing SQL queries continue to work.
 func (s *Store) RecordAuditEvent(ctx context.Context, tenantID string, e audit.Event) error {
 	if e.ID == "" {
 		return errors.New("postgres: audit event missing ID")
@@ -468,29 +506,46 @@ func (s *Store) RecordAuditEvent(ctx context.Context, tenantID string, e audit.E
 	if e.At.IsZero() {
 		e.At = time.Now().UTC()
 	}
+
+	// Build encrypted payload for SIEM / compliance archive.
+	raw, err := json.Marshal(e)
+	if err != nil {
+		return fmt.Errorf("postgres: marshal audit event: %w", err)
+	}
+	payloadCT, err := s.enc.Encrypt(raw)
+	if err != nil {
+		return fmt.Errorf("postgres: encrypt audit event: %w", err)
+	}
+
 	return s.withTenant(ctx, tenantID, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, `
 			INSERT INTO audit_events
 				(tenant_id, id, at, kind, agent_id, message_id, from_id, to_id,
 				 type, patient_id, case_id, trace_id, decision, reason,
-				 reviewer_id, error_text)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+				 reviewer_id, error_text, payload_ct)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
 		`,
 			tenantID, e.ID, e.At, string(e.Kind), e.AgentID, e.MessageID,
 			e.From, e.To, e.Type, e.PatientID, e.CaseID, e.TraceID,
-			e.Decision, e.Reason, e.ReviewerID, e.ErrorText)
+			e.Decision, e.Reason, e.ReviewerID, e.ErrorText, payloadCT)
 		return err
 	})
 }
 
 // ListAuditEvents returns all events for tenantID ordered chronologically.
+//
+// When a row carries a non-NULL payload_ct and the encryptor is enabled, the
+// event is reconstructed from the decrypted JSON blob (which is canonical).
+// Rows written before 0003_encrypted_columns.sql (payload_ct IS NULL) fall
+// back to the structured text columns — ensuring the reader works during a
+// rolling migration where old and new rows coexist.
 func (s *Store) ListAuditEvents(ctx context.Context, tenantID string) ([]audit.Event, error) {
 	var out []audit.Event
 	err := s.withTenant(ctx, tenantID, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
 			SELECT id, at, kind, agent_id, message_id, from_id, to_id,
 			       type, patient_id, case_id, trace_id, decision, reason,
-			       reviewer_id, error_text
+			       reviewer_id, error_text, payload_ct
 			FROM audit_events
 			ORDER BY at ASC
 		`)
@@ -500,16 +555,35 @@ func (s *Store) ListAuditEvents(ctx context.Context, tenantID string) ([]audit.E
 		defer rows.Close()
 		for rows.Next() {
 			var (
-				e    audit.Event
-				kind string
+				e         audit.Event
+				kind      string
+				payloadCT []byte
 			)
 			if err := rows.Scan(&e.ID, &e.At, &kind, &e.AgentID, &e.MessageID,
 				&e.From, &e.To, &e.Type, &e.PatientID, &e.CaseID,
-				&e.TraceID, &e.Decision, &e.Reason, &e.ReviewerID, &e.ErrorText); err != nil {
+				&e.TraceID, &e.Decision, &e.Reason, &e.ReviewerID, &e.ErrorText,
+				&payloadCT); err != nil {
 				return err
 			}
 			e.Kind = audit.Kind(kind)
 			e.TenantID = "" // RLS gave us our tenant; don't echo it back
+
+			// If a sealed payload is present, decrypt and unmarshal the canonical
+			// blob. This overwrites the structured-column values with the full
+			// event, which may carry additional fields added in future versions.
+			if len(payloadCT) > 0 && s.enc.IsEnabled() {
+				plain, err := s.enc.Decrypt(payloadCT)
+				if err != nil {
+					return fmt.Errorf("postgres: decrypt audit event %s: %w", e.ID, err)
+				}
+				var full audit.Event
+				if err := json.Unmarshal(plain, &full); err != nil {
+					return fmt.Errorf("postgres: unmarshal audit event %s: %w", e.ID, err)
+				}
+				full.TenantID = "" // same sentinel as above
+				e = full
+			}
+
 			out = append(out, e)
 		}
 		return rows.Err()

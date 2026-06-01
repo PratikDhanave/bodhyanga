@@ -1,0 +1,89 @@
+Bodh HIPAA-grade Medical AI Orchestration Platform
+===================================================
+
+Release:   {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+Chart:     {{ .Chart.Name }}-{{ .Chart.Version }}
+Image:     {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+
+Service
+-------
+The Bodh care HTTP API is available within the cluster at:
+
+  http://{{ include "bodh.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+
+{{- if .Values.ingress.enabled }}
+
+Ingress
+-------
+The application is exposed via Ingress at:
+  {{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+  {{- end }}
+
+{{- else }}
+
+To access the service locally, run:
+
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "bodh.fullname" . }} 8088:{{ .Values.service.port }}
+
+Then visit: http://localhost:8088
+
+{{- end }}
+
+Diagnostician
+-------------
+Current mode: {{ .Values.diagnostician }}
+
+To switch diagnostician at upgrade time:
+  helm upgrade {{ .Release.Name }} bodh/ --set diagnostician=llm-anthropic
+
+Secrets
+-------
+{{- if .Values.existingSecret }}
+Using existing secret: {{ .Values.existingSecret }}
+Ensure it contains: BODH_DB_DSN, ANTHROPIC_API_KEY (if using llm-anthropic),
+                    OPENAI_API_KEY (if using llm-openai), LMNR_PROJECT_API_KEY.
+{{- else }}
+A chart-managed Secret has been created: {{ include "bodh.fullname" . }}-secret
+
+For production, create an external secret and set:
+  --set existingSecret=<your-secret-name>
+
+Supported secret backends:
+  - GKE Secret Manager (CSI driver)
+  - AWS Secrets Manager (External Secrets Operator)
+  - HashiCorp Vault (Vault Agent Injector)
+{{- end }}
+
+Autoscaling
+-----------
+{{- if .Values.autoscaling.enabled }}
+HPA enabled: {{ .Values.autoscaling.minReplicas }}-{{ .Values.autoscaling.maxReplicas }} replicas
+             CPU target: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}%
+Requires metrics-server to be installed in the cluster.
+{{- else }}
+HPA disabled. Running with {{ .Values.replicaCount }} replicas.
+To enable: --set autoscaling.enabled=true
+{{- end }}
+
+Security Notes
+--------------
+- PodSecurity "restricted" profile is enforced (runAsNonRoot, readOnlyRootFilesystem,
+  no privilege escalation, ALL capabilities dropped, seccompProfile: RuntimeDefault)
+- NetworkPolicy is {{ if .Values.networkPolicy.enabled }}enabled (default-deny + allowlist){{ else }}DISABLED — enable for production!{{ end }}
+- PHI: raw MRNs are never emitted to telemetry; case IDs are sha256[:8] hex only
+- Audit log: appended to /var/lib/bodh/audit.log inside the container (emptyDir at base)
+  For HIPAA compliance, mount a WORM-capable PVC or forward via a log shipper
+
+HIPAA / Compliance
+------------------
+This chart deploys a HIPAA-grade workload. Before going to production:
+  1. Enable NetworkPolicy (networkPolicy.enabled=true)
+  2. Use existingSecret with a compliant secret store (Vault, GCP Secret Manager, etc.)
+  3. Replace the emptyDir audit volume with a WORM-capable PVC
+  4. Enable Pod Disruption Budget (podDisruptionBudget.enabled=true) — ENABLED by default
+  5. Review ingress TLS configuration
+  6. Set up Workload Identity (serviceAccount.annotations) for cloud IAM
+
+Documentation: https://github.com/PratikDhanave/bodh/tree/main/docs
