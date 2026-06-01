@@ -12,6 +12,7 @@ import type {
   BenchResult,
   NurseTask,
 } from '../types';
+import { getToken, clearToken } from '../hooks/useAuth';
 
 // API base. In dev, Vite proxies /api to the Go backend on :8088.
 // In prod, the Go binary serves the SPA from / and the API from /api on
@@ -19,10 +20,19 @@ import type {
 const BASE = '/api';
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken();
+  const authHeader: Record<string, string> = token
+    ? { Authorization: `Bearer ${token}` }
+    : {};
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...authHeader, ...(init?.headers || {}) },
     ...init,
   });
+  if (res.status === 401) {
+    clearToken();
+    window.location.href = '/ui/login';
+    return undefined as T;
+  }
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`HTTP ${res.status}: ${body}`);

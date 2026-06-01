@@ -16,13 +16,8 @@ make care          # start HTTP API + Vue SPA on :8088
 make demo          # sequential diagnosis demo (Ollama)
 make evals         # multi-turn agent evaluation
 make laminar-eval  # lmnr.evaluate() equivalent
-make lesson-10     # computer use — GUI automation
-make lesson-11     # long-horizon planning
-make lesson-12     # multi-agent debate
-make lesson-13     # self-correction loop
-make hl7-oru       # parse HL7 ORU lab result messages
-make equity-eval   # stratified equity evaluation
-make drift-monitor # accuracy drift monitoring
+make cds-hooks     # CDS Hooks service for EHR integration
+make finetune      # fine-tuning pipeline (validate/split/upload)
 make help          # full target listing with variable overrides
 ```
 
@@ -85,17 +80,10 @@ cmd/                  CLI binaries (one subdirectory per binary)
   bodhctl/            control-plane CLI
   care/               HTTP API + embedded Vue 3 SPA
   caredemo/           CDM/TCM/Panel demo
-  computeruse/        Lesson 10: computer use / GUI automation
-  debate/             Lesson 12: multi-agent debate
   demo/               sequential diagnosis walkthrough
-  drift-monitor/      accuracy drift monitoring
-  equity-eval/        stratified equity evaluation
   evals/              multi-turn evaluation runner
   export-hitl-feedback/
-  hl7oru/             HL7 ORU lab result parser CLI
   laminar-eval/       Go equivalent of Python lmnr.evaluate()
-  planning/           Lesson 11: long-horizon planning
-  selfcorrect/        Lesson 13: self-correction loop
 
 pkg/                  library packages (36 total)
   agent/              agent orchestration core

@@ -17,11 +17,27 @@ import Bench from './pages/Bench';
 import LLMTraces from './pages/LLMTraces';
 import FineTune from './pages/FineTune';
 import About from './pages/About';
+import Login from './pages/Login';
+import { isAuthenticated } from './hooks/useAuth';
+
+// AuthedLayout is used as the route element for all protected routes.
+// If the user is not authenticated it redirects to /login; otherwise
+// it renders the Layout (which contains <Outlet /> for child routes).
+function AuthedLayout() {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return <Layout />;
+}
 
 export default function App() {
   return (
     <Routes>
-      <Route element={<Layout />}>
+      {/* Public route — no auth required */}
+      <Route path="/login" element={<Login />} />
+
+      {/* Protected routes — wrapped in auth guard via AuthedLayout */}
+      <Route element={<AuthedLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<ClinicianDashboard />} />
         <Route path="/portal" element={<PatientPortal />} />
