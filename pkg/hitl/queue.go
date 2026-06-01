@@ -64,6 +64,17 @@ type Queue struct {
 	// Must only be set before the queue is shared across goroutines
 	// (i.e., in Checkpointer.AutoFlush before the queue goes live).
 	submitHook func()
+
+	// Hub is the optional WebSocket broadcast hub. When non-nil, every
+	// successful Submit triggers Hub.NotifySubmit so connected clinicians
+	// receive a real-time "review_submitted" push. The tenant ID is read
+	// from the ReviewRequest.Meta["tenant_id"] key; if absent, the
+	// constant "default" is used so single-tenant deployments work without
+	// setting envelope metadata.
+	//
+	// Hub must be set before the queue is shared across goroutines (same
+	// lifetime rule as submitHook).
+	Hub *Hub
 }
 
 // NewQueue returns an empty queue.
@@ -114,12 +125,24 @@ func (q *Queue) Submit(r medical.ReviewRequest) medical.ReviewRequest {
 	r.Status = medical.ReviewPending
 	q.requests[r.ID] = r
 	hook := q.submitHook
+	hub := q.Hub
 	q.mu.Unlock()
 
 	// Fire the hook outside the lock so it can safely call back into the
 	// queue (e.g. Checkpointer.AutoFlush calls Flush which calls Pending).
 	if hook != nil {
 		hook()
+	}
+
+	// Notify connected WebSocket clients of the new review.  tenantID is
+	// derived from the envelope metadata so the broadcast reaches only the
+	// right tenant's subscribers.
+	if hub != nil {
+		tenantID := "default"
+		if t, ok := r.Meta["tenant_id"].(string); ok && t != "" {
+			tenantID = t
+		}
+		hub.NotifySubmit(tenantID, r)
 	}
 	return r
 }

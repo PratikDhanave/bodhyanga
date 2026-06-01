@@ -97,6 +97,7 @@ SELFCORRECT_TASK     ?= Write a Go function that reverses a string
 
 A2A_ADDR       ?= :8099
 MCPSERVER_ADDR ?= :8097
+CDSHOOKS_ADDR  ?= :8096
 
 # ----- Container / Compose --------------------------------------------------
 
@@ -193,6 +194,8 @@ help:
 	@echo "  make lesson-13       self-correction loop (cmd/selfcorrect)"
 	@echo "  make a2aserver       Agent-to-Agent server on A2A_ADDR ($(A2A_ADDR))"
 	@echo "  make mcp-server      MCP server on MCPSERVER_ADDR ($(MCPSERVER_ADDR))"
+	@echo "  make cds-hooks       CDS Hooks service on CDSHOOKS_ADDR ($(CDSHOOKS_ADDR))"
+	@echo "  make finetune        fine-tuning pipeline (validate/split/upload)"
 	@echo "  make redteam-eval    red-team evaluation (cmd/redteameval)"
 	@echo "  Variables: INTRO_PROVIDER TOOLCALLING_PROVIDER AGENTLOOP_PROVIDER COMPUTERUSE_PROVIDER …"
 	@echo ""
@@ -268,6 +271,7 @@ help:
 	@echo "  EVALS_PROVIDER   $(EVALS_PROVIDER)  (ollama|anthropic)"
 	@echo "  K8S_ENV          $(K8S_ENV)   (dev|prod)"
 	@echo "  IMG_CARE         $(IMG_CARE)"
+	@echo "  CDSHOOKS_ADDR    $(CDSHOOKS_ADDR)"
 	@echo "  ARGS             extra flags passed to the target binary"
 
 # ===========================================================================
@@ -570,6 +574,14 @@ a2aserver:
 .PHONY: mcp-server
 mcp-server:
 	$(GO) run ./cmd/mcpserver/... -addr=$(MCPSERVER_ADDR) $(ARGS)
+
+.PHONY: cds-hooks
+cds-hooks:
+	$(GO) run ./cmd/cdshooks/... -addr=$(CDSHOOKS_ADDR) $(ARGS)
+
+.PHONY: finetune
+finetune:
+	$(GO) run ./cmd/finetune/... $(ARGS)
 
 .PHONY: redteam-eval
 redteam-eval:
