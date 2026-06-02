@@ -1,5 +1,5 @@
 # Bodh — Session Memory
-_Last updated: 2026-06-01_
+_Last updated: 2026-06-02_
 
 ---
 
@@ -8,257 +8,114 @@ _Last updated: 2026-06-01_
 - **Repo:** `github.com/PratikDhanave/bodh`
 - **Local path:** `/Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodh`
 - **Module:** `github.com/PratikDhanave/bodh` · Go 1.26
-- **Description:** HIPAA-grade medical AI orchestration platform (MARA architecture)
-- **Current branch:** `feat/production-hardening` (active workflow running)
-- **Test status:** 56 packages, 0 failures on `main`
+- **Current branch:** `feat/final-extensions` (ready to commit + PR)
+- **Stats:** 61 test packages · 37 agent files · 35 cmd binaries · 42 pkg packages · 71 commits on main
 
 ---
 
-## What was built this session (PRs #36–#42 + commits)
+## Merged PRs (this session series)
 
-### PR #36 — OPA Rego policy adapter
-- `pkg/governance/opa_policy.go` — OPA-backed governance using Rego rules
-- `pkg/governance/rego/medical.rego` — medical domain Rego policies
-
-### PR #37 — Lesson 01: Intro to Agents
-- `pkg/agent/intro/` + `cmd/intro/` — simplest LLM call, no tools, no loop
-
-### PR #38 — Lesson 02: Tool Calling
-- `pkg/agent/toolcalling/` + `cmd/toolcalling/` — advertise tools, detect model selection
-
-### PR #39 — Laminar OTLP exporter
-- `pkg/observability/laminar.go` — OTLP spans with `lmnr.span.type=LLM` attributes
-- `pkg/observability/llm_client.go` — `TracingClient` transparent wrapper
-
-### PR #40 — All agentic AI skills (lessons 03–09 + infrastructure)
-Lessons:
-- Lesson 03 Agent Loop — `pkg/agent/agentloop/` + `cmd/agentloop/`
-- Lesson 04 Single-Turn Evals — `pkg/agent/singleturneval/` + `cmd/singleturneval/`
-- Lesson 05 Multi-Turn Evals — `pkg/agent/multiturneval/` + `cmd/multiturneval/`
-- Lesson 06 File System Tools — `pkg/tools/filesystem.go` + `cmd/filesystemtools/`
-- Lesson 07 Web Search — `pkg/tools/websearch.go` + `cmd/websearchtools/`
-- Lesson 08 Streaming — `pkg/llm/stream.go` + adapters + `cmd/streaming/`
-- Lesson 09 HITL — `cmd/hitl/`
-
-Infrastructure:
-- `pkg/llm/stream.go` — `Streamer` interface + `AsStreamer()` helper
-- `pkg/memory/redis.go` — RESP2 KeyValueStore (stdlib only, no deps)
-- `pkg/a2a/` + `cmd/a2aserver/` — A2A protocol server (Agent Card + tasks)
-- `pkg/mcp/server/` + `cmd/mcpserver/` — MCP server exposing tools registry
-- `pkg/hitl/checkpoint.go` — flush/restore HITL queue to JSON (pod restarts)
-- `pkg/eval/redteam/` + `cmd/redteameval/` — adversarial red-team suite
-- **Ollama compatibility:** GBNF → `options.grammar`, full JSON Schema in `format`, streaming
-
-### PR #41 — Full platform extension
-Clinical agents:
-- PE diagnostic rule (closes rule-path gap; bench ~90%+)
-- `agents/pharmacist.go` — drug-drug interaction checker (top 10 pairs)
-- `agents/cardiologist.go` — ECG, STEMI, TIMI, CHF class
-- `agents/radiologist.go` — critical finding detection from imaging
-- `agents/infectious_disease.go` — antibiotic stewardship (Sanford Guide-style)
-- PHQ-9 depression panel rule + care plan
-- Post-MI + post-stroke care plans
-- Pediatric well-child care plan (age-based vaccines, weight-based dosing)
-
-Healthcare interop:
-- `pkg/hl7v2/oru.go` — HL7 v2 ORU^R01 lab results ingest (OBR/OBX)
-- `cmd/hl7oru/` — CLI parser
-
-Compliance policies:
-- `pkg/governance/part2_policy.go` — 42 CFR Part 2 SUD protection
-- `pkg/governance/break_glass_policy.go` — audited emergency override
-- `pkg/governance/redact_narrative_policy.go` — strip PHI from log-bound copies
-- `pkg/governance/rate_limit_policy.go` — token bucket per-tenant + per-agent
-
-Infrastructure:
-- `pkg/audit/pagination.go` — cursor-based `/api/audit`
-- `pkg/eval/equity/` + `cmd/equity-eval/` — stratified accuracy by demographics
-- `pkg/eval/drift/` + `cmd/drift-monitor/` — accuracy drift monitoring
-
-Lessons 10–13:
-- Lesson 10 Computer Use — `pkg/tools/computer.go` + `cmd/computeruse/`
-- Lesson 11 Long-horizon Planning — `pkg/agent/planning/` + `cmd/planning/`
-- Lesson 12 Multi-Agent Debate — `pkg/agent/debate/` + `cmd/debate/`
-- Lesson 13 Self-Correction — `pkg/agent/selfcorrect/` + `cmd/selfcorrect/`
-
-Frontend (React/TypeScript SPA):
-- `ClinicianDashboard.tsx` — summary cards, HITL queue, case table
-- `PatientPortal.tsx` — care plan, panel gaps, RPM trends
-- `AuditLog.tsx` — paginated audit events with filters
-
-### PR #42 — WebSocket HITL, CDS Hooks, JWT, cost dashboard, NEWS2, oncology, fine-tuning
-Backend:
-- `pkg/hitl/hub.go` — WebSocket broadcast hub (real-time HITL push)
-- `pkg/cdshooks/` + `cmd/cdshooks/` — CDS Hooks server (:8096) — patient-view, order-sign, medication-prescribe, encounter-discharge
-- `pkg/auth/login.go` — JWT credential store, bcrypt, HS256 token
-- `pkg/analytics/cost.go` — LLM spend ledger, `/api/analytics/cost`
-- `pkg/webhooks/` — HMAC-SHA256 signed webhook delivery with retry
-- `pkg/medical/news2.go` — NEWS2 early warning score (10 components)
-- `pkg/comm/nats.go` + `nats_stub.go` — NATS JetStream bus adapter (`-tags nats`)
-- `pkg/finetune/` + `cmd/finetune/` — validate/split/estimate/upload pipeline
-
-New agents:
-- `agents/oncologist.go` — chemo protocols (NSCLC, breast, colon, lymphoma), BSA dosing
-- `agents/trial_screener.go` — clinical trial eligibility + ClinicalTrials.gov tool
-- `pkg/tools/dosing.go` — weight-based, renal-adjusted (Cockcroft-Gault), pediatric
-- `pkg/tools/ctgov.go` — ClinicalTrials.gov search tool
-
-Frontend additions:
-- `Login.tsx` — JWT login, auth guard on all routes
-- `Cost.tsx` — spend dashboard, SVG sparklines, Pareto chart
-- `NotificationBell.tsx` — real-time HITL alerts via WebSocket
-- `Toast.tsx` — slide-in toast notifications
-- Dark mode — tailwind `darkMode: class`, toggle in Layout
-
-### Commit 99afd42 — Claude Code plugins
-Three plugins installed in `.claude/`:
-- `commit-commands` → `/commit`, `/commit-push-pr`, `/clean_gone`
-- `code-review` → `/code-review [--comment]` (5-agent Opus review)
-- `security-guidance` → hooks on PostToolUse/Stop scanning 25+ vuln classes
+| PR | Title | What it added |
+|---|---|---|
+| #36 | OPA Rego policy adapter | `pkg/governance/opa_policy.go`, Rego rules |
+| #37 | Lesson 01: Intro to Agents | `pkg/agent/intro/`, `cmd/intro/` |
+| #38 | Lesson 02: Tool Calling | `pkg/agent/toolcalling/`, `cmd/toolcalling/` |
+| #39 | Laminar OTLP exporter | `pkg/observability/laminar.go`, `TracingClient` |
+| #40 | All agentic AI skills (03-09) | Lessons 03-09, streaming, A2A, MCP server, Redis KV, HITL checkpoint, red-team eval, Ollama GBNF/streaming fix |
+| #41 | Full platform extension | PE rule, Pharmacist, Cardiologist, Radiologist, ID agent, PHQ-9, post-MI/stroke, pediatric, HL7 ORU, Part2/BreakGlass/Redact/RateLimit policies, equity/drift eval, lessons 10-13, frontend pages |
+| #42 | WebSocket HITL, CDS Hooks, JWT, cost, NEWS2, oncology, fine-tuning | Hub, CDS Hooks server, JWT auth, cost ledger, webhooks, NEWS2 score, NATS bus, fine-tune pipeline, oncology agent, trial screener, dosing tools, Login/Cost/dark mode/notifications UI |
+| #43 | Production hardening | AES-256-GCM encryption, SMART on FHIR, immutable audit (Merkle chain), FHIR Bulk $export, HL7 ORM, neurologist/nephrologist/pulmonologist/ophthalmologist, Helm chart, perf benchmarks, E2E Playwright, chaos tests |
+| (pending) | Final extensions | Ambient scribe, shadow mode, cost-based routing, notifications service, federated eval, i18n (en/es/fr/zh) |
 
 ---
 
-## Active work
+## Current work on feat/final-extensions (uncommitted)
 
-**Branch:** `feat/production-hardening`
-**Workflow running:** `wf_de496243-24e` (12 agents)
+Applied from workflow worktrees, builds clean, tests pass (61 packages):
+- `pkg/medical/scribe.go` — ambient scribe NLP (vitals/meds/allergies regex + LLM extraction)
+- `cmd/scribe/` — CLI for transcript → structured PatientPresentation
+- `pkg/shadow/` + `cmd/shadow/` — shadow mode (async/sync concordance capture)
+- `pkg/llm/budget.go` — cost-based model routing (3-tier cascade with hard caps)
+- `pkg/notifications/` — multi-channel dispatcher (Slack/Teams/PagerDuty/email)
+- `pkg/eval/federated/` + `cmd/federated-eval/` — cross-site eval with differential privacy
+- `cmd/care/web/src/i18n/` — i18n (en/es/fr/zh) with React context + localStorage
 
-What's being built right now:
-- Column-level AES-256-GCM encryption (`pkg/persistence/crypto.go`)
-- SMART on FHIR auth (`pkg/auth/smart.go` + `SMARTScopePolicy`)
-- Immutable audit sink with Merkle chain-hash (`pkg/audit/immutable.go`)
-- FHIR Bulk Data `$export` (`pkg/fhir/bulk.go`)
-- HL7 v2 ORM outbound orders (`pkg/hl7v2/orm.go`)
-- NeurologyAgent (stroke NIH, tPA window, seizure classification)
-- NephrologyAgent (CKD-EPI eGFR, KDIGO staging, AKI)
-- PulmonologyAgent (PFT, COPD GOLD, asthma severity)
-- OphthalmologyAgent (diabetic retinopathy ETDRS, glaucoma, DME)
-- Helm chart (`zarf/helm/bodh/`) — distroless, NetworkPolicy, HPA, PDB
-- Performance benchmarks (`pkg/bench/`)
-- E2E Playwright tests (dashboard, auth, reviews, case runner)
-- Chaos tests (panic recovery, PHI-leak assertion, concurrent load)
+Also in progress (OSS audit):
+- `LICENSE` — Apache 2.0 (written)
+- `SECURITY.md` — vulnerability reporting + PHI security overview (written)
+- Still need: CODE_OF_CONDUCT.md, CHANGELOG.md, issue templates, PR template, CODEOWNERS, .editorconfig
 
 ---
 
 ## Key technical facts
 
-### Ports
-| Port | Service |
-|---|---|
-| 8088 | Bodh care API + SPA |
-| 8096 | CDS Hooks server |
-| 8097 | MCP server |
-| 8099 | A2A server |
-| 5667 | Laminar web UI (NOT the API) |
-| 8000 | Laminar REST API (`LMNR_BASE_URL`) |
-| 8001 | Laminar OTLP/gRPC |
+### Architecture
+- MARA pipeline: Intake → Test Planner → Diagnostician → Care Plan Generator
+- Bus: InMemoryBus (default) or NATS JetStream (`-tags nats`)
+- Governance: CompositePolicy (deny-first) gates every message before agents
+- Audit: append-only, PHI-free, Merkle chain-hash, S3 export stub
+
+### Clinical agents (37 implementations)
+Diagnostic: intake, rpm_monitor, supervisor, questioner, test_planner, cost_guardian, diagnostician (rule + 6 LLM variants), reasoning_verifier, human_review
+Specialists: cardiologist, radiologist, pharmacist, infectious_disease, neurologist, nephrologist, pulmonologist, ophthalmologist, oncologist, trial_screener
+Care services: cdm_planner, tcm_coordinator, panel_manager, pre_visit_prep, inbox_triage, refill_manager, prior_auth, engagement, readmission_tracker
+Support: audio_transcriber
+
+### LLM providers
+Anthropic (claude-sonnet-4-6), OpenAI (gpt-4o), Ollama (qwen2.5:7b/llama3.2), Kronk (in-process llama.cpp)
+Streaming: all 3 via `Streamer` interface
+GBNF grammar: Ollama (`options.grammar`) + Kronk (native)
+Budget routing: 3-tier cascade (Ollama→small-cloud→large-cloud)
 
 ### Build tags
-- `otel` — OpenTelemetry SDK (OTLP export, Laminar)
-- `kronk` — proprietary in-process llama.cpp provider
-- `nats` — NATS JetStream bus adapter
+`otel` — OpenTelemetry SDK, Laminar exporter
+`kronk` — proprietary llama.cpp provider
+`nats` — NATS JetStream bus adapter
+
+### Ports
+8088=care API, 8096=CDS Hooks, 8097=MCP server, 8099=A2A server, 5667=Laminar UI, 8000=Laminar API
 
 ### PHI security invariants
-- `bodh.case_id` on spans = `sha256(caseID)[:8]` hex — never raw MRN
-- Audit events: reason field is redacted, never contains diagnosis/HPI/lab values
-- BODH_ENCRYPTION_KEY (base64, 32 bytes) → AES-256-GCM on all PHI columns
+- `bodh.case_id` on spans = `sha256(caseID)[:8]` hex
+- Audit events: reason field redacted, never diagnosis/HPI/labs
+- `BODH_ENCRYPTION_KEY` (base64, 32 bytes) → AES-256-GCM on PHI columns
+- SMART on FHIR: RS256 JWT + JWKS caching for EHR integration
 
-### Default providers + models
-- Ollama default: `qwen2.5:7b` (lessons), `llama3.2` (care)
-- Anthropic default: `claude-sonnet-4-6`
-- OpenAI default: `gpt-4o`
+### Frontend (React/TypeScript SPA)
+18 pages: Dashboard, ClinicianDashboard, PatientPortal, AuditLog, Login, Cost, CaseRunner, RunTrace, Reviews, ReviewDetail, Tasks, Patients, PanelReport, Agents, RPM, Bench, LLMTraces, FineTune, About
+Features: JWT auth guard, dark mode, notification bell (WebSocket), toast alerts, Pareto charts, RPM sparklines, i18n (en/es/fr/zh)
 
-### Environment key vars
-```bash
-ANTHROPIC_API_KEY       # llm-anthropic diagnostician
-OPENAI_API_KEY          # llm-openai diagnostician
-OLLAMA_HOST             # default http://localhost:11434
-LMNR_PROJECT_API_KEY    # Laminar (use local key from localhost:5667)
-LMNR_BASE_URL           # http://localhost:8000 for self-hosted
-DATABASE_URL            # PostgreSQL DSN (optional, enables Postgres backend)
-BODH_ENCRYPTION_KEY     # base64 AES-256 key for PHI column encryption
-BODH_JWT_SECRET         # JWT signing secret (default: bodh-dev-secret-change-in-prod)
-NATS_URL                # nats://localhost:4222 (only with -tags nats)
-```
+### Claude Code setup
+- `.claude/settings.json` — 7 permissions + security-guidance hooks
+- `.claude/settings.local.json` — 140+ permission entries (gitignored)
+- `.claude/commands/` — /commit, /commit-push-pr, /clean_gone, /code-review
+- `.claude/plugins/security-guidance/` — PreToolUse/PostToolUse/Stop hooks (25+ vuln classes)
 
 ---
 
-## Packages overview
+## What's remaining (post-final-extensions)
 
-```
-agents/          28+ clinical agents (diagnostic + care-services + specialist)
-cmd/             18+ CLI binaries
-pkg/
-  a2a/           A2A wire protocol server
-  agent/         agent interface + lesson packages (intro, toolcalling, agentloop, ...)
-  analytics/     cost ledger, cohort metrics
-  audit/         append-only log, immutable sink, pagination
-  auth/          OPA Rego + JWT + SMART on FHIR
-  cdshooks/      CDS Hooks server (EHR integration)
-  comm/          InMemoryBus + NATS adapter
-  eval/          single-turn, equity, drift, redteam
-  evals/         laminar + multiturn
-  finetune/      SFT/DPO export + OpenAI upload
-  fhir/          R4 types + Bulk $export
-  governance/    CompositePolicy + 8 policies (OPA, Part2, BreakGlass, ...)
-  hitl/          Queue + Hub (WebSocket) + Checkpoint
-  hl7v2/         ADT + ORU + ORM parsers
-  llm/           4 providers + streaming + GBNF grammar
-  mcp/           client + server
-  medical/       care plans (10+ templates), NEWS2, panel rules
-  memory/        InMemoryKV + Redis adapter
-  observability/ OTel + Laminar exporter
-  orchestration/ MARA orchestrator + message bus
-  persistence/   file + postgres (with encryption)
-  phi/           PHI redaction
-  safety/        refusal detection, hallucination, PHI patterns
-  tools/         drug interaction, FHIR query, filesystem, websearch, computer, dosing, ctgov
-  webhooks/      HMAC-signed event delivery
-```
+### Needs real external systems (can't stub)
+- Epic/Cerner FHIR connector (OAuth2 client registration)
+- Surescripts NCPDP SCRIPT (credentials)
+- X12 EDI 270/271/837/835 (clearinghouse)
+- AWS/GCP KMS (cloud account)
+- Twilio/SendGrid (API key + phone)
 
----
+### Needs legal/policy decisions
+- GDPR DPIA template (Article 35)
+- Right-to-delete (HIPAA 6yr retention vs GDPR erasure)
+- 21 CFR Part 11 e-signatures (FDA pathway)
+- ONC Certification (accredited lab)
+- SOC 2 Type II (auditor + 6-month window)
 
-## Claude Code setup
-
-### Settings files
-- `.claude/settings.json` — tracked, 7 core permissions + security-guidance hooks
-- `.claude/settings.local.json` — gitignored, 140 permissions (all go/git/make/npm/docker commands)
-
-### Installed plugins
-- `/commit` — stage + commit in one shot
-- `/commit-push-pr` — commit, push, open PR in one shot
-- `/clean_gone` — prune deleted remote branches
-- `/code-review [--comment]` — 5-agent Opus PR review
-- Security guidance — auto-runs on every file edit + commit + push
-
-### Session isolation tip
-**One terminal per project.** Run `/clear` before switching tasks.
-Context is scoped to working directory — never switch dirs mid-session.
-
----
-
-## What's still remaining (roadmap)
-
-### High priority
-- [ ] Workflow running: production-hardening (Helm, encryption, SMART, 4 specialist agents)
-- [ ] FHIR Bulk $export (in workflow)
-- [ ] HL7 ORM outbound orders (in workflow)
-
-### Next after production-hardening merges
-- [ ] Right-to-delete tooling (hard-delete patient_id across all stores)
-- [ ] 21 CFR Part 11 e-signature
-- [ ] GDPR DPIA template
-- [ ] Federated eval (cross-site accuracy without data sharing)
-- [ ] Shadow mode kit (silent prospective deployment)
-- [ ] Ambient scribe (voice → PatientPresentation)
-- [ ] Multi-language patient portal (Spanish, French)
-- [ ] NCPDP SCRIPT e-prescribing
-- [ ] X12 270/271 real-time eligibility
-
----
-
-## LinkedIn article series
-
-Repo: `github.com/PratikDhanave/https-pratikdhanave.github.io`
-Local: `/Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodh-linkedin`
-PR #1 merged: 11 technical articles (00–10) on Bodh's Go healthcare AI implementation
+### OSS documentation (in progress this session)
+- [x] LICENSE (Apache 2.0)
+- [x] SECURITY.md
+- [ ] CODE_OF_CONDUCT.md
+- [ ] CHANGELOG.md
+- [ ] .github/ISSUE_TEMPLATE/bug_report.md
+- [ ] .github/ISSUE_TEMPLATE/feature_request.md
+- [ ] .github/PULL_REQUEST_TEMPLATE.md
+- [ ] .github/CODEOWNERS
+- [ ] .editorconfig

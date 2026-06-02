@@ -3,6 +3,7 @@ import Loader, { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
 import { useApi } from '../hooks/useApi';
 import { api } from '../api/client';
+import { useI18n } from '../i18n';
 
 // ---------------------------------------------------------------------------
 // Patient Portal — read-only patient-facing view
@@ -10,20 +11,21 @@ import { api } from '../api/client';
 // ---------------------------------------------------------------------------
 
 export default function PatientPortal() {
+  const { t } = useI18n();
   const patients = useApi(() => api.patients(), []);
   const panel = useApi(() => api.panel(), []);
 
   if (patients.loading || panel.loading) {
     return (
-      <Page title="Patient Portal">
-        <Loader what="patient data" />
+      <Page title={t('portal.title')}>
+        <Loader what={t('common.loading')} />
       </Page>
     );
   }
 
   if (patients.error) {
     return (
-      <Page title="Patient Portal">
+      <Page title={t('portal.title')}>
         <ErrorBox error={patients.error} retry={patients.reload} />
       </Page>
     );
@@ -33,8 +35,8 @@ export default function PatientPortal() {
 
   if (!patient) {
     return (
-      <Page title="Patient Portal">
-        <Empty title="No patient record found" hint="Run a care demo or POST /api/patients to register a patient." />
+      <Page title={t('portal.title')}>
+        <Empty title={t('portal.no_patient')} hint={t('portal.no_patient_hint')} />
       </Page>
     );
   }
@@ -45,7 +47,7 @@ export default function PatientPortal() {
   );
 
   return (
-    <Page title="Patient Portal" subtitle={`Welcome${patient.name ? `, ${patient.name}` : ''}`}>
+    <Page title={t('portal.title')} subtitle={`${t('portal.welcome')}${patient.name ? `, ${patient.name}` : ''}`}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Care plan card */}
         <CarePlanCard patient={patient} />
@@ -64,6 +66,7 @@ export default function PatientPortal() {
 // Care plan display
 // ---------------------------------------------------------------------------
 function CarePlanCard({ patient }: { patient: import('../types').PatientRecord }) {
+  const { t } = useI18n();
   const conditions = patient.conditions ?? [];
   const medications = patient.medications ?? [];
 
@@ -73,12 +76,12 @@ function CarePlanCard({ patient }: { patient: import('../types').PatientRecord }
 
   return (
     <div className="card">
-      <div className="card-header">Your Care Plan</div>
+      <div className="card-header">{t('portal.care_plan')}</div>
       <div className="card-body space-y-4 text-sm">
         <section>
-          <h3 className="text-xs uppercase tracking-wide text-bodh-400 mb-2">Conditions</h3>
+          <h3 className="text-xs uppercase tracking-wide text-bodh-400 mb-2">{t('portal.conditions')}</h3>
           {conditions.length === 0 ? (
-            <p className="text-bodh-400">No conditions on file.</p>
+            <p className="text-bodh-400">{t('portal.no_conditions')}</p>
           ) : (
             <ul className="space-y-1">
               {conditions.map((c) => (
@@ -92,9 +95,9 @@ function CarePlanCard({ patient }: { patient: import('../types').PatientRecord }
         </section>
 
         <section>
-          <h3 className="text-xs uppercase tracking-wide text-bodh-400 mb-2">Medications</h3>
+          <h3 className="text-xs uppercase tracking-wide text-bodh-400 mb-2">{t('portal.medications')}</h3>
           {medications.length === 0 ? (
-            <p className="text-bodh-400">No medications on file.</p>
+            <p className="text-bodh-400">{t('portal.no_medications')}</p>
           ) : (
             <ul className="space-y-1">
               {medications.map((m) => (
@@ -107,23 +110,23 @@ function CarePlanCard({ patient }: { patient: import('../types').PatientRecord }
         </section>
 
         <section>
-          <h3 className="text-xs uppercase tracking-wide text-bodh-400 mb-2">Goals</h3>
+          <h3 className="text-xs uppercase tracking-wide text-bodh-400 mb-2">{t('portal.goals')}</h3>
           <ul className="space-y-1 text-bodh-600">
             {conditions.includes('diabetes') && (
-              <li>Maintain A1c below 7.0%</li>
+              <li>{t('portal.goal.a1c')}</li>
             )}
             {conditions.includes('hypertension') && (
-              <li>Keep blood pressure below 130/80 mmHg</li>
+              <li>{t('portal.goal.bp')}</li>
             )}
-            <li>Attend all scheduled follow-up appointments</li>
-            <li>Report new symptoms via the portal within 24 hours</li>
+            <li>{t('portal.goal.followup')}</li>
+            <li>{t('portal.goal.symptoms')}</li>
           </ul>
         </section>
 
         <section>
-          <h3 className="text-xs uppercase tracking-wide text-bodh-400 mb-2">Next Appointment</h3>
+          <h3 className="text-xs uppercase tracking-wide text-bodh-400 mb-2">{t('portal.next_appointment')}</h3>
           <p className="text-bodh-700 font-medium">{nextAppt.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-          <p className="text-xs text-bodh-400 mt-0.5">Please arrive 10 minutes early to complete check-in.</p>
+          <p className="text-xs text-bodh-400 mt-0.5">{t('portal.arrive_early')}</p>
         </section>
       </div>
     </div>
@@ -134,25 +137,34 @@ function CarePlanCard({ patient }: { patient: import('../types').PatientRecord }
 // Upcoming panel gaps
 // ---------------------------------------------------------------------------
 function PanelGapsCard({ gaps }: { gaps: import('../types').PanelGap[] }) {
+  const { t } = useI18n();
+
+  function formatMeasure(measure: string): string {
+    const key = `portal.measure.${measure}`;
+    const translated = t(key);
+    // If translation returns the key itself, the measure is unknown — show raw
+    return translated === key ? measure : translated;
+  }
+
   return (
     <div className="card">
-      <div className="card-header">Upcoming Care Reminders</div>
+      <div className="card-header">{t('portal.care_reminders')}</div>
       <div className="card-body space-y-3">
         {gaps.length === 0 && (
-          <p className="text-sm text-bodh-400">You are up to date on all preventive care measures.</p>
+          <p className="text-sm text-bodh-400">{t('portal.up_to_date')}</p>
         )}
         {gaps.map((g, i) => (
           <div key={i} className={`rounded-md p-3 border ${g.severity === 'high' ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50'}`}>
             <div className="text-sm font-medium text-bodh-800">{formatMeasure(g.measure)}</div>
             <p className="text-xs text-bodh-600 mt-1">{g.reason}</p>
-            <span className={`badge mt-2 ${g.severity === 'high' ? 'badge-urgent' : 'badge-pending'}`}>{g.severity} priority</span>
+            <span className={`badge mt-2 ${g.severity === 'high' ? 'badge-urgent' : 'badge-pending'}`}>{g.severity} {t('portal.priority')}</span>
           </div>
         ))}
         {/* Static example when no gaps exist for demo purposes */}
         {gaps.length === 0 && (
           <div className="rounded-md p-3 border border-bodh-100 bg-bodh-50">
-            <div className="text-sm font-medium text-bodh-700">Annual Wellness Visit</div>
-            <p className="text-xs text-bodh-400 mt-1">Your annual wellness check is due within the next 30 days.</p>
+            <div className="text-sm font-medium text-bodh-700">{t('portal.annual_wellness')}</div>
+            <p className="text-xs text-bodh-400 mt-1">{t('portal.annual_wellness_hint')}</p>
           </div>
         )}
       </div>
@@ -160,54 +172,45 @@ function PanelGapsCard({ gaps }: { gaps: import('../types').PanelGap[] }) {
   );
 }
 
-function formatMeasure(measure: string): string {
-  const map: Record<string, string> = {
-    a1c: 'Your A1c is due for review',
-    bp: 'Blood pressure monitoring needed',
-    mammogram: 'Mammogram screening due',
-    colonoscopy: 'Colonoscopy screening due',
-    flu_vaccine: 'Annual flu vaccine recommended',
-  };
-  return map[measure] ?? measure;
-}
-
 // ---------------------------------------------------------------------------
 // RPM vitals table
 // ---------------------------------------------------------------------------
 function VitalsTable({ patient }: { patient: import('../types').PatientRecord }) {
+  const { t } = useI18n();
+
   // Derive a synthetic vitals table from the stored aggregate values
   const rows: { date: string; measure: string; value: string; unit: string }[] = [];
 
   if (patient.last_a1c != null) {
-    rows.push({ date: 'Most recent', measure: 'A1c', value: patient.last_a1c.toFixed(1), unit: '%' });
+    rows.push({ date: t('portal.vitals.most_recent'), measure: t('portal.vitals.a1c'), value: patient.last_a1c.toFixed(1), unit: '%' });
   }
   if (patient.last_bp_systolic != null) {
     rows.push({
-      date: 'Most recent',
-      measure: 'Blood Pressure',
+      date: t('portal.vitals.most_recent'),
+      measure: t('portal.vitals.bp'),
       value: `${patient.last_bp_systolic}/${patient.last_bp_diastolic ?? '–'}`,
       unit: 'mmHg',
     });
   }
   if (patient.last_weight_lbs != null) {
-    rows.push({ date: 'Most recent', measure: 'Weight', value: patient.last_weight_lbs.toFixed(1), unit: 'lbs' });
+    rows.push({ date: t('portal.vitals.most_recent'), measure: t('portal.vitals.weight'), value: patient.last_weight_lbs.toFixed(1), unit: 'lbs' });
   }
 
   return (
     <div className="card overflow-hidden">
-      <div className="card-header">Recent Vitals</div>
+      <div className="card-header">{t('portal.vitals')}</div>
       {rows.length === 0 ? (
         <div className="card-body">
-          <p className="text-sm text-bodh-400">No vitals on file.</p>
+          <p className="text-sm text-bodh-400">{t('portal.no_vitals')}</p>
         </div>
       ) : (
         <table className="min-w-full text-sm">
           <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
             <tr>
-              <th className="px-4 py-2 text-left">Date</th>
-              <th className="px-4 py-2 text-left">Measure</th>
-              <th className="px-4 py-2 text-left">Value</th>
-              <th className="px-4 py-2 text-left">Unit</th>
+              <th className="px-4 py-2 text-left">{t('portal.vitals.date')}</th>
+              <th className="px-4 py-2 text-left">{t('portal.vitals.measure')}</th>
+              <th className="px-4 py-2 text-left">{t('portal.vitals.value')}</th>
+              <th className="px-4 py-2 text-left">{t('portal.vitals.unit')}</th>
             </tr>
           </thead>
           <tbody>
