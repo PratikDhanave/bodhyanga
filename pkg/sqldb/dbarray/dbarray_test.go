@@ -58,3 +58,84 @@ func TestBool_Value(t *testing.T) {
 		t.Fatalf("got %v", got)
 	}
 }
+
+// Cover nil and empty cases for Int64.
+func TestInt64_Value_NilAndEmpty(t *testing.T) {
+	// nil returns nil
+	got, err := Int64(nil).Value()
+	if err != nil {
+		t.Fatalf("nil Int64 error: %v", err)
+	}
+	if got != nil {
+		t.Fatalf("nil Int64 got %v, want nil", got)
+	}
+
+	// empty returns "{}"
+	got, err = Int64{}.Value()
+	if err != nil {
+		t.Fatalf("empty Int64 error: %v", err)
+	}
+	if got != "{}" {
+		t.Fatalf("empty Int64 got %v, want {}", got)
+	}
+}
+
+// Cover nil and empty cases for Float64.
+func TestFloat64_Value_NilAndEmpty(t *testing.T) {
+	got, err := Float64(nil).Value()
+	if err != nil {
+		t.Fatalf("nil Float64 error: %v", err)
+	}
+	if got != nil {
+		t.Fatalf("nil Float64 got %v, want nil", got)
+	}
+
+	got, err = Float64{}.Value()
+	if err != nil {
+		t.Fatalf("empty Float64 error: %v", err)
+	}
+	if got != "{}" {
+		t.Fatalf("empty Float64 got %v, want {}", got)
+	}
+}
+
+// Cover nil and empty cases for Bool.
+func TestBool_Value_NilAndEmpty(t *testing.T) {
+	got, err := Bool(nil).Value()
+	if err != nil {
+		t.Fatalf("nil Bool error: %v", err)
+	}
+	if got != nil {
+		t.Fatalf("nil Bool got %v, want nil", got)
+	}
+
+	got, err = Bool{}.Value()
+	if err != nil {
+		t.Fatalf("empty Bool error: %v", err)
+	}
+	if got != "{}" {
+		t.Fatalf("empty Bool got %v, want {}", got)
+	}
+}
+
+// Cover single-element cases for Int64, Float64, Bool.
+func TestInt64_Value_Single(t *testing.T) {
+	got, _ := Int64{42}.Value()
+	if got != "{42}" {
+		t.Fatalf("got %v, want {42}", got)
+	}
+}
+
+func TestFloat64_Value_Single(t *testing.T) {
+	got, _ := Float64{3.14}.Value()
+	if got != "{3.14}" {
+		t.Fatalf("got %v, want {3.14}", got)
+	}
+}
+
+func TestBool_Value_Single(t *testing.T) {
+	got, _ := Bool{false}.Value()
+	if got != "{f}" {
+		t.Fatalf("got %v, want {f}", got)
+	}
+}

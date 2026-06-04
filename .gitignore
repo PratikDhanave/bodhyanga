@@ -1,28 +1,80 @@
+# Go build artifacts — `go build ./cmd/X` drops binaries at repo root.
+# These are compiled outputs, not source. Never commit them.
+/care
+/evals
+/intro
+/toolcalling
+/laminar-eval
+/zarf_validate
+/agentloop
+/bench-suite
+/cdshooks
+/computeruse
+/debate
+/drift-monitor
+/equity-eval
+/federated-eval
+/finetune
+/filesystemtools
+/hitl
+/hl7oru
+/mcpserver
+/multiturneval
+/planning
+/redteameval
+/scribe
+/selfcorrect
+/shadow
+/singleturneval
+/streaming
+/websearchtools
+/a2aserver
+/audit-verify
+
+# Python
 __pycache__/
-.DS_Store
-.env
 .venv
 env/
 venv/
 ENV/
-.genie-ref/
-
-build/
-dist/
 *.egg-info/
 
+# OS
+.DS_Store
+
+# Environment — API keys live here, never committed
+.env
+
+# Submodule reference
+.genie-ref/
+
+# Build output
+build/
+dist/
+
+# Editor
 .vscode/
 .idea/
 *.swp
 *.swo
 
+# Dependencies
 node_modules/
 
+# Logs and databases
 *.log
 *.sqlite
 
+# Test output
 test-results/
+coverage.out
+*.coverprofile
 
 # JWT signing keys — never commit real keys; the example placeholder is
 # tracked but real *.pem files must stay local.
 zarf/keys/*.pem
+
+# Claude Code local settings and worktrees (gitignored by convention)
+.claude/settings.local.json
+.claude/worktrees/
+/bin/
