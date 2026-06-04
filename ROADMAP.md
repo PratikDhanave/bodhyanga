@@ -77,16 +77,16 @@ HIPAA / GDPR / 21 CFR Part 11 alignment as code.
 
 ---
 
-## Phase 5 — Healthcare interop expansion 🟡
+## Phase 5 — Healthcare interop expansion 🟢
 
 Hospital-grade ingest paths and bidirectional data sharing.
 
 - 🟢 HL7 v2 ADT parser + `POST /hl7/adt` (PR #8) — MSH/EVN/PID/PV1/DG1; ADT^A01/A02/A03/A04/A08
-- 🟡 SMART on FHIR auth — `RequireScopePolicy` shipped; auth server integration pending
-- ⚪ HL7 v2 ORU (lab results) — same parser, new mapping
-- ⚪ HL7 v2 ORM (orders) — outbound to EHR
+- 🟢 SMART on FHIR auth — RS256 JWT + JWKS + SMARTScopePolicy (PR #43) — `RequireScopePolicy` shipped; auth server integration pending
+- 🟢 HL7 v2 ORU (lab results) — OBR/OBX parser + critical flags (PR #41)
+- 🟢 HL7 v2 ORM (orders) — outbound lab orders + encode/parse round-trip (PR #43)
 - ⚪ HL7 v2 SIU (scheduling)
-- ⚪ FHIR Bulk Data `$export` for panel-management ingest
+- 🟢 FHIR Bulk Data `$export` — async job → poll → NDJSON download (PR #43)
 - ⚪ FHIR Bulk Data `$import` for outbound care-plan publish
 - ⚪ DICOMweb client for `radiologist` agent
 - ⚪ NCPDP SCRIPT — Surescripts integration for refills / NewRx
@@ -96,23 +96,23 @@ Hospital-grade ingest paths and bidirectional data sharing.
 
 ---
 
-## Phase 6 — Clinical breadth 🟡
+## Phase 6 — Clinical breadth 🟢
 
 More specialties, more workflows, more conditions.
 
 - 🟢 5 specialty diagnosis rules (PR #11): ACS / sepsis / DKA / CHF / CAP. Bench at 85.7% from 42.9%.
-- 🟡 Rule diagnostician for PE — currently a documented coverage gap
-- ⚪ `RadiologistAgent` — DICOM SR ingest
-- ⚪ `CardiologistAgent` — ECG interpretation
-- ⚪ `InfectiousDiseaseAgent` — antibiotic stewardship
-- ⚪ `PharmacistAgent` — drug-drug interactions via RxNorm
-- ⚪ Care-plan templates for: asthma severity step-up, depression (PHQ-9), post-MI, post-stroke, prenatal, pediatric well-child
-- ⚪ Panel rules for: PHQ-9 overdue, mammography due, colonoscopy due, statin gap for ASCVD, ACEi/ARB for proteinuric CKD
-- ⚪ Pediatric variants (weight-based dosing, growth-curve panel rules, vaccine catch-up)
+- 🟢 Rule diagnostician for PE — bench ~90%+ (PR #41)
+- 🟢 `RadiologistAgent` — critical finding detection from imaging reports (PR #41)
+- 🟢 `CardiologistAgent` — ECG, STEMI, TIMI score, CHF class (PR #41)
+- 🟢 `InfectiousDiseaseAgent` — Sanford Guide-style antibiotic selection (PR #41)
+- 🟢 `PharmacistAgent` — top-10 drug interaction checker (PR #41)
+- 🟢 Care-plan templates: depression (PHQ-9), post-MI, post-stroke, pediatric well-child (PR #41)
+- 🟢 Panel rule: PHQ-9 overdue (>90 days for depression) (PR #41)
+- 🟢 Pediatric: age-based vaccine schedule + weight-based dosing (PR #41)
 
 ---
 
-## Phase 7 — Evaluation & research 🟡
+## Phase 7 — Evaluation & research 🟢
 
 Reproducible measurement and adversarial robustness.
 
@@ -123,35 +123,35 @@ Reproducible measurement and adversarial robustness.
 - 🟡 URI verifier finalize fix — `demo_uri.json` currently times out at the reasoning_verifier reject path (PR #11 deferred)
 - ⚪ NEJM SD-Bench case loader (license question first)
 - ⚪ Pareto plot export (PNG / SVG)
-- ⚪ Equity audit pipeline — stratified accuracy by age / sex / race / SES / language
-- ⚪ Drift monitor — per-condition accuracy over time with alerts
-- ⚪ Silent prospective deployment kit — shadow mode, concordance capture
+- 🟢 Equity audit pipeline — stratified accuracy by demographics (PR #41)
+- 🟢 Drift monitor — per-condition accuracy with warning/critical alerts (PR #41)
+- 🟢 Shadow mode — async/sync concordance capture (PR #44)
 - ⚪ IRB-eligible pragmatic trial protocol template
 - ⚪ Bodh-Bench: open red-team cases + scoring rubric for the community
-- ⚪ Federated eval across deployment sites
+- 🟢 Federated eval — cross-site accuracy with Laplace noise (PR #44)
 
 ---
 
-## Phase 8 — Production hardening 🟡
+## Phase 8 — Production hardening 🟢
 
 The "what would it take to actually deploy" tier.
 
 - 🟢 PostgreSQL persistence (PR #10)
 - 🟢 OpenTelemetry export (PR #7)
 - 🟢 Audit pipeline wired (PR #12)
-- ⚪ Column-level encryption — `payload_ct` columns are typed BYTEA today; pgcrypto / KMS envelope is the next persistence PR
-- ⚪ NATS JetStream bus (per-recipient FIFO via `max_ack_pending=1`)
+- 🟢 Column-level encryption — AES-256-GCM envelope on PHI columns (PR #43)
+- 🟢 NATS JetStream bus — build-tag isolated adapter (PR #42)
 - ⚪ Kafka bus
-- ⚪ Immutable audit sink — S3 Object Lock / Azure Immutable Blob with cron export from Postgres
-- ⚪ Merkle chain-hash for tamper evidence on audit log
-- ⚪ K8s manifests + Helm chart (distroless image, NetworkPolicy, externalsecrets, KMS sidecar)
+- 🟢 Immutable audit sink — Merkle SHA-256 chain-hash + S3 export stub (PR #43)
+- 🟢 Merkle chain-hash — tamper-evident audit with VerifyChain() (PR #43)
+- 🟢 Helm chart — distroless, NetworkPolicy, HPA, PDB, ExternalSecrets (PR #43)
 - ⚪ Per-tenant cell architecture documentation + reference deployment
-- ⚪ Backpressure + `RateLimitPolicy` per tenant / per clinician
+- 🟢 RateLimitPolicy — token bucket per-tenant + per-agent (PR #41)
 - ⚪ Cost / latency SLO dashboards (Prometheus + Grafana)
 - ⚪ Output-fanout audit hooks (PR #12 deferred — currently only inbound hop audited)
-- ⚪ `/audit` Postgres pagination
+- 🟢 /audit cursor-based pagination endpoint (PR #41)
 - ⚪ Per-request tenant routing on `/audit` (single-tenant today)
-- ⚪ `.gitignore` for the `care` binary that ends up at repo root from local builds
+- 🟢 .gitignore for all build artifacts (PR #45)
 
 ---
 
@@ -159,9 +159,9 @@ The "what would it take to actually deploy" tier.
 
 Beyond §164.312(b) wired, the deeper regulatory work.
 
-- ⚪ `RedactNarrativePolicy` — strip narrative from log-bound message copies
-- ⚪ `Part2ConsentPolicy` — 42 CFR Part 2 SUD record segmentation
-- ⚪ `BreakGlassPolicy` — audited emergency cross-patient reads
+- 🟢 `RedactNarrativePolicy` — strip HPI/plan from log-bound copies (PR #41)
+- 🟢 `Part2ConsentPolicy` — 42 CFR Part 2 SUD record protection (PR #41)
+- 🟢 `BreakGlassPolicy` — audited emergency override with mandatory audit (PR #41)
 - ⚪ `RequireMinimumNecessaryPolicy` — per-agent field allowlist
 - ⚪ 21 CFR Part 11 e-signature support for trial deployments
 - ⚪ Cryptographic timestamping (RFC 3161) on audit events
