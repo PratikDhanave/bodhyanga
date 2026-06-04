@@ -1,0 +1,30 @@
+# Bodh CODEOWNERS
+# These owners are automatically requested for review on PRs that touch their area.
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default — all PRs
+* @PratikDhanave
+
+# Core architecture (load-bearing interfaces — require careful review)
+pkg/agent/          @PratikDhanave
+pkg/protocol/       @PratikDhanave
+pkg/orchestration/  @PratikDhanave
+pkg/audit/          @PratikDhanave
+pkg/governance/     @PratikDhanave
+
+# Clinical agents
+agents/             @PratikDhanave
+
+# PHI / security sensitive
+pkg/phi/            @PratikDhanave
+pkg/persistence/crypto.go @PratikDhanave
+pkg/auth/           @PratikDhanave
+SECURITY.md         @PratikDhanave
+
+# Infrastructure
+zarf/               @PratikDhanave
+Makefile            @PratikDhanave
+Dockerfile          @PratikDhanave
+
+# Frontend
+cmd/care/web/       @PratikDhanave
