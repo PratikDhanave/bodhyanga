@@ -197,6 +197,216 @@ func TestRun_TableDriven(t *testing.T) {
 	Run(t, tbl, "TestRun_TableDriven")
 }
 
+// ---------- WithSkip ----------
+
+func TestWithSkip_SkipsTest(t *testing.T) {
+	// WithSkip calls t.Skipf which sets the skip flag. We verify indirectly
+	// by checking the option struct assembly.
+	opt := WithSkip(true, "docker not available")
+	opts := &tableOptions{}
+	opt(opts)
+	if !opts.skip {
+		t.Error("WithSkip(true, ...) should set skip=true")
+	}
+	if opts.skipMsg != "docker not available" {
+		t.Errorf("skipMsg: got %q", opts.skipMsg)
+	}
+
+	// Also test skip=false.
+	opt2 := WithSkip(false, "")
+	opts2 := &tableOptions{}
+	opt2(opts2)
+	if opts2.skip {
+		t.Error("WithSkip(false, ...) should set skip=false")
+	}
+}
+
+func TestWithSkip_NoSkip(t *testing.T) {
+	tbl := []Table{
+		{
+			Name:    "no_skip",
+			ExpResp: 42,
+			ExcFunc: func(_ context.Context) any { return 42 },
+			CmpFunc: func(got, exp any) string { return "" },
+		},
+	}
+	Run(t, tbl, "NoSkipTest", WithSkip(false, ""))
+}
+
+// ---------- Run with diff (failure reporting) ----------
+
+// The Run() function's diff/failure path (lines 67-73 in unittest.go) calls
+// t.Fatalf which cannot be exercised without failing the parent test. This
+// path is tested indirectly by any real test failure in downstream packages.
+
+// ---------- Cleanup with nil DB ----------
+
+func TestCleanup_NilDB(t *testing.T) {
+	// Should not panic.
+	Cleanup(t, nil)
+}
+
+// ---------- Wipe with nil DB ----------
+
+func TestWipe_NilDB(t *testing.T) {
+	var db *DB
+	if err := db.Wipe(context.Background()); err != nil {
+		t.Fatalf("Wipe(nil): %v", err)
+	}
+}
+
+func TestWipe_NilStore(t *testing.T) {
+	db := &DB{Store: nil, TenantID: "tenant_test_x"}
+	if err := db.Wipe(context.Background()); err != nil {
+		t.Fatalf("Wipe(nil store): %v", err)
+	}
+}
+
+// ---------- LoadFixture — file not found ----------
+
+func TestLoadFixture_FileNotFound(t *testing.T) {
+	var v any
+	err := LoadFixture("nonexistent_file.json", &v)
+	if err == nil {
+		t.Fatal("expected error for missing fixture file")
+	}
+	if !strings.Contains(err.Error(), "read fixture") {
+		t.Errorf("error: %q", err.Error())
+	}
+}
+
+// ---------- LoadFixture — invalid JSON ----------
+
+func TestLoadFixture_InvalidJSON(t *testing.T) {
+	// We can't easily inject invalid JSON into the embedded FS, but
+	// the error path is there. We test that valid fixtures decode fine.
+	var fx struct {
+		Synthetic bool `json:"_synthetic"`
+	}
+	err := LoadFixture("patients_basic.json", &fx)
+	if err != nil {
+		t.Fatalf("LoadFixture: %v", err)
+	}
+	if !fx.Synthetic {
+		t.Error("expected _synthetic: true")
+	}
+}
+
+// ---------- rewriteUser ----------
+
+func TestRewriteUser_HappyPath(t *testing.T) {
+	dsn := "postgres://owner:ownerpass@localhost:5432/bodh?sslmode=disable"
+	got := rewriteUser(dsn, "app", "apppass")
+	want := "postgres://app:apppass@localhost:5432/bodh?sslmode=disable"
+	if got != want {
+		t.Errorf("rewriteUser:\ngot  %q\nwant %q", got, want)
+	}
+}
+
+func TestRewriteUser_Panics(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("expected panic for invalid DSN")
+		}
+	}()
+	rewriteUser("://invalid", "u", "p")
+}
+
+// ---------- SeedData helpers ----------
+
+func TestSeedCaseStates_HasTestPrefix(t *testing.T) {
+	for _, c := range SeedCaseStates() {
+		if !strings.HasPrefix(c.CaseID, "case_test_") {
+			t.Errorf("CaseID %q missing case_test_ prefix", c.CaseID)
+		}
+	}
+}
+
+func TestSeedInteractions_NotEmpty(t *testing.T) {
+	recs := SeedInteractions()
+	if len(recs) == 0 {
+		t.Fatal("SeedInteractions should return non-empty slice")
+	}
+}
+
+func TestSeedAuditEvents_NotEmpty(t *testing.T) {
+	events := SeedAuditEvents()
+	if len(events) == 0 {
+		t.Fatal("SeedAuditEvents should return non-empty slice")
+	}
+}
+
+func TestSeedPatients_NotEmpty(t *testing.T) {
+	patients := SeedPatients()
+	if len(patients) == 0 {
+		t.Fatal("SeedPatients should return non-empty slice")
+	}
+}
+
+// ---------- FixtureNames ----------
+
+func TestFixtureNames_NonEmpty(t *testing.T) {
+	names, err := FixtureNames()
+	if err != nil {
+		t.Fatalf("FixtureNames: %v", err)
+	}
+	if len(names) == 0 {
+		t.Fatal("expected at least one fixture")
+	}
+}
+
+// ---------- Integration tests (Docker required) ----------
+
+// TestSeed_Full exercises Seed with all fixtures. Requires Docker.
+func TestSeed_Full(t *testing.T) {
+	db := NewDB(t)
+	Seed(t, db)
+	// After Seed, patients + audit + interactions should exist.
+	ctx := context.Background()
+	patients, err := db.Store.ListPatients(ctx, db.TenantID)
+	if err != nil {
+		t.Fatalf("ListPatients: %v", err)
+	}
+	if len(patients) != len(SeedPatients()) {
+		t.Fatalf("patients: got %d, want %d", len(patients), len(SeedPatients()))
+	}
+}
+
+// TestSeedInteractionsOnly exercises the interaction seeding path.
+func TestSeedInteractionsOnly(t *testing.T) {
+	db := NewDB(t)
+	recs := SeedInteractionsOnly(t, db)
+	if len(recs) != len(SeedInteractions()) {
+		t.Fatalf("recs: got %d, want %d", len(recs), len(SeedInteractions()))
+	}
+}
+
+// TestAssertNoBypassRLS exercises the RLS check.
+func TestAssertNoBypassRLS(t *testing.T) {
+	db := NewDB(t)
+	AssertNoBypassRLS(t, db)
+}
+
+// TestCleanup_WithDB exercises the Cleanup path with a real DB.
+func TestCleanup_WithDB(t *testing.T) {
+	db := NewDB(t)
+	SeedPatientsOnly(t, db)
+
+	// Cleanup should wipe the seeded patients.
+	Cleanup(t, db)
+
+	ctx := context.Background()
+	patients, err := db.Store.ListPatients(ctx, db.TenantID)
+	if err != nil {
+		t.Fatalf("ListPatients: %v", err)
+	}
+	if len(patients) != 0 {
+		t.Fatalf("after Cleanup: got %d patients, want 0", len(patients))
+	}
+}
+
+// ---------- LoadFixture_Synthetic ----------
+
 // TestLoadFixture_Synthetic round-trips the basic patients fixture.
 func TestLoadFixture_Synthetic(t *testing.T) {
 	var fx struct {

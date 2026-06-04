@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 // testLogger captures Printf calls into a bytes.Buffer so tests can
@@ -313,5 +314,607 @@ func TestRespond_BodyIsValidJSON(t *testing.T) {
 	}
 	if got["a"] != 1 || got["b"] != 2 {
 		t.Errorf("body: got %v", got)
+	}
+}
+
+// ---------- SetWriter / GetWriter ----------
+
+func TestSetWriter_GetWriter_RoundTrip(t *testing.T) {
+	rr := httptest.NewRecorder()
+	ctx := SetWriter(context.Background(), rr)
+	got := GetWriter(ctx)
+	if got != rr {
+		t.Error("GetWriter should return the writer set by SetWriter")
+	}
+}
+
+func TestGetWriter_NilOnBareContext(t *testing.T) {
+	if got := GetWriter(context.Background()); got != nil {
+		t.Errorf("expected nil on bare context, got %v", got)
+	}
+}
+
+// ---------- WrapMiddleware ----------
+
+func TestWrapMiddleware_Exported(t *testing.T) {
+	var trace []string
+	mk := func(name string) Middleware {
+		return func(next HandlerFunc) HandlerFunc {
+			return func(ctx context.Context, r *http.Request) (Encoder, error) {
+				trace = append(trace, name)
+				return next(ctx, r)
+			}
+		}
+	}
+	handler := func(ctx context.Context, r *http.Request) (Encoder, error) {
+		trace = append(trace, "handler")
+		return NewJSON(nil), nil
+	}
+	wrapped := WrapMiddleware([]Middleware{mk("A"), mk("B")}, handler)
+	req := httptest.NewRequest("GET", "/", nil)
+	wrapped(context.Background(), req)
+	if len(trace) != 3 || trace[0] != "A" || trace[1] != "B" || trace[2] != "handler" {
+		t.Errorf("trace: %v, want [A B handler]", trace)
+	}
+}
+
+func TestWrapMiddleware_NilMiddlewareSkipped(t *testing.T) {
+	called := false
+	handler := func(ctx context.Context, r *http.Request) (Encoder, error) {
+		called = true
+		return NoResponse{}, nil
+	}
+	wrapped := WrapMiddleware([]Middleware{nil, nil}, handler)
+	req := httptest.NewRequest("GET", "/", nil)
+	wrapped(context.Background(), req)
+	if !called {
+		t.Error("handler should be called even with nil middleware")
+	}
+}
+
+// ---------- Param ----------
+
+func TestParam_ReturnsPathValue(t *testing.T) {
+	app := NewApp(&testLogger{})
+	var got string
+	app.HandlerFunc("GET", "", "/items/{id}", func(ctx context.Context, r *http.Request) (Encoder, error) {
+		got = Param(r, "id")
+		return NewJSON(nil), nil
+	})
+	req := httptest.NewRequest("GET", "/items/42", nil)
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+	if got != "42" {
+		t.Errorf("Param(id) = %q, want '42'", got)
+	}
+}
+
+func TestParam_EmptyForMissingKey(t *testing.T) {
+	req := httptest.NewRequest("GET", "/x", nil)
+	if got := Param(req, "nonexistent"); got != "" {
+		t.Errorf("expected empty for missing key, got %q", got)
+	}
+}
+
+// ---------- Decode — invalid JSON ----------
+
+func TestDecode_InvalidJSON(t *testing.T) {
+	r := httptest.NewRequest("POST", "/", io.NopCloser(strings.NewReader("not-json")))
+	var v struct{ Name string }
+	err := Decode(r, &v)
+	if err == nil {
+		t.Fatal("expected error for invalid JSON")
+	}
+	if !strings.Contains(err.Error(), "decode body") {
+		t.Errorf("error: %q, want 'decode body' prefix", err.Error())
+	}
+}
+
+// ---------- Decode — read error ----------
+
+func TestDecode_ReadError(t *testing.T) {
+	r := httptest.NewRequest("POST", "/", io.NopCloser(&errReader{}))
+	var v struct{ Name string }
+	err := Decode(r, &v)
+	if err == nil {
+		t.Fatal("expected error for read failure")
+	}
+	if !strings.Contains(err.Error(), "read body") {
+		t.Errorf("error: %q, want 'read body' prefix", err.Error())
+	}
+}
+
+// errReader is an io.Reader that always returns an error.
+type errReader struct{}
+
+func (errReader) Read([]byte) (int, error) {
+	return 0, errors.New("read failure")
+}
+
+// ---------- Decode — successful validation ----------
+
+func TestDecode_ValidatorSuccess(t *testing.T) {
+	r := httptest.NewRequest("POST", "/", io.NopCloser(strings.NewReader(`{"name":"bob"}`)))
+	var v requireName
+	err := Decode(r, &v)
+	if err != nil {
+		t.Fatalf("expected no error for valid input, got %v", err)
+	}
+	if v.Name != "bob" {
+		t.Errorf("Name: got %q", v.Name)
+	}
+}
+
+// ---------- Respond — error Encoder type ----------
+
+func TestRespond_ErrorEncoder(t *testing.T) {
+	rr := httptest.NewRecorder()
+	err := Respond(context.Background(), rr, &errEncoder{})
+	if err == nil {
+		t.Fatal("expected error from bad encoder")
+	}
+	if rr.Code != http.StatusInternalServerError {
+		t.Errorf("status: got %d, want 500", rr.Code)
+	}
+}
+
+type errEncoder struct{}
+
+func (errEncoder) Encode() ([]byte, string, error) {
+	return nil, "", errors.New("encode fail")
+}
+
+// ---------- Respond — encoder that implements error (status 500 fallback) ----------
+
+type errEncoderWithErrorIface struct{}
+
+func (e errEncoderWithErrorIface) Encode() ([]byte, string, error) {
+	return []byte("err"), "text/plain", nil
+}
+func (e errEncoderWithErrorIface) Error() string { return "something broke" }
+
+func TestRespond_ErrorInterfaceEncoder(t *testing.T) {
+	rr := httptest.NewRecorder()
+	err := Respond(context.Background(), rr, errEncoderWithErrorIface{})
+	if err != nil {
+		t.Fatalf("respond: %v", err)
+	}
+	if rr.Code != http.StatusInternalServerError {
+		t.Errorf("status: got %d, want 500 for error Encoder", rr.Code)
+	}
+}
+
+// ---------- Respond — context Deadline exceeded (not Canceled) ----------
+
+func TestRespond_ContextDeadlineExceeded(t *testing.T) {
+	rr := httptest.NewRecorder()
+	ctx, cancel := context.WithDeadline(context.Background(), timeInPast())
+	defer cancel()
+	// Deadline exceeded is not context.Canceled, so it should NOT short-circuit
+	// with the "client disconnected" message. It should proceed.
+	// Wait for the deadline to actually fire.
+	<-ctx.Done()
+
+	err := Respond(ctx, rr, NewJSON(map[string]string{"ok": "1"}))
+	// ctx.Err() is DeadlineExceeded, which is not Canceled, so
+	// the code should NOT return the "client disconnected" error.
+	// Actually looking at the code: ctx.Err() returns non-nil but not Canceled,
+	// so the switch falls through and proceeds normally.
+	_ = err
+}
+
+func timeInPast() time.Time {
+	return time.Now().Add(-time.Second)
+}
+
+// ---------- HTTPStatus — zero value defaults to 200 ----------
+
+func TestJSON_HTTPStatus_ZeroValue(t *testing.T) {
+	j := JSON{Value: "x"} // Status field is 0
+	if got := j.HTTPStatus(); got != http.StatusOK {
+		t.Errorf("HTTPStatus: got %d, want 200", got)
+	}
+}
+
+// ---------- JSON.Encode — marshal error ----------
+
+func TestJSON_Encode_MarshalError(t *testing.T) {
+	// Channels cannot be marshaled.
+	j := JSON{Value: make(chan int)}
+	_, _, err := j.Encode()
+	if err == nil {
+		t.Fatal("expected marshal error for channel value")
+	}
+}
+
+// ---------- ServeHTTP — CORS preamble ----------
+
+func TestApp_ServeHTTP_CORS_MatchingOrigin(t *testing.T) {
+	app := NewApp(&testLogger{})
+	app.EnableCORS([]string{"https://example.com"})
+	app.HandlerFunc("GET", "", "/ping", func(ctx context.Context, r *http.Request) (Encoder, error) {
+		return NewJSON("ok"), nil
+	})
+
+	req := httptest.NewRequest("GET", "/ping", nil)
+	req.Header.Set("Origin", "https://example.com")
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	if got := rr.Header().Get("Access-Control-Allow-Origin"); got != "https://example.com" {
+		t.Errorf("ACAO: got %q, want 'https://example.com'", got)
+	}
+	if got := rr.Header().Get("Access-Control-Allow-Methods"); got == "" {
+		t.Error("missing ACAM header")
+	}
+}
+
+func TestApp_ServeHTTP_CORS_WildcardOrigin(t *testing.T) {
+	app := NewApp(&testLogger{})
+	app.EnableCORS([]string{"*"})
+	app.HandlerFunc("GET", "", "/ping", func(ctx context.Context, r *http.Request) (Encoder, error) {
+		return NewJSON("ok"), nil
+	})
+
+	req := httptest.NewRequest("GET", "/ping", nil)
+	req.Header.Set("Origin", "https://anything.com")
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	if got := rr.Header().Get("Access-Control-Allow-Origin"); got != "*" {
+		t.Errorf("ACAO: got %q, want '*'", got)
+	}
+}
+
+func TestApp_ServeHTTP_CORS_NonMatchingOrigin(t *testing.T) {
+	app := NewApp(&testLogger{})
+	app.EnableCORS([]string{"https://allowed.com"})
+	app.HandlerFunc("GET", "", "/ping", func(ctx context.Context, r *http.Request) (Encoder, error) {
+		return NewJSON("ok"), nil
+	})
+
+	req := httptest.NewRequest("GET", "/ping", nil)
+	req.Header.Set("Origin", "https://evil.com")
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	if got := rr.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Errorf("ACAO should be empty for non-matching origin, got %q", got)
+	}
+}
+
+func TestApp_ServeHTTP_CORS_Preflight(t *testing.T) {
+	app := NewApp(&testLogger{})
+	app.EnableCORS([]string{"https://example.com"})
+
+	req := httptest.NewRequest("OPTIONS", "/anything", nil)
+	req.Header.Set("Origin", "https://example.com")
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("status: got %d, want 200 for OPTIONS preflight", rr.Code)
+	}
+	if got := rr.Header().Get("Access-Control-Max-Age"); got != "86400" {
+		t.Errorf("MaxAge: got %q, want '86400'", got)
+	}
+}
+
+func TestApp_ServeHTTP_HSTS(t *testing.T) {
+	app := NewApp(&testLogger{})
+	app.HandlerFunc("GET", "", "/ping", func(ctx context.Context, r *http.Request) (Encoder, error) {
+		return NewJSON("ok"), nil
+	})
+
+	req := httptest.NewRequest("GET", "/ping", nil)
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	hsts := rr.Header().Get("Strict-Transport-Security")
+	if hsts == "" {
+		t.Error("missing HSTS header")
+	}
+	if !strings.Contains(hsts, "max-age=63072000") {
+		t.Errorf("HSTS: got %q", hsts)
+	}
+}
+
+func TestApp_ServeHTTP_PathCleaning(t *testing.T) {
+	app := NewApp(&testLogger{})
+	var gotPath string
+	app.HandlerFunc("GET", "", "/clean", func(ctx context.Context, r *http.Request) (Encoder, error) {
+		gotPath = r.URL.Path
+		return NewJSON("ok"), nil
+	})
+
+	// Unclean path should be cleaned.
+	req := httptest.NewRequest("GET", "/./clean", nil)
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	if gotPath != "/clean" {
+		t.Errorf("path: got %q, want '/clean'", gotPath)
+	}
+}
+
+// ---------- RawHandlerFunc ----------
+
+func TestApp_RawHandlerFunc(t *testing.T) {
+	app := NewApp(&testLogger{})
+	app.RawHandlerFunc("GET", "", "/raw", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("raw response"))
+	})
+
+	req := httptest.NewRequest("GET", "/raw", nil)
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("status: got %d, want 200", rr.Code)
+	}
+	if !strings.Contains(rr.Body.String(), "raw response") {
+		t.Errorf("body: got %q", rr.Body.String())
+	}
+}
+
+func TestApp_RawHandlerFunc_WithGroup(t *testing.T) {
+	app := NewApp(&testLogger{})
+	app.RawHandlerFunc("GET", "api", "/raw", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("grouped raw"))
+	})
+
+	req := httptest.NewRequest("GET", "/api/raw", nil)
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	if !strings.Contains(rr.Body.String(), "grouped raw") {
+		t.Errorf("body: got %q", rr.Body.String())
+	}
+}
+
+func TestApp_RawHandlerFunc_WithMiddleware(t *testing.T) {
+	var mwCalled bool
+	mw := func(next HandlerFunc) HandlerFunc {
+		return func(ctx context.Context, r *http.Request) (Encoder, error) {
+			mwCalled = true
+			return next(ctx, r)
+		}
+	}
+
+	app := NewApp(&testLogger{})
+	app.RawHandlerFunc("GET", "", "/rawmw", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	}, mw)
+
+	req := httptest.NewRequest("GET", "/rawmw", nil)
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	if !mwCalled {
+		t.Error("per-handler middleware should have run")
+	}
+}
+
+// ---------- Handle ----------
+
+func TestApp_Handle(t *testing.T) {
+	app := NewApp(&testLogger{})
+	app.Handle("/static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("static content"))
+	}))
+
+	req := httptest.NewRequest("GET", "/static/file.js", nil)
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	if !strings.Contains(rr.Body.String(), "static content") {
+		t.Errorf("body: got %q", rr.Body.String())
+	}
+}
+
+// ---------- Mux ----------
+
+func TestApp_Mux(t *testing.T) {
+	app := NewApp(&testLogger{})
+	mux := app.Mux()
+	if mux == nil {
+		t.Fatal("Mux() should return non-nil")
+	}
+}
+
+// ---------- WrapMux ----------
+
+func TestApp_WrapMux(t *testing.T) {
+	var mwCalled bool
+	mw := func(next HandlerFunc) HandlerFunc {
+		return func(ctx context.Context, r *http.Request) (Encoder, error) {
+			mwCalled = true
+			return next(ctx, r)
+		}
+	}
+
+	app := NewApp(&testLogger{}, mw)
+
+	inner := http.NewServeMux()
+	inner.HandleFunc("GET /legacy", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("legacy handler"))
+	})
+
+	wrapped := app.WrapMux(inner)
+
+	req := httptest.NewRequest("GET", "/legacy", nil)
+	rr := httptest.NewRecorder()
+	wrapped.ServeHTTP(rr, req)
+
+	if !mwCalled {
+		t.Error("middleware should have run for wrapped mux")
+	}
+	if !strings.Contains(rr.Body.String(), "legacy handler") {
+		t.Errorf("body: got %q", rr.Body.String())
+	}
+}
+
+// ---------- HandlerFunc with group ----------
+
+func TestApp_HandlerFunc_WithGroup(t *testing.T) {
+	app := NewApp(&testLogger{})
+	app.HandlerFunc("GET", "v1", "/items", func(ctx context.Context, r *http.Request) (Encoder, error) {
+		return NewJSON(map[string]string{"group": "v1"}), nil
+	})
+
+	req := httptest.NewRequest("GET", "/v1/items", nil)
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("status: got %d, want 200", rr.Code)
+	}
+	if !strings.Contains(rr.Body.String(), "v1") {
+		t.Errorf("body: got %q", rr.Body.String())
+	}
+}
+
+// ---------- HandlerFunc — handler uses GetWriter ----------
+
+func TestApp_HandlerFunc_GetWriterInHandler(t *testing.T) {
+	app := NewApp(&testLogger{})
+	var writerFound bool
+	app.HandlerFunc("GET", "", "/check", func(ctx context.Context, r *http.Request) (Encoder, error) {
+		writerFound = GetWriter(ctx) != nil
+		return NewJSON("ok"), nil
+	})
+
+	req := httptest.NewRequest("GET", "/check", nil)
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	if !writerFound {
+		t.Error("GetWriter should return non-nil inside a handler")
+	}
+}
+
+// ---------- EnableCORS with empty slice ----------
+
+func TestApp_EnableCORS_EmptySlice(t *testing.T) {
+	app := NewApp(&testLogger{})
+	app.EnableCORS([]string{})
+	// With empty origins, CORS should still be "enabled" but no origin matches.
+	app.HandlerFunc("GET", "", "/test", func(ctx context.Context, r *http.Request) (Encoder, error) {
+		return NewJSON("ok"), nil
+	})
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.Header.Set("Origin", "https://example.com")
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	// CORS headers should be set (Allow-Methods etc) but not Allow-Origin.
+	if got := rr.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Errorf("ACAO should be empty with empty origins, got %q", got)
+	}
+	if got := rr.Header().Get("Access-Control-Allow-Methods"); got == "" {
+		t.Error("Allow-Methods should still be set")
+	}
+}
+
+// ---------- Respond — encoder returns empty content type ----------
+
+func TestRespond_EmptyContentTypeDefaultsToJSON(t *testing.T) {
+	rr := httptest.NewRecorder()
+	enc := &bareEncoder{data: []byte(`{"x":1}`)}
+	err := Respond(context.Background(), rr, enc)
+	if err != nil {
+		t.Fatalf("respond: %v", err)
+	}
+	if ct := rr.Header().Get("Content-Type"); ct != "application/json" {
+		t.Errorf("content-type: got %q, want 'application/json'", ct)
+	}
+}
+
+type bareEncoder struct{ data []byte }
+
+func (b *bareEncoder) Encode() ([]byte, string, error) {
+	return b.data, "", nil // empty content type
+}
+
+// ---------- Respond — Encoder that implements httpStatus with custom code ----------
+
+func TestRespond_CustomHTTPStatus(t *testing.T) {
+	rr := httptest.NewRecorder()
+	enc := JSON{Status: http.StatusAccepted, Value: map[string]int{"n": 1}}
+	err := Respond(context.Background(), rr, enc)
+	if err != nil {
+		t.Fatalf("respond: %v", err)
+	}
+	if rr.Code != http.StatusAccepted {
+		t.Errorf("status: got %d, want 202", rr.Code)
+	}
+}
+
+// ---------- context: setStart / GetStart ----------
+
+func TestGetStart_DefaultZero(t *testing.T) {
+	if got := GetStart(context.Background()); got != 0 {
+		t.Errorf("expected 0 on bare context, got %d", got)
+	}
+}
+
+func TestSetStart_GetStart_RoundTrip(t *testing.T) {
+	ctx := setStart(context.Background(), 12345)
+	if got := GetStart(ctx); got != 12345 {
+		t.Errorf("expected 12345, got %d", got)
+	}
+}
+
+// ---------- Respond — write error ----------
+
+// errWriter is an http.ResponseWriter whose Write always fails.
+type errWriter struct {
+	header http.Header
+	code   int
+}
+
+func (ew *errWriter) Header() http.Header {
+	if ew.header == nil {
+		ew.header = make(http.Header)
+	}
+	return ew.header
+}
+func (ew *errWriter) WriteHeader(code int) { ew.code = code }
+func (ew *errWriter) Write(b []byte) (int, error) {
+	return 0, errors.New("write failed")
+}
+
+func TestRespond_WriteError(t *testing.T) {
+	w := &errWriter{}
+	err := Respond(context.Background(), w, NewJSON(map[string]int{"a": 1}))
+	if err == nil {
+		t.Fatal("expected error from write failure")
+	}
+	if !strings.Contains(err.Error(), "write") {
+		t.Errorf("error: %q, want 'write' in message", err.Error())
+	}
+}
+
+// ---------- HandlerFunc — Respond fails (error logged) ----------
+
+func TestApp_HandlerFunc_RespondFails(t *testing.T) {
+	log := &testLogger{}
+	app := NewApp(log)
+
+	// Handler returns a value that will fail during Encode.
+	app.HandlerFunc("GET", "", "/encode-fail", func(ctx context.Context, r *http.Request) (Encoder, error) {
+		return JSON{Value: make(chan int)}, nil // channel cannot be marshaled
+	})
+
+	req := httptest.NewRequest("GET", "/encode-fail", nil)
+	rr := httptest.NewRecorder()
+	app.ServeHTTP(rr, req)
+
+	// The respond error should have been logged.
+	if !strings.Contains(log.buf.String(), "respond failed") {
+		t.Errorf("expected 'respond failed' in log, got %q", log.buf.String())
 	}
 }

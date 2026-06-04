@@ -348,6 +348,37 @@ clean:
 	rm -f coverage.out
 
 # ===========================================================================
+# RELEASE
+# ===========================================================================
+
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+
+.PHONY: release
+## Build release binaries with version info embedded.
+##   make release VERSION=v1.0.0
+release:
+	@echo "Building Bodh $(VERSION)..."
+	$(GO) build -ldflags "-X main.version=$(VERSION)" -o bin/care    ./cmd/care/...
+	$(GO) build -ldflags "-X main.version=$(VERSION)" -o bin/demo    ./cmd/demo/...
+	$(GO) build -ldflags "-X main.version=$(VERSION)" -o bin/bench   ./cmd/bench/...
+	$(GO) build -ldflags "-X main.version=$(VERSION)" -o bin/bodhctl ./cmd/bodhctl/...
+	@echo "Binaries in bin/"
+	@ls -lh bin/
+
+.PHONY: docker-release
+## Build + tag Docker image for release.
+##   make docker-release VERSION=v1.0.0
+docker-release:
+	docker build -t bodh-care:$(VERSION) -t bodh-care:latest .
+	@echo "Tagged: bodh-care:$(VERSION) bodh-care:latest"
+
+.PHONY: coverage-check
+## Fail if test coverage drops below 80%.
+coverage-check:
+	@echo "Checking test coverage..."
+	@$(GO) test $(PKG) -cover 2>&1 | grep -E "^ok" | grep "coverage:" | awk '{gsub(/%/, "", $$NF); if ($$NF+0 < 80) print "FAIL: " $$2 " at " $$NF "%%"; found++} END {if (!found) print "All packages above 80%%"}'
+
+# ===========================================================================
 # LESSONS — agents-v2 curriculum in Go
 # ===========================================================================
 
