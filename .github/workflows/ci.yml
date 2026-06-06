@@ -43,11 +43,20 @@ jobs:
             exit 1
           fi
 
+      - name: go test (otel build tag)
+        run: go test -tags otel ./pkg/observability/... -v 2>&1 | tail -10
+
+      - name: go vet (otel build tag)
+        run: go vet -tags otel ./pkg/observability/...
+
       - name: smoke — diagnostic demo
         run: go run ./cmd/demo | tail -5
 
       - name: smoke — bench
         run: go run ./cmd/bench -timeout=5s | tail -10
+
+      - name: smoke — integration (full MARA pipeline)
+        run: go test -run TestIntegration ./pkg/orchestration/... -v -timeout=30s 2>&1 | tail -10
 
   vuln:
     name: govulncheck

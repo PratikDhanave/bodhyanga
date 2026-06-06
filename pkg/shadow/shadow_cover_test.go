@@ -46,12 +46,11 @@ func TestConcordanceLedger_AppendAfterClose(t *testing.T) {
 		t.Fatalf("Close: %v", err)
 	}
 
-	// Append after close: the file.Write should fail but Append should not panic.
-	l.file = l.file // file is closed, so Write will fail
-	// Reopen the struct's file pointer to a closed state to trigger the error path.
-	f, _ := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	f.Close()
-	l.file = f // closed file descriptor
+	// Append after close: reopen the struct's file pointer to a closed fd
+	// so file.Write will fail. This tests the error path in Append.
+	closedFile, _ := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	closedFile.Close()
+	l.file = closedFile // closed file descriptor — Write will error
 	l.Append(ConcordanceRecord{CaseID: "after-close"})
 
 	// The record should still be in memory.
