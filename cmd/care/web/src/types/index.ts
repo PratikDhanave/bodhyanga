@@ -149,6 +149,37 @@ export interface BenchResult {
   under_budget_pct: number;
 }
 
+export interface CostAnalytics {
+  today_usd: number;
+  month_usd: number;
+  cost_per_case_usd: number;
+  savings_vs_cloud_usd: number;
+  providers: Array<{
+    provider: string;
+    spend_usd: number;
+    calls: number;
+    tokens: number;
+  }>;
+  daily: Array<{
+    date: string;
+    spend_usd: number;
+  }>;
+  top_agents: Array<{
+    agent: string;
+    calls: number;
+    tokens: number;
+    cost_usd: number;
+  }>;
+  daily_budget_usd: number;
+}
+
+export interface FineTuneStatus {
+  decided_reviews: number;
+  pending_reviews: number;
+  sft_lines: number;
+  dpo_pairs: number;
+}
+
 export interface LLMTraceLog {
   started_at: string;
   duration_ms: number;

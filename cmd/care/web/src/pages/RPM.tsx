@@ -101,11 +101,23 @@ function HRSparkline({ readings }: { readings: number[] }) {
 }
 
 export default function RPM() {
+  const alertCount = STUB_PATIENTS.filter((p) => p.alert).length;
+
   return (
     <Page title="RPM observations" subtitle="Remote patient monitoring — last 7 HR readings per patient">
+      {/* Alert summary banner */}
+      {alertCount > 0 && (
+        <div className="mb-4 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 flex items-center gap-2">
+          <span className="text-amber-600 dark:text-amber-400 font-bold text-lg">!</span>
+          <span className="text-sm text-amber-800 dark:text-amber-300">
+            {alertCount} patient{alertCount > 1 ? 's' : ''} with active alerts requiring review
+          </span>
+        </div>
+      )}
+
       <div className="card overflow-hidden">
         <table className="min-w-full text-sm">
-          <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+          <thead className="bg-bodh-50 dark:bg-gray-800 text-bodh-400 dark:text-gray-500 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Patient</th>
               <th className="px-4 py-2 text-left">HR (bpm)</th>
@@ -117,25 +129,25 @@ export default function RPM() {
           </thead>
           <tbody>
             {STUB_PATIENTS.map((p) => (
-              <tr key={p.patient_id} className={`border-t border-bodh-100 ${p.alert ? 'bg-amber-50' : ''}`}>
+              <tr key={p.patient_id} className={`border-t border-bodh-100 dark:border-gray-700 ${p.alert ? 'bg-amber-50 dark:bg-amber-900/20' : ''}`}>
                 <td className="px-4 py-2">
-                  <div className="font-medium">{p.name}</div>
-                  <div className="text-xs text-bodh-400">{p.patient_id}</div>
+                  <div className="font-medium dark:text-gray-100">{p.name}</div>
+                  <div className="text-xs text-bodh-400 dark:text-gray-500">{p.patient_id}</div>
                 </td>
-                <td className="px-4 py-2 font-mono">{p.last_hr}</td>
+                <td className="px-4 py-2 font-mono dark:text-gray-300">{p.last_hr}</td>
                 <td className="px-4 py-2">
                   <HRSparkline readings={p.hr_history} />
                 </td>
-                <td className="px-4 py-2 text-right">{p.last_spo2}%</td>
-                <td className="px-4 py-2 text-right font-mono">{p.last_bp}</td>
+                <td className="px-4 py-2 text-right dark:text-gray-300">{p.last_spo2}%</td>
+                <td className="px-4 py-2 text-right font-mono dark:text-gray-300">{p.last_bp}</td>
                 <td className="px-4 py-2">
                   {p.alert ? (
-                    <span className="inline-flex items-center gap-1 text-amber-700 text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 text-xs font-medium">
                       <span>!</span>
                       {p.alert}
                     </span>
                   ) : (
-                    <span className="text-xs text-bodh-300">—</span>
+                    <span className="text-xs text-bodh-300 dark:text-gray-600">—</span>
                   )}
                 </td>
               </tr>
@@ -143,9 +155,9 @@ export default function RPM() {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-bodh-400">
-        Live feed via POST /rpm/observation is planned. This view shows stub data until
-        the persistent observation store is wired.
+      <p className="text-xs text-bodh-400 dark:text-gray-500">
+        Demo data shown. Wire <code className="font-mono bg-bodh-100 dark:bg-gray-700 px-1 rounded">POST /rpm/observation</code> to
+        display live readings from the persistent observation store.
       </p>
     </Page>
   );

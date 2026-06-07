@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ReviewDetail from '../ReviewDetail';
+import { ToastProvider } from '../../components/Toast';
 import { mockFetch } from '../../test/setup';
 
 function routeFor(input: RequestInfo | URL): string {
@@ -12,16 +13,19 @@ function routeFor(input: RequestInfo | URL): string {
 function renderAt(id: string) {
   return render(
     <MemoryRouter initialEntries={[`/reviews/${id}`]}>
-      <Routes>
-        <Route path="/reviews/:id" element={<ReviewDetail />} />
-        <Route path="/reviews" element={<div>Reviews list</div>} />
-      </Routes>
+      <ToastProvider>
+        <Routes>
+          <Route path="/reviews/:id" element={<ReviewDetail />} />
+          <Route path="/reviews" element={<div>Reviews list</div>} />
+        </Routes>
+      </ToastProvider>
     </MemoryRouter>,
   );
 }
 
 describe('ReviewDetail', () => {
-  it('submits POST /api/reviews/{id}/decide with approve when Approve clicked', async () => {
+  it('submits POST /api/reviews/{id}/decide with approve when Approve clicked and confirmed', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const fetchFn = mockFetch((input, init) => {
       const url = routeFor(input);
       const method = (init?.method || 'GET').toUpperCase();
@@ -46,7 +50,7 @@ describe('ReviewDetail', () => {
       return {};
     });
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderAt('r1');
 
     // Wait for the form to render.
@@ -54,7 +58,18 @@ describe('ReviewDetail', () => {
     await user.clear(reviewerInput);
     await user.type(reviewerInput, 'dr-foo');
 
+    // Click Approve — opens confirmation modal
     await user.click(screen.getByRole('button', { name: 'Approve' }));
+
+    // Confirmation modal should show
+    expect(screen.getByText('Confirm Clinical Decision')).toBeInTheDocument();
+
+    // Wait for the 2-second safety delay
+    await act(async () => { vi.advanceTimersByTime(2100); });
+
+    // Click confirm
+    const confirmBtn = screen.getByRole('button', { name: /Confirm Approve/ });
+    await user.click(confirmBtn);
 
     // Find the POST call.
     const postCall = fetchFn.mock.calls.find((c) => {
@@ -71,6 +86,7 @@ describe('ReviewDetail', () => {
         decision: 'approved',
       }),
     );
+    vi.useRealTimers();
   });
 
   it('disables modification button until textarea has content', async () => {

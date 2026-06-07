@@ -1,6 +1,8 @@
 import type {
   Agent,
   CaseFixture,
+  CostAnalytics,
+  FineTuneStatus,
   LLMTraceLog,
   Notification,
   PanelReport,
@@ -54,13 +56,13 @@ export const api = {
   panel: () => http<PanelReport>('/panel/report'),
   bench: () => http<BenchResult[]>('/bench/latest'),
   llmTraces: (limit = 100) => http<LLMTraceLog[]>(`/llm-traces?limit=${limit}`),
-  fineTuneStatus: () =>
-    http<{
-      sft_lines: number;
-      dpo_pairs: number;
-      decided_reviews: number;
-      pending_reviews: number;
-    }>('/fine-tune/status'),
+  fineTuneStatus: () => http<FineTuneStatus>('/fine-tune/status'),
+  costAnalytics: (tenant = 'default', from?: string, to?: string) => {
+    const params = new URLSearchParams({ tenant });
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    return http<CostAnalytics>(`/cost/analytics?${params.toString()}`);
+  },
 
   // Mutations
   decide: (id: string, body: { reviewer_id: string; decision: ReviewDecision; reason?: string; modification?: string }) =>
@@ -77,4 +79,4 @@ export const api = {
   },
 };
 
-export type { Agent, NurseTask, Review, ReviewDecision, PatientRecord, Notification, CaseFixture, RunRequest, RunSummary, BenchResult, LLMTraceLog, PanelReport };
+export type { Agent, NurseTask, Review, ReviewDecision, PatientRecord, Notification, CaseFixture, CostAnalytics, FineTuneStatus, RunRequest, RunSummary, BenchResult, LLMTraceLog, PanelReport };

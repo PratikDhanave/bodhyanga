@@ -21,7 +21,13 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
       if (!res.ok) {
-        setError('Invalid credentials');
+        if (res.status === 429) {
+          setError('Too many attempts — please wait a moment');
+        } else if (res.status >= 500) {
+          setError('Server error — please try again later');
+        } else {
+          setError('Invalid credentials');
+        }
         return;
       }
       const data = await res.json() as { token?: string };
@@ -39,28 +45,28 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bodh-50">
+    <div className="min-h-screen flex items-center justify-center bg-bodh-50 dark:bg-gray-900">
       <div className="w-full max-w-sm">
         {/* Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-bodh-800 text-white text-2xl font-bold mb-3">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-bodh-800 dark:bg-bodh-500 text-white text-2xl font-bold mb-3">
             B
           </div>
-          <h1 className="text-2xl font-semibold text-bodh-800">Bodh</h1>
-          <p className="text-sm text-bodh-400 mt-1">Clinical AI orchestration platform</p>
+          <h1 className="text-2xl font-semibold text-bodh-800 dark:text-gray-100">Bodh</h1>
+          <p className="text-sm text-bodh-400 dark:text-gray-500 mt-1">Clinical AI orchestration platform</p>
         </div>
 
         {/* Form card */}
         <div className="card">
           <div className="card-body space-y-4">
             <div>
-              <h2 className="text-lg font-medium text-bodh-800">Sign in</h2>
+              <h2 className="text-lg font-medium text-bodh-800 dark:text-gray-100">Sign in</h2>
             </div>
 
             <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-4">
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-bodh-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-bodh-700 dark:text-gray-300 mb-1">
                   Email
                 </label>
                 <input
@@ -70,14 +76,14 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-bodh-200 rounded-md text-sm text-bodh-800 placeholder-bodh-300 focus:outline-none focus:ring-2 focus:ring-bodh-400 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-bodh-200 dark:border-gray-600 rounded-md text-sm text-bodh-800 dark:text-gray-100 bg-white dark:bg-gray-800 placeholder-bodh-300 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-bodh-400 focus:border-transparent"
                   placeholder="clinician@hospital.org"
                 />
               </div>
 
               {/* Password */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-bodh-700 mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-bodh-700 dark:text-gray-300 mb-1">
                   Password
                 </label>
                 <div className="relative">
@@ -88,13 +94,13 @@ export default function Login() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 pr-10 border border-bodh-200 rounded-md text-sm text-bodh-800 placeholder-bodh-300 focus:outline-none focus:ring-2 focus:ring-bodh-400 focus:border-transparent"
+                    className="w-full px-3 py-2 pr-10 border border-bodh-200 dark:border-gray-600 rounded-md text-sm text-bodh-800 dark:text-gray-100 bg-white dark:bg-gray-800 placeholder-bodh-300 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-bodh-400 focus:border-transparent"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute inset-y-0 right-0 px-3 flex items-center text-bodh-400 hover:text-bodh-600"
+                    className="absolute inset-y-0 right-0 px-3 flex items-center text-bodh-400 dark:text-gray-500 hover:text-bodh-600 dark:hover:text-gray-300"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
@@ -113,7 +119,7 @@ export default function Login() {
 
               {/* Error message */}
               {error && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 px-3 py-2 text-sm text-red-700 dark:text-red-300" role="alert">
                   {error}
                 </div>
               )}
@@ -122,7 +128,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2 px-4 bg-bodh-800 text-white text-sm font-medium rounded-md hover:bg-bodh-700 focus:outline-none focus:ring-2 focus:ring-bodh-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full py-2 px-4 bg-bodh-800 dark:bg-bodh-500 text-white text-sm font-medium rounded-md hover:bg-bodh-700 dark:hover:bg-bodh-400 focus:outline-none focus:ring-2 focus:ring-bodh-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Signing in…' : 'Sign in'}
               </button>
@@ -131,7 +137,7 @@ export default function Login() {
         </div>
 
         {/* Disclaimer */}
-        <p className="text-center text-xs text-bodh-400 mt-6">
+        <p className="text-center text-xs text-bodh-400 dark:text-gray-600 mt-6">
           Research demo — not for clinical use. All data is synthetic.
         </p>
       </div>

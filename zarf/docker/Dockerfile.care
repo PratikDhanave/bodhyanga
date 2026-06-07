@@ -46,6 +46,12 @@ COPY --from=build_care --chown=65532:65532 /out/care /care
 COPY --from=build_care --chown=65532:65532 /service/data /data
 
 EXPOSE 8088
+
+# No HEALTHCHECK directive — distroless images lack a shell and common
+# networking tools. Health checks are configured at the orchestrator level:
+#   Docker Compose: wget -qO- (defined in docker_compose.yaml)
+#   Kubernetes:     httpGet /healthz (defined in deployment.yaml)
+
 USER 65532:65532
 ENTRYPOINT ["/care"]
 CMD ["-addr=:8088"]

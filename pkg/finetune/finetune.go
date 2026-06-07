@@ -19,6 +19,10 @@ import (
 	"time"
 )
 
+// openAIBaseURL is the base URL for OpenAI API calls. It is a package-level
+// variable so that internal tests can point it at an httptest server.
+var openAIBaseURL = "https://api.openai.com"
+
 // DatasetStats summarises a validated JSONL dataset.
 type DatasetStats struct {
 	Total            int
@@ -302,7 +306,7 @@ func UploadToOpenAI(apiKey, trainPath string) (string, error) {
 	}
 	mw.Close()
 
-	req, err := http.NewRequest(http.MethodPost, "https://api.openai.com/v1/files", &body)
+	req, err := http.NewRequest(http.MethodPost, openAIBaseURL+"/v1/files", &body)
 	if err != nil {
 		return "", fmt.Errorf("finetune: build request: %w", err)
 	}
@@ -345,7 +349,7 @@ func CreateOpenAIJob(apiKey, fileID, model string) (FineTuneJob, error) {
 		return FineTuneJob{}, fmt.Errorf("finetune: marshal job payload: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, "https://api.openai.com/v1/fine_tuning/jobs", bytes.NewReader(b))
+	req, err := http.NewRequest(http.MethodPost, openAIBaseURL+"/v1/fine_tuning/jobs", bytes.NewReader(b))
 	if err != nil {
 		return FineTuneJob{}, fmt.Errorf("finetune: build request: %w", err)
 	}
@@ -370,7 +374,7 @@ func CreateOpenAIJob(apiKey, fileID, model string) (FineTuneJob, error) {
 // PollOpenAIJob fetches the current status of a fine-tuning job from the
 // OpenAI API and returns the updated FineTuneJob.
 func PollOpenAIJob(apiKey, jobID string) (FineTuneJob, error) {
-	url := "https://api.openai.com/v1/fine_tuning/jobs/" + jobID
+	url := openAIBaseURL + "/v1/fine_tuning/jobs/" + jobID
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return FineTuneJob{}, fmt.Errorf("finetune: build request: %w", err)

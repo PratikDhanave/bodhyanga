@@ -184,6 +184,13 @@ export default function Cost() {
       {loading && <Loader what="cost data" />}
       {error && <ErrorBox error={error} retry={reload} />}
 
+      {!raw && (
+        <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 px-4 py-2 text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+          <span className="font-medium">Demo data</span>
+          <span className="text-blue-500 dark:text-blue-400">— wire <code className="font-mono text-xs bg-blue-100 dark:bg-blue-800 px-1 rounded">POST /api/cost/analytics</code> for real cost tracking</span>
+        </div>
+      )}
+
       <BudgetAlert today={data.today_usd} budget={data.daily_budget_usd} />
 
       {/* Summary cards */}

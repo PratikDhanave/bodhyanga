@@ -34,12 +34,12 @@ jobs:
       - name: coverage summary
         run: go tool cover -func=coverage.out | tail -20
 
-      - name: coverage gate (fail below 80%)
+      - name: coverage gate (fail below 90%)
         run: |
           TOTAL=$(go tool cover -func=coverage.out | grep "^total:" | awk '{print $3}' | tr -d '%')
           echo "Total coverage: ${TOTAL}%"
-          if [ "$(echo "$TOTAL < 80" | bc -l)" = "1" ]; then
-            echo "::error::Coverage ${TOTAL}% is below 80% threshold"
+          if [ "$(echo "$TOTAL < 90" | bc -l)" = "1" ]; then
+            echo "::error::Coverage ${TOTAL}% is below 90% threshold"
             exit 1
           fi
 
@@ -57,6 +57,127 @@ jobs:
 
       - name: smoke — integration (full MARA pipeline)
         run: go test -run TestIntegration ./pkg/orchestration/... -v -timeout=30s 2>&1 | tail -10
+
+      - name: validate k8s manifests
+        run: |
+          # Ensure kustomize overlays render without errors
+          go run sigs.k8s.io/kustomize/kustomize/v5@latest build zarf/k8s/dev
+          go run sigs.k8s.io/kustomize/kustomize/v5@latest build zarf/k8s/prod
+
+  frontend:
+    name: frontend · typecheck · test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: cmd/care/web/package-lock.json
+
+      - name: npm ci
+        working-directory: cmd/care/web
+        run: npm ci
+
+      - name: typecheck
+        working-directory: cmd/care/web
+        run: npx tsc --noEmit
+
+      - name: vitest with coverage
+        working-directory: cmd/care/web
+        run: npx vitest run --coverage
+
+      - name: coverage summary
+        working-directory: cmd/care/web
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "## Frontend Coverage Summary"
+            node -e "
+              const s = require('./coverage/coverage-summary.json').total;
+              console.log('Lines:      ' + s.lines.pct + '%');
+              console.log('Branches:   ' + s.branches.pct + '%');
+              console.log('Functions:  ' + s.functions.pct + '%');
+              console.log('Statements: ' + s.statements.pct + '%');
+            "
+          else
+            echo "No coverage-summary.json found; skipping summary."
+          fi
+
+      - name: coverage gate (fail below 80%)
+        working-directory: cmd/care/web
+        run: |
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "::warning::No coverage-summary.json found; skipping gate."
+            exit 0
+          fi
+          LINES=$(node -e "console.log(require('./coverage/coverage-summary.json').total.lines.pct)")
+          echo "Line coverage: ${LINES}%"
+          FAIL=$(node -e "console.log($LINES < 80 ? 'yes' : 'no')")
+          if [ "$FAIL" = "yes" ]; then
+            echo "::error::Frontend line coverage ${LINES}% is below 80% threshold"
+            exit 1
+          fi
+
+  e2e:
+    name: e2e · playwright
+    runs-on: ubuntu-latest
+    needs: [build-test, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: cmd/care/web/package-lock.json
+
+      - name: npm ci
+        working-directory: cmd/care/web
+        run: npm ci
+
+      - name: install playwright browsers
+        working-directory: cmd/care/web
+        run: npx playwright install --with-deps chromium
+
+      - name: run playwright tests
+        working-directory: cmd/care/web
+        run: npx playwright test
+
+      - name: upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: cmd/care/web/test-results/
+          retention-days: 7
+
+  security:
+    name: security · gosec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+
+      - name: install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: gosec scan
+        run: gosec -quiet ./...
+        continue-on-error: true
 
   vuln:
     name: govulncheck

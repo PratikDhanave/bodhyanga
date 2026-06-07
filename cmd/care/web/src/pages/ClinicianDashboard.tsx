@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
+import { Modal } from '../components/Modal';
+import { useToast } from '../components/Toast';
 import { useApi } from '../hooks/useApi';
 import { api } from '../api/client';
 import type { ReviewDecision, Review, BenchResult } from '../types';
@@ -159,14 +161,18 @@ function HitlQueue({
   onDecide: () => void;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{ id: string; decision: ReviewDecision; subject: string } | null>(null);
+  const { showToast } = useToast();
 
-  async function decide(id: string, decision: ReviewDecision) {
+  async function executeDecision(id: string, decision: ReviewDecision) {
     setBusy(id);
+    setConfirm(null);
     try {
       await api.decide(id, { reviewer_id: 'clinician-demo', decision });
+      showToast(`Review ${decision.replace(/_/g, ' ')} successfully`, 'success');
       onDecide();
     } catch (e) {
-      alert(String(e));
+      showToast(e instanceof Error ? e.message : String(e), 'error');
     } finally {
       setBusy(null);
     }
@@ -178,29 +184,29 @@ function HitlQueue({
     <div className="card">
       <div className="card-header flex items-center justify-between">
         <span>HITL Queue</span>
-        <Link to="/reviews" className="text-xs text-bodh-400 hover:text-bodh-700">
+        <Link to="/reviews" className="text-xs text-bodh-400 hover:text-bodh-700 dark:text-gray-400 dark:hover:text-gray-200">
           View all
         </Link>
       </div>
       <div className="card-body space-y-3">
         {pending.length === 0 && (
-          <p className="text-sm text-bodh-400">No pending reviews.</p>
+          <p className="text-sm text-bodh-400 dark:text-gray-400">No pending reviews.</p>
         )}
         {pending.map((r) => (
-          <div key={r.id} className="border border-bodh-100 rounded-md p-3 space-y-2">
+          <div key={r.id} className="border border-bodh-100 dark:border-gray-600 rounded-md p-3 space-y-2">
             <div className="text-sm font-medium leading-snug">{r.subject}</div>
-            <div className="text-xs text-bodh-400">{r.kind}</div>
+            <div className="text-xs text-bodh-400 dark:text-gray-400">{r.kind}</div>
             <div className="flex gap-2">
               <button
                 disabled={busy === r.id}
-                onClick={() => decide(r.id, 'approved')}
+                onClick={() => setConfirm({ id: r.id, decision: 'approved', subject: r.subject })}
                 className="btn text-xs px-2 py-1"
               >
                 Accept
               </button>
               <button
                 disabled={busy === r.id}
-                onClick={() => decide(r.id, 'rejected')}
+                onClick={() => setConfirm({ id: r.id, decision: 'rejected', subject: r.subject })}
                 className="btn-secondary text-xs px-2 py-1"
               >
                 Reject
@@ -212,6 +218,35 @@ function HitlQueue({
           </div>
         ))}
       </div>
+
+      {/* Clinical decision confirmation modal */}
+      <Modal
+        open={confirm !== null}
+        onClose={() => setConfirm(null)}
+        title="Confirm Decision"
+        danger={confirm?.decision === 'rejected'}
+      >
+        {confirm && (
+          <div className="space-y-4">
+            <p className="text-sm">
+              {confirm.decision === 'approved'
+                ? 'Accept this review and approve the AI recommendation?'
+                : 'Reject this review? The case will require manual assessment.'}
+            </p>
+            <div className="bg-bodh-50 dark:bg-gray-700 rounded p-3 text-sm font-medium">{confirm.subject}</div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setConfirm(null)} className="btn-secondary">Cancel</button>
+              <button
+                onClick={() => executeDecision(confirm.id, confirm.decision)}
+                className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white
+                            ${confirm.decision === 'rejected' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+              >
+                Confirm {confirm.decision === 'approved' ? 'Accept' : 'Reject'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

@@ -5,13 +5,32 @@
 // - a global fetch mock helper installed automatically; tests override it
 // - a minimal EventSource stub so SSE-driven components can be tested
 //   without a real network endpoint
+// - a localStorage stub for environments where jsdom doesn't provide one
 import '@testing-library/jest-dom/vitest';
 import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
+// Ensure localStorage is available (some jsdom versions don't provide it).
+if (typeof globalThis.localStorage === 'undefined') {
+  const store = new Map<string, string>();
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => store.set(key, String(value)),
+      removeItem: (key: string) => store.delete(key),
+      clear: () => store.clear(),
+      get length() { return store.size; },
+      key: (index: number) => [...store.keys()][index] ?? null,
+    },
+    writable: true,
+  });
+}
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  // Clear localStorage between tests to prevent state leaks.
+  try { localStorage.clear(); } catch { /* ignore */ }
 });
 
 // Minimal EventSource stub. Tests can call `eventSourceFire(url, data)` to

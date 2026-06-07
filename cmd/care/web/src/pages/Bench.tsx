@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
@@ -35,8 +35,26 @@ function colorFor(provider: string): string {
   return PROVIDER_COLORS[provider] ?? '#64748b';
 }
 
-// ---- Pareto scatter plot (pure SVG) ----
-function ParetoChart({ data }: { data: BenchResult[] }) {
+// ---- Color legend ----
+function ColorLegend({ data }: { data: BenchResult[] }) {
+  const providers = [...new Set(data.map((d) => d.provider))];
+  return (
+    <div className="flex flex-wrap gap-3 mt-2 text-xs">
+      {providers.map((p) => (
+        <div key={p} className="flex items-center gap-1.5">
+          <span
+            className="inline-block w-3 h-3 rounded-full border border-white dark:border-gray-700"
+            style={{ backgroundColor: colorFor(p) }}
+          />
+          <span className="font-mono text-bodh-500 dark:text-gray-400">{p}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---- Pareto scatter plot (pure SVG) with hover tooltip ----
+function ParetoChart({ data, hovered, onHover }: { data: BenchResult[]; hovered: string | null; onHover: (p: string | null) => void }) {
   const W = 480;
   const H = 280;
   const PAD = { top: 20, right: 20, bottom: 40, left: 48 };
@@ -97,27 +115,45 @@ function ParetoChart({ data }: { data: BenchResult[] }) {
           const y = toY(d.mean_accuracy_pct);
           const color = colorFor(d.provider);
           const onFrontier = frontier.includes(d);
+          const isHovered = hovered === d.provider;
+          const dimmed = hovered !== null && !isHovered;
           return (
-            <g key={d.provider}>
+            <g
+              key={d.provider}
+              onMouseEnter={() => onHover(d.provider)}
+              onMouseLeave={() => onHover(null)}
+              className="cursor-pointer"
+            >
               <circle
                 cx={x}
                 cy={y}
-                r={onFrontier ? 7 : 5}
+                r={isHovered ? 9 : onFrontier ? 7 : 5}
                 fill={color}
-                stroke="white"
-                strokeWidth="1.5"
-                opacity={onFrontier ? 1 : 0.6}
+                stroke={isHovered ? '#1e293b' : 'white'}
+                strokeWidth={isHovered ? 2 : 1.5}
+                opacity={dimmed ? 0.25 : onFrontier ? 1 : 0.6}
               />
               <text
                 x={x}
-                y={y - 10}
+                y={y - 12}
                 fontSize="9"
                 textAnchor="middle"
                 fill="#475569"
                 fontFamily="monospace"
+                opacity={dimmed ? 0.25 : 1}
               >
                 {d.provider}
               </text>
+              {/* Tooltip on hover */}
+              {isHovered && (
+                <foreignObject x={x + 12} y={y - 40} width="140" height="50">
+                  <div className="bg-gray-900 text-white text-[10px] rounded px-2 py-1 shadow-lg leading-tight">
+                    <div className="font-semibold">{d.provider}</div>
+                    <div>Accuracy: {d.mean_accuracy_pct.toFixed(1)}%</div>
+                    <div>Cost: ${d.mean_cost_usd.toFixed(3)}</div>
+                  </div>
+                </foreignObject>
+              )}
             </g>
           );
         })}
@@ -160,6 +196,8 @@ function ParetoChart({ data }: { data: BenchResult[] }) {
 
 export default function Bench() {
   const { data, loading, error, reload } = useApi(() => api.bench(), []);
+  const [hovered, setHovered] = useState<string | null>(null);
+
   if (loading) return <Page title="Bench results"><Loader what="bench" /></Page>;
   if (error) return <Page title="Bench results"><ErrorBox error={error} retry={reload} /></Page>;
   if (!data || data.length === 0) {
@@ -177,11 +215,12 @@ export default function Bench() {
     <Page title="Bench results" subtitle="Provider comparison from cmd/bench">
       {/* Pareto chart */}
       <div className="card">
-        <div className="card-header">Cost vs accuracy — Pareto frontier</div>
+        <div className="card-header dark:border-gray-700 dark:text-gray-100">Cost vs accuracy — Pareto frontier</div>
         <div className="card-body">
-          <ParetoChart data={data} />
-          <p className="text-xs text-bodh-400 mt-2">
-            Dashed line connects non-dominated providers. Filled circles are on the frontier.
+          <ParetoChart data={data} hovered={hovered} onHover={setHovered} />
+          <ColorLegend data={data} />
+          <p className="text-xs text-bodh-400 dark:text-gray-500 mt-2">
+            Dashed line connects non-dominated providers. Filled circles are on the frontier. Hover to inspect.
           </p>
         </div>
       </div>
@@ -189,7 +228,7 @@ export default function Bench() {
       {/* Summary table */}
       <div className="card overflow-hidden">
         <table className="min-w-full text-sm">
-          <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+          <thead className="bg-bodh-50 dark:bg-gray-800 text-bodh-400 dark:text-gray-500 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Provider</th>
               <th className="px-4 py-2 text-right">Cases</th>
@@ -200,12 +239,29 @@ export default function Bench() {
           </thead>
           <tbody>
             {data.map((r) => (
-              <tr key={r.provider} className="border-t border-bodh-100">
-                <td className="px-4 py-2 font-mono">{r.provider}</td>
-                <td className="px-4 py-2 text-right">{r.cases}</td>
-                <td className="px-4 py-2 text-right">{r.mean_accuracy_pct.toFixed(0)}%</td>
-                <td className="px-4 py-2 text-right">${r.mean_cost_usd.toFixed(2)}</td>
-                <td className="px-4 py-2 text-right">{r.under_budget_pct.toFixed(0)}%</td>
+              <tr
+                key={r.provider}
+                className={`border-t border-bodh-100 dark:border-gray-700 cursor-pointer transition-colors ${
+                  hovered === r.provider
+                    ? 'bg-bodh-50 dark:bg-gray-800'
+                    : hovered !== null
+                      ? 'opacity-40'
+                      : ''
+                }`}
+                onMouseEnter={() => setHovered(r.provider)}
+                onMouseLeave={() => setHovered(null)}
+              >
+                <td className="px-4 py-2 font-mono dark:text-gray-100">
+                  <span
+                    className="inline-block w-2.5 h-2.5 rounded-full mr-2"
+                    style={{ backgroundColor: colorFor(r.provider) }}
+                  />
+                  {r.provider}
+                </td>
+                <td className="px-4 py-2 text-right dark:text-gray-300">{r.cases}</td>
+                <td className="px-4 py-2 text-right dark:text-gray-300">{r.mean_accuracy_pct.toFixed(0)}%</td>
+                <td className="px-4 py-2 text-right dark:text-gray-300">${r.mean_cost_usd.toFixed(2)}</td>
+                <td className="px-4 py-2 text-right dark:text-gray-300">{r.under_budget_pct.toFixed(0)}%</td>
               </tr>
             ))}
           </tbody>

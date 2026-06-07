@@ -1,0 +1,61 @@
+groups:
+  - name: bodh-care
+    rules:
+      # Alert if 5xx error rate exceeds 1% over 5 minutes
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(bodh_http_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(bodh_http_requests_total[5m]))
+          ) * 100 > 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "5xx error rate is {{ $value | printf \"%.1f\" }}% (threshold: 1%)"
+
+      # Alert if LLM P95 latency exceeds 30 seconds
+      - alert: LLMHighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(bodh_llm_request_duration_seconds_bucket[5m])) by (le, provider))
+          > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LLM P95 latency exceeds 30s"
+          description: "Provider {{ $labels.provider }} P95 latency is {{ $value | printf \"%.1f\" }}s"
+
+      # Alert if no successful health checks for 2 minutes
+      - alert: ServiceDown
+        expr: up{job="bodh-care"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Bodh care service is down"
+          description: "The bodh-care service has been unreachable for 2 minutes"
+
+      # Alert if memory usage exceeds 80% of limit
+      - alert: HighMemoryUsage
+        expr: |
+          process_resident_memory_bytes{job="bodh-care"}
+          / 268435456 * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | printf \"%.0f\" }}% of 256Mi limit"
+
+      # Alert if goroutine count is abnormally high (leak detection)
+      - alert: GoroutineLeak
+        expr: go_goroutines{job="bodh-care"} > 1000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Possible goroutine leak"
+          description: "Goroutine count is {{ $value }} (threshold: 1000)"

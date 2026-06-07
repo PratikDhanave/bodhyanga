@@ -121,7 +121,21 @@ export default function AuditLog() {
   }
 
   return (
-    <Page title="Audit Log" subtitle="HIPAA append-only event viewer">
+    <Page
+      title="Audit Log"
+      subtitle="HIPAA append-only event viewer"
+      actions={
+        events.length > 0 ? (
+          <button
+            onClick={() => exportCSV(events)}
+            className="btn-secondary text-xs"
+            title="Export visible events as CSV"
+          >
+            Export CSV
+          </button>
+        ) : undefined
+      }
+    >
       {/* Filters */}
       <div className="card">
         <div className="card-header">Filters</div>
@@ -134,7 +148,7 @@ export default function AuditLog() {
                 value={filterCaseId}
                 onChange={(e) => setFilterCaseId(e.target.value)}
                 placeholder="e.g. a3f1b9c2"
-                className="mt-1 w-full border border-bodh-200 rounded px-2 py-1 text-sm"
+                className="mt-1 w-full border border-bodh-200 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-bodh-800 dark:text-gray-100"
               />
             </label>
             <label className="block">
@@ -144,7 +158,7 @@ export default function AuditLog() {
                 value={filterKind}
                 onChange={(e) => setFilterKind(e.target.value)}
                 placeholder="e.g. diagnosis, review_request"
-                className="mt-1 w-full border border-bodh-200 rounded px-2 py-1 text-sm"
+                className="mt-1 w-full border border-bodh-200 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-bodh-800 dark:text-gray-100"
               />
             </label>
             <label className="block">
@@ -154,7 +168,7 @@ export default function AuditLog() {
                 value={filterAgent}
                 onChange={(e) => setFilterAgent(e.target.value)}
                 placeholder="e.g. diagnostician"
-                className="mt-1 w-full border border-bodh-200 rounded px-2 py-1 text-sm"
+                className="mt-1 w-full border border-bodh-200 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-bodh-800 dark:text-gray-100"
               />
             </label>
           </div>
@@ -248,6 +262,30 @@ export default function AuditLog() {
       )}
     </Page>
   );
+}
+
+/** Export visible audit events as a CSV download. */
+function exportCSV(events: AuditEvent[]) {
+  const headers = ['id', 'timestamp', 'agent', 'kind', 'case_id', 'decision', 'reason'];
+  const escape = (v?: string) => {
+    if (!v) return '';
+    // Escape double quotes and wrap in quotes if contains comma/newline/quote
+    const s = v.replace(/"/g, '""');
+    return /[,\n"]/.test(s) ? `"${s}"` : s;
+  };
+  const rows = events.map((e) =>
+    [e.id, e.ts, e.agent, e.kind, e.case_id ?? '', e.decision ?? '', e.reason ?? '']
+      .map(escape)
+      .join(','),
+  );
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `bodh-audit-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function decisionBadge(decision: string): string {

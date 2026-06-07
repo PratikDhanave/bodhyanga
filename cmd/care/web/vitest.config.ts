@@ -15,7 +15,7 @@ export default defineConfig({
     // testMatch (`**/*.{test,spec}.*`) doesn't try to load these files
     // during e2e discovery and crash on the .tsx extension.
     include: ['src/**/*.{unit,test}.{ts,tsx}', 'src/**/__tests__/**/*.{ts,tsx}'],
-    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+    exclude: ['e2e/**', 'node_modules/**', 'dist/**', '**/.claude/**'],
     css: false,
     restoreMocks: true,
   },

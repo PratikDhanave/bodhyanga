@@ -1,25 +1,47 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
+import { ConnectionStatus } from './ConnectionStatus';
 import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS } from '../i18n';
 import type { Locale } from '../i18n';
 
-const nav = [
-  { to: '/', label: 'Dashboard' },
-  { to: '/dashboard', label: 'Clinician Dashboard' },
-  { to: '/portal', label: 'Patient Portal' },
-  { to: '/audit', label: 'Audit Log' },
-  { to: '/runs', label: 'Case runner' },
-  { to: '/reviews', label: 'HITL reviews' },
-  { to: '/tasks', label: 'Nurse tasks' },
-  { to: '/patients', label: 'Patients' },
-  { to: '/panel', label: 'Panel report' },
-  { to: '/agents', label: 'Agents' },
-  { to: '/rpm', label: 'RPM' },
-  { to: '/bench', label: 'Bench results' },
-  { to: '/llm-traces', label: 'LLM traces' },
-  { to: '/fine-tune', label: 'Fine-tune export' },
-  { to: '/about', label: 'About' },
+// Sidebar navigation grouped into 4 categories for discoverability.
+const navGroups = [
+  {
+    label: 'Clinical',
+    items: [
+      { to: '/', label: 'Dashboard' },
+      { to: '/dashboard', label: 'Clinician Dashboard' },
+      { to: '/portal', label: 'Patient Portal' },
+      { to: '/patients', label: 'Patients' },
+      { to: '/runs', label: 'Case runner' },
+      { to: '/rpm', label: 'RPM' },
+    ],
+  },
+  {
+    label: 'Population',
+    items: [
+      { to: '/panel', label: 'Panel report' },
+      { to: '/tasks', label: 'Nurse tasks' },
+      { to: '/reviews', label: 'HITL reviews' },
+    ],
+  },
+  {
+    label: 'Platform',
+    items: [
+      { to: '/agents', label: 'Agents' },
+      { to: '/llm-traces', label: 'LLM traces' },
+      { to: '/bench', label: 'Bench results' },
+      { to: '/fine-tune', label: 'Fine-tune export' },
+    ],
+  },
+  {
+    label: 'Compliance',
+    items: [
+      { to: '/audit', label: 'Audit Log' },
+      { to: '/about', label: 'About' },
+    ],
+  },
 ];
 
 function useDarkMode() {
@@ -59,6 +81,13 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex bg-white dark:bg-gray-900 text-bodh-800 dark:text-gray-100">
+      {/* Skip to content link — hidden until focused for keyboard navigation (WCAG 2.4.1) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] focus:px-4 focus:py-2 focus:bg-bodh-800 focus:text-white focus:rounded-md focus:text-sm focus:font-medium"
+      >
+        Skip to main content
+      </a>
       <aside className="w-56 bg-white dark:bg-gray-800 border-r border-bodh-200 dark:border-gray-700 flex flex-col">
         {/* Sidebar header */}
         <div className="px-4 py-4 border-b border-bodh-200 dark:border-gray-700 flex items-center justify-between">
@@ -126,19 +155,28 @@ export default function Layout() {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {nav.map((n) => (
-            <NavLink
-              key={n.to}
-              to={n.to}
-              end={n.to === '/'}
-              className={({ isActive }) =>
-                isActive ? 'nav-link nav-link-active' : 'nav-link'
-              }
-            >
-              {n.label}
-            </NavLink>
+        {/* Navigation — grouped by category */}
+        <nav className="flex-1 p-2 space-y-3 overflow-y-auto">
+          {navGroups.map((group) => (
+            <div key={group.label}>
+              <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-bodh-300 dark:text-gray-600 select-none">
+                {group.label}
+              </div>
+              <div className="space-y-0.5">
+                {group.items.map((n) => (
+                  <NavLink
+                    key={n.to}
+                    to={n.to}
+                    end={n.to === '/'}
+                    className={({ isActive }) =>
+                      isActive ? 'nav-link nav-link-active' : 'nav-link'
+                    }
+                  >
+                    {n.label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
 
@@ -149,12 +187,13 @@ export default function Layout() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top header bar */}
-        <header className="h-10 flex items-center justify-end px-4 border-b border-bodh-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
+        <header className="h-10 flex items-center justify-between px-4 border-b border-bodh-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
+          <ConnectionStatus />
           <NotificationBell />
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
+        <main id="main-content" className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>

@@ -27,6 +27,7 @@ resources:
   - service.yaml
   - networkpolicy.yaml
   - pdb.yaml
+  - hpa.yaml
 
 # Image placeholder. Overlays pin the actual registry + tag — never use :latest.
 images:
