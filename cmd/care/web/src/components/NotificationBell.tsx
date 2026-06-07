@@ -51,6 +51,12 @@ export default function NotificationBell() {
     if (!open) setUnreadCount(0);
   }
 
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  }
+
   return (
     <div className="relative" ref={panelRef}>
       <button
@@ -96,6 +102,7 @@ export default function NotificationBell() {
         <div
           className="absolute right-0 top-8 z-40 w-72 rounded-lg shadow-lg border
                      bg-white border-bodh-200 dark:bg-gray-800 dark:border-gray-700"
+          onKeyDown={handleKeyDown}
         >
           <div className="flex items-center justify-between px-3 py-2 border-b border-bodh-200 dark:border-gray-700">
             <span className="text-sm font-medium text-bodh-700 dark:text-gray-100">

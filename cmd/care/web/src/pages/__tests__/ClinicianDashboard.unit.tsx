@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import ClinicianDashboard from '../ClinicianDashboard';
 import { mockFetch } from '../../test/setup';
 import { ToastProvider } from '../../components/Toast';
+import I18nProvider from '../../i18n/I18nProvider';
 
 function routeFor(input: RequestInfo | URL): string {
   return typeof input === 'string' ? input : input.toString();
@@ -31,11 +32,13 @@ const BENCH = [
 
 function renderDashboard() {
   return render(
-    <MemoryRouter>
-      <ToastProvider>
-        <ClinicianDashboard />
-      </ToastProvider>
-    </MemoryRouter>,
+    <I18nProvider>
+      <MemoryRouter>
+        <ToastProvider>
+          <ClinicianDashboard />
+        </ToastProvider>
+      </MemoryRouter>
+    </I18nProvider>,
   );
 }
 

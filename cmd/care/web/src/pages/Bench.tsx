@@ -83,7 +83,7 @@ function ParetoChart({ data, hovered, onHover }: { data: BenchResult[]; hovered:
 
   return (
     <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: W, minWidth: 300 }}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: W, minWidth: 300 }} role="img" aria-label="Pareto frontier scatter plot of accuracy vs cost">
         {/* grid lines */}
         {yTicks.map((t) => (
           <line
@@ -227,7 +227,7 @@ export default function Bench() {
 
       {/* Summary table */}
       <div className="card overflow-hidden">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full text-sm" aria-label="Benchmark results">
           <thead className="bg-bodh-50 dark:bg-gray-800 text-bodh-400 dark:text-gray-500 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Provider</th>

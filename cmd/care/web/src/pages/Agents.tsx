@@ -16,7 +16,7 @@ export default function Agents() {
   return (
     <Page title="Agents" subtitle={`${data.length} registered`}>
       <div className="card">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full text-sm" aria-label="Registered agents">
           <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">ID</th>

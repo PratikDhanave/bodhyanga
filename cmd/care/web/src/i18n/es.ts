@@ -48,6 +48,59 @@ const es: Record<string, string> = {
   "common.loading": "Cargando...",
   "common.error": "Ocurrió un error",
   "common.retry": "Reintentar",
+
+  // Login
+  "login.title": "Iniciar sesión",
+  "login.email": "Correo electrónico",
+  "login.password": "Contraseña",
+  "login.submit": "Iniciar sesión",
+  "login.submitting": "Iniciando sesión…",
+  "login.error": "Credenciales inválidas",
+  "login.error.rate_limit": "Demasiados intentos — por favor espere un momento",
+  "login.error.server": "Error del servidor — inténtelo de nuevo más tarde",
+  "login.error.network": "Error de red — inténtelo de nuevo",
+  "login.disclaimer": "Demostración de investigación — no para uso clínico. Todos los datos son sintéticos.",
+  "login.subtitle": "Plataforma de orquestación de IA clínica",
+
+  // Dashboard
+  "dashboard.title": "Panel del Médico",
+  "dashboard.subtitle": "Resumen operativo del día",
+  "dashboard.recentCases": "Casos Recientes",
+  "dashboard.noCases": "No se encontraron casos.",
+  "dashboard.totalCases": "Total de Casos Hoy",
+  "dashboard.pendingReviews": "Revisiones HITL Pendientes",
+  "dashboard.activeAlerts": "Alertas Activas",
+  "dashboard.panelGaps": "Brechas del Panel",
+  "dashboard.hitlQueue": "Cola HITL",
+  "dashboard.viewAll": "Ver todo",
+  "dashboard.noPending": "No hay revisiones pendientes.",
+  "dashboard.accuracy": "Precisión por Proveedor",
+  "dashboard.accept": "Aceptar",
+  "dashboard.reject": "Rechazar",
+  "dashboard.detail": "Detalle",
+  "dashboard.confirmTitle": "Confirmar Decisión",
+  "dashboard.confirmAccept": "¿Aceptar esta revisión y aprobar la recomendación de IA?",
+  "dashboard.confirmReject": "¿Rechazar esta revisión? El caso requerirá evaluación manual.",
+  "dashboard.cancel": "Cancelar",
+  "dashboard.confirmBtn": "Confirmar",
+
+  // Reviews
+  "reviews.title": "Revisiones",
+  "reviews.subtitle": "Cola de revisión con intervención humana",
+  "reviews.pending": "Pendientes",
+  "reviews.all": "Todas",
+  "reviews.noReviews": "No se encontraron revisiones.",
+  "reviews.approve": "Aprobar",
+  "reviews.reject": "Rechazar",
+
+  // Tasks
+  "tasks.title": "Tareas",
+  "tasks.subtitle": "Gestión de tareas clínicas",
+  "tasks.all": "Todas",
+  "tasks.open": "Abiertas",
+  "tasks.urgent": "Urgentes",
+  "tasks.overdue": "Vencidas",
+  "tasks.noTasks": "No se encontraron tareas.",
 };
 
 export default es;

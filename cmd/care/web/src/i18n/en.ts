@@ -48,6 +48,59 @@ const en: Record<string, string> = {
   "common.loading": "Loading...",
   "common.error": "An error occurred",
   "common.retry": "Retry",
+
+  // Login
+  "login.title": "Sign in",
+  "login.email": "Email",
+  "login.password": "Password",
+  "login.submit": "Sign in",
+  "login.submitting": "Signing in…",
+  "login.error": "Invalid credentials",
+  "login.error.rate_limit": "Too many attempts — please wait a moment",
+  "login.error.server": "Server error — please try again later",
+  "login.error.network": "Network error — please try again",
+  "login.disclaimer": "Research demo — not for clinical use. All data is synthetic.",
+  "login.subtitle": "Clinical AI orchestration platform",
+
+  // Dashboard
+  "dashboard.title": "Clinician Dashboard",
+  "dashboard.subtitle": "Today’s operational overview",
+  "dashboard.recentCases": "Recent Cases",
+  "dashboard.noCases": "No cases found.",
+  "dashboard.totalCases": "Total Cases Today",
+  "dashboard.pendingReviews": "Pending HITL Reviews",
+  "dashboard.activeAlerts": "Active Alerts",
+  "dashboard.panelGaps": "Panel Gaps",
+  "dashboard.hitlQueue": "HITL Queue",
+  "dashboard.viewAll": "View all",
+  "dashboard.noPending": "No pending reviews.",
+  "dashboard.accuracy": "Accuracy by Provider",
+  "dashboard.accept": "Accept",
+  "dashboard.reject": "Reject",
+  "dashboard.detail": "Detail",
+  "dashboard.confirmTitle": "Confirm Decision",
+  "dashboard.confirmAccept": "Accept this review and approve the AI recommendation?",
+  "dashboard.confirmReject": "Reject this review? The case will require manual assessment.",
+  "dashboard.cancel": "Cancel",
+  "dashboard.confirmBtn": "Confirm",
+
+  // Reviews
+  "reviews.title": "Reviews",
+  "reviews.subtitle": "Human-in-the-loop review queue",
+  "reviews.pending": "Pending",
+  "reviews.all": "All",
+  "reviews.noReviews": "No reviews found.",
+  "reviews.approve": "Approve",
+  "reviews.reject": "Reject",
+
+  // Tasks
+  "tasks.title": "Tasks",
+  "tasks.subtitle": "Clinical task management",
+  "tasks.all": "All",
+  "tasks.open": "Open",
+  "tasks.urgent": "Urgent",
+  "tasks.overdue": "Overdue",
+  "tasks.noTasks": "No tasks found.",
 };
 
 export default en;

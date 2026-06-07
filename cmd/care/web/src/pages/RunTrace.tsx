@@ -139,7 +139,7 @@ export default function RunTrace() {
           <span className="dark:text-gray-100">Agent message stream</span>
           <span className={`badge ${closed ? 'badge-done' : 'badge-pending'}`}>{closed ? 'closed' : 'live'}</span>
         </div>
-        <div ref={containerRef} className="max-h-[70vh] overflow-y-auto p-4 space-y-3 text-sm font-mono dark:bg-gray-900">
+        <div ref={containerRef} className="max-h-[70vh] overflow-y-auto p-4 space-y-3 text-sm font-mono dark:bg-gray-900" aria-live="polite">
           {events.length === 0 && <p className="text-bodh-400 dark:text-gray-500 italic">Waiting for first message…</p>}
           {grouped.map((group) => (
             <div key={`${group.stage}-${group.events[0]?.index}`} className="space-y-1">

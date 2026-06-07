@@ -6,6 +6,7 @@ import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { useApi } from '../hooks/useApi';
 import { api } from '../api/client';
+import { useI18n } from '../i18n';
 import type { ReviewDecision, Review, BenchResult } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -14,6 +15,7 @@ import type { ReviewDecision, Review, BenchResult } from '../types';
 // ---------------------------------------------------------------------------
 
 export default function ClinicianDashboard() {
+  const { t } = useI18n();
   const reviews = useApi(() => api.reviews('pending'), []);
   const patients = useApi(() => api.patients(), []);
   const panel = useApi(() => api.panel(), []);
@@ -28,15 +30,15 @@ export default function ClinicianDashboard() {
   const panelGaps = panel.data?.gaps.length ?? 0;
 
   return (
-    <Page title="Clinician Dashboard" subtitle="Today's operational overview">
+    <Page title={t('dashboard.title')} subtitle={t('dashboard.subtitle')}>
       {loading && <Loader what="dashboard" />}
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Cases Today" value={totalCasesToday} to="/patients" />
-        <StatCard label="Pending HITL Reviews" value={pendingHitl} to="/reviews" emphasis={pendingHitl > 0} />
-        <StatCard label="Active Alerts" value={activeAlerts} to="/panel" emphasis={activeAlerts > 0} color="rose" />
-        <StatCard label="Panel Gaps" value={panelGaps} to="/panel" />
+        <StatCard label={t('dashboard.totalCases')} value={totalCasesToday} to="/patients" />
+        <StatCard label={t('dashboard.pendingReviews')} value={pendingHitl} to="/reviews" emphasis={pendingHitl > 0} />
+        <StatCard label={t('dashboard.activeAlerts')} value={activeAlerts} to="/panel" emphasis={activeAlerts > 0} color="rose" />
+        <StatCard label={t('dashboard.panelGaps')} value={panelGaps} to="/panel" />
       </div>
 
       {reviews.error && <ErrorBox error={reviews.error} retry={reviews.reload} />}
@@ -94,6 +96,7 @@ function StatCard({
 // Recent cases table
 // ---------------------------------------------------------------------------
 function RecentCasesTable({ patients }: { patients: import('../types').PatientRecord[] | null }) {
+  const { t } = useI18n();
   // Use patient records as a proxy for "cases" — extend with synthetic fields
   // so the table columns are satisfied without a dedicated /api/cases endpoint.
   const rows = (patients ?? []).slice(0, 10).map((p) => ({
@@ -108,8 +111,8 @@ function RecentCasesTable({ patients }: { patients: import('../types').PatientRe
 
   return (
     <div className="card overflow-hidden">
-      <div className="card-header">Recent Cases</div>
-      <table className="min-w-full text-sm">
+      <div className="card-header">{t('dashboard.recentCases')}</div>
+      <table className="min-w-full text-sm" aria-label="Recent case results">
         <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
           <tr>
             <th className="px-4 py-2 text-left">Case ID</th>
@@ -140,7 +143,7 @@ function RecentCasesTable({ patients }: { patients: import('../types').PatientRe
           {rows.length === 0 && (
             <tr>
               <td colSpan={7} className="px-4 py-6 text-center text-sm text-bodh-400">
-                No cases found.
+                {t('dashboard.noCases')}
               </td>
             </tr>
           )}
@@ -160,6 +163,7 @@ function HitlQueue({
   reviews: Review[] | null;
   onDecide: () => void;
 }) {
+  const { t } = useI18n();
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ id: string; decision: ReviewDecision; subject: string } | null>(null);
   const { showToast } = useToast();
@@ -183,14 +187,14 @@ function HitlQueue({
   return (
     <div className="card">
       <div className="card-header flex items-center justify-between">
-        <span>HITL Queue</span>
+        <span>{t('dashboard.hitlQueue')}</span>
         <Link to="/reviews" className="text-xs text-bodh-400 hover:text-bodh-700 dark:text-gray-400 dark:hover:text-gray-200">
-          View all
+          {t('dashboard.viewAll')}
         </Link>
       </div>
       <div className="card-body space-y-3">
         {pending.length === 0 && (
-          <p className="text-sm text-bodh-400 dark:text-gray-400">No pending reviews.</p>
+          <p className="text-sm text-bodh-400 dark:text-gray-400">{t('dashboard.noPending')}</p>
         )}
         {pending.map((r) => (
           <div key={r.id} className="border border-bodh-100 dark:border-gray-600 rounded-md p-3 space-y-2">
@@ -202,17 +206,17 @@ function HitlQueue({
                 onClick={() => setConfirm({ id: r.id, decision: 'approved', subject: r.subject })}
                 className="btn text-xs px-2 py-1"
               >
-                Accept
+                {t('dashboard.accept')}
               </button>
               <button
                 disabled={busy === r.id}
                 onClick={() => setConfirm({ id: r.id, decision: 'rejected', subject: r.subject })}
                 className="btn-secondary text-xs px-2 py-1"
               >
-                Reject
+                {t('dashboard.reject')}
               </button>
               <Link to={`/reviews/${r.id}`} className="btn-secondary text-xs px-2 py-1">
-                Detail
+                {t('dashboard.detail')}
               </Link>
             </div>
           </div>
@@ -223,25 +227,25 @@ function HitlQueue({
       <Modal
         open={confirm !== null}
         onClose={() => setConfirm(null)}
-        title="Confirm Decision"
+        title={t('dashboard.confirmTitle')}
         danger={confirm?.decision === 'rejected'}
       >
         {confirm && (
           <div className="space-y-4">
             <p className="text-sm">
               {confirm.decision === 'approved'
-                ? 'Accept this review and approve the AI recommendation?'
-                : 'Reject this review? The case will require manual assessment.'}
+                ? t('dashboard.confirmAccept')
+                : t('dashboard.confirmReject')}
             </p>
             <div className="bg-bodh-50 dark:bg-gray-700 rounded p-3 text-sm font-medium">{confirm.subject}</div>
             <div className="flex gap-3 justify-end">
-              <button onClick={() => setConfirm(null)} className="btn-secondary">Cancel</button>
+              <button onClick={() => setConfirm(null)} className="btn-secondary">{t('dashboard.cancel')}</button>
               <button
                 onClick={() => executeDecision(confirm.id, confirm.decision)}
                 className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white
                             ${confirm.decision === 'rejected' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
               >
-                Confirm {confirm.decision === 'approved' ? 'Accept' : 'Reject'}
+                {t('dashboard.confirmBtn')} {confirm.decision === 'approved' ? t('dashboard.accept') : t('dashboard.reject')}
               </button>
             </div>
           </div>
@@ -255,13 +259,14 @@ function HitlQueue({
 // Accuracy bar chart (CSS only, no charting lib)
 // ---------------------------------------------------------------------------
 function AccuracyChart({ bench }: { bench: BenchResult[] | null }) {
+  const { t } = useI18n();
   if (!bench || bench.length === 0) return null;
 
   const max = Math.max(...bench.map((b) => b.mean_accuracy_pct), 1);
 
   return (
     <div className="card">
-      <div className="card-header">Accuracy by Provider</div>
+      <div className="card-header">{t('dashboard.accuracy')}</div>
       <div className="card-body space-y-3">
         {bench.map((b) => {
           const pct = (b.mean_accuracy_pct / max) * 100;

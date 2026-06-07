@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { setToken } from '../hooks/useAuth';
+import { useI18n } from '../i18n';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -22,23 +24,23 @@ export default function Login() {
       });
       if (!res.ok) {
         if (res.status === 429) {
-          setError('Too many attempts — please wait a moment');
+          setError(t('login.error.rate_limit'));
         } else if (res.status >= 500) {
-          setError('Server error — please try again later');
+          setError(t('login.error.server'));
         } else {
-          setError('Invalid credentials');
+          setError(t('login.error'));
         }
         return;
       }
       const data = await res.json() as { token?: string };
       if (!data.token) {
-        setError('Invalid credentials');
+        setError(t('login.error'));
         return;
       }
       setToken(data.token);
       navigate('/');
     } catch {
-      setError('Network error — please try again');
+      setError(t('login.error.network'));
     } finally {
       setLoading(false);
     }
@@ -53,21 +55,21 @@ export default function Login() {
             B
           </div>
           <h1 className="text-2xl font-semibold text-bodh-800 dark:text-gray-100">Bodh</h1>
-          <p className="text-sm text-bodh-400 dark:text-gray-500 mt-1">Clinical AI orchestration platform</p>
+          <p className="text-sm text-bodh-400 dark:text-gray-500 mt-1">{t('login.subtitle')}</p>
         </div>
 
         {/* Form card */}
         <div className="card">
           <div className="card-body space-y-4">
             <div>
-              <h2 className="text-lg font-medium text-bodh-800 dark:text-gray-100">Sign in</h2>
+              <h2 className="text-lg font-medium text-bodh-800 dark:text-gray-100">{t('login.title')}</h2>
             </div>
 
             <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-4">
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-bodh-700 dark:text-gray-300 mb-1">
-                  Email
+                  {t('login.email')}
                 </label>
                 <input
                   id="email"
@@ -84,7 +86,7 @@ export default function Login() {
               {/* Password */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-bodh-700 dark:text-gray-300 mb-1">
-                  Password
+                  {t('login.password')}
                 </label>
                 <div className="relative">
                   <input
@@ -130,7 +132,7 @@ export default function Login() {
                 disabled={loading}
                 className="w-full py-2 px-4 bg-bodh-800 dark:bg-bodh-500 text-white text-sm font-medium rounded-md hover:bg-bodh-700 dark:hover:bg-bodh-400 focus:outline-none focus:ring-2 focus:ring-bodh-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? 'Signing in…' : 'Sign in'}
+                {loading ? t('login.submitting') : t('login.submit')}
               </button>
             </form>
           </div>
@@ -138,7 +140,7 @@ export default function Login() {
 
         {/* Disclaimer */}
         <p className="text-center text-xs text-bodh-400 dark:text-gray-600 mt-6">
-          Research demo — not for clinical use. All data is synthetic.
+          {t('login.disclaimer')}
         </p>
       </div>
     </div>

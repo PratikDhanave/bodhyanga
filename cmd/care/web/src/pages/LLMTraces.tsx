@@ -46,11 +46,11 @@ export default function LLMTraces() {
     return <Page title="LLM traces"><Empty title="No LLM calls recorded yet" hint="Set -diagnostician=llm-anthropic and run a case to populate." /></Page>;
   }
 
-  function sortHeader(label: string, key: SortKey, align: 'left' | 'right' = 'left') {
+  function sortHeader(label: string, key: SortKey, align: 'left' | 'right' = 'left', extraClass = '') {
     const active = sortBy === key;
     return (
       <th
-        className={`px-4 py-2 text-${align} cursor-pointer hover:text-bodh-600 dark:hover:text-gray-200 select-none ${active ? 'text-bodh-700 dark:text-gray-200 underline' : ''}`}
+        className={`px-4 py-2 text-${align} cursor-pointer hover:text-bodh-600 dark:hover:text-gray-200 select-none ${active ? 'text-bodh-700 dark:text-gray-200 underline' : ''} ${extraClass}`}
         onClick={() => setSortBy(key)}
       >
         {label} {active && '↓'}
@@ -77,18 +77,18 @@ export default function LLMTraces() {
       </div>
 
       <div className="card overflow-hidden">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full text-sm" aria-label="LLM call traces">
           <thead className="bg-bodh-50 dark:bg-gray-800 text-bodh-400 dark:text-gray-500 text-xs uppercase tracking-wide">
             <tr>
               {sortHeader('Time', 'time')}
               <th className="px-4 py-2 text-left">Provider</th>
-              <th className="px-4 py-2 text-left">Model</th>
+              <th className="px-4 py-2 text-left hidden lg:table-cell">Model</th>
               <th className="px-4 py-2 text-left">Agent</th>
-              {sortHeader('in+out', 'tokens', 'right')}
+              {sortHeader('in+out', 'tokens', 'right', 'hidden md:table-cell')}
               <th className="px-4 py-2 text-right">cached</th>
               <th className="px-4 py-2 text-right">tools</th>
-              {sortHeader('ms', 'duration', 'right')}
-              {sortHeader('est $', 'cost', 'right')}
+              {sortHeader('ms', 'duration', 'right', 'hidden md:table-cell')}
+              {sortHeader('est $', 'cost', 'right', 'hidden lg:table-cell')}
               <th className="px-4 py-2 text-left">stop</th>
             </tr>
           </thead>
@@ -99,13 +99,13 @@ export default function LLMTraces() {
                 <tr key={`${t.started_at}-${i}`} className={`border-t border-bodh-100 dark:border-gray-700 ${t.error ? 'bg-rose-50 dark:bg-rose-900/20' : ''}`}>
                   <td className="px-4 py-2 text-xs text-bodh-400 dark:text-gray-500">{new Date(t.started_at).toLocaleTimeString()}</td>
                   <td className="px-4 py-2 font-mono text-xs">{t.provider}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{t.model}</td>
+                  <td className="px-4 py-2 font-mono text-xs hidden lg:table-cell">{t.model}</td>
                   <td className="px-4 py-2 font-mono text-xs">{t.agent_id ?? '–'}</td>
-                  <td className="px-4 py-2 text-right">{(t.input_tokens + t.output_tokens).toLocaleString()}</td>
+                  <td className="px-4 py-2 text-right hidden md:table-cell">{(t.input_tokens + t.output_tokens).toLocaleString()}</td>
                   <td className="px-4 py-2 text-right">{t.cached_tokens}</td>
                   <td className="px-4 py-2 text-right">{t.tool_calls ?? 0}</td>
-                  <td className="px-4 py-2 text-right">{t.duration_ms}</td>
-                  <td className="px-4 py-2 text-right font-mono text-xs text-bodh-400 dark:text-gray-500">
+                  <td className="px-4 py-2 text-right hidden md:table-cell">{t.duration_ms}</td>
+                  <td className="px-4 py-2 text-right font-mono text-xs text-bodh-400 dark:text-gray-500 hidden lg:table-cell">
                     {cost > 0 ? `$${cost.toFixed(4)}` : 'free'}
                   </td>
                   <td className="px-4 py-2 text-xs text-bodh-400 dark:text-gray-500">{t.stop_reason ?? t.error ?? '–'}</td>

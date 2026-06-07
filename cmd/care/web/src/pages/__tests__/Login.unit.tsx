@@ -3,16 +3,19 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Login from '../Login';
+import I18nProvider from '../../i18n/I18nProvider';
 import { mockFetch } from '../../test/setup';
 
 function renderLogin() {
   return render(
-    <MemoryRouter initialEntries={['/login']}>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/" element={<div>Dashboard</div>} />
-      </Routes>
-    </MemoryRouter>,
+    <I18nProvider>
+      <MemoryRouter initialEntries={['/login']}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<div>Dashboard</div>} />
+        </Routes>
+      </MemoryRouter>
+    </I18nProvider>,
   );
 }
 

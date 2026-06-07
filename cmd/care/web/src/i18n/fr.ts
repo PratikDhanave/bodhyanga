@@ -48,6 +48,59 @@ const fr: Record<string, string> = {
   "common.loading": "Chargement...",
   "common.error": "Une erreur est survenue",
   "common.retry": "Réessayer",
+
+  // Login
+  "login.title": "Se connecter",
+  "login.email": "Adresse e-mail",
+  "login.password": "Mot de passe",
+  "login.submit": "Se connecter",
+  "login.submitting": "Connexion en cours…",
+  "login.error": "Identifiants invalides",
+  "login.error.rate_limit": "Trop de tentatives — veuillez patienter un instant",
+  "login.error.server": "Erreur du serveur — veuillez réessayer plus tard",
+  "login.error.network": "Erreur réseau — veuillez réessayer",
+  "login.disclaimer": "Démonstration de recherche — pas pour usage clinique. Toutes les données sont synthétiques.",
+  "login.subtitle": "Plateforme d’orchestration d’IA clinique",
+
+  // Dashboard
+  "dashboard.title": "Tableau de Bord Clinique",
+  "dashboard.subtitle": "Aperçu opérationnel du jour",
+  "dashboard.recentCases": "Cas Récents",
+  "dashboard.noCases": "Aucun cas trouvé.",
+  "dashboard.totalCases": "Total des Cas du Jour",
+  "dashboard.pendingReviews": "Révisions HITL en Attente",
+  "dashboard.activeAlerts": "Alertes Actives",
+  "dashboard.panelGaps": "Lacunes du Panel",
+  "dashboard.hitlQueue": "File HITL",
+  "dashboard.viewAll": "Tout voir",
+  "dashboard.noPending": "Aucune révision en attente.",
+  "dashboard.accuracy": "Précision par Fournisseur",
+  "dashboard.accept": "Accepter",
+  "dashboard.reject": "Rejeter",
+  "dashboard.detail": "Détail",
+  "dashboard.confirmTitle": "Confirmer la Décision",
+  "dashboard.confirmAccept": "Accepter cette révision et approuver la recommandation de l’IA ?",
+  "dashboard.confirmReject": "Rejeter cette révision ? Le cas nécessitera une évaluation manuelle.",
+  "dashboard.cancel": "Annuler",
+  "dashboard.confirmBtn": "Confirmer",
+
+  // Reviews
+  "reviews.title": "Révisions",
+  "reviews.subtitle": "File de révision avec intervention humaine",
+  "reviews.pending": "En attente",
+  "reviews.all": "Toutes",
+  "reviews.noReviews": "Aucune révision trouvée.",
+  "reviews.approve": "Approuver",
+  "reviews.reject": "Rejeter",
+
+  // Tasks
+  "tasks.title": "Tâches",
+  "tasks.subtitle": "Gestion des tâches cliniques",
+  "tasks.all": "Toutes",
+  "tasks.open": "Ouvertes",
+  "tasks.urgent": "Urgentes",
+  "tasks.overdue": "En retard",
+  "tasks.noTasks": "Aucune tâche trouvée.",
 };
 
 export default fr;

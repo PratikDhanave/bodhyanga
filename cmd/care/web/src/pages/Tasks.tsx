@@ -82,7 +82,7 @@ export default function Tasks() {
       </div>
 
       <div className="card overflow-hidden">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full text-sm" aria-label="Nurse tasks">
           <thead className="bg-bodh-50 dark:bg-gray-800 text-bodh-400 dark:text-gray-500 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Subject</th>

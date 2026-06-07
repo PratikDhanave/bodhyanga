@@ -48,6 +48,59 @@ const zh: Record<string, string> = {
   "common.loading": "加载中...",
   "common.error": "发生错误",
   "common.retry": "重试",
+
+  // Login
+  "login.title": "登录",
+  "login.email": "电子邮箱",
+  "login.password": "密码",
+  "login.submit": "登录",
+  "login.submitting": "正在登录…",
+  "login.error": "凭据无效",
+  "login.error.rate_limit": "尝试次数过多——请稍后再试",
+  "login.error.server": "服务器错误——请稍后再试",
+  "login.error.network": "网络错误——请重试",
+  "login.disclaimer": "研究演示——不用于临床用途。所有数据均为合成数据。",
+  "login.subtitle": "临床AI编排平台",
+
+  // Dashboard
+  "dashboard.title": "临床医生仪表板",
+  "dashboard.subtitle": "今日运营概览",
+  "dashboard.recentCases": "近期病例",
+  "dashboard.noCases": "未找到病例。",
+  "dashboard.totalCases": "今日病例总数",
+  "dashboard.pendingReviews": "待处理HITL审查",
+  "dashboard.activeAlerts": "活动警报",
+  "dashboard.panelGaps": "面板缺口",
+  "dashboard.hitlQueue": "HITL队列",
+  "dashboard.viewAll": "查看全部",
+  "dashboard.noPending": "没有待处理的审查。",
+  "dashboard.accuracy": "按提供者的准确率",
+  "dashboard.accept": "接受",
+  "dashboard.reject": "拒绝",
+  "dashboard.detail": "详情",
+  "dashboard.confirmTitle": "确认决定",
+  "dashboard.confirmAccept": "接受此审查并批准AI建议？",
+  "dashboard.confirmReject": "拒绝此审查？该病例将需要人工评估。",
+  "dashboard.cancel": "取消",
+  "dashboard.confirmBtn": "确认",
+
+  // Reviews
+  "reviews.title": "审查",
+  "reviews.subtitle": "人工审核队列",
+  "reviews.pending": "待处理",
+  "reviews.all": "全部",
+  "reviews.noReviews": "未找到审查。",
+  "reviews.approve": "批准",
+  "reviews.reject": "拒绝",
+
+  // Tasks
+  "tasks.title": "任务",
+  "tasks.subtitle": "临床任务管理",
+  "tasks.all": "全部",
+  "tasks.open": "进行中",
+  "tasks.urgent": "紧急",
+  "tasks.overdue": "逾期",
+  "tasks.noTasks": "未找到任务。",
 };
 
 export default zh;

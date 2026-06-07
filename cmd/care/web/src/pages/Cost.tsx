@@ -239,7 +239,7 @@ export default function Cost() {
       {/* Top agents table */}
       <div className="card overflow-hidden">
         <div className="card-header">Top agents by spend</div>
-        <table className="min-w-full text-sm">
+        <table className="min-w-full text-sm" aria-label="Cost breakdown by provider">
           <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Agent</th>

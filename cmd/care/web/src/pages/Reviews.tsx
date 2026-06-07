@@ -27,7 +27,7 @@ export default function Reviews() {
       actions={<ScopeToggle scope={scope} setScope={setScope} />}
     >
       <div className="card overflow-hidden">
-        <table className="min-w-full text-sm">
+        <table className="min-w-full text-sm" aria-label="HITL review requests">
           <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Subject</th>

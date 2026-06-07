@@ -18,7 +18,7 @@ export default function PanelReport() {
         <div className="lg:col-span-2">
           <div className="card overflow-hidden">
             <div className="card-header">Care gaps</div>
-            <table className="min-w-full text-sm">
+            <table className="min-w-full text-sm" aria-label="Panel report metrics">
               <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
                 <tr>
                   <th className="px-4 py-2 text-left">Patient</th>

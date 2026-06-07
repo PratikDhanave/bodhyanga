@@ -204,7 +204,7 @@ function VitalsTable({ patient }: { patient: import('../types').PatientRecord })
           <p className="text-sm text-bodh-400">{t('portal.no_vitals')}</p>
         </div>
       ) : (
-        <table className="min-w-full text-sm">
+        <table className="min-w-full text-sm" aria-label="Patient health records">
           <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">{t('portal.vitals.date')}</th>

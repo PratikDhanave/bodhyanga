@@ -78,6 +78,7 @@ function useDarkMode() {
 export default function Layout() {
   const { dark, toggle } = useDarkMode();
   const { locale, setLocale } = useI18n();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex bg-white dark:bg-gray-900 text-bodh-800 dark:text-gray-100">
@@ -88,7 +89,14 @@ export default function Layout() {
       >
         Skip to main content
       </a>
-      <aside className="w-56 bg-white dark:bg-gray-800 border-r border-bodh-200 dark:border-gray-700 flex flex-col">
+      {/* Overlay behind sidebar on mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-56 transform transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} bg-white dark:bg-gray-800 border-r border-bodh-200 dark:border-gray-700 flex flex-col`}>
         {/* Sidebar header */}
         <div className="px-4 py-4 border-b border-bodh-200 dark:border-gray-700 flex items-center justify-between">
           <div>
@@ -168,6 +176,7 @@ export default function Layout() {
                     key={n.to}
                     to={n.to}
                     end={n.to === '/'}
+                    onClick={() => setSidebarOpen(false)}
                     className={({ isActive }) =>
                       isActive ? 'nav-link nav-link-active' : 'nav-link'
                     }
@@ -188,7 +197,18 @@ export default function Layout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top header bar */}
         <header className="h-10 flex items-center justify-between px-4 border-b border-bodh-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
-          <ConnectionStatus />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSidebarOpen(v => !v)}
+              aria-label="Toggle sidebar"
+              className="lg:hidden p-1 rounded-md hover:bg-bodh-100 dark:hover:bg-gray-700 text-bodh-700 dark:text-gray-300"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <ConnectionStatus />
+          </div>
           <NotificationBell />
         </header>
 

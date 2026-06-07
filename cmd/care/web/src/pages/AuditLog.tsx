@@ -185,7 +185,7 @@ export default function AuditLog() {
       {/* Table */}
       {!error && (
         <div className="card overflow-hidden">
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-sm" aria-label="Audit log entries">
             <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
               <tr>
                 <th className="px-4 py-2 text-left">Timestamp</th>
