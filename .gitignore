@@ -78,3 +78,6 @@ zarf/keys/*.pem
 .claude/settings.local.json
 .claude/worktrees/
 /bin/
+
+# Internal cross-model review artifact — kept local, not tracked
+specs/002-agent-decoupling/planandthinking.md
