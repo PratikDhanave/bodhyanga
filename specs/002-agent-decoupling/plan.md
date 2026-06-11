@@ -315,13 +315,14 @@ github.com/PratikDhanave/bodh/agents   ← AGENTS MODULE (separate go.mod)
       tcm-coordinator/main.go
       panel-manager/main.go
       pre-visit-prep/main.go
-      inbox-triage/main.go
+      inbox-triage/main.go             ← --provider flag: rule | llm-anthropic | llm-ollama
       refill-manager/main.go
       prior-auth/main.go
       human-review/main.go
       engagement/main.go
       audio-transcriber/main.go
       rpm-monitor/main.go
+      readmission-tracker/main.go
       trial-screener/main.go
       specialists/main.go              ← --specialty flag: cardiologist/pharmacist/etc
     care/                              ← MONOLITH DEV BINARY (moved into agents module)
@@ -345,7 +346,7 @@ bodh ←→ bodh/agents    ❌ circular (not allowed)
 
 The `go.work` file at repo root ties both modules together for local development. `make test` runs in workspace mode. `go build ./...` still works from either module root.
 
-**Binary count**: 20 per-agent binaries (specialists grouped into one), 1 API binary, 1 eval-mirror binary, 1 monolith binary = **23 binaries total**.
+**Binary count**: 21 per-agent binaries (specialists grouped into one), 1 API binary, 1 eval-mirror binary, 1 monolith binary = **24 binaries total**.
 
 ---
 
@@ -404,7 +405,8 @@ func main() {
 ```
 
 ```go
-// cmd/agents/specialists/main.go — all 8 specialists, --specialty flag
+// cmd/agents/specialists/main.go — 8 deployed specialists, --specialty flag
+// (radiologist pending — see Open Question 5)
 package main
 
 import (
@@ -431,6 +433,8 @@ func main() {
 7. Starts health/readiness HTTP probe on `:8080`
 
 No manifest YAML needed. Configuration comes entirely from environment variables. This is simpler than the generic runtime model and consistent with the 12-factor app pattern.
+
+`runtime.ParseConfig()` is a public function. State/LLM binaries call it in `main()` to wire their dependencies (DB connection, LLM client, knowledge store) before passing the constructed agent to `Run()`. `Run()` also calls `ParseConfig()` internally for its own needs (NATS URL, tenant ID, health addr). Both calls read the same env vars — idempotent, no conflict.
 
 ### Contrast with rejected alternative (generic runtime)
 
@@ -924,15 +928,16 @@ agents/
       tcm-coordinator/main.go
       panel-manager/main.go
       pre-visit-prep/main.go
-      inbox-triage/main.go
+      inbox-triage/main.go        --provider flag
       refill-manager/main.go
       prior-auth/main.go
       human-review/main.go
       engagement/main.go
       audio-transcriber/main.go
       rpm-monitor/main.go
+      readmission-tracker/main.go
       trial-screener/main.go
-      specialists/main.go         --specialty flag
+      specialists/main.go         --specialty flag (8 deployed; radiologist pending)
     care/                         MOVED from top-level cmd/care
       main.go                     UNCHANGED code
       web/                        UNCHANGED
@@ -943,7 +948,7 @@ zarf/
     Dockerfile.diagnostician      NEW
     Dockerfile.api                NEW
     Dockerfile.care               KEPT (unchanged for monolith mode)
-    ... (22 total)
+    ... (23 total)
   k8s/
     agents/                       NEW — per-agent k8s manifests
       intake/deployment.yaml
@@ -1024,8 +1029,15 @@ All changes are inside existing packages. `cmd/care/` continues to work unchange
 | 0.6 | Add `TaskStoreAdapter` | `pkg/persistence/postgres/task_adapter.go` (NEW) | ~120 |
 | 0.7 | Add `ReviewStoreAdapter` | `pkg/persistence/postgres/review_adapter.go` (NEW) | ~150 |
 | 0.8 | Migration SQL for tasks + reviews tables | `db/migrations/*.sql` | ~60 SQL |
+| 0.9 | Update `explainHandler` signature: `*hitl.Queue` → `ReviewStore` | `cmd/care/explain.go` | ~5 |
 
-**Phase 0 total: ~440 LOC. Zero behavior change. Zero deployment change.**
+**Phase 0 total: ~445 LOC. Zero behavior change. Zero deployment change.**
+
+> Task 0.9 is required because in pure decoupled mode `cmd/api/` uses a Postgres-backed
+> `ReviewStoreAdapter`, not the in-memory `*hitl.Queue`. `explainHandler` currently takes
+> the concrete type; it only calls `.List()` and reads fields on `medical.ReviewRequest` —
+> both are satisfied by the `ReviewStore` interface. The monolith (`cmd/care/`) passes its
+> existing `*hitl.Queue` directly; it satisfies `ReviewStore` implicitly.
 
 Validation gate: `make test` passes, `make build` passes, `cmd/care` runs identically.
 
@@ -1044,7 +1056,7 @@ Validation gate: `make test` passes, `make build` passes, `cmd/care` runs identi
 | Task | What | Est. effort |
 |------|------|------------|
 | 2.1 | Create `agents/go.mod` (module `github.com/PratikDhanave/bodh/agents`) | ~5 min |
-| 2.2 | Create `go.work` with `use . / use ./agents` | ~2 min |
+| 2.2 | Create `go.work`; run `go work sync` to generate `go.work.sum`; commit both | ~5 min |
 | 2.3 | Move `cmd/care/` → `agents/cmd/care/` | ~5 min (git mv) |
 | 2.4 | Verify `make test` still passes in workspace mode | validation |
 
@@ -1054,7 +1066,7 @@ Validation gate: `make test` passes, `make build` passes, `cmd/care` runs identi
 
 | Task | What | File(s) | Est. LOC |
 |------|------|---------|---------|
-| 3.1 | 20 per-agent binaries in `agents/cmd/agents/*/main.go` | 20 files × ~20 lines | ~400 |
+| 3.1 | 21 per-agent binaries in `agents/cmd/agents/*/main.go` | 21 files × ~20 lines | ~420 |
 | 3.2 | `cmd/api/main.go` — backend (zero agent imports) | 1 file | ~500 |
 | 3.3 | `cmd/eval-mirror/main.go` | 1 file | ~80 |
 
@@ -1080,9 +1092,9 @@ Validation gate: `make test` passes, `make build` passes, `cmd/care` runs identi
 
 **Phase 5 total: ~550 LOC.**
 
-### Grand Total: ~5,870 LOC (Go + YAML)
+### Grand Total: ~5,900 LOC (Go + YAML)
 
-Existing code changes: ~440 LOC (Phase 0 only — interface extraction + resume extraction).  
+Existing code changes: ~445 LOC (Phase 0 only — interface extraction + resume extraction + explainHandler update).  
 All other code is new. Zero breaking changes to `cmd/care/` or any existing functionality.
 
 ---
