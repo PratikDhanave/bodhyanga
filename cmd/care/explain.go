@@ -260,7 +260,7 @@ type PolicyDecisionSummary struct {
 //     yet produced KindReviewDecision events — i.e. reviews still awaiting
 //     clinician disposition. The dedup against Pass 1 by timestamp prevents
 //     a decided review from appearing twice.
-func explainHandler(tenantID string, rec audit.Recorder, store eval.Store, queue *hitl.Queue) http.HandlerFunc {
+func explainHandler(tenantID string, rec audit.Recorder, store eval.Store, queue hitl.ReviewStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// The path is /explain/{case_id}; r.PathValue is Go 1.22+ pattern
 		// matching from http.ServeMux. An empty case_id is treated as

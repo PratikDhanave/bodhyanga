@@ -72,12 +72,12 @@ import (
 // See bodh-linkedin/02-cures-act-as-code.md § Seven gated agents and
 // docs/agents.md § HITL.
 type HumanReviewAgent struct {
-	// Queue is the in-memory review queue. cmd/care swaps in a
-	// durable backing store for production; the interface is the
-	// pkg/hitl.Queue type today (no abstract interface yet because
-	// the same in-memory Queue is reused by HTTP handlers that need
-	// List / Pending visibility).
-	Queue *hitl.Queue
+	// Queue is the review store this agent parks requests in and applies
+	// decisions to. It is the hitl.ReviewStore interface, so cmd/care can
+	// inject the in-memory *hitl.Queue while a decoupled deployment injects
+	// a Postgres-backed store — the same store the backend HTTP handlers
+	// read for List / Pending visibility.
+	Queue hitl.ReviewStore
 }
 
 // ID matches what upstream agents address their review_request messages
