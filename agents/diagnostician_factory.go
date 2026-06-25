@@ -461,7 +461,7 @@ func NewQuestioner(provider string) (agent.Agent, error) {
 // InboxTriageAgent. LLM providers wrap the rule-based agent as the per-call
 // fallback. The same taskQueue is wired into both the LLM agent and its
 // fallback so urgent / general messages always reach the nurse queue.
-func NewInboxTriage(provider string, taskQueue *tasks.Queue) (agent.Agent, error) {
+func NewInboxTriage(provider string, taskQueue tasks.TaskStore) (agent.Agent, error) {
 	switch provider {
 	case "", ProviderRule:
 		return &InboxTriageAgent{Tasks: taskQueue}, nil

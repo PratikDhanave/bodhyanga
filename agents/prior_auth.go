@@ -14,7 +14,7 @@ import (
 // Input message Type:  prior_auth_request   Content: {"patient_id","code","payer"}
 // Output message Type: prior_auth_status    Content: {"status":"submitted|approved|review"}
 type PriorAuthAgent struct {
-	Tasks *tasks.Queue
+	Tasks tasks.TaskStore
 	// HITL routes the outbound status through human_review so a clinician
 	// signs off on PA submissions before they leave the platform.
 	HITL bool

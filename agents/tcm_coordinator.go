@@ -18,7 +18,7 @@ import (
 // Output routes to:    engagement (to notify the patient), optionally HITL-gated
 //                      so a nurse confirms the welcome message and task plan.
 type TCMCoordinatorAgent struct {
-	Tasks    *tasks.Queue
+	Tasks    tasks.TaskStore
 	Registry medical.PatientStore
 	// HITL routes the patient-facing TCM welcome through human_review so a
 	// nurse confirms it before the SMS goes out.

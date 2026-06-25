@@ -17,7 +17,7 @@ import (
 // Input message Type:  refill_request   Content: {"patient_id","medication","reason"}
 // Output message Type: refill_response  Content: {"status":"approved|review"}
 type RefillManagerAgent struct {
-	Tasks    *tasks.Queue
+	Tasks    tasks.TaskStore
 	Registry medical.PatientStore
 	// HITL routes the patient-facing refill_response through human_review so a
 	// clinician confirms the refill before SMS goes out (covers controlled

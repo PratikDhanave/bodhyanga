@@ -16,7 +16,7 @@ import (
 // Input message Type:  inbox_message   Content: {"patient_id","subject","body"}
 // Output message Type: refill_request | prior_auth_request | inbox_routed
 type InboxTriageAgent struct {
-	Tasks *tasks.Queue
+	Tasks tasks.TaskStore
 }
 
 type inboxMessage struct {

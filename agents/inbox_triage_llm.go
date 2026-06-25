@@ -30,7 +30,7 @@ type LLMInboxTriage struct {
 
 	// Tasks is the nurse-task queue used when the model classifies a message
 	// as urgent_clinical or general. Required.
-	Tasks *tasks.Queue
+	Tasks tasks.TaskStore
 
 	// Timeout caps a single LLM call. Defaults to 30s.
 	Timeout time.Duration
