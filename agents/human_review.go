@@ -236,47 +236,18 @@ func (a *HumanReviewAgent) ApplyDecision(id, reviewerID, decision, reason, modif
 	if !ok {
 		return r, nil, false
 	}
-	// Reject path: no resume messages. The caller still gets the
-	// updated ReviewRequest (with Status=rejected, ReviewerID,
-	// Reason, DecidedAt populated) so the HTTP layer can return it
-	// to the reviewer's UI and the audit layer can emit the
-	// KindReviewDecision event. ok=true because the decision was
-	// applied successfully — "ok" measures the apply, not whether
-	// the request was approved.
-	if r.Status != medical.ReviewApproved && r.Status != medical.ReviewModified {
+	// Build the resume message from the decided review. The construction
+	// half now lives in pkg/hitl.BuildResumeMessage — the same agent-free
+	// implementation the decoupled backend (cmd/api) uses — so the monolith
+	// and the backend cannot drift in how an approved review resumes the
+	// pipeline. resume=false on a reject (or any non-approving terminal
+	// status); ok stays true because the decision itself was applied
+	// successfully ("ok" measures the apply, not the approval).
+	msg, resume := hitl.BuildResumeMessage(r, reviewerID, modification)
+	if !resume {
 		return r, nil, true
 	}
-	// Approve path: pick the payload to republish. ApproveWith-
-	// Modifications uses the reviewer's edit; plain Approve uses the
-	// original. Modification is allowed to be empty even on
-	// ReviewModified — defends against a caller that picked the
-	// modifications status but forgot to set the new content.
-	payload := r.Payload
-	if r.Status == medical.ReviewModified && modification != "" {
-		payload = modification
-	}
-	// Restore the downstream message metadata. r.Meta is what
-	// HandleMessage stored after stripping envelope keys, so it
-	// already has case_id, tenant_id, trace_id, patient_id but not
-	// the hitl_* keys. We add a couple of breadcrumb keys so audit /
-	// downstream agents can correlate the resumed message back to
-	// the review that produced it.
-	meta := copyMeta(r.Meta)
-	meta["hitl_review_id"] = r.ID
-	meta["hitl_reviewer_id"] = reviewerID
-	// hitl_kind is cleared as a sentinel (empty string) and then
-	// deleted; the two-step is intentional belt-and-braces in case
-	// downstream code looks for the key's PRESENCE rather than its
-	// value. The delete is the authoritative final state — downstream
-	// agents see no hitl_kind at all on the resumed message.
-	meta["hitl_kind"] = "" // sentinel: cleared envelope, just an audit breadcrumb
-	delete(meta, "hitl_kind")
-	// Build the resume message. From = this agent's ID so the audit
-	// trail attributes the resume to human_review (rather than
-	// impersonating the original upstream agent — keep provenance
-	// honest). To / Type / payload come from the queue entry.
-	out := agent.NewMessage(a.ID(), r.NextTo, agent.RoleAgent, r.NextType, payload, meta)
-	return r, []agent.Message{out}, true
+	return r, []agent.Message{msg}, true
 }
 
 // reviewOptions configures the HITL gate wrapped around a downstream
