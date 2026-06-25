@@ -14,7 +14,7 @@ import (
 // Input message Type:  pre_visit_request   Content: {"patient_id","encounter_id"}
 // Output message Type: pre_visit_ready     Content: prep summary JSON
 type PreVisitPrepAgent struct {
-	Registry *medical.PatientRegistry
+	Registry medical.PatientStore
 }
 
 type preVisitRequest struct {

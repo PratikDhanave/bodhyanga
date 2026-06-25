@@ -18,7 +18,7 @@ import (
 // Output routes to:    engagement (for outreach, optionally HITL-gated) and
 //                      panel_manager (for tracking, always direct).
 type CDMPlannerAgent struct {
-	Registry *medical.PatientRegistry
+	Registry medical.PatientStore
 	// HITL routes the patient-facing engagement message through human_review
 	// so a clinician approves the care plan before SMS goes out.
 	HITL bool

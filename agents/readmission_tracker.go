@@ -19,7 +19,7 @@ import (
 // When HITL is true, the cascade into tcm_coordinator goes through human_review
 // so a clinician confirms the discharge-to-TCM hand-off before tasks fire.
 type ReadmissionTrackerAgent struct {
-	Registry *medical.PatientRegistry
+	Registry medical.PatientStore
 	HITL     bool
 }
 

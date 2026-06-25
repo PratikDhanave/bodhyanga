@@ -19,7 +19,7 @@ import (
 //                      so a nurse confirms the welcome message and task plan.
 type TCMCoordinatorAgent struct {
 	Tasks    *tasks.Queue
-	Registry *medical.PatientRegistry
+	Registry medical.PatientStore
 	// HITL routes the patient-facing TCM welcome through human_review so a
 	// nurse confirms it before the SMS goes out.
 	HITL bool

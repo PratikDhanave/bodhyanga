@@ -19,7 +19,7 @@ import (
 //                      HITL-gated so a clinician or panel manager approves each
 //                      outreach before SMS goes out.
 type PanelManagerAgent struct {
-	Registry *medical.PatientRegistry
+	Registry medical.PatientStore
 	Rules    []medical.PanelRule
 	// HITL routes per-gap engagement_request messages through human_review.
 	HITL bool
