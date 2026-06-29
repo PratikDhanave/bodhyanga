@@ -98,36 +98,6 @@ func TestRunShadow_InvalidJSON(t *testing.T) {
 	}
 }
 
-// TestRunShadow_ContextCancelled verifies that runAndRecord respects ctx
-// cancellation.
-func TestRunShadow_ContextCancelled(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel() // cancel immediately
-
-	orch, bus, err := BuildShadowPipeline(context.Background(), "rule")
-	if err != nil {
-		t.Fatalf("BuildShadowPipeline: %v", err)
-	}
-	_ = orch
-
-	l, _ := NewConcordanceLedger("")
-	runner := NewShadowRunner(orch, bus, l, ModeSync, time.Second)
-
-	caseInput := `{"chief_complaint": "cough", "hpi": "test", "demographics": "50M", "vitals": "normal", "case_id": "ctx-cancel"}`
-	_, err = runner.RunShadow(ctx, caseInput, "test")
-	if err == nil {
-		t.Fatal("expected error for cancelled context")
-	}
-}
-
-// TestBuildShadowPipeline_InvalidProvider verifies error for unknown provider.
-func TestBuildShadowPipeline_InvalidProvider(t *testing.T) {
-	_, _, err := BuildShadowPipeline(context.Background(), "nonexistent-provider-xyz")
-	if err == nil {
-		t.Fatal("expected error for unknown provider")
-	}
-}
-
 // TestConcordanceRecord_JSONRoundtrip verifies full JSON serialization.
 func TestConcordanceRecord_JSONRoundtrip(t *testing.T) {
 	rec := ConcordanceRecord{

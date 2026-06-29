@@ -31,14 +31,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PratikDhanave/bodh/agents"
 	"github.com/PratikDhanave/bodh/pkg/agent"
 	"github.com/PratikDhanave/bodh/pkg/comm"
-	"github.com/PratikDhanave/bodh/pkg/governance"
 	"github.com/PratikDhanave/bodh/pkg/medical"
-	"github.com/PratikDhanave/bodh/pkg/observability"
 	"github.com/PratikDhanave/bodh/pkg/orchestration"
-	"github.com/PratikDhanave/bodh/pkg/registry"
 )
 
 // Mode controls whether the shadow pipeline blocks on the AI result or
@@ -330,45 +326,10 @@ func extractConfidence(state medical.CaseState) float64 {
 	return 0.0
 }
 
-// BuildShadowPipeline constructs a full orchestrator + bus + agent pipeline
-// suitable for shadow evaluation. It returns the orchestrator, bus, and a
-// cleanup function. The provider parameter selects the diagnostician
-// backend (e.g. "rule", "llm-anthropic").
-//
-// This is a convenience for cmd/shadow and tests; production deployments
-// wire their own orchestrator.
-func BuildShadowPipeline(ctx context.Context, provider string) (*orchestration.Orchestrator, comm.Bus, error) {
-	logger := observability.NewStdLogger()
-	env := &orchestration.SimpleEnvironment{Logger: logger, Clock: observability.SystemClock{}}
-	reg := registry.NewInMemory()
-	bus := comm.NewInMemoryBus()
-	policy := governance.NewComposite(
-		governance.MaxContentLengthPolicy{Max: 65536},
-		governance.RequireCaseIDPolicy{},
-		governance.MaxDiagnosticCostPolicy{},
-		governance.ResearchDisclaimerPolicy{},
-	)
-
-	diag, err := agents.NewDiagnostician(provider)
-	if err != nil {
-		return nil, nil, fmt.Errorf("build diagnostician (%s): %w", provider, err)
-	}
-
-	for _, a := range []agent.Agent{
-		&agents.IntakeAgent{},
-		&agents.RPMMonitorAgent{},
-		&agents.DiagnosticSupervisor{},
-		&agents.QuestionerAgent{},
-		&agents.TestPlannerAgent{},
-		&agents.CostGuardianAgent{},
-		diag,
-		&agents.ReasoningVerifierAgent{},
-	} {
-		_ = reg.Register(ctx, a)
-	}
-
-	orch := orchestration.NewOrchestrator(reg, bus, policy, env)
-	orch.Start(ctx)
-
-	return orch, bus, nil
-}
+// BuildShadowPipeline has moved to the agents package
+// (agents.BuildShadowPipeline) so that pkg/shadow stays free of any dependency
+// on concrete agent implementations — a prerequisite for the agent-decoupling
+// module split (decoupling PR-0.6). The ShadowRunner and ConcordanceLedger in
+// this package operate purely on the orchestration.Orchestrator + comm.Bus
+// abstractions; callers build the pipeline with agents.BuildShadowPipeline and
+// pass the result to NewShadowRunner.

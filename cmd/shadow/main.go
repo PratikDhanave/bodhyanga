@@ -21,19 +21,20 @@ import (
 	"sort"
 	"time"
 
+	"github.com/PratikDhanave/bodh/agents"
 	"github.com/PratikDhanave/bodh/pkg/shadow"
 )
 
 // fixture mirrors the case file format used by data/cases/*.json. We only
 // need the fields relevant to shadow evaluation.
 type fixture struct {
-	CaseID         string `json:"case_id"`
-	Condition      string `json:"condition"`
-	ChiefComplaint string `json:"chief_complaint"`
-	HPI            string `json:"hpi"`
-	Demographics   string `json:"demographics"`
-	Vitals         string `json:"vitals"`
-	GoldDiagnosis  string `json:"gold_diagnosis"`
+	CaseID         string  `json:"case_id"`
+	Condition      string  `json:"condition"`
+	ChiefComplaint string  `json:"chief_complaint"`
+	HPI            string  `json:"hpi"`
+	Demographics   string  `json:"demographics"`
+	Vitals         string  `json:"vitals"`
+	GoldDiagnosis  string  `json:"gold_diagnosis"`
 	MaxCostUSD     float64 `json:"max_cost_usd"`
 }
 
@@ -71,7 +72,7 @@ func main() {
 		len(fixtures), *provider, *modeStr)
 
 	ctx := context.Background()
-	orch, bus, err := shadow.BuildShadowPipeline(ctx, *provider)
+	orch, bus, err := agents.BuildShadowPipeline(ctx, *provider)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "build pipeline: %v\n", err)
 		os.Exit(1)

@@ -1,7 +1,6 @@
 package shadow
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -216,108 +215,6 @@ func TestExtractConfidence(t *testing.T) {
 					tt.diag, tt.hypo, got, tt.want)
 			}
 		})
-	}
-}
-
-// TestShadowRunner_SyncMode exercises the full shadow pipeline end-to-end
-// using the rule-based diagnostician in synchronous mode.
-func TestShadowRunner_SyncMode(t *testing.T) {
-	ctx := context.Background()
-
-	orch, bus, err := BuildShadowPipeline(ctx, "rule")
-	if err != nil {
-		t.Fatalf("BuildShadowPipeline: %v", err)
-	}
-	_ = orch // already started
-
-	ledger, err := NewConcordanceLedger("")
-	if err != nil {
-		t.Fatalf("NewConcordanceLedger: %v", err)
-	}
-
-	runner := NewShadowRunner(orch, bus, ledger, ModeSync, 5*time.Second)
-
-	// Community-acquired pneumonia fixture — the rule diagnostician should
-	// resolve this correctly.
-	caseInput := `{
-		"chief_complaint": "Cough and fever",
-		"hpi": "58-year-old presents with 5 days productive cough and fever to 38.9C",
-		"demographics": "58M",
-		"vitals": "T 38.9C, HR 98, RR 22, SpO2 94%",
-		"case_id": "shadow-test-001"
-	}`
-
-	rec, err := runner.RunShadow(ctx, caseInput, "Community-acquired pneumonia")
-	if err != nil {
-		t.Fatalf("RunShadow: %v", err)
-	}
-	if rec == nil {
-		t.Fatal("RunShadow returned nil record in sync mode")
-	}
-
-	t.Logf("AI decision: %q", rec.AIDecision)
-	t.Logf("Concordant: %v", rec.Concordant)
-	t.Logf("Latency: %dms", rec.LatencyMs)
-
-	if rec.CaseID != "shadow-test-001" {
-		t.Errorf("CaseID = %q, want %q", rec.CaseID, "shadow-test-001")
-	}
-	if rec.ClinicianDecision != "Community-acquired pneumonia" {
-		t.Errorf("ClinicianDecision = %q, want %q", rec.ClinicianDecision, "Community-acquired pneumonia")
-	}
-	if rec.AIDecision == "" {
-		t.Error("AIDecision should not be empty")
-	}
-
-	// Verify report aggregation works.
-	report := runner.Report()
-	if report.Total != 1 {
-		t.Errorf("Report.Total = %d, want 1", report.Total)
-	}
-}
-
-// TestShadowRunner_AsyncMode verifies that async mode returns nil
-// immediately and eventually records the result.
-func TestShadowRunner_AsyncMode(t *testing.T) {
-	ctx := context.Background()
-
-	orch, bus, err := BuildShadowPipeline(ctx, "rule")
-	if err != nil {
-		t.Fatalf("BuildShadowPipeline: %v", err)
-	}
-	_ = orch
-
-	ledger, err := NewConcordanceLedger("")
-	if err != nil {
-		t.Fatalf("NewConcordanceLedger: %v", err)
-	}
-
-	runner := NewShadowRunner(orch, bus, ledger, ModeAsync, 5*time.Second)
-
-	caseInput := `{
-		"chief_complaint": "Cough and fever",
-		"hpi": "58-year-old with productive cough",
-		"demographics": "58M",
-		"vitals": "T 38.5C, HR 95, RR 20",
-		"case_id": "shadow-async-001"
-	}`
-
-	rec, err := runner.RunShadow(ctx, caseInput, "Community-acquired pneumonia")
-	if err != nil {
-		t.Fatalf("RunShadow async: %v", err)
-	}
-	if rec != nil {
-		t.Error("RunShadow async should return nil record")
-	}
-
-	// Give the background goroutine time to complete.
-	time.Sleep(3 * time.Second)
-
-	report := runner.Report()
-	if report.Total < 1 {
-		t.Logf("async record may not have completed yet (Total=%d), skipping assertion", report.Total)
-	} else {
-		t.Logf("Async report: %+v", report)
 	}
 }
 
