@@ -1,4 +1,12 @@
-package orchestration_test
+package agents_test
+
+// Integration tests for the full MARA pipeline assembled from concrete agents.
+// These live in the agents module (not pkg/orchestration) because they wire
+// real agent implementations through the orchestrator; keeping them here means
+// no main-module package — production OR test — imports
+// github.com/PratikDhanave/bodh/agents, which is a prerequisite for the
+// Phase-2 separate-module split (decoupling PR-0.6b). They exercise only
+// exported orchestration symbols, so nothing is lost by the relocation.
 
 import (
 	"context"
@@ -16,10 +24,10 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/registry"
 )
 
-type testEnv struct{}
+type integrationEnv struct{}
 
-func (testEnv) Now() time.Time      { return time.Now() }
-func (testEnv) Logf(string, ...any) {}
+func (integrationEnv) Now() time.Time      { return time.Now() }
+func (integrationEnv) Logf(string, ...any) {}
 
 // TestIntegration_OrchestratorBootstrap verifies that the full MARA pipeline
 // can be assembled and started without error — all agents register, governance
@@ -57,7 +65,7 @@ func TestIntegration_OrchestratorBootstrap(t *testing.T) {
 	)
 
 	// Start orchestrator — should not panic.
-	env := testEnv{}
+	env := integrationEnv{}
 	orch := orchestration.NewOrchestrator(reg, bus, policy, env)
 	orch.Start(ctx)
 	time.Sleep(50 * time.Millisecond)
@@ -101,7 +109,7 @@ func TestIntegration_DiagnosticianDirect(t *testing.T) {
 	content, _ := json.Marshal(cs)
 
 	diag := &agents.DiagnosticianAgent{}
-	env := testEnv{}
+	env := integrationEnv{}
 
 	msgs, err := diag.HandleMessage(context.Background(), agent.Message{
 		From:    "test_planner",
