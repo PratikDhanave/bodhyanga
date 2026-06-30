@@ -14,10 +14,22 @@ type Criteria struct {
 	MinWilsonLower float64
 	// Z is the confidence z-score. Zero ⇒ DefaultZ (1.96, 95%).
 	Z float64
+
+	// AllowAutopilot must be explicitly true to permit promotion INTO the
+	// autopilot stage. It defaults to false, which fences autonomous operation
+	// behind a deliberate, audited decision: clearing the Wilson gate proves an
+	// agent is statistically good, NOT that it is cleared to act on patients
+	// without a human in the loop. Autonomous clinical decisioning is a
+	// regulated change (SaMD), not a statistical threshold — so the statistical
+	// machinery must never grant it on its own. Leave false unless a documented
+	// authorization (regulatory + clinical sign-off) backs the change.
+	AllowAutopilot bool
 }
 
-// DefaultCriteria returns the autopilot-promotion bar from the decoupling plan:
-// a 0.95 Wilson lower bound over at least 100 observations at 95% confidence.
+// DefaultCriteria returns the statistical promotion bar: a 0.95 Wilson lower
+// bound over at least 100 observations at 95% confidence. AllowAutopilot is
+// deliberately left false — the default criteria can promote an agent up to
+// copilot, but never into autopilot without an explicit, authorized override.
 func DefaultCriteria() Criteria {
 	return Criteria{MinObservations: 100, MinWilsonLower: 0.95, Z: DefaultZ}
 }
@@ -67,6 +79,18 @@ func Evaluate(from Stage, successes, total int, c Criteria) Decision {
 		} else {
 			d.Reason = fmt.Sprintf("invalid stage %q; holding", from)
 		}
+		return d
+	}
+	// Regulatory fence: promotion INTO autopilot is categorical, not
+	// statistical. The Wilson gate below is necessary but NOT sufficient for
+	// autonomy — it additionally requires explicit authorization
+	// (Criteria.AllowAutopilot, default false). This check comes BEFORE the
+	// statistical gates so the reason makes the policy nature unmistakable: an
+	// agent does not earn autonomous clinical operation by being accurate.
+	if next == StageAutopilot && !c.AllowAutopilot {
+		d.Reason = "promotion to autopilot requires explicit authorization " +
+			"(Criteria.AllowAutopilot); autonomous clinical decisioning is a " +
+			"regulated change, not a statistical threshold"
 		return d
 	}
 	if total < c.MinObservations {
