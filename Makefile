@@ -285,6 +285,27 @@ all: vet test build
 build:
 	$(GO) build $(PKG)
 
+## Compile-check every build-tag configuration that can build in open CI, so
+## tag-gated code cannot rot undetected. This is a guardrail for a real failure
+## mode: the `nats` JetStream bus silently stopped compiling (its dependency
+## was never committed) and nobody noticed because no CI lane built it. Build
+## tags hide code from the default `make build`/`make test`; anything that
+## ships must be compiled somewhere in CI or it WILL rot.
+##
+## Scope notes:
+##   - default + otel build from a clean checkout and are covered here.
+##   - nats is excluded until its dependency lands (the durable-bus work);
+##     re-add `$(GO) build -tags nats $(PKG)` once go.mod carries nats.go.
+##   - kronk needs the proprietary github.com/ardanlabs/kronk module and so
+##     can only be compiled in an environment that has it (see docker-admin).
+##   - tag-gated INTEGRATION tests that need Docker (NATS, Postgres) run in
+##     their own gated lanes, not here — this target only COMPILES.
+.PHONY: build-tags
+build-tags:
+	@echo "==> build (default)"  && $(GO) build $(PKG)
+	@echo "==> build -tags otel" && $(GO) build -tags otel $(PKG)
+	@echo "==> vet -tags otel"   && $(GO) vet -tags otel $(PKG)
+
 .PHONY: test
 test:
 	$(GO) test $(PKG)
