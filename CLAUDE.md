@@ -1,4 +1,6 @@
-# Bodh — CLAUDE.md
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 Bodh is a **HIPAA-grade medical AI orchestration platform** written in Go. It implements the
 Multi-Agent Reference Architecture (MARA) for clinical decision support: intake → test-planning
@@ -12,7 +14,7 @@ LLM-agnostic provider abstraction.
 ```bash
 make test          # run all Go tests
 make build         # compile all binaries
-make care          # start HTTP API + Vue SPA on :8088
+make care          # start HTTP API + embedded React SPA on :8088
 make demo          # sequential diagnosis demo (Ollama)
 make evals         # multi-turn agent evaluation
 make laminar-eval  # lmnr.evaluate() equivalent
@@ -40,7 +42,7 @@ make help          # full target listing with variable overrides
 
 ### Build tags
 
-Two optional tags gate heavyweight or proprietary features:
+Three optional tags gate heavyweight, proprietary, or alternate-transport code:
 
 ```bash
 # OpenTelemetry + Laminar tracing
@@ -49,13 +51,20 @@ go build -tags otel ./cmd/care
 # Kronk (proprietary) LLM / audio / rerank providers
 go build -tags kronk ./cmd/care
 
-# Both
+# NATS bus transport (pkg/comm) — alternative to the in-process bus
+go build -tags nats ./...
+
+# Combine
 go build -tags "otel kronk" ./cmd/care
 ```
 
-Default (`go build ./...`) compiles without either tag. Every tagged file has a
+Default (`go build ./...`) compiles without any tag. Every tagged file has a
 `_stub.go` counterpart (e.g. `laminar_stub.go`, `kronk_stub.go`) so the project always
 builds cleanly without those tags.
+
+**Tagged code is invisible to default CI, so it silently rots** (this happened to the
+`nats` bus — see ADR-0011). Run `make build-tags` to compile-check the default + `otel`
+build combinations before relying on them.
 
 ---
 
@@ -78,7 +87,7 @@ cmd/                  CLI binaries (one subdirectory per binary)
   bench/              SD-Bench regression runner
   bodhadmin/          admin CLI (migrations, config)
   bodhctl/            control-plane CLI
-  care/               HTTP API + embedded Vue 3 SPA
+  care/               HTTP API + embedded React 18 + TS SPA (web/)
   caredemo/           CDM/TCM/Panel demo
   demo/               sequential diagnosis walkthrough
   evals/              multi-turn evaluation runner
@@ -160,7 +169,38 @@ Key architectural decisions:
 - **`pkg/orchestration`** is an in-process message bus; agents communicate via typed messages
 - **`pkg/audit`** writes an append-only audit log for every clinical action (HIPAA requirement)
 - **`pkg/hitl`** captures human feedback for every AI decision
-- **Build tags** (`otel`, `kronk`) keep the default binary small; stubs satisfy all interfaces
+- **Build tags** (`otel`, `kronk`, `nats`) keep the default binary small; stubs satisfy all interfaces
+
+### Agent-decoupling substrate (Phase 1)
+
+These three packages form the per-message safety boundary that must survive splitting the
+monolith into per-agent processes. Understand them together before touching agent admission:
+
+- **`pkg/governance`** — a composable policy stack (`medical_policy`, `break_glass_policy`,
+  `part2_policy`, `rate_limit_policy`, `smart_scope_policy`, `opa_policy`, …) plus
+  `agentmesh_gate.go`, which provides global + per-agent kill switches for operator demotion.
+- **`pkg/gateway`** — `Pipeline.Admit` extracts Steps 1–2 of `orchestration.Orchestrator.Start`
+  (governance evaluate/deny + audit record) into a **reusable admission-control pipeline**, so a
+  decoupled agent binary enforces the *identical* boundary the monolith does. **Fail-closed on
+  governance, fail-open on audit; never copy `msg.Content` (PHI) into audit events.** Start at
+  `pkg/gateway/doc.go`.
+- **`pkg/graduation`** — the agent-autonomy lifecycle ladder
+  `development → shadow → copilot → autopilot`. Promotion is **evidence-gated, one rung at a time**,
+  cleared only when the **Wilson-score lower bound** of the success rate beats a threshold over a
+  minimum observation count (default 0.95 / ≥100 obs). The **autopilot fence**
+  (`Criteria.AllowAutopilot`, default `false`) is checked *before* the statistical gate: promoting
+  *into* autopilot requires an explicit authorized override, because unsupervised clinical
+  decisioning is a regulated SaMD change, not a statistics threshold (ADR-0012). Currently a
+  library with no production caller yet — start at `pkg/graduation/stage.go`.
+
+### Architecture decision records
+
+`docs/adr/` holds the design rationale. `0001`–`0005` are foundational (LLM abstraction, audit
+chain-hash, build tags, MARA, PHI de-id). `0006`–`0012` are a 2026 principal-engineer review;
+**read ADR-0006 first — the unresolved "research platform vs clinical product" identity question
+gates how 0007–0012 resolve.** Key open threads: audit is fail-open at every seam and the
+tamper-evident `ImmutableRecorder` is wired nowhere in `cmd/care` (0008); the decoupling plan's
+24 per-agent NATS services may be premature distribution vs. a trust-tier split (0007).
 
 ---
 
@@ -232,4 +272,5 @@ make cover
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
+at specs/001-remaining-plan-items/plan.md
 <!-- SPECKIT END -->
