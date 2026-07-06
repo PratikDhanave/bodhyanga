@@ -4,8 +4,10 @@ import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
 import { useApi } from '../hooks/useApi';
 import { api } from '../api/client';
+import { useI18n } from '../i18n';
 
 export default function CaseRunner() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const fixtures = useApi(() => api.fixtures(), []);
   const [provider, setProvider] = useState('rule');
@@ -41,19 +43,19 @@ export default function CaseRunner() {
   }
 
   return (
-    <Page title="Case runner" subtitle="Trigger a diagnostic flow and watch the agent trace live">
+    <Page title={t('caseRunner.title')} subtitle={t('caseRunner.subtitle')}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card">
-          <div className="card-header">From fixture</div>
+          <div className="card-header">{t('caseRunner.fromFixture')}</div>
           <div className="card-body space-y-3 text-sm">
             {fixtures.loading && <Loader what="fixtures" />}
             {fixtures.error && <ErrorBox error={fixtures.error} retry={fixtures.reload} />}
             {fixtures.data && (
               <>
                 <label className="block">
-                  <span className="text-xs uppercase tracking-wide text-bodh-400">Fixture</span>
+                  <span className="text-xs uppercase tracking-wide text-bodh-400">{t('caseRunner.fixture_label')}</span>
                   <select value={selectedFixture} onChange={(e) => setSelectedFixture(e.target.value)} className="mt-1 w-full border border-bodh-200 rounded px-2 py-1">
-                    <option value="">(use custom presentation below)</option>
+                    <option value="">{t('caseRunner.fixture_placeholder')}</option>
                     {fixtures.data.map((f) => (
                       <option key={f.case_id} value={f.case_id}>{f.case_id} · {f.condition} · {f.gold_diagnosis}</option>
                     ))}
@@ -64,10 +66,10 @@ export default function CaseRunner() {
           </div>
         </div>
         <div className="card">
-          <div className="card-header">Provider</div>
+          <div className="card-header">{t('caseRunner.provider')}</div>
           <div className="card-body text-sm">
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">Diagnostician</span>
+              <span className="text-xs uppercase tracking-wide text-bodh-400">{t('caseRunner.diagnostician_label')}</span>
               <select value={provider} onChange={(e) => setProvider(e.target.value)} className="mt-1 w-full border border-bodh-200 rounded px-2 py-1">
                 <option value="rule">rule (deterministic)</option>
                 <option value="llm-anthropic">llm-anthropic (Claude)</option>
@@ -75,37 +77,37 @@ export default function CaseRunner() {
                 <option value="llm-ollama">llm-ollama (local)</option>
               </select>
             </label>
-            <p className="text-xs text-bodh-400 mt-2">LLM providers require the matching API-key env var on the cmd/care server.</p>
+            <p className="text-xs text-bodh-400 mt-2">{t('caseRunner.llm_hint')}</p>
           </div>
         </div>
       </div>
 
       {!selectedFixture && (
         <div className="card">
-          <div className="card-header">Custom presentation</div>
+          <div className="card-header">{t('caseRunner.customPresentation')}</div>
           <div className="card-body grid grid-cols-1 lg:grid-cols-2 gap-3 text-sm">
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">Chief complaint</span>
+              <span className="text-xs uppercase tracking-wide text-bodh-400">{t('caseRunner.chiefComplaint')}</span>
               <input value={chiefComplaint} onChange={(e) => setChiefComplaint(e.target.value)} className="mt-1 w-full border border-bodh-200 rounded px-2 py-1" />
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">Condition tag</span>
+              <span className="text-xs uppercase tracking-wide text-bodh-400">{t('caseRunner.conditionTag')}</span>
               <input value={condition} onChange={(e) => setCondition(e.target.value)} className="mt-1 w-full border border-bodh-200 rounded px-2 py-1" />
             </label>
             <label className="block lg:col-span-2">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">HPI</span>
+              <span className="text-xs uppercase tracking-wide text-bodh-400">{t('caseRunner.hpi')}</span>
               <textarea value={hpi} onChange={(e) => setHPI(e.target.value)} className="mt-1 w-full border border-bodh-200 rounded px-2 py-1" rows={3} />
             </label>
             <label className="block lg:col-span-2">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">Vitals</span>
+              <span className="text-xs uppercase tracking-wide text-bodh-400">{t('caseRunner.vitals')}</span>
               <input value={vitals} onChange={(e) => setVitals(e.target.value)} className="mt-1 w-full border border-bodh-200 rounded px-2 py-1" />
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">Max diagnostic cost (USD)</span>
+              <span className="text-xs uppercase tracking-wide text-bodh-400">{t('caseRunner.maxCost')}</span>
               <input type="number" value={maxCostUSD} onChange={(e) => setMaxCostUSD(Number(e.target.value))} className="mt-1 w-full border border-bodh-200 rounded px-2 py-1" />
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">Gold diagnosis (for scoring)</span>
+              <span className="text-xs uppercase tracking-wide text-bodh-400">{t('caseRunner.goldDiagnosis')}</span>
               <input value={goldDiagnosis} onChange={(e) => setGoldDiagnosis(e.target.value)} className="mt-1 w-full border border-bodh-200 rounded px-2 py-1" />
             </label>
           </div>
@@ -116,7 +118,7 @@ export default function CaseRunner() {
 
       <div className="flex justify-end">
         <button onClick={run} disabled={submitting} className="btn">
-          {submitting ? 'Starting…' : 'Run case'}
+          {submitting ? t('caseRunner.starting') : t('caseRunner.runCase')}
         </button>
       </div>
     </Page>

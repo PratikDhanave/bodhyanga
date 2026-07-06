@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import FineTune from '../FineTune';
 import { mockFetch } from '../../test/setup';
+import I18nProvider from '../../i18n/I18nProvider';
 
 const STATUS = {
   decided_reviews: 145,
@@ -13,9 +14,11 @@ const STATUS = {
 
 function renderFineTune() {
   return render(
-    <MemoryRouter>
-      <FineTune />
-    </MemoryRouter>,
+    <I18nProvider>
+      <MemoryRouter>
+        <FineTune />
+      </MemoryRouter>
+    </I18nProvider>,
   );
 }
 

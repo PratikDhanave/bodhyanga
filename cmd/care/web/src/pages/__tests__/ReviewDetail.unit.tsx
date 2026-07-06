@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ReviewDetail from '../ReviewDetail';
@@ -25,7 +25,6 @@ function renderAt(id: string) {
 
 describe('ReviewDetail', () => {
   it('submits POST /api/reviews/{id}/decide with approve when Approve clicked and confirmed', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
     const fetchFn = mockFetch((input, init) => {
       const url = routeFor(input);
       const method = (init?.method || 'GET').toUpperCase();
@@ -50,7 +49,7 @@ describe('ReviewDetail', () => {
       return {};
     });
 
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const user = userEvent.setup();
     renderAt('r1');
 
     // Wait for the form to render.
@@ -58,35 +57,63 @@ describe('ReviewDetail', () => {
     await user.clear(reviewerInput);
     await user.type(reviewerInput, 'dr-foo');
 
-    // Click Approve — opens confirmation modal
+    // Click Approve — opens ConfirmationModal
     await user.click(screen.getByRole('button', { name: 'Approve' }));
 
-    // Confirmation modal should show
-    expect(screen.getByText('Confirm Clinical Decision')).toBeInTheDocument();
+    // ConfirmationModal should show with title and reason textarea
+    expect(screen.getByText('Confirm Approve')).toBeInTheDocument();
 
-    // Wait for the 2-second safety delay
-    await act(async () => { vi.advanceTimersByTime(2100); });
+    // ConfirmationModal requires a reason before the confirm button is enabled
+    // Wait for the 2-second default delay to pass
+    const reasonInput = screen.getByLabelText(/Reason/);
+    fireEvent.change(reasonInput, { target: { value: 'Clinical judgment' } });
 
-    // Click confirm
-    const confirmBtn = screen.getByRole('button', { name: /Confirm Approve/ });
-    await user.click(confirmBtn);
+    // Wait for the safety delay to clear and Confirm button to appear
+    await waitFor(() => screen.getByRole('button', { name: 'Confirm' }), { timeout: 3000 });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
 
     // Find the POST call.
-    const postCall = fetchFn.mock.calls.find((c) => {
-      const init = c[1] as RequestInit | undefined;
-      return (init?.method || 'GET').toUpperCase() === 'POST';
+    await waitFor(() => {
+      const postCall = fetchFn.mock.calls.find((c) => {
+        const init = c[1] as RequestInit | undefined;
+        return (init?.method || 'GET').toUpperCase() === 'POST';
+      });
+      expect(postCall).toBeDefined();
+      const [postUrl, postInit] = postCall!;
+      expect(routeFor(postUrl as RequestInfo | URL)).toBe('/api/reviews/r1/decide');
+      const body = JSON.parse((postInit as RequestInit).body as string);
+      expect(body).toEqual(
+        expect.objectContaining({
+          reviewer_id: 'dr-foo',
+          decision: 'approved',
+          reason: 'Clinical judgment',
+        }),
+      );
     });
-    expect(postCall).toBeDefined();
-    const [postUrl, postInit] = postCall!;
-    expect(routeFor(postUrl as RequestInfo | URL)).toBe('/api/reviews/r1/decide');
-    const body = JSON.parse((postInit as RequestInit).body as string);
-    expect(body).toEqual(
-      expect.objectContaining({
-        reviewer_id: 'dr-foo',
-        decision: 'approved',
-      }),
-    );
-    vi.useRealTimers();
+  });
+
+  it('opens ConfirmationModal with danger styling for Reject', async () => {
+    mockFetch((input) => {
+      const url = routeFor(input);
+      if (url.endsWith('/api/reviews/r1')) {
+        return {
+          id: 'r1',
+          kind: 'sign_off',
+          status: 'pending',
+          subject: 'Approve cap dx',
+          submitted_at: '2026-01-01T00:00:00Z',
+        };
+      }
+      return {};
+    });
+
+    renderAt('r1');
+    const rejectBtn = await screen.findByRole('button', { name: 'Reject' });
+    fireEvent.click(rejectBtn);
+
+    // ConfirmationModal title should reflect Reject action
+    expect(screen.getByText('Confirm Reject')).toBeInTheDocument();
   });
 
   it('disables modification button until textarea has content', async () => {

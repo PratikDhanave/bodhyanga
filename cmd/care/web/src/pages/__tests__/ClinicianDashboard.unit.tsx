@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ClinicianDashboard from '../ClinicianDashboard';
 import { mockFetch } from '../../test/setup';
@@ -105,13 +105,15 @@ describe('ClinicianDashboard', () => {
     expect(rejectButtons.length).toBe(2);
   });
 
-  it('renders the accuracy chart when bench data exists', async () => {
+  it('renders the accuracy chart with ConfidenceDisplay', async () => {
     setupMockFetch();
     renderDashboard();
 
     expect(await screen.findByText('Accuracy by Provider')).toBeInTheDocument();
     expect(screen.getByText('rule')).toBeInTheDocument();
-    expect(screen.getByText('85.0%')).toBeInTheDocument();
+    // ConfidenceDisplay renders "High" category and "(85%)" for 0.85
+    expect(screen.getByText('High')).toBeInTheDocument();
+    expect(screen.getByText('(85%)')).toBeInTheDocument();
   });
 
   it('shows error when reviews API fails', async () => {
@@ -126,5 +128,50 @@ describe('ClinicianDashboard', () => {
     renderDashboard();
 
     expect(await screen.findByText('Something went wrong.')).toBeInTheDocument();
+  });
+
+  it('Accept button opens ConfirmationModal with reason textarea', async () => {
+    setupMockFetch();
+    renderDashboard();
+
+    await screen.findByText('Approve CHF dx');
+    const acceptButtons = screen.getAllByRole('button', { name: 'Accept' });
+    fireEvent.click(acceptButtons[0]);
+
+    // ConfirmationModal should show with a required reason textarea
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Reason/)).toBeInTheDocument();
+    });
+  });
+
+  it('Cancel in ConfirmationModal closes without API call', async () => {
+    const fetchFn = setupMockFetch();
+    renderDashboard();
+
+    await screen.findByText('Approve CHF dx');
+    const acceptButtons = screen.getAllByRole('button', { name: 'Accept' });
+    fireEvent.click(acceptButtons[0]);
+
+    // Modal opens
+    await waitFor(() => screen.getByLabelText(/Reason/));
+
+    // Click Cancel
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    // No POST call should have been made
+    const postCalls = fetchFn.mock.calls.filter((c) => {
+      const init = c[1] as RequestInit | undefined;
+      return (init?.method || 'GET').toUpperCase() === 'POST';
+    });
+    expect(postCalls).toHaveLength(0);
+  });
+
+  it('renders ConfidenceDisplay for accuracy values in chart', async () => {
+    setupMockFetch();
+    renderDashboard();
+
+    expect(await screen.findByText('Accuracy by Provider')).toBeInTheDocument();
+    // ConfidenceDisplay renders the category label — 85% → "High"
+    expect(screen.getByText('High')).toBeInTheDocument();
   });
 });

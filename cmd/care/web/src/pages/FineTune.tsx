@@ -4,18 +4,20 @@ import Loader, { ErrorBox } from '../components/Loader';
 import { Tooltip } from '../components/Tooltip';
 import { useApi } from '../hooks/useApi';
 import { api } from '../api/client';
+import { useI18n } from '../i18n';
 
 const CLI_COMMAND = `go run ./cmd/export-hitl-feedback \\
   -in ./data/hitl-sample.json \\
   -out-dir /tmp/ft-out`;
 
 export default function FineTune() {
+  const { t } = useI18n();
   const { data, loading, error, reload } = useApi(() => api.fineTuneStatus(), []);
   const [copied, setCopied] = useState(false);
 
-  if (loading) return <Page title="Fine-tune export"><Loader what="fine-tune status" /></Page>;
-  if (error) return <Page title="Fine-tune export"><ErrorBox error={error} retry={reload} /></Page>;
-  if (!data) return <Page title="Fine-tune export"><p>No data.</p></Page>;
+  if (loading) return <Page title={t('fineTune.title')}><Loader what="fine-tune status" /></Page>;
+  if (error) return <Page title={t('fineTune.title')}><ErrorBox error={error} retry={reload} /></Page>;
+  if (!data) return <Page title={t('fineTune.title')}><p>{t('fineTune.noData')}</p></Page>;
 
   async function copyCommand() {
     try {
@@ -28,32 +30,32 @@ export default function FineTune() {
   }
 
   return (
-    <Page title="Fine-tune export" subtitle="HITL decisions as training data">
+    <Page title={t('fineTune.title')} subtitle={t('fineTune.subtitle')}>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat label="Decided reviews" value={data.decided_reviews} />
-        <Stat label="Pending reviews" value={data.pending_reviews} />
+        <Stat label={t('fineTune.decidedReviews')} value={data.decided_reviews} />
+        <Stat label={t('fineTune.pendingReviews')} value={data.pending_reviews} />
         <Stat
-          label="Projected SFT lines"
+          label={t('fineTune.projectedSFT')}
           value={data.sft_lines}
           emphasis
-          tooltip="Supervised Fine-Tuning: each decided review becomes one training example"
+          tooltip={t('fineTune.projectedSFT_tooltip')}
         />
         <Stat
-          label="Projected DPO pairs"
+          label={t('fineTune.projectedDPO')}
           value={data.dpo_pairs}
           emphasis
-          tooltip="Direct Preference Optimization: pairs of chosen (approved) vs rejected responses"
+          tooltip={t('fineTune.projectedDPO_tooltip')}
         />
       </div>
       <div className="card">
         <div className="card-header flex items-center justify-between">
-          <span>How to export</span>
+          <span>{t('fineTune.howToExport')}</span>
           <button
             onClick={() => { void copyCommand(); }}
             className="btn-secondary text-xs"
-            title="Copy command to clipboard"
+            title={t('fineTune.copyCommand_tooltip')}
           >
-            {copied ? 'Copied!' : 'Copy command'}
+            {copied ? t('fineTune.copied') : t('fineTune.copyCommand')}
           </button>
         </div>
         <div className="card-body space-y-2 text-sm">

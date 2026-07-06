@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 // Cost.tsx calls api.costAnalytics() which is not yet defined in the api
@@ -16,6 +16,7 @@ vi.mock('../../api/client', () => ({
 
 // Import after mock is set up (vi.mock is hoisted automatically)
 import Cost from '../Cost';
+import I18nProvider from '../../i18n/I18nProvider';
 
 const COST_DATA = {
   today_usd: 12.50,
@@ -41,9 +42,11 @@ const COST_DATA = {
 
 function renderCost() {
   return render(
-    <MemoryRouter>
-      <Cost />
-    </MemoryRouter>,
+    <I18nProvider>
+      <MemoryRouter>
+        <Cost />
+      </MemoryRouter>
+    </I18nProvider>,
   );
 }
 
@@ -88,11 +91,12 @@ describe('Cost', () => {
     costAnalyticsMock.mockResolvedValue(COST_DATA);
     renderCost();
 
-    expect(await screen.findByText('Top agents by spend')).toBeInTheDocument();
-    expect(screen.getByText('diagnostician-llm')).toBeInTheDocument();
-    expect(screen.getByText('care-plan-gen')).toBeInTheDocument();
-    expect(screen.getByText('$45.00')).toBeInTheDocument();
-    expect(screen.getByText('$18.50')).toBeInTheDocument();
+    const table = await screen.findByRole('table', { name: 'Cost breakdown by provider' });
+    const view = within(table);
+    expect(view.getByText('diagnostician-llm')).toBeInTheDocument();
+    expect(view.getByText('care-plan-gen')).toBeInTheDocument();
+    expect(view.getByText('$45.00')).toBeInTheDocument();
+    expect(view.getByText('$18.50')).toBeInTheDocument();
   });
 
   it('shows budget exceeded alert when today exceeds budget', async () => {

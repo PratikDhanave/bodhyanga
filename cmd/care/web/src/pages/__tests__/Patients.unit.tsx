@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Patients from '../Patients';
 import { mockFetch } from '../../test/setup';
 import type { PatientRecord } from '../../types';
+import I18nProvider from '../../i18n/I18nProvider';
 
 const PATIENTS: PatientRecord[] = [
   {
@@ -26,9 +27,11 @@ const PATIENTS: PatientRecord[] = [
 
 function renderPatients() {
   return render(
-    <MemoryRouter>
-      <Patients />
-    </MemoryRouter>,
+    <I18nProvider>
+      <MemoryRouter>
+        <Patients />
+      </MemoryRouter>
+    </I18nProvider>,
   );
 }
 
@@ -37,34 +40,39 @@ describe('Patients', () => {
     mockFetch(() => PATIENTS);
     renderPatients();
 
-    expect(await screen.findByText('Jane Doe')).toBeInTheDocument();
-    expect(screen.getByText('John Smith')).toBeInTheDocument();
+    const table = await screen.findByRole('table', { name: 'Patient registry' });
+    const view = within(table);
+    expect(view.getByText('Jane Doe')).toBeInTheDocument();
+    expect(view.getByText('John Smith')).toBeInTheDocument();
   });
 
   it('renders conditions as badges', async () => {
     mockFetch(() => PATIENTS);
     renderPatients();
 
-    await screen.findByText('Jane Doe');
-    expect(screen.getByText('CHF')).toBeInTheDocument();
-    expect(screen.getByText('T2DM')).toBeInTheDocument();
-    expect(screen.getByText('COPD')).toBeInTheDocument();
+    const table = await screen.findByRole('table', { name: 'Patient registry' });
+    const view = within(table);
+    expect(await view.findByText('CHF')).toBeInTheDocument();
+    expect(view.getByText('T2DM')).toBeInTheDocument();
+    expect(view.getByText('COPD')).toBeInTheDocument();
   });
 
   it('renders medications list', async () => {
     mockFetch(() => PATIENTS);
     renderPatients();
 
-    await screen.findByText('Jane Doe');
-    expect(screen.getByText('Metformin, Lisinopril')).toBeInTheDocument();
+    const table = await screen.findByRole('table', { name: 'Patient registry' });
+    const view = within(table);
+    expect(await view.findByText('Metformin, Lisinopril')).toBeInTheDocument();
   });
 
   it('shows blood pressure', async () => {
     mockFetch(() => PATIENTS);
     renderPatients();
 
-    await screen.findByText('Jane Doe');
-    expect(screen.getByText('130/85')).toBeInTheDocument();
+    const table = await screen.findByRole('table', { name: 'Patient registry' });
+    const view = within(table);
+    expect(await view.findByText('130/85')).toBeInTheDocument();
   });
 
   it('shows empty state when no patients', async () => {
@@ -77,7 +85,8 @@ describe('Patients', () => {
     mockFetch(() => PATIENTS);
     renderPatients();
 
-    await screen.findByText('Jane Doe');
+    const table = await screen.findByRole('table', { name: 'Patient registry' });
+    await within(table).findByText('Jane Doe');
     expect(screen.getByText('2 in registry')).toBeInTheDocument();
   });
 
@@ -85,7 +94,8 @@ describe('Patients', () => {
     mockFetch(() => [{ patient_id: 'PAT-003' }]);
     renderPatients();
 
-    await screen.findByText('PAT-003');
+    const table = await screen.findByRole('table', { name: 'Patient registry' });
+    await within(table).findByText('PAT-003');
     // Name, medications, A1c, BP, discharged should all show dash
     const dashes = screen.getAllByText('–');
     expect(dashes.length).toBeGreaterThanOrEqual(4);
@@ -102,7 +112,8 @@ describe('Patients', () => {
     mockFetch(() => PATIENTS);
     renderPatients();
 
-    await screen.findByText('Jane Doe');
+    const table = await screen.findByRole('table', { name: 'Patient registry' });
+    await within(table).findByText('Jane Doe');
     expect(screen.getByPlaceholderText(/Search by ID/)).toBeInTheDocument();
   });
 
@@ -110,7 +121,9 @@ describe('Patients', () => {
     mockFetch(() => PATIENTS);
     renderPatients();
 
-    const link = await screen.findByText('PAT-001');
+    const table = await screen.findByRole('table', { name: 'Patient registry' });
+    const view = within(table);
+    const link = await view.findByText('PAT-001');
     expect(link.closest('a')).toHaveAttribute('href', '/patients/PAT-001');
   });
 
@@ -118,7 +131,8 @@ describe('Patients', () => {
     mockFetch(() => PATIENTS);
     renderPatients();
 
-    await screen.findByText('Jane Doe');
+    const table = await screen.findByRole('table', { name: 'Patient registry' });
+    await within(table).findByText('Jane Doe');
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
   });
 });

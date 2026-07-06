@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { t, useI18n, SUPPORTED_LOCALES, LOCALE_LABELS } from '../index';
 import I18nProvider from '../I18nProvider';
-import type { Locale } from '../index';
 
 // Helper component to test useI18n hook
 function I18nConsumer() {

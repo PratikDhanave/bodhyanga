@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import Tasks from '../Tasks';
@@ -25,9 +25,11 @@ describe('Tasks', () => {
     mockFetch(() => TASKS);
     renderTasks();
 
-    expect(await screen.findByText('Call patient about labs')).toBeInTheDocument();
-    expect(screen.getByText('Review discharge meds')).toBeInTheDocument();
-    expect(screen.getByText('Schedule cardiology referral')).toBeInTheDocument();
+    const table = await screen.findByRole('table', { name: 'Nurse tasks' });
+    const view = within(table);
+    expect(view.getByText('Call patient about labs')).toBeInTheDocument();
+    expect(view.getByText('Review discharge meds')).toBeInTheDocument();
+    expect(view.getByText('Schedule cardiology referral')).toBeInTheDocument();
   });
 
   it('shows empty state when no tasks', async () => {
@@ -41,12 +43,14 @@ describe('Tasks', () => {
     const user = userEvent.setup();
     renderTasks();
 
-    await screen.findByText('Call patient about labs');
+    const table = await screen.findByRole('table', { name: 'Nurse tasks' });
+    const view = within(table);
+    await view.findByText('Call patient about labs');
     await user.click(screen.getByRole('tab', { name: /Urgent/ }));
 
-    expect(screen.getByText('Call patient about labs')).toBeInTheDocument();
-    expect(screen.queryByText('Review discharge meds')).not.toBeInTheDocument();
-    expect(screen.queryByText('Schedule cardiology referral')).not.toBeInTheDocument();
+    expect(view.getByText('Call patient about labs')).toBeInTheDocument();
+    expect(view.queryByText('Review discharge meds')).not.toBeInTheDocument();
+    expect(view.queryByText('Schedule cardiology referral')).not.toBeInTheDocument();
   });
 
   it('filters by open when Open tab is clicked', async () => {
@@ -54,12 +58,14 @@ describe('Tasks', () => {
     const user = userEvent.setup();
     renderTasks();
 
-    await screen.findByText('Call patient about labs');
+    const table = await screen.findByRole('table', { name: 'Nurse tasks' });
+    const view = within(table);
+    await view.findByText('Call patient about labs');
     await user.click(screen.getByRole('tab', { name: /Open/ }));
 
-    expect(screen.getByText('Call patient about labs')).toBeInTheDocument();
-    expect(screen.getByText('Schedule cardiology referral')).toBeInTheDocument();
-    expect(screen.queryByText('Review discharge meds')).not.toBeInTheDocument();
+    expect(view.getByText('Call patient about labs')).toBeInTheDocument();
+    expect(view.getByText('Schedule cardiology referral')).toBeInTheDocument();
+    expect(view.queryByText('Review discharge meds')).not.toBeInTheDocument();
   });
 
   it('shows all tasks when All tab is clicked after filtering', async () => {
@@ -67,19 +73,23 @@ describe('Tasks', () => {
     const user = userEvent.setup();
     renderTasks();
 
-    await screen.findByText('Call patient about labs');
+    const table = await screen.findByRole('table', { name: 'Nurse tasks' });
+    const view = within(table);
+    await view.findByText('Call patient about labs');
     await user.click(screen.getByRole('tab', { name: /Urgent/ }));
     await user.click(screen.getByRole('tab', { name: /All/ }));
 
-    expect(screen.getByText('Call patient about labs')).toBeInTheDocument();
-    expect(screen.getByText('Review discharge meds')).toBeInTheDocument();
+    expect(view.getByText('Call patient about labs')).toBeInTheDocument();
+    expect(view.getByText('Review discharge meds')).toBeInTheDocument();
   });
 
   it('renders priority badges correctly', async () => {
     mockFetch(() => TASKS);
     renderTasks();
 
-    const urgentBadge = await screen.findByText('urgent');
+    const table = await screen.findByRole('table', { name: 'Nurse tasks' });
+    const view = within(table);
+    const urgentBadge = view.getByText('urgent');
     expect(urgentBadge.className).toContain('badge-urgent');
   });
 
@@ -87,7 +97,8 @@ describe('Tasks', () => {
     mockFetch(() => TASKS);
     renderTasks();
 
-    await screen.findByText('Call patient about labs');
+    const table = await screen.findByRole('table', { name: 'Nurse tasks' });
+    await within(table).findByText('Call patient about labs');
     expect(screen.getByText('3 of 3')).toBeInTheDocument();
   });
 
@@ -95,7 +106,8 @@ describe('Tasks', () => {
     mockFetch(() => TASKS);
     renderTasks();
 
-    await screen.findByText('Call patient about labs');
+    const table = await screen.findByRole('table', { name: 'Nurse tasks' });
+    await within(table).findByText('Call patient about labs');
     const overdueTab = screen.getByRole('tab', { name: /Overdue/ });
     expect(overdueTab).toBeInTheDocument();
   });
@@ -105,9 +117,11 @@ describe('Tasks', () => {
     const user = userEvent.setup();
     renderTasks();
 
-    await screen.findByText('Call patient about labs');
+    const table = await screen.findByRole('table', { name: 'Nurse tasks' });
+    const view = within(table);
+    await view.findByText('Call patient about labs');
     // Click Priority header to sort by priority
-    const priorityHeader = screen.getByText(/^Priority/);
+    const priorityHeader = view.getByText(/^Priority/);
     await user.click(priorityHeader);
     expect(priorityHeader.textContent).toContain('↓');
   });
@@ -116,9 +130,11 @@ describe('Tasks', () => {
     mockFetch(() => TASKS);
     renderTasks();
 
-    await screen.findByText('Call patient about labs');
+    const table = await screen.findByRole('table', { name: 'Nurse tasks' });
+    const view = within(table);
+    await view.findByText('Call patient about labs');
     // Due header should show ↓ since it's the default sort
-    const dueHeader = screen.getByText(/^Due/);
+    const dueHeader = view.getByText(/^Due/);
     expect(dueHeader.textContent).toContain('↓');
   });
 });

@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import PanelReport from '../PanelReport';
 import { mockFetch } from '../../test/setup';
 import type { PanelReport as PanelReportData } from '../../types';
+import I18nProvider from '../../i18n/I18nProvider';
 
 const REPORT: PanelReportData = {
   patients: 42,
@@ -17,9 +18,11 @@ const REPORT: PanelReportData = {
 
 function renderPanel() {
   return render(
-    <MemoryRouter>
-      <PanelReport />
-    </MemoryRouter>,
+    <I18nProvider>
+      <MemoryRouter>
+        <PanelReport />
+      </MemoryRouter>
+    </I18nProvider>,
   );
 }
 
@@ -28,9 +31,11 @@ describe('PanelReport', () => {
     mockFetch(() => REPORT);
     renderPanel();
 
-    expect(await screen.findByText('A1c not checked in 6 months')).toBeInTheDocument();
-    expect(screen.getByText('Overdue screening')).toBeInTheDocument();
-    expect(screen.getByText('Annual flu vaccine due')).toBeInTheDocument();
+    const table = await screen.findByRole('table', { name: 'Panel report metrics' });
+    const view = within(table);
+    expect(view.getByText('A1c not checked in 6 months')).toBeInTheDocument();
+    expect(view.getByText('Overdue screening')).toBeInTheDocument();
+    expect(view.getByText('Annual flu vaccine due')).toBeInTheDocument();
   });
 
   it('displays the subtitle with patient and gap counts', async () => {
@@ -71,9 +76,11 @@ describe('PanelReport', () => {
     mockFetch(() => REPORT);
     renderPanel();
 
-    const highBadge = await screen.findByText('high');
+    const table = await screen.findByRole('table', { name: 'Panel report metrics' });
+    const view = within(table);
+    const highBadge = view.getByText('high');
     expect(highBadge.className).toContain('badge-urgent');
-    const urgentBadge = screen.getByText('urgent');
+    const urgentBadge = view.getByText('urgent');
     expect(urgentBadge.className).toContain('badge-urgent');
   });
 });

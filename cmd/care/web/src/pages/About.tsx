@@ -1,8 +1,10 @@
 import Page from '../components/Page';
+import { useI18n } from '../i18n';
 
 export default function About() {
+  const { t } = useI18n();
   return (
-    <Page title="About" subtitle="Bodh — Medical Diagnostic Orchestrator & Care Services Platform">
+    <Page title={t('about.title')} subtitle={t('about.subtitle')}>
       <div className="card">
         <div className="card-body space-y-4 text-sm leading-relaxed">
           <p>
@@ -11,8 +13,8 @@ export default function About() {
             <a href="https://microsoft.ai/news/the-path-to-medical-superintelligence/" target="_blank" rel="noreferrer" className="text-bodh-600 underline"> MAI-DxO</a>, and adds a care-services layer (CDM, TCM, panel management, RPM, engagement, readmission tracking) on the same bus.
           </p>
           <div className="border-l-4 border-amber-400 bg-amber-50 p-3 rounded">
-            <p className="font-semibold text-amber-900">Research disclaimer</p>
-            <p className="text-amber-900 mt-1">Bodh is a research and engineering reference. Do not use for real patient care, triage, treatment, or billing.</p>
+            <p className="font-semibold text-amber-900">{t('about.disclaimer_heading')}</p>
+            <p className="text-amber-900 mt-1">{t('about.disclaimer_body')}</p>
           </div>
           <ul className="list-disc pl-5 space-y-1">
             <li>Repository: <a href="https://github.com/PratikDhanave/bodh" target="_blank" rel="noreferrer" className="text-bodh-600 underline">github.com/PratikDhanave/bodh</a></li>

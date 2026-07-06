@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
-import { Modal } from '../components/Modal';
+import ConfirmationModal from '../components/ConfirmationModal';
 import { useApi } from '../hooks/useApi';
 import { useToast } from '../components/Toast';
 import { api } from '../api/client';
@@ -17,11 +17,6 @@ const DECISION_LABELS: Record<ReviewDecision, string> = {
   approved_with_modifications: 'Approve with modifications',
   rejected: 'Reject',
 };
-const DECISION_COLORS: Record<ReviewDecision, string> = {
-  approved: 'bg-emerald-600 hover:bg-emerald-700',
-  approved_with_modifications: 'bg-amber-600 hover:bg-amber-700',
-  rejected: 'bg-rose-600 hover:bg-rose-700',
-};
 
 export default function ReviewDetail() {
   const { id = '' } = useParams();
@@ -32,38 +27,17 @@ export default function ReviewDetail() {
   // Pre-fill reviewer from JWT when available
   const user = getCurrentUser();
   const [reviewerId, setReviewerId] = useState(user?.email ?? 'clinician-demo');
-  const [reason, setReason] = useState('');
   const [modification, setModification] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Confirmation modal state
+  // Confirmation modal state — uses ConfirmationModal with built-in reason + delay
   const [confirmDecision, setConfirmDecision] = useState<ReviewDecision | null>(null);
-  const [confirmDelay, setConfirmDelay] = useState(2); // 2-second safety delay
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Count down the confirm delay when modal is open
-  useEffect(() => {
-    if (confirmDecision === null) return;
-    setConfirmDelay(2);
-    timerRef.current = setInterval(() => {
-      setConfirmDelay((prev) => {
-        if (prev <= 1) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [confirmDecision]);
 
   const handleDecisionClick = useCallback((decision: ReviewDecision) => {
     setConfirmDecision(decision);
   }, []);
 
-  const handleConfirm = useCallback(async () => {
+  const handleConfirm = useCallback(async (reason: string) => {
     if (!confirmDecision) return;
     const decision = confirmDecision;
     setConfirmDecision(null);
@@ -82,7 +56,7 @@ export default function ReviewDetail() {
     } finally {
       setSubmitting(false);
     }
-  }, [confirmDecision, id, reviewerId, reason, modification, navigate, showToast]);
+  }, [confirmDecision, id, reviewerId, modification, navigate, showToast]);
 
   if (loading) return <Page title="Review"><Loader what="review" /></Page>;
   if (error) return <Page title="Review"><ErrorBox error={error} retry={reload} /></Page>;
@@ -134,10 +108,6 @@ export default function ReviewDetail() {
                     <input value={reviewerId} onChange={(e) => setReviewerId(e.target.value)} className="mt-1 w-full border border-bodh-200 dark:border-gray-600 dark:bg-gray-700 rounded px-2 py-1" />
                   </label>
                   <label className="block">
-                    <span className="text-xs uppercase tracking-wide text-bodh-400 dark:text-gray-400">Reason</span>
-                    <textarea value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 w-full border border-bodh-200 dark:border-gray-600 dark:bg-gray-700 rounded px-2 py-1" rows={2} />
-                  </label>
-                  <label className="block">
                     <span className="text-xs uppercase tracking-wide text-bodh-400 dark:text-gray-400">Modified payload (if approving with mods)</span>
                     <textarea value={modification} onChange={(e) => setModification(e.target.value)} className="mt-1 w-full border border-bodh-200 dark:border-gray-600 dark:bg-gray-700 rounded px-2 py-1 font-mono text-xs" rows={4} />
                   </label>
@@ -154,45 +124,18 @@ export default function ReviewDetail() {
       </div>
 
       {/* Confirmation modal — clinical safety: prevents accidental decisions */}
-      <Modal
-        open={confirmDecision !== null}
-        onClose={() => setConfirmDecision(null)}
-        title="Confirm Clinical Decision"
-        danger={confirmDecision === 'rejected'}
-      >
-        {confirmDecision && (
-          <div className="space-y-4">
-            <p className="text-sm">
-              You are about to <strong>{DECISION_LABELS[confirmDecision].toLowerCase()}</strong> this review:
-            </p>
-            <div className="bg-bodh-50 dark:bg-gray-700 rounded p-3 text-sm">
-              <div className="font-medium">{data?.subject}</div>
-              <div className="text-xs text-bodh-400 dark:text-gray-400 mt-1">{data?.kind} · Review {data?.id}</div>
-            </div>
-            {reason && (
-              <div className="text-xs">
-                <span className="text-bodh-400 dark:text-gray-400">Reason:</span> {reason}
-              </div>
-            )}
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setConfirmDecision(null)} className="btn-secondary">
-                Cancel
-              </button>
-              <button
-                disabled={confirmDelay > 0}
-                onClick={handleConfirm}
-                className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white
-                            disabled:opacity-50 disabled:cursor-not-allowed ${DECISION_COLORS[confirmDecision]}`}
-              >
-                {confirmDelay > 0
-                  ? `Confirm (${confirmDelay}s)`
-                  : `Confirm ${DECISION_LABELS[confirmDecision]}`
-                }
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      {confirmDecision && (
+        <ConfirmationModal
+          isOpen
+          title={`Confirm ${DECISION_LABELS[confirmDecision]}`}
+          diagnosisSummary={data?.subject ?? ''}
+          patientContext={`${data?.kind ?? ''} · Review ${data?.id ?? ''}`}
+          confidence={data?.meta?.confidence as number | undefined}
+          onConfirm={handleConfirm}
+          onCancel={() => setConfirmDecision(null)}
+          danger={confirmDecision === 'rejected'}
+        />
+      )}
     </Page>
   );
 }

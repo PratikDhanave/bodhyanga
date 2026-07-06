@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
+import DemoBanner from './DemoBanner';
 import { ConnectionStatus } from './ConnectionStatus';
 import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS } from '../i18n';
 import type { Locale } from '../i18n';
@@ -211,6 +212,9 @@ export default function Layout() {
           </div>
           <NotificationBell />
         </header>
+
+        {/* Demo safeguard banner — visible on all pages */}
+        <DemoBanner />
 
         {/* Page content */}
         <main id="main-content" className="flex-1 overflow-y-auto">

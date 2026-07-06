@@ -3,14 +3,17 @@ import { render, screen, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import RunTrace from '../RunTrace';
 import { eventSourceFire, resetEventSources, mockFetch } from '../../test/setup';
+import I18nProvider from '../../i18n/I18nProvider';
 
 function renderAt(runId: string) {
   return render(
-    <MemoryRouter initialEntries={[`/runs/${runId}`]}>
-      <Routes>
-        <Route path="/runs/:runId" element={<RunTrace />} />
-      </Routes>
-    </MemoryRouter>,
+    <I18nProvider>
+      <MemoryRouter initialEntries={[`/runs/${runId}`]}>
+        <Routes>
+          <Route path="/runs/:runId" element={<RunTrace />} />
+        </Routes>
+      </MemoryRouter>
+    </I18nProvider>,
   );
 }
 

@@ -1,9 +1,13 @@
 import { useMemo } from 'react';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
+import CardTable from '../components/CardTable';
+import type { CardColumn } from '../components/CardTable';
 import { useApi } from '../hooks/useApi';
 import { api } from '../api/client';
 import type { CostAnalytics } from '../types/index';
+import { useI18n } from '../i18n';
+import { useTableKeyboardNav } from '../hooks/useTableKeyboardNav';
 
 // Stub data used when the API returns nothing yet
 const STUB: CostAnalytics = {
@@ -33,6 +37,13 @@ const STUB: CostAnalytics = {
   ],
   daily_budget_usd: 10,
 };
+
+const COST_COLUMNS: CardColumn[] = [
+  { key: 'agent', label: 'Agent', showInCard: true, primary: true },
+  { key: 'calls', label: 'Calls', showInCard: true },
+  { key: 'tokens', label: 'Tokens', showInCard: true },
+  { key: 'cost_usd', label: 'Cost', showInCard: true },
+];
 
 const PROVIDER_COLORS: Record<string, string> = {
   anthropic: '#6366f1',
@@ -126,13 +137,13 @@ function DailySparkline({ daily }: { daily: CostAnalytics['daily'] }) {
 }
 
 // ---- Budget alert banner ----
-function BudgetAlert({ today, budget }: { today: number; budget: number }) {
+function BudgetAlert({ today, budget, t }: { today: number; budget: number; t: (key: string) => string }) {
   if (today <= budget) return null;
   return (
     <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3">
       <span className="text-amber-600 text-lg leading-none">!</span>
       <div>
-        <div className="font-semibold text-amber-800 text-sm">Daily budget exceeded</div>
+        <div className="font-semibold text-amber-800 text-sm">{t('cost.budgetExceeded')}</div>
         <div className="text-xs text-amber-700 mt-0.5">
           Spent ${today.toFixed(2)} today — budget is ${budget.toFixed(2)}. Consider routing
           low-complexity cases to Ollama (free, local).
@@ -166,6 +177,7 @@ function SummaryCard({
 }
 
 export default function Cost() {
+  const { t } = useI18n();
   const today = new Date();
   const from = new Date(today);
   from.setDate(from.getDate() - 6);
@@ -178,42 +190,49 @@ export default function Cost() {
 
   // Fall back to stub so the page is always useful
   const data: CostAnalytics = raw ?? STUB;
+  const { getRowProps } = useTableKeyboardNav(data.top_agents.length);
 
   return (
-    <Page title="Cost analytics" subtitle="LLM spend across providers and agents">
+    <Page title={t('cost.title')} subtitle={t('cost.subtitle')}>
+      {/* Synthetic data safeguard notice */}
+      <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-2 text-sm text-amber-800 dark:text-amber-300 flex items-center gap-2" role="status">
+        <span className="font-bold">⚠</span>
+        <span>Synthetic data — not connected to live billing systems</span>
+      </div>
+
       {loading && <Loader what="cost data" />}
       {error && <ErrorBox error={error} retry={reload} />}
 
       {!raw && (
         <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 px-4 py-2 text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
-          <span className="font-medium">Demo data</span>
+          <span className="font-medium">{t('cost.demoData')}</span>
           <span className="text-blue-500 dark:text-blue-400">— wire <code className="font-mono text-xs bg-blue-100 dark:bg-blue-800 px-1 rounded">POST /api/cost/analytics</code> for real cost tracking</span>
         </div>
       )}
 
-      <BudgetAlert today={data.today_usd} budget={data.daily_budget_usd} />
+      <BudgetAlert today={data.today_usd} budget={data.daily_budget_usd} t={t} />
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SummaryCard
-          label="Spend today"
+          label={t('cost.spendToday')}
           value={`$${data.today_usd.toFixed(2)}`}
           sub={`Budget $${data.daily_budget_usd.toFixed(2)}`}
         />
         <SummaryCard
-          label="This month"
+          label={t('cost.thisMonth')}
           value={`$${data.month_usd.toFixed(2)}`}
-          sub="Rolling 30 days"
+          sub={t('cost.thisMonth_sub')}
         />
         <SummaryCard
-          label="Cost per case"
+          label={t('cost.costPerCase')}
           value={`$${data.cost_per_case_usd.toFixed(3)}`}
-          sub="Avg across all providers"
+          sub={t('cost.costPerCase_sub')}
         />
         <SummaryCard
-          label="Savings vs cloud"
+          label={t('cost.savingsVsCloud')}
           value={`$${data.savings_vs_cloud_usd.toFixed(2)}`}
-          sub="Local Ollama inference"
+          sub={t('cost.savingsVsCloud_sub')}
           highlight
         />
       </div>
@@ -221,7 +240,7 @@ export default function Cost() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Spend by provider */}
         <div className="card">
-          <div className="card-header">Spend by provider</div>
+          <div className="card-header">{t('cost.spendByProvider')}</div>
           <div className="card-body">
             <ProviderBars providers={data.providers} />
           </div>
@@ -229,7 +248,7 @@ export default function Cost() {
 
         {/* Daily sparkline */}
         <div className="card">
-          <div className="card-header">Daily spend — last 7 days</div>
+          <div className="card-header">{t('cost.dailySpend')}</div>
           <div className="card-body">
             <DailySparkline daily={data.daily} />
           </div>
@@ -237,29 +256,34 @@ export default function Cost() {
       </div>
 
       {/* Top agents table */}
-      <div className="card overflow-hidden">
-        <div className="card-header">Top agents by spend</div>
-        <table className="min-w-full text-sm" aria-label="Cost breakdown by provider">
-          <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
-            <tr>
-              <th className="px-4 py-2 text-left">Agent</th>
-              <th className="px-4 py-2 text-right">Calls</th>
-              <th className="px-4 py-2 text-right">Tokens</th>
-              <th className="px-4 py-2 text-right">Cost</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.top_agents.map((a) => (
-              <tr key={a.agent} className="border-t border-bodh-100">
-                <td className="px-4 py-2 font-mono text-xs">{a.agent}</td>
-                <td className="px-4 py-2 text-right">{a.calls.toLocaleString()}</td>
-                <td className="px-4 py-2 text-right">{a.tokens.toLocaleString()}</td>
-                <td className="px-4 py-2 text-right">${a.cost_usd.toFixed(2)}</td>
+      <CardTable columns={COST_COLUMNS} data={data.top_agents as unknown as Record<string, unknown>[]} keyField="agent">
+        <div className="card overflow-hidden">
+          <div className="card-header">{t('cost.topAgents')}</div>
+          <table className="min-w-full text-sm" aria-label="Cost breakdown by provider">
+            <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+              <tr>
+                <th className="px-4 py-2 text-left">{t('cost.col_agent')}</th>
+                <th className="px-4 py-2 text-right">{t('cost.col_calls')}</th>
+                <th className="px-4 py-2 text-right">{t('cost.col_tokens')}</th>
+                <th className="px-4 py-2 text-right">{t('cost.col_cost')}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {data.top_agents.map((a, i) => {
+                const rp = getRowProps(i);
+                return (
+                <tr key={a.agent} {...rp} className={`border-t border-bodh-100 ${rp.className}`}>
+                  <td className="px-4 py-2 font-mono text-xs">{a.agent}</td>
+                  <td className="px-4 py-2 text-right">{a.calls.toLocaleString()}</td>
+                  <td className="px-4 py-2 text-right">{a.tokens.toLocaleString()}</td>
+                  <td className="px-4 py-2 text-right">${a.cost_usd.toFixed(2)}</td>
+                </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </CardTable>
     </Page>
   );
 }

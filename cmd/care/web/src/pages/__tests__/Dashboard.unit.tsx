@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Dashboard from '../Dashboard';
 import { mockFetch } from '../../test/setup';
+import I18nProvider from '../../i18n/I18nProvider';
 
 function routeFor(input: RequestInfo | URL): string {
   return typeof input === 'string' ? input : input.toString();
@@ -50,9 +51,11 @@ describe('Dashboard', () => {
     });
 
     render(
-      <MemoryRouter>
-        <Dashboard />
-      </MemoryRouter>,
+      <I18nProvider>
+        <MemoryRouter>
+          <Dashboard />
+        </MemoryRouter>
+      </I18nProvider>,
     );
 
     // Stat tiles render label + value inside a Link container.
@@ -80,9 +83,11 @@ describe('Dashboard', () => {
     });
 
     render(
-      <MemoryRouter>
-        <Dashboard />
-      </MemoryRouter>,
+      <I18nProvider>
+        <MemoryRouter>
+          <Dashboard />
+        </MemoryRouter>
+      </I18nProvider>,
     );
 
     expect(await screen.findByText('No pending reviews.')).toBeInTheDocument();
@@ -110,9 +115,11 @@ describe('Dashboard', () => {
     });
 
     render(
-      <MemoryRouter>
-        <Dashboard />
-      </MemoryRouter>,
+      <I18nProvider>
+        <MemoryRouter>
+          <Dashboard />
+        </MemoryRouter>
+      </I18nProvider>,
     );
 
     expect(await screen.findByText('Sign off diagnosis: CAP')).toBeInTheDocument();

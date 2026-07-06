@@ -2,6 +2,10 @@ import { useState, useCallback } from 'react';
 import Page from '../components/Page';
 import { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
+import CardTable from '../components/CardTable';
+import type { CardColumn } from '../components/CardTable';
+import { useI18n } from '../i18n';
+import { useTableKeyboardNav } from '../hooks/useTableKeyboardNav';
 
 // ---------------------------------------------------------------------------
 // AuditEvent type — mirrors the HIPAA append-only audit log in pkg/audit
@@ -54,15 +58,26 @@ async function fetchAudit(params: {
   }
 }
 
+const COLUMNS: CardColumn[] = [
+  { key: 'ts', label: 'Timestamp', showInCard: true, primary: true },
+  { key: 'agent', label: 'Agent', showInCard: true },
+  { key: 'kind', label: 'Kind', showInCard: true },
+  { key: 'case_id', label: 'Case ID', showInCard: true },
+  { key: 'decision', label: 'Decision', showInCard: true },
+  { key: 'reason', label: 'Reason', showInCard: false },
+];
+
 // ---------------------------------------------------------------------------
 // AuditLog page
 // ---------------------------------------------------------------------------
 export default function AuditLog() {
+  const { t } = useI18n();
   const [filterCaseId, setFilterCaseId] = useState('');
   const [filterKind, setFilterKind] = useState('');
   const [filterAgent, setFilterAgent] = useState('');
 
   const [events, setEvents] = useState<AuditEvent[]>([]);
+  const { getRowProps } = useTableKeyboardNav(events.length);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -122,27 +137,27 @@ export default function AuditLog() {
 
   return (
     <Page
-      title="Audit Log"
-      subtitle="HIPAA append-only event viewer"
+      title={t('auditLog.title')}
+      subtitle={t('auditLog.subtitle')}
       actions={
         events.length > 0 ? (
           <button
             onClick={() => exportCSV(events)}
             className="btn-secondary text-xs"
-            title="Export visible events as CSV"
+            title={t('auditLog.exportCsv_tooltip')}
           >
-            Export CSV
+            {t('auditLog.exportCsv')}
           </button>
         ) : undefined
       }
     >
       {/* Filters */}
       <div className="card">
-        <div className="card-header">Filters</div>
+        <div className="card-header">{t('auditLog.filters')}</div>
         <div className="card-body">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">Case ID</span>
+              <span className="text-xs uppercase tracking-wide text-bodh-400">{t('auditLog.filter_caseId')}</span>
               <input
                 type="text"
                 value={filterCaseId}
@@ -152,7 +167,7 @@ export default function AuditLog() {
               />
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">Event Kind</span>
+              <span className="text-xs uppercase tracking-wide text-bodh-400">{t('auditLog.filter_kind')}</span>
               <input
                 type="text"
                 value={filterKind}
@@ -162,7 +177,7 @@ export default function AuditLog() {
               />
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">Agent</span>
+              <span className="text-xs uppercase tracking-wide text-bodh-400">{t('auditLog.filter_agent')}</span>
               <input
                 type="text"
                 value={filterAgent}
@@ -173,8 +188,8 @@ export default function AuditLog() {
             </label>
           </div>
           <div className="flex gap-2 mt-3">
-            <button onClick={applyFilters} className="btn">Apply</button>
-            <button onClick={clearFilters} className="btn-secondary">Clear</button>
+            <button onClick={applyFilters} className="btn">{t('auditLog.apply')}</button>
+            <button onClick={clearFilters} className="btn-secondary">{t('auditLog.clear')}</button>
           </div>
         </div>
       </div>
@@ -184,81 +199,86 @@ export default function AuditLog() {
 
       {/* Table */}
       {!error && (
-        <div className="card overflow-hidden">
-          <table className="min-w-full text-sm" aria-label="Audit log entries">
-            <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
-              <tr>
-                <th className="px-4 py-2 text-left">Timestamp</th>
-                <th className="px-4 py-2 text-left">Agent</th>
-                <th className="px-4 py-2 text-left">Kind</th>
-                <th className="px-4 py-2 text-left">Case ID</th>
-                <th className="px-4 py-2 text-left">Decision</th>
-                <th className="px-4 py-2 text-left">Reason</th>
-              </tr>
-            </thead>
-            <tbody>
-              {events.map((e) => (
-                <tr key={e.id} className="border-t border-bodh-100 hover:bg-bodh-50">
-                  <td className="px-4 py-2 text-xs text-bodh-400 whitespace-nowrap">
-                    {new Date(e.ts).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-2 font-mono text-xs">{e.agent}</td>
-                  <td className="px-4 py-2">
-                    <span className="badge badge-normal">{e.kind}</span>
-                  </td>
-                  <td className="px-4 py-2 font-mono text-xs">{e.case_id ?? '–'}</td>
-                  <td className="px-4 py-2">
-                    {e.decision ? (
-                      <span className={`badge badge-${decisionBadge(e.decision)}`}>{e.decision}</span>
-                    ) : (
-                      <span className="text-bodh-300">–</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-xs text-bodh-500 max-w-xs truncate" title={e.reason}>
-                    {e.reason ?? '–'}
-                  </td>
-                </tr>
-              ))}
-              {!loading && events.length === 0 && initialLoaded && (
+        <CardTable columns={COLUMNS} data={events as unknown as Record<string, unknown>[]} keyField="id">
+          <div className="card overflow-hidden">
+            <table className="min-w-full text-sm" aria-label="Audit log entries">
+              <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
                 <tr>
-                  <td colSpan={6} className="px-4 py-8">
-                    <div className="text-center text-sm text-bodh-400">
-                      No audit events found.
-                    </div>
-                  </td>
+                  <th className="px-4 py-2 text-left">{t('auditLog.col_timestamp')}</th>
+                  <th className="px-4 py-2 text-left">{t('auditLog.col_agent')}</th>
+                  <th className="px-4 py-2 text-left">{t('auditLog.col_kind')}</th>
+                  <th className="px-4 py-2 text-left">{t('auditLog.col_caseId')}</th>
+                  <th className="px-4 py-2 text-left">{t('auditLog.col_decision')}</th>
+                  <th className="px-4 py-2 text-left">{t('auditLog.col_reason')}</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {events.map((e, i) => {
+                  const rp = getRowProps(i);
+                  return (
+                  <tr key={e.id} {...rp} className={`border-t border-bodh-100 hover:bg-bodh-50 ${rp.className}`}>
+                    <td className="px-4 py-2 text-xs text-bodh-400 whitespace-nowrap">
+                      {new Date(e.ts).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-2 font-mono text-xs">{e.agent}</td>
+                    <td className="px-4 py-2">
+                      <span className="badge badge-normal">{e.kind}</span>
+                    </td>
+                    <td className="px-4 py-2 font-mono text-xs">{e.case_id ?? '–'}</td>
+                    <td className="px-4 py-2">
+                      {e.decision ? (
+                        <span className={`badge badge-${decisionBadge(e.decision)}`}>{e.decision}</span>
+                      ) : (
+                        <span className="text-bodh-300">–</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-xs text-bodh-500 max-w-xs truncate" title={e.reason}>
+                      {e.reason ?? '–'}
+                    </td>
+                  </tr>
+                  );
+                })}
+                {!loading && events.length === 0 && initialLoaded && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8">
+                      <div className="text-center text-sm text-bodh-400">
+                        {t('auditLog.noEvents')}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
 
-          {/* Loading spinner row */}
-          {loading && (
-            <div className="px-4 py-6 text-center text-sm text-bodh-400 animate-pulse">
-              Loading audit events…
-            </div>
-          )}
+            {/* Loading spinner row */}
+            {loading && (
+              <div className="px-4 py-6 text-center text-sm text-bodh-400 animate-pulse">
+                {t('auditLog.loading')}
+              </div>
+            )}
 
-          {/* Load more */}
-          {!loading && hasMore && events.length > 0 && (
-            <div className="px-4 py-3 border-t border-bodh-100 text-center">
-              <button onClick={() => load(false)} className="btn-secondary">
-                Load more
-              </button>
-            </div>
-          )}
+            {/* Load more */}
+            {!loading && hasMore && events.length > 0 && (
+              <div className="px-4 py-3 border-t border-bodh-100 text-center">
+                <button onClick={() => load(false)} className="btn-secondary">
+                  {t('auditLog.loadMore')}
+                </button>
+              </div>
+            )}
 
-          {/* End-of-log indicator */}
-          {!loading && !hasMore && events.length > 0 && (
-            <div className="px-4 py-3 border-t border-bodh-100 text-center text-xs text-bodh-300">
-              End of audit log ({events.length} events)
-            </div>
-          )}
-        </div>
+            {/* End-of-log indicator */}
+            {!loading && !hasMore && events.length > 0 && (
+              <div className="px-4 py-3 border-t border-bodh-100 text-center text-xs text-bodh-300">
+                End of audit log ({events.length} events)
+              </div>
+            )}
+          </div>
+        </CardTable>
       )}
 
       {/* Empty state before first load */}
       {!loading && !error && events.length === 0 && !initialLoaded && (
-        <Empty title="Loading audit events…" hint="Fetching from GET /api/audit" />
+        <Empty title={t('auditLog.empty_title')} hint={t('auditLog.empty_hint')} />
       )}
     </Page>
   );
@@ -278,7 +298,7 @@ function exportCSV(events: AuditEvent[]) {
       .map(escape)
       .join(','),
   );
-  const csv = [headers.join(','), ...rows].join('\n');
+  const csv = ['# DEMO — NOT FOR CLINICAL USE', headers.join(','), ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

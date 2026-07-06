@@ -2,12 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import About from '../About';
+import I18nProvider from '../../i18n/I18nProvider';
 
 function renderAbout() {
   return render(
-    <MemoryRouter>
-      <About />
-    </MemoryRouter>,
+    <I18nProvider>
+      <MemoryRouter>
+        <About />
+      </MemoryRouter>
+    </I18nProvider>,
   );
 }
 

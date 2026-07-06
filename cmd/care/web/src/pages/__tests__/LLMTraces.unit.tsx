@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import LLMTraces from '../LLMTraces';
 import { mockFetch } from '../../test/setup';
 import type { LLMTraceLog } from '../../types';
+import I18nProvider from '../../i18n/I18nProvider';
 
 const TRACES: LLMTraceLog[] = [
   {
@@ -50,9 +51,11 @@ const TRACES: LLMTraceLog[] = [
 
 function renderTraces() {
   return render(
-    <MemoryRouter>
-      <LLMTraces />
-    </MemoryRouter>,
+    <I18nProvider>
+      <MemoryRouter>
+        <LLMTraces />
+      </MemoryRouter>
+    </I18nProvider>,
   );
 }
 
@@ -61,36 +64,43 @@ describe('LLMTraces', () => {
     mockFetch(() => TRACES);
     renderTraces();
 
-    expect(await screen.findByText('diagnostician')).toBeInTheDocument();
-    expect(screen.getByText('care-plan-gen')).toBeInTheDocument();
+    const table = await screen.findByRole('table', { name: 'LLM call traces' });
+    const view = within(table);
+    expect(view.getByText('diagnostician')).toBeInTheDocument();
+    expect(view.getByText('care-plan-gen')).toBeInTheDocument();
   });
 
   it('displays provider and model columns', async () => {
     mockFetch(() => TRACES);
     renderTraces();
 
-    await screen.findByText('diagnostician');
-    const anthropicCells = screen.getAllByText('anthropic');
+    const table = await screen.findByRole('table', { name: 'LLM call traces' });
+    const view = within(table);
+    const anthropicCells = view.getAllByText('anthropic');
     expect(anthropicCells.length).toBe(2);
-    expect(screen.getByText('openai')).toBeInTheDocument();
-    expect(screen.getAllByText('claude-sonnet-4-6').length).toBe(2);
-    expect(screen.getByText('gpt-4o')).toBeInTheDocument();
+    expect(view.getByText('openai')).toBeInTheDocument();
+    expect(view.getAllByText('claude-sonnet-4-6').length).toBe(2);
+    expect(view.getByText('gpt-4o')).toBeInTheDocument();
   });
 
   it('displays combined token counts (in+out) for each trace', async () => {
     mockFetch(() => TRACES);
     renderTraces();
 
-    await screen.findByText('diagnostician');
+    const table = await screen.findByRole('table', { name: 'LLM call traces' });
+    const view = within(table);
+    await view.findByText('diagnostician');
     // in+out column: 2400+680 = 3,080
-    expect(screen.getByText('3,080')).toBeInTheDocument();
+    expect(view.getByText('3,080')).toBeInTheDocument();
   });
 
   it('highlights error rows and shows error text', async () => {
     mockFetch(() => TRACES);
     renderTraces();
 
-    expect(await screen.findByText('context_length_exceeded')).toBeInTheDocument();
+    const table = await screen.findByRole('table', { name: 'LLM call traces' });
+    const view = within(table);
+    expect(await view.findByText('context_length_exceeded')).toBeInTheDocument();
   });
 
   it('shows empty state when no traces exist', async () => {
@@ -112,7 +122,8 @@ describe('LLMTraces', () => {
     const user = userEvent.setup();
     renderTraces();
 
-    await screen.findByText('diagnostician');
+    const table = await screen.findByRole('table', { name: 'LLM call traces' });
+    await within(table).findByText('diagnostician');
     const refreshBtn = screen.getByRole('button', { name: 'Refresh' });
     expect(refreshBtn).toBeInTheDocument();
 
@@ -124,7 +135,8 @@ describe('LLMTraces', () => {
     mockFetch(() => TRACES);
     renderTraces();
 
-    await screen.findByText('diagnostician');
+    const table = await screen.findByRole('table', { name: 'LLM call traces' });
+    await within(table).findByText('diagnostician');
     expect(screen.getByText('3 most recent')).toBeInTheDocument();
   });
 
@@ -132,7 +144,8 @@ describe('LLMTraces', () => {
     mockFetch(() => TRACES);
     renderTraces();
 
-    await screen.findByText('diagnostician');
+    const table = await screen.findByRole('table', { name: 'LLM call traces' });
+    await within(table).findByText('diagnostician');
     // Should show "All 3" and "Errors 1" tabs
     expect(screen.getByText('All')).toBeInTheDocument();
     expect(screen.getByText('Errors')).toBeInTheDocument();
@@ -143,21 +156,24 @@ describe('LLMTraces', () => {
     const user = userEvent.setup();
     renderTraces();
 
-    await screen.findByText('diagnostician');
+    const table = await screen.findByRole('table', { name: 'LLM call traces' });
+    const view = within(table);
+    await view.findByText('diagnostician');
     await user.click(screen.getByText('Errors'));
 
     // Only the error row should remain
-    expect(screen.getByText('context_length_exceeded')).toBeInTheDocument();
+    expect(view.getByText('context_length_exceeded')).toBeInTheDocument();
     // Non-error agents should be gone
-    expect(screen.queryByText('diagnostician')).not.toBeInTheDocument();
-    expect(screen.queryByText('care-plan-gen')).not.toBeInTheDocument();
+    expect(view.queryByText('diagnostician')).not.toBeInTheDocument();
+    expect(view.queryByText('care-plan-gen')).not.toBeInTheDocument();
   });
 
   it('displays estimated cost column', async () => {
     mockFetch(() => TRACES);
     renderTraces();
 
-    await screen.findByText('diagnostician');
+    const table = await screen.findByRole('table', { name: 'LLM call traces' });
+    await within(table).findByText('diagnostician');
     // Anthropic: (2400+680) / 1M * 6.0 = $0.0185
     expect(screen.getAllByText(/\$0\.0/).length).toBeGreaterThan(0);
   });
@@ -167,10 +183,12 @@ describe('LLMTraces', () => {
     const user = userEvent.setup();
     renderTraces();
 
-    await screen.findByText('diagnostician');
+    const table = await screen.findByRole('table', { name: 'LLM call traces' });
+    const view = within(table);
+    await view.findByText('diagnostician');
 
     // Click the "ms" sort header to sort by duration
-    const msHeader = screen.getByText(/^ms/);
+    const msHeader = view.getByText(/^ms/);
     await user.click(msHeader);
     // The header should show a down arrow when active
     expect(msHeader.textContent).toContain('↓');

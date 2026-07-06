@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Bench from '../Bench';
 import { mockFetch } from '../../test/setup';
 import type { BenchResult } from '../../types';
+import I18nProvider from '../../i18n/I18nProvider';
 
 const RESULTS: BenchResult[] = [
   { provider: 'rule', cases: 50, mean_accuracy_pct: 62, mean_cost_usd: 0.0, under_budget_pct: 100 },
@@ -14,9 +15,11 @@ const RESULTS: BenchResult[] = [
 
 function renderBench() {
   return render(
-    <MemoryRouter>
-      <Bench />
-    </MemoryRouter>,
+    <I18nProvider>
+      <MemoryRouter>
+        <Bench />
+      </MemoryRouter>
+    </I18nProvider>,
   );
 }
 
@@ -34,15 +37,16 @@ describe('Bench', () => {
     expect(screen.getAllByText('llm-ollama').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('displays accuracy percentages correctly', async () => {
+  it('displays accuracy with ConfidenceDisplay categories', async () => {
     mockFetch(() => RESULTS);
     renderBench();
 
     await screen.findAllByText('rule');
-    expect(screen.getByText('94%')).toBeInTheDocument();
-    expect(screen.getByText('91%')).toBeInTheDocument();
-    expect(screen.getByText('78%')).toBeInTheDocument();
-    expect(screen.getByText('62%')).toBeInTheDocument();
+    // ConfidenceDisplay renders "(94%)" with "Very High" category, etc.
+    expect(screen.getByText('(94%)')).toBeInTheDocument();
+    expect(screen.getByText('(91%)')).toBeInTheDocument();
+    expect(screen.getByText('(78%)')).toBeInTheDocument();
+    expect(screen.getByText('(62%)')).toBeInTheDocument();
   });
 
   it('displays cost values formatted as dollars', async () => {
@@ -91,12 +95,13 @@ describe('Bench', () => {
     mockFetch(() => RESULTS);
     renderBench();
 
-    await screen.findAllByText('rule');
-    expect(screen.getByText('Provider')).toBeInTheDocument();
-    expect(screen.getByText('Cases')).toBeInTheDocument();
-    expect(screen.getByText('Mean accuracy')).toBeInTheDocument();
-    expect(screen.getByText('Mean cost')).toBeInTheDocument();
-    expect(screen.getByText('Under budget')).toBeInTheDocument();
+    const table = await screen.findByRole('table', { name: 'Benchmark results' });
+    const view = within(table);
+    expect(view.getByText('Provider')).toBeInTheDocument();
+    expect(view.getByText('Cases')).toBeInTheDocument();
+    expect(view.getByText('Mean accuracy')).toBeInTheDocument();
+    expect(view.getByText('Mean cost')).toBeInTheDocument();
+    expect(view.getByText('Under budget')).toBeInTheDocument();
   });
 
   it('shows hover instruction text', async () => {

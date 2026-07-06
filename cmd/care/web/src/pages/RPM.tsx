@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
 import Page from '../components/Page';
+import CardTable from '../components/CardTable';
+import type { CardColumn } from '../components/CardTable';
+import { useI18n } from '../i18n';
+import { useTableKeyboardNav } from '../hooks/useTableKeyboardNav';
 
 // Stub HR history for demo purposes — each patient has 7 readings (last 7 days).
 // When the real /rpm/feed endpoint lands, replace this with useApi().
@@ -56,6 +60,15 @@ const STUB_PATIENTS: Array<{
   },
 ];
 
+const RPM_COLUMNS: CardColumn[] = [
+  { key: 'name', label: 'Patient', showInCard: true, primary: true },
+  { key: 'patient_id', label: 'ID', showInCard: true },
+  { key: 'last_hr', label: 'HR', showInCard: true },
+  { key: 'last_spo2', label: 'SpO2', showInCard: true },
+  { key: 'last_bp', label: 'BP', showInCard: true },
+  { key: 'alert', label: 'Alert', showInCard: true },
+];
+
 // ---- Mini HR sparkline ----
 function HRSparkline({ readings }: { readings: number[] }) {
   const W = 70;
@@ -101,63 +114,75 @@ function HRSparkline({ readings }: { readings: number[] }) {
 }
 
 export default function RPM() {
+  const { t } = useI18n();
+  const { getRowProps } = useTableKeyboardNav(STUB_PATIENTS.length);
   const alertCount = STUB_PATIENTS.filter((p) => p.alert).length;
 
   return (
-    <Page title="RPM observations" subtitle="Remote patient monitoring — last 7 HR readings per patient">
+    <Page title={t('rpm.title')} subtitle={t('rpm.subtitle')}>
+      {/* Synthetic data safeguard notice */}
+      <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-2 text-sm text-amber-800 dark:text-amber-300 flex items-center gap-2 mb-4" role="status">
+        <span className="font-bold">⚠</span>
+        <span>Synthetic data — not connected to live monitoring systems</span>
+      </div>
+
       {/* Alert summary banner */}
       {alertCount > 0 && (
         <div className="mb-4 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 flex items-center gap-2">
           <span className="text-amber-600 dark:text-amber-400 font-bold text-lg">!</span>
           <span className="text-sm text-amber-800 dark:text-amber-300">
-            {alertCount} patient{alertCount > 1 ? 's' : ''} with active alerts requiring review
+            {alertCount} {alertCount > 1 ? t('rpm.alertBanner_plural') : t('rpm.alertBanner')}
           </span>
         </div>
       )}
 
-      <div className="card overflow-hidden">
-        <table className="min-w-full text-sm" aria-label="Patient monitoring observations">
-          <thead className="bg-bodh-50 dark:bg-gray-800 text-bodh-400 dark:text-gray-500 text-xs uppercase tracking-wide">
-            <tr>
-              <th className="px-4 py-2 text-left">Patient</th>
-              <th className="px-4 py-2 text-left">HR (bpm)</th>
-              <th className="px-4 py-2 text-left">7-day trend</th>
-              <th className="px-4 py-2 text-right">SpO2</th>
-              <th className="px-4 py-2 text-right">BP</th>
-              <th className="px-4 py-2 text-left">Alert</th>
-            </tr>
-          </thead>
-          <tbody>
-            {STUB_PATIENTS.map((p) => (
-              <tr key={p.patient_id} className={`border-t border-bodh-100 dark:border-gray-700 ${p.alert ? 'bg-amber-50 dark:bg-amber-900/20' : ''}`}>
-                <td className="px-4 py-2">
-                  <div className="font-medium dark:text-gray-100">{p.name}</div>
-                  <div className="text-xs text-bodh-400 dark:text-gray-500">{p.patient_id}</div>
-                </td>
-                <td className="px-4 py-2 font-mono dark:text-gray-300">{p.last_hr}</td>
-                <td className="px-4 py-2">
-                  <HRSparkline readings={p.hr_history} />
-                </td>
-                <td className="px-4 py-2 text-right dark:text-gray-300">{p.last_spo2}%</td>
-                <td className="px-4 py-2 text-right font-mono dark:text-gray-300">{p.last_bp}</td>
-                <td className="px-4 py-2">
-                  {p.alert ? (
-                    <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 text-xs font-medium">
-                      <span>!</span>
-                      {p.alert}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-bodh-300 dark:text-gray-600">—</span>
-                  )}
-                </td>
+      <CardTable columns={RPM_COLUMNS} data={STUB_PATIENTS as unknown as Record<string, unknown>[]} keyField="patient_id">
+        <div className="card overflow-hidden">
+          <table className="min-w-full text-sm" aria-label="Patient monitoring observations">
+            <thead className="bg-bodh-50 dark:bg-gray-800 text-bodh-400 dark:text-gray-500 text-xs uppercase tracking-wide">
+              <tr>
+                <th className="px-4 py-2 text-left">{t('rpm.col_patient')}</th>
+                <th className="px-4 py-2 text-left">{t('rpm.col_hr')}</th>
+                <th className="px-4 py-2 text-left">{t('rpm.col_trend')}</th>
+                <th className="px-4 py-2 text-right">{t('rpm.col_spo2')}</th>
+                <th className="px-4 py-2 text-right">{t('rpm.col_bp')}</th>
+                <th className="px-4 py-2 text-left">{t('rpm.col_alert')}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {STUB_PATIENTS.map((p, i) => {
+                const rp = getRowProps(i);
+                return (
+                <tr key={p.patient_id} {...rp} className={`border-t border-bodh-100 dark:border-gray-700 ${p.alert ? 'bg-amber-50 dark:bg-amber-900/20' : ''} ${rp.className}`}>
+                  <td className="px-4 py-2">
+                    <div className="font-medium dark:text-gray-100">{p.name}</div>
+                    <div className="text-xs text-bodh-400 dark:text-gray-500">{p.patient_id}</div>
+                  </td>
+                  <td className="px-4 py-2 font-mono dark:text-gray-300">{p.last_hr}</td>
+                  <td className="px-4 py-2">
+                    <HRSparkline readings={p.hr_history} />
+                  </td>
+                  <td className="px-4 py-2 text-right dark:text-gray-300">{p.last_spo2}%</td>
+                  <td className="px-4 py-2 text-right font-mono dark:text-gray-300">{p.last_bp}</td>
+                  <td className="px-4 py-2">
+                    {p.alert ? (
+                      <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 text-xs font-medium">
+                        <span>!</span>
+                        {p.alert}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-bodh-300 dark:text-gray-600">—</span>
+                    )}
+                  </td>
+                </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </CardTable>
       <p className="text-xs text-bodh-400 dark:text-gray-500">
-        Demo data shown. Wire <code className="font-mono bg-bodh-100 dark:bg-gray-700 px-1 rounded">POST /rpm/observation</code> to
-        display live readings from the persistent observation store.
+        {t('rpm.demoNote')}
       </p>
     </Page>
   );

@@ -59,4 +59,27 @@
     @apply bg-bodh-600 text-white hover:bg-bodh-700
            dark:bg-bodh-700 dark:hover:bg-bodh-600;
   }
+
+  /* Table row keyboard focus ring (WAI-ARIA grid navigation) */
+  tr:focus-visible {
+    @apply outline-2 outline-bodh-600 outline-offset-[-2px] rounded
+           dark:outline-blue-400;
+  }
+}
+
+/* Touch target sizing — 44px minimum for coarse-pointer (tablet/mobile) devices */
+@media (pointer: coarse) {
+  .btn,
+  .btn-secondary,
+  .nav-link,
+  button,
+  a[role="button"],
+  select,
+  [role="tab"],
+  [role="radio"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }

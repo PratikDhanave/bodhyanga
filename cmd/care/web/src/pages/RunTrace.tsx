@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Page from '../components/Page';
 import { api } from '../api/client';
+import { useI18n } from '../i18n';
 import type { TraceEvent } from '../types';
 
 /** MARA stage ordering for visual grouping */
@@ -32,6 +33,7 @@ const STAGE_COLORS: Record<string, string> = {
 };
 
 export default function RunTrace() {
+  const { t } = useI18n();
   const { runId = '' } = useParams();
   const [events, setEvents] = useState<TraceEvent[]>([]);
   const [closed, setClosed] = useState(false);
@@ -92,9 +94,9 @@ export default function RunTrace() {
 
   return (
     <Page
-      title="Run trace"
+      title={t('runTrace.title')}
       subtitle={`Run ${runId} · ${events.length} event${events.length === 1 ? '' : 's'} ${closed ? '(closed)' : '(streaming)'}`}
-      actions={<Link to="/runs" className="btn-secondary">New run</Link>}
+      actions={<Link to="/runs" className="btn-secondary">{t('runTrace.newRun')}</Link>}
     >
       {error && (
         <div className="card border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20">
@@ -107,25 +109,25 @@ export default function RunTrace() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           <div className="card">
             <div className="card-body py-2">
-              <div className="text-xs uppercase tracking-wide text-bodh-400 dark:text-gray-500">Events</div>
+              <div className="text-xs uppercase tracking-wide text-bodh-400 dark:text-gray-500">{t('runTrace.stat_events')}</div>
               <div className="text-2xl font-semibold dark:text-gray-100">{events.length}</div>
             </div>
           </div>
           <div className="card">
             <div className="card-body py-2">
-              <div className="text-xs uppercase tracking-wide text-bodh-400 dark:text-gray-500">Agents</div>
+              <div className="text-xs uppercase tracking-wide text-bodh-400 dark:text-gray-500">{t('runTrace.stat_agents')}</div>
               <div className="text-2xl font-semibold dark:text-gray-100">{summary.agents}</div>
             </div>
           </div>
           <div className="card">
             <div className="card-body py-2">
-              <div className="text-xs uppercase tracking-wide text-bodh-400 dark:text-gray-500">Stages</div>
+              <div className="text-xs uppercase tracking-wide text-bodh-400 dark:text-gray-500">{t('runTrace.stat_stages')}</div>
               <div className="text-2xl font-semibold dark:text-gray-100">{summary.stages}</div>
             </div>
           </div>
           <div className="card">
             <div className="card-body py-2">
-              <div className="text-xs uppercase tracking-wide text-bodh-400 dark:text-gray-500">Duration</div>
+              <div className="text-xs uppercase tracking-wide text-bodh-400 dark:text-gray-500">{t('runTrace.stat_duration')}</div>
               <div className="text-2xl font-semibold dark:text-gray-100">
                 {summary.durationMs < 1000 ? `${summary.durationMs}ms` : `${(summary.durationMs / 1000).toFixed(1)}s`}
               </div>
@@ -136,11 +138,11 @@ export default function RunTrace() {
 
       <div className="card">
         <div className="card-header flex justify-between items-center dark:border-gray-700">
-          <span className="dark:text-gray-100">Agent message stream</span>
-          <span className={`badge ${closed ? 'badge-done' : 'badge-pending'}`}>{closed ? 'closed' : 'live'}</span>
+          <span className="dark:text-gray-100">{t('runTrace.messageStream')}</span>
+          <span className={`badge ${closed ? 'badge-done' : 'badge-pending'}`}>{closed ? t('runTrace.status_closed') : t('runTrace.status_live')}</span>
         </div>
         <div ref={containerRef} className="max-h-[70vh] overflow-y-auto p-4 space-y-3 text-sm font-mono dark:bg-gray-900" aria-live="polite">
-          {events.length === 0 && <p className="text-bodh-400 dark:text-gray-500 italic">Waiting for first message…</p>}
+          {events.length === 0 && <p className="text-bodh-400 dark:text-gray-500 italic">{t('runTrace.waiting')}</p>}
           {grouped.map((group) => (
             <div key={`${group.stage}-${group.events[0]?.index}`} className="space-y-1">
               <div className="text-[10px] font-semibold uppercase tracking-widest text-bodh-300 dark:text-gray-600 pl-4">

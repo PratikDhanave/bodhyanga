@@ -2,9 +2,14 @@ import { useMemo, useState } from 'react';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
+import ConfidenceDisplay from '../components/ConfidenceDisplay';
+import CardTable from '../components/CardTable';
+import type { CardColumn } from '../components/CardTable';
 import { useApi } from '../hooks/useApi';
 import { api } from '../api/client';
 import type { BenchResult } from '../types/index';
+import { useI18n } from '../i18n';
+import { useTableKeyboardNav } from '../hooks/useTableKeyboardNav';
 
 // ---- Pareto frontier helper ----
 // A point P dominates Q if P has lower cost AND higher accuracy.
@@ -54,7 +59,7 @@ function ColorLegend({ data }: { data: BenchResult[] }) {
 }
 
 // ---- Pareto scatter plot (pure SVG) with hover tooltip ----
-function ParetoChart({ data, hovered, onHover }: { data: BenchResult[]; hovered: string | null; onHover: (p: string | null) => void }) {
+function ParetoChart({ data, hovered, onHover, t }: { data: BenchResult[]; hovered: string | null; onHover: (p: string | null) => void; t: (key: string) => string }) {
   const W = 480;
   const H = 280;
   const PAD = { top: 20, right: 20, bottom: 40, left: 48 };
@@ -149,8 +154,8 @@ function ParetoChart({ data, hovered, onHover }: { data: BenchResult[]; hovered:
                 <foreignObject x={x + 12} y={y - 40} width="140" height="50">
                   <div className="bg-gray-900 text-white text-[10px] rounded px-2 py-1 shadow-lg leading-tight">
                     <div className="font-semibold">{d.provider}</div>
-                    <div>Accuracy: {d.mean_accuracy_pct.toFixed(1)}%</div>
-                    <div>Cost: ${d.mean_cost_usd.toFixed(3)}</div>
+                    <div>{t('bench.tooltip_accuracy')}: {d.mean_accuracy_pct.toFixed(1)}%</div>
+                    <div>{t('bench.tooltip_cost')}: ${d.mean_cost_usd.toFixed(3)}</div>
                   </div>
                 </foreignObject>
               )}
@@ -166,7 +171,7 @@ function ParetoChart({ data, hovered, onHover }: { data: BenchResult[]; hovered:
           </text>
         ))}
         <text x={PAD.left + plotW / 2} y={H - 4} fontSize="10" textAnchor="middle" fill="#64748b">
-          Cost per case (USD)
+          {t('bench.axis_costPerCase')}
         </text>
 
         {/* Y axis */}
@@ -186,7 +191,7 @@ function ParetoChart({ data, hovered, onHover }: { data: BenchResult[]; hovered:
             fill="#6366f1"
             opacity="0.8"
           >
-            Pareto frontier
+            {t('bench.pareto_label')}
           </text>
         )}
       </svg>
@@ -194,79 +199,95 @@ function ParetoChart({ data, hovered, onHover }: { data: BenchResult[]; hovered:
   );
 }
 
+const BENCH_COLUMNS: CardColumn[] = [
+  { key: 'provider', label: 'Provider', showInCard: true, primary: true },
+  { key: 'cases', label: 'Cases', showInCard: true },
+  { key: 'mean_accuracy_pct', label: 'Mean Accuracy', showInCard: true },
+  { key: 'mean_cost_usd', label: 'Mean Cost', showInCard: true },
+  { key: 'under_budget_pct', label: 'Under Budget', showInCard: true },
+];
+
 export default function Bench() {
+  const { t } = useI18n();
   const { data, loading, error, reload } = useApi(() => api.bench(), []);
   const [hovered, setHovered] = useState<string | null>(null);
+  const { getRowProps } = useTableKeyboardNav(data?.length ?? 0);
 
-  if (loading) return <Page title="Bench results"><Loader what="bench" /></Page>;
-  if (error) return <Page title="Bench results"><ErrorBox error={error} retry={reload} /></Page>;
+  if (loading) return <Page title={t('bench.title')}><Loader what="bench" /></Page>;
+  if (error) return <Page title={t('bench.title')}><ErrorBox error={error} retry={reload} /></Page>;
   if (!data || data.length === 0) {
     return (
-      <Page title="Bench results">
+      <Page title={t('bench.title')}>
         <Empty
-          title="No bench results yet"
-          hint="Run cmd/bench -providers=rule,llm-anthropic,llm-openai,llm-ollama -json > bench.json and POST it to /api/bench/results."
+          title={t('bench.noResults')}
+          hint={t('bench.noResults_hint')}
         />
       </Page>
     );
   }
 
   return (
-    <Page title="Bench results" subtitle="Provider comparison from cmd/bench">
+    <Page title={t('bench.title')} subtitle={t('bench.subtitle')}>
       {/* Pareto chart */}
       <div className="card">
-        <div className="card-header dark:border-gray-700 dark:text-gray-100">Cost vs accuracy — Pareto frontier</div>
+        <div className="card-header dark:border-gray-700 dark:text-gray-100">{t('bench.chart_title')}</div>
         <div className="card-body">
-          <ParetoChart data={data} hovered={hovered} onHover={setHovered} />
+          <ParetoChart data={data} hovered={hovered} onHover={setHovered} t={t} />
           <ColorLegend data={data} />
           <p className="text-xs text-bodh-400 dark:text-gray-500 mt-2">
-            Dashed line connects non-dominated providers. Filled circles are on the frontier. Hover to inspect.
+            {t('bench.chart_hint')}
           </p>
         </div>
       </div>
 
       {/* Summary table */}
-      <div className="card overflow-hidden">
-        <table className="min-w-full text-sm" aria-label="Benchmark results">
-          <thead className="bg-bodh-50 dark:bg-gray-800 text-bodh-400 dark:text-gray-500 text-xs uppercase tracking-wide">
-            <tr>
-              <th className="px-4 py-2 text-left">Provider</th>
-              <th className="px-4 py-2 text-right">Cases</th>
-              <th className="px-4 py-2 text-right">Mean accuracy</th>
-              <th className="px-4 py-2 text-right">Mean cost</th>
-              <th className="px-4 py-2 text-right">Under budget</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((r) => (
-              <tr
-                key={r.provider}
-                className={`border-t border-bodh-100 dark:border-gray-700 cursor-pointer transition-colors ${
-                  hovered === r.provider
-                    ? 'bg-bodh-50 dark:bg-gray-800'
-                    : hovered !== null
-                      ? 'opacity-40'
-                      : ''
-                }`}
-                onMouseEnter={() => setHovered(r.provider)}
-                onMouseLeave={() => setHovered(null)}
-              >
-                <td className="px-4 py-2 font-mono dark:text-gray-100">
-                  <span
-                    className="inline-block w-2.5 h-2.5 rounded-full mr-2"
-                    style={{ backgroundColor: colorFor(r.provider) }}
-                  />
-                  {r.provider}
-                </td>
-                <td className="px-4 py-2 text-right dark:text-gray-300">{r.cases}</td>
-                <td className="px-4 py-2 text-right dark:text-gray-300">{r.mean_accuracy_pct.toFixed(0)}%</td>
-                <td className="px-4 py-2 text-right dark:text-gray-300">${r.mean_cost_usd.toFixed(2)}</td>
-                <td className="px-4 py-2 text-right dark:text-gray-300">{r.under_budget_pct.toFixed(0)}%</td>
+      <CardTable columns={BENCH_COLUMNS} data={data as unknown as Record<string, unknown>[]} keyField="provider">
+        <div className="card overflow-hidden">
+          <table className="min-w-full text-sm" aria-label="Benchmark results">
+            <thead className="bg-bodh-50 dark:bg-gray-800 text-bodh-400 dark:text-gray-500 text-xs uppercase tracking-wide">
+              <tr>
+                <th className="px-4 py-2 text-left">{t('bench.col_provider')}</th>
+                <th className="px-4 py-2 text-right">{t('bench.col_cases')}</th>
+                <th className="px-4 py-2 text-right">{t('bench.col_meanAccuracy')}</th>
+                <th className="px-4 py-2 text-right">{t('bench.col_meanCost')}</th>
+                <th className="px-4 py-2 text-right">{t('bench.col_underBudget')}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {data.map((r, i) => {
+                const rp = getRowProps(i);
+                return (
+                <tr
+                  key={r.provider}
+                  {...rp}
+                  className={`border-t border-bodh-100 dark:border-gray-700 cursor-pointer transition-colors ${
+                    hovered === r.provider
+                      ? 'bg-bodh-50 dark:bg-gray-800'
+                      : hovered !== null
+                        ? 'opacity-40'
+                        : ''
+                  } ${rp.className}`}
+                  onMouseEnter={() => setHovered(r.provider)}
+                  onMouseLeave={() => setHovered(null)}
+                >
+                  <td className="px-4 py-2 font-mono dark:text-gray-100">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full mr-2"
+                      style={{ backgroundColor: colorFor(r.provider) }}
+                    />
+                    {r.provider}
+                  </td>
+                  <td className="px-4 py-2 text-right dark:text-gray-300">{r.cases}</td>
+                  <td className="px-4 py-2 text-right dark:text-gray-300"><ConfidenceDisplay value={r.mean_accuracy_pct / 100} size="sm" showTooltip={false} /></td>
+                  <td className="px-4 py-2 text-right dark:text-gray-300">${r.mean_cost_usd.toFixed(2)}</td>
+                  <td className="px-4 py-2 text-right dark:text-gray-300">{r.under_budget_pct.toFixed(0)}%</td>
+                </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </CardTable>
     </Page>
   );
 }

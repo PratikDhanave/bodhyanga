@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import AuditLog from '../AuditLog';
 import { mockFetch } from '../../test/setup';
+import I18nProvider from '../../i18n/I18nProvider';
 
 const EVENTS = [
   { id: 'a1', ts: '2026-06-06T08:00:00Z', agent: 'diagnostician', kind: 'diagnosis', case_id: 'ab12cd34', decision: 'approved', reason: 'CHF confirmed' },
@@ -17,9 +18,11 @@ function routeFor(input: RequestInfo | URL): string {
 
 function renderAuditLog() {
   return render(
-    <MemoryRouter>
-      <AuditLog />
-    </MemoryRouter>,
+    <I18nProvider>
+      <MemoryRouter>
+        <AuditLog />
+      </MemoryRouter>
+    </I18nProvider>,
   );
 }
 
@@ -32,19 +35,23 @@ describe('AuditLog', () => {
     });
 
     renderAuditLog();
-    expect(await screen.findByText('diagnostician')).toBeInTheDocument();
-    expect(screen.getByText('intake')).toBeInTheDocument();
-    expect(screen.getByText('care_planner')).toBeInTheDocument();
+    const table = await screen.findByRole('table', { name: 'Audit log entries' });
+    const view = within(table);
+    expect(view.getByText('diagnostician')).toBeInTheDocument();
+    expect(view.getByText('intake')).toBeInTheDocument();
+    expect(view.getByText('care_planner')).toBeInTheDocument();
   });
 
   it('shows decision badges with correct style', async () => {
     mockFetch(() => ({ events: EVENTS }));
     renderAuditLog();
 
-    const approved = await screen.findByText('approved');
+    const table = await screen.findByRole('table', { name: 'Audit log entries' });
+    const view = within(table);
+    const approved = view.getByText('approved');
     expect(approved.className).toContain('badge-approved');
 
-    const rejected = screen.getByText('rejected');
+    const rejected = view.getByText('rejected');
     expect(rejected.className).toContain('badge-rejected');
   });
 
@@ -69,7 +76,8 @@ describe('AuditLog', () => {
     mockFetch(() => ({ events: EVENTS }));
     renderAuditLog();
 
-    await screen.findByText('diagnostician');
+    const table = await screen.findByRole('table', { name: 'Audit log entries' });
+    await within(table).findByText('diagnostician');
     expect(screen.getByPlaceholderText('e.g. a3f1b9c2')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('e.g. diagnosis, review_request')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('e.g. diagnostician')).toBeInTheDocument();
@@ -80,7 +88,8 @@ describe('AuditLog', () => {
     mockFetch(() => EVENTS);
     renderAuditLog();
 
-    expect(await screen.findByText('diagnostician')).toBeInTheDocument();
+    const table = await screen.findByRole('table', { name: 'Audit log entries' });
+    expect(await within(table).findByText('diagnostician')).toBeInTheDocument();
   });
 
   it('shows Load more button when cursor exists', async () => {
@@ -103,7 +112,8 @@ describe('AuditLog', () => {
     const user = userEvent.setup();
     renderAuditLog();
 
-    await screen.findByText('diagnostician');
+    const table = await screen.findByRole('table', { name: 'Audit log entries' });
+    await within(table).findByText('diagnostician');
 
     // Type a filter
     const caseInput = screen.getByPlaceholderText('e.g. a3f1b9c2');

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import CaseRunner from '../CaseRunner';
 import { mockFetch } from '../../test/setup';
+import I18nProvider from '../../i18n/I18nProvider';
 
 function routeFor(input: RequestInfo | URL): string {
   return typeof input === 'string' ? input : input.toString();
@@ -38,9 +39,11 @@ describe('CaseRunner', () => {
 
     const user = userEvent.setup();
     render(
-      <MemoryRouter>
-        <CaseRunner />
-      </MemoryRouter>,
+      <I18nProvider>
+        <MemoryRouter>
+          <CaseRunner />
+        </MemoryRouter>
+      </I18nProvider>,
     );
 
     // Wait for fixtures to load (select renders only then).
@@ -85,9 +88,11 @@ describe('CaseRunner', () => {
 
     const user = userEvent.setup();
     render(
-      <MemoryRouter>
-        <CaseRunner />
-      </MemoryRouter>,
+      <I18nProvider>
+        <MemoryRouter>
+          <CaseRunner />
+        </MemoryRouter>
+      </I18nProvider>,
     );
 
     const select = await screen.findByRole('combobox', { name: /Fixture/i });

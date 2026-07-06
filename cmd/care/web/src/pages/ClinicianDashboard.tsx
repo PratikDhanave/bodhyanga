@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
-import { Modal } from '../components/Modal';
+import ConfirmationModal from '../components/ConfirmationModal';
+import ConfidenceDisplay from '../components/ConfidenceDisplay';
 import { useToast } from '../components/Toast';
 import { useApi } from '../hooks/useApi';
 import { api } from '../api/client';
@@ -168,11 +169,11 @@ function HitlQueue({
   const [confirm, setConfirm] = useState<{ id: string; decision: ReviewDecision; subject: string } | null>(null);
   const { showToast } = useToast();
 
-  async function executeDecision(id: string, decision: ReviewDecision) {
+  async function executeDecision(id: string, decision: ReviewDecision, reason?: string) {
     setBusy(id);
     setConfirm(null);
     try {
-      await api.decide(id, { reviewer_id: 'clinician-demo', decision });
+      await api.decide(id, { reviewer_id: 'clinician-demo', decision, reason: reason || undefined });
       showToast(`Review ${decision.replace(/_/g, ' ')} successfully`, 'success');
       onDecide();
     } catch (e) {
@@ -223,34 +224,18 @@ function HitlQueue({
         ))}
       </div>
 
-      {/* Clinical decision confirmation modal */}
-      <Modal
-        open={confirm !== null}
-        onClose={() => setConfirm(null)}
-        title={t('dashboard.confirmTitle')}
-        danger={confirm?.decision === 'rejected'}
-      >
-        {confirm && (
-          <div className="space-y-4">
-            <p className="text-sm">
-              {confirm.decision === 'approved'
-                ? t('dashboard.confirmAccept')
-                : t('dashboard.confirmReject')}
-            </p>
-            <div className="bg-bodh-50 dark:bg-gray-700 rounded p-3 text-sm font-medium">{confirm.subject}</div>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setConfirm(null)} className="btn-secondary">{t('dashboard.cancel')}</button>
-              <button
-                onClick={() => executeDecision(confirm.id, confirm.decision)}
-                className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium text-white
-                            ${confirm.decision === 'rejected' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
-              >
-                {t('dashboard.confirmBtn')} {confirm.decision === 'approved' ? t('dashboard.accept') : t('dashboard.reject')}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      {/* Clinical decision confirmation modal — requires reason + safety delay */}
+      {confirm && (
+        <ConfirmationModal
+          isOpen
+          title={confirm.decision === 'approved' ? t('dashboard.confirmAccept') : t('dashboard.confirmReject')}
+          diagnosisSummary={confirm.subject}
+          patientContext={`Review ${confirm.id}`}
+          onConfirm={(reason) => executeDecision(confirm.id, confirm.decision, reason)}
+          onCancel={() => setConfirm(null)}
+          danger={confirm.decision === 'rejected'}
+        />
+      )}
     </div>
   );
 }
@@ -272,9 +257,9 @@ function AccuracyChart({ bench }: { bench: BenchResult[] | null }) {
           const pct = (b.mean_accuracy_pct / max) * 100;
           return (
             <div key={b.provider}>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="font-medium text-bodh-700">{b.provider}</span>
-                <span className="text-bodh-400">{b.mean_accuracy_pct.toFixed(1)}%</span>
+              <div className="flex justify-between items-center text-xs mb-1">
+                <span className="font-medium text-bodh-700 dark:text-gray-200">{b.provider}</span>
+                <ConfidenceDisplay value={b.mean_accuracy_pct / 100} size="sm" showTooltip={false} />
               </div>
               <div className="h-3 bg-bodh-100 rounded-full overflow-hidden">
                 <div
