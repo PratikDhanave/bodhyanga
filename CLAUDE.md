@@ -94,7 +94,7 @@ cmd/                  CLI binaries (one subdirectory per binary)
   export-hitl-feedback/
   laminar-eval/       Go equivalent of Python lmnr.evaluate()
 
-pkg/                  library packages (36 total)
+pkg/                  library packages (~45; run `ls pkg/` for the current set)
   agent/              agent orchestration core
   audio/              audio processing (+ kronk/ subpkg)
   audit/              HIPAA append-only audit log
@@ -116,10 +116,10 @@ pkg/                  library packages (36 total)
   web/                HTTP handlers + routing
   ... (see pkg/ for the full list)
 
-agents/               96 YAML/Go agent definitions
+agents/               YAML/Go agent definitions (~145)
 data/                 knowledge corpus, clinical case data
 db/                   SQL migrations
-docs/                 18 markdown documentation files
+docs/                 markdown documentation (+ docs/adr/ decision records)
 zarf/                 Docker Compose + Kubernetes manifests
 ```
 
@@ -271,6 +271,8 @@ make cover
 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
-at specs/001-remaining-plan-items/plan.md
+shell commands, and other important information, read the current plan.
+The active branch `feat/agent-decoupling-phase0` tracks
+specs/002-agent-decoupling/plan.md (per-agent binary / 3-tier split);
+the earlier specs/001-remaining-plan-items/plan.md covers prior platform work.
 <!-- SPECKIT END -->
