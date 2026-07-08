@@ -251,6 +251,14 @@ func (b *NATSBus) Subscribe(agentID string, h Handler) (unsubscribe func()) {
 	go func() {
 		defer close(done)
 		for {
+			// consumer.Fetch does not take our context, so a cancel during an
+			// in-flight fetch cannot interrupt it. Check ctx at the top of every
+			// iteration so that unsubscribe()/Close() (which cancel ctx) are
+			// honoured within one FetchMaxWait window instead of looping forever
+			// — otherwise `done` never closes and unsubscribe deadlocks.
+			if ctx.Err() != nil {
+				return
+			}
 			// FetchNoWait returns immediately; use Fetch with a short
 			// deadline so we can honour context cancellation promptly
 			// without busy-spinning.
