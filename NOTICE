@@ -1,12 +1,45 @@
-Bodh
-Copyright 2025 The Bodh Authors
+Bodh — Medical Diagnostic Orchestrator & Care Services Platform
 
-This product includes software developed at The Bodh Authors
-(https://github.com/PratikDhanave/bodh).
+Required Notice: Copyright 2024-2026 Pratik Dhanave
+
+Licensed under the PolyForm Noncommercial License 1.0.0. See the LICENSE file
+or <https://polyformproject.org/licenses/noncommercial/1.0.0>. Commercial use is
+NOT permitted without a separate written license from the copyright holder.
+Contact: Pratik Dhanave <i.pratikdhanave@gmail.com>.
+
+This product includes software developed by Pratik Dhanave
+(https://github.com/PratikDhanave/bodh) together with the third-party
+components attributed below.
+
+========================================================================
+EXPERIMENTAL — NOT FOR CLINICAL USE — DO NOT USE AS-IS
+========================================================================
+
+Bodh is an experimental research and engineering reference. It is NOT a medical
+device and NOT clinical software, and must NOT be used as-is in any production,
+commercial, or clinical setting.
+
+  - Do NOT use Bodh for real patient care, triage, diagnosis, treatment,
+    billing, or any decision affecting a person's health, safety, or legal
+    rights.
+  - Demo agents use simulated answers and rule-based inference — not validated
+    models. All thresholds are illustrative, not clinical guidelines.
+  - HIPAA / FDA / ONC / state-law alignment in the docs is architectural
+    guidance only; the codebase is not certified, audited, or under a Business
+    Associate Agreement (BAA).
+  - Known limitations exist by design; see docs/adr/ (notably 0006, 0008, 0010,
+    0011) for gaps between the documented architecture and what is actually
+    wired into the running service.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OR CONDITION OF ANY KIND.
 
 ------------------------------------------------------------------------
 Third-party attributions
 ------------------------------------------------------------------------
+
+Note: the components below are distributed under their own licenses (Apache-2.0,
+MIT), which continue to govern them and are not superseded by this project's
+PolyForm Noncommercial license. Their attribution notices must be preserved.
 
 ardanlabs/service
   https://github.com/ardanlabs/service

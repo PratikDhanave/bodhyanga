@@ -1,8 +1,8 @@
 # Bodh — Medical Diagnostic Orchestrator & Care Services Platform (Go)
 
-> **Bodh** (Sanskrit: *bodhi* — knowledge, awakening, insight) is an open-source **medical AI platform** implemented in **Go**. It follows Microsoft's [**Multi-Agent Reference Architecture (MARA)**](https://microsoft.github.io/multi-agent-reference-architecture/), implements a **virtual physician panel** inspired by [**MAI-DxO**](https://microsoft.ai/news/the-path-to-medical-superintelligence/) and the [**Sequential Diagnosis Benchmark (SD Bench)**](https://microsoft.ai/news/the-path-to-medical-superintelligence/), and adds a **care-services layer** (CDM, TCM, panel management, virtual office, RPM, engagement, readmission tracking) on the same bus.
+> **Bodh** (Sanskrit: *bodhi* — knowledge, awakening, insight) is a source-available **medical AI platform** implemented in **Go**, released for **noncommercial use** under the [PolyForm Noncommercial License 1.0.0](LICENSE). It follows Microsoft's [**Multi-Agent Reference Architecture (MARA)**](https://microsoft.github.io/multi-agent-reference-architecture/), implements a **virtual physician panel** inspired by [**MAI-DxO**](https://microsoft.ai/news/the-path-to-medical-superintelligence/) and the [**Sequential Diagnosis Benchmark (SD Bench)**](https://microsoft.ai/news/the-path-to-medical-superintelligence/), and adds a **care-services layer** (CDM, TCM, panel management, virtual office, RPM, engagement, readmission tracking) on the same bus.
 
-Go · MARA · Medical AI · Sequential Diagnosis · FHIR · HL7 v2 · HIPAA-aware · Open Source
+Go · MARA · Medical AI · Sequential Diagnosis · FHIR · HL7 v2 · HIPAA-aware · Source-available (Noncommercial)
 
 **Module path:** `github.com/PratikDhanave/bodh`
 
@@ -2155,3 +2155,7 @@ See [ROADMAP.md](ROADMAP.md) for the full 10-phase plan with status, decision lo
 Reference **Go** implementation of MARA patterns for **medical sequential diagnosis** and **value-based care services**. Extend agents and policies incrementally; keep `pkg/orchestration` thin and stable.
 
 **Not a medical device. Not clinical software. Research and education only.**
+
+### License
+
+Copyright © 2024-2026 Pratik Dhanave. Licensed under the **[PolyForm Noncommercial License 1.0.0](LICENSE)** — you may use, study, modify, and share Bodh for **noncommercial purposes**; **commercial use is not permitted** without a separate written license from the copyright holder. See [`NOTICE`](NOTICE) for the required attribution and third-party notices (portions are adapted from [`ardanlabs/service`](https://github.com/ardanlabs/service) under Apache-2.0 and [`lib/pq`](https://github.com/lib/pq) under MIT; those licenses continue to govern their respective components). For commercial licensing, contact <i.pratikdhanave@gmail.com>.
