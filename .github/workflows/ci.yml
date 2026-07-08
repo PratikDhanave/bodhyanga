@@ -49,6 +49,15 @@ jobs:
       - name: go vet (otel build tag)
         run: go vet -tags otel ./pkg/observability/...
 
+      # Tag-gated code is invisible to the default build and silently rots
+      # (the nats bus did — see ADR-0011). Compile-check every tag combination,
+      # then run the nats JetStream integration tests against a real container.
+      - name: build-tags compile check (otel, nats, kronk best-effort)
+        run: make build-tags
+
+      - name: nats integration tests (JetStream at-least-once + DLQ)
+        run: go test -tags nats ./pkg/comm/... -timeout 180s
+
       - name: smoke — diagnostic demo
         run: go run ./cmd/demo | tail -5
 
@@ -175,7 +184,15 @@ jobs:
       - name: install gosec
         run: go install github.com/securego/gosec/v2/cmd/gosec@latest
 
-      - name: gosec scan
+      # Advisory (non-blocking) BY DESIGN until a dedicated triage pass.
+      # gosec's taint analysis reports 25 HIGH findings, most of which are false
+      # positives on CLI/eval tools that legitimately take file paths and URLs
+      # (bodhctl reading a fixture path; the Laminar client POSTing to its
+      # configured endpoint). A few need real review (G707 SMTP header injection
+      # in pkg/notifications, G118 context.Background in pkg/shadow). Blocking CI
+      # requires classifying each with an annotated #nosec or a fix first; that
+      # is tracked separately. Do NOT flip to blocking without that triage.
+      - name: gosec scan (advisory — see comment; triage tracked)
         run: gosec -quiet ./...
         continue-on-error: true
 
@@ -192,6 +209,22 @@ jobs:
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
       - name: govulncheck
         run: govulncheck ./...
+
+  lint:
+    name: lint · gofmt · vet · staticcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+      - name: gofmt check
+        run: make fmt-check
+      - name: vet + staticcheck
+        # staticcheck runs via `go run @latest` so it is built with this
+        # toolchain — a stale pre-built binary silently no-ops on a newer module.
+        run: make lint
 
   docker:
     name: docker build

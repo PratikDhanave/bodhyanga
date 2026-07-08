@@ -24,6 +24,8 @@ DOCKER  ?= docker
 NPM     ?= npm
 KUBECTL ?= kubectl
 PKG     ?= ./...
+# Pinned linter version — `go run` builds it with the current toolchain (see lint:).
+STATICCHECK ?= honnef.co/go/tools/cmd/staticcheck@v0.7.0
 
 # ----- LLM / RAG defaults ---------------------------------------------------
 
@@ -302,9 +304,16 @@ build:
 ##     their own gated lanes, not here — this target only COMPILES.
 .PHONY: build-tags
 build-tags:
-	@echo "==> build (default)"  && $(GO) build $(PKG)
-	@echo "==> build -tags otel" && $(GO) build -tags otel $(PKG)
-	@echo "==> vet -tags otel"   && $(GO) vet -tags otel $(PKG)
+	@echo "==> build (default)"       && $(GO) build $(PKG)
+	@echo "==> build -tags otel"      && $(GO) build -tags otel $(PKG)
+	@echo "==> vet   -tags otel"      && $(GO) vet -tags otel $(PKG)
+	@echo "==> build -tags nats"      && $(GO) build -tags nats $(PKG)
+	@echo "==> vet   -tags nats"      && $(GO) vet -tags nats $(PKG)
+	@echo "==> build -tags 'otel nats'" && $(GO) build -tags "otel nats" $(PKG)
+	@# kronk needs the proprietary module; compile-check best-effort, never fail
+	@echo "==> build -tags kronk (best-effort; proprietary dep may be absent)" && \
+		($(GO) build -tags kronk $(PKG) && echo "    kronk OK") || \
+		echo "    kronk skipped: proprietary module not in graph (expected outside the private env)"
 
 .PHONY: test
 test:
@@ -340,9 +349,12 @@ vet:
 .PHONY: lint
 lint:
 	$(GO) vet $(PKG)
-	@command -v staticcheck >/dev/null 2>&1 \
-		|| (echo "installing staticcheck…" && $(GO) install honnef.co/go/tools/cmd/staticcheck@latest)
-	staticcheck $(PKG)
+	@# Run staticcheck via `go run` so it is COMPILED WITH THE CURRENT TOOLCHAIN.
+	@# A pre-installed staticcheck binary built with an older Go silently fails to
+	@# analyse a newer-Go module ("module requires at least go1.26" compile error),
+	@# turning `make lint` into a no-op. The version is PINNED (not @latest) for
+	@# reproducibility and to avoid a module-list network fetch on every run.
+	$(GO) run $(STATICCHECK) $(PKG)
 
 .PHONY: cover
 cover:
@@ -362,6 +374,15 @@ tidy:
 .PHONY: fmt
 fmt:
 	$(GO) fmt $(PKG)
+
+.PHONY: fmt-check
+## Fail if any Go file is not gofmt-clean (CI gate; does not modify files).
+fmt-check:
+	@dirty=$$(gofmt -l $$(git ls-files '*.go')); \
+	if [ -n "$$dirty" ]; then \
+		echo "::error::gofmt-dirty files (run 'make fmt'):"; echo "$$dirty"; exit 1; \
+	fi; \
+	echo "gofmt: clean"
 
 .PHONY: clean
 clean:
