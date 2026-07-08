@@ -47,9 +47,9 @@ type mockLedger struct {
 }
 
 type mockUsage struct {
-	provider, model              string
-	inputTokens, outputTokens    int
-	cacheTokens                  int
+	provider, model           string
+	inputTokens, outputTokens int
+	cacheTokens               int
 }
 
 func (l *mockLedger) MonthlySpendUSD(_, _ time.Time) float64 {

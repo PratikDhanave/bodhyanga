@@ -54,7 +54,7 @@ type TierConfig struct {
 // BudgetAlert is emitted when the BudgetRouter detects a budget threshold
 // has been crossed or a tier escalation/fallback occurs.
 type BudgetAlert struct {
-	Type      string    // "warning" | "hard_limit" | "tier_escalation"
+	Type      string // "warning" | "hard_limit" | "tier_escalation"
 	Message   string
 	SpentUSD  float64
 	LimitUSD  float64

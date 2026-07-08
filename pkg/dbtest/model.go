@@ -38,14 +38,14 @@ type SeedData struct {
 //
 //   - Name        — sub-test label, becomes the t.Run argument.
 //   - ExpResp     — the expected value; any-typed so tables can hold
-//                   different shapes per row (a slice for List tests, a
-//                   single record for Get tests).
+//     different shapes per row (a slice for List tests, a
+//     single record for Get tests).
 //   - ExcFunc     — the code under test. Takes the ctx for cancellation,
-//                   returns the actual value (any).
+//     returns the actual value (any).
 //   - CmpFunc     — domain-aware comparison. Returns a non-empty diff
-//                   string on failure; empty string on success. Lets each
-//                   table choose its comparison: full deep-equal, key
-//                   subset, ordering-insensitive, etc.
+//     string on failure; empty string on success. Lets each
+//     table choose its comparison: full deep-equal, key
+//     subset, ordering-insensitive, etc.
 //
 // The "diff" idiom comes straight from ardanlabs's pattern (see
 // business/sdk/unittest/unittest.go upstream). It plays nicely with

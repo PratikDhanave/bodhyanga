@@ -84,10 +84,10 @@ type audioResult struct {
 // The Reason is a short, PHI-free template string (never the raw error
 // from the model SDK, which could in principle quote audio metadata).
 type audioFailure struct {
-	Reason    string `json:"reason"`
-	Code      string `json:"code"`       // "unavailable" | "unsupported_media" | "invalid_request" | "internal"
-	ModelID   string `json:"model_id,omitempty"`
-	BytesIn   int    `json:"bytes_in,omitempty"`
+	Reason  string `json:"reason"`
+	Code    string `json:"code"` // "unavailable" | "unsupported_media" | "invalid_request" | "internal"
+	ModelID string `json:"model_id,omitempty"`
+	BytesIn int    `json:"bytes_in,omitempty"`
 }
 
 // AgentID is the bus address used by other agents to send transcription

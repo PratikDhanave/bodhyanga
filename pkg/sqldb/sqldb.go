@@ -20,7 +20,7 @@
 // one COMMIT/ROLLBACK barrier, and the typed error sentinels every
 // domain store maps DB-level failures into.
 //
-// Why this package exists
+// # Why this package exists
 //
 // pkg/persistence/postgres holds Bodh's first store (eval / patient /
 // audit) and inlines its own pool open + tenant-scoped transaction

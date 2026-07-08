@@ -152,7 +152,7 @@ func TestComputeRates_EmptyInput(t *testing.T) {
 
 func TestObservedRate(t *testing.T) {
 	cases := []struct {
-		name string
+		name  string
 		preds []bool
 		want  float64
 	}{
@@ -372,7 +372,7 @@ func TestSortFloat64s(t *testing.T) {
 }
 
 func TestSortFloat64s_Empty(t *testing.T) {
-	sortFloat64s(nil)      // should not panic
+	sortFloat64s(nil)         // should not panic
 	sortFloat64s([]float64{}) // should not panic
 }
 
@@ -553,7 +553,7 @@ func TestCalibrateAndEstimate_EndToEnd(t *testing.T) {
 		{TraceID: "2", Input: "b", Output: "pass-output", HumanLabel: true},
 		{TraceID: "3", Input: "c", Output: "pass-output", HumanLabel: true},
 		{TraceID: "4", Input: "d", Output: "pass-output", HumanLabel: true},
-		{TraceID: "5", Input: "e", Output: "fail-output", HumanLabel: true},  // judge will say fail (FN)
+		{TraceID: "5", Input: "e", Output: "fail-output", HumanLabel: true}, // judge will say fail (FN)
 		{TraceID: "6", Input: "f", Output: "fail-output", HumanLabel: false},
 		{TraceID: "7", Input: "g", Output: "fail-output", HumanLabel: false},
 		{TraceID: "8", Input: "h", Output: "fail-output", HumanLabel: false},

@@ -1,7 +1,7 @@
 // Package tools provides deterministic, in-process clinical utilities that
 // an LLM diagnostician may invoke mid-reasoning.
 //
-// Why a separate package
+// # Why a separate package
 //
 // An LLM that proposes a working diagnosis benefits from access to a small set
 // of deterministic helpers: a drug-interaction check, a clinical risk
@@ -16,7 +16,7 @@
 // bundles a set of Tools and converts them to llm.Tool descriptors for
 // inclusion in a Request.
 //
-// Scope and limits
+// # Scope and limits
 //
 // The data shipped in this package is illustrative — small hard-coded tables
 // of drug pairs and patient records that are obviously synthetic, tagged with

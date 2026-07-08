@@ -51,9 +51,9 @@ type stubAgent struct {
 	caps []string
 }
 
-func (s stubAgent) ID() string                                                      { return s.id }
-func (s stubAgent) Name() string                                                    { return s.id }
-func (s stubAgent) Capabilities() []string                                          { return s.caps }
+func (s stubAgent) ID() string             { return s.id }
+func (s stubAgent) Name() string           { return s.id }
+func (s stubAgent) Capabilities() []string { return s.caps }
 func (s stubAgent) HandleMessage(_ context.Context, _ agent.Message, _ agent.Environment) ([]agent.Message, error) {
 	return nil, nil
 }

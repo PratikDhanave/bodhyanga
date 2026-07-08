@@ -408,12 +408,12 @@ func buildDPO(decided []medical.ReviewRequest) []dpoLine {
 					Chosen:   a.Payload,
 					Rejected: rej.Payload,
 					Meta: map[string]any{
-						"source":            "approved_vs_rejected",
-						"case_id":           caseID,
-						"approved_review":   a.ID,
-						"rejected_review":   rej.ID,
-						"approved_decided":  a.DecidedAt.UTC().Format("2006-01-02T15:04:05Z07:00"),
-						"rejected_decided":  rej.DecidedAt.UTC().Format("2006-01-02T15:04:05Z07:00"),
+						"source":           "approved_vs_rejected",
+						"case_id":          caseID,
+						"approved_review":  a.ID,
+						"rejected_review":  rej.ID,
+						"approved_decided": a.DecidedAt.UTC().Format("2006-01-02T15:04:05Z07:00"),
+						"rejected_decided": rej.DecidedAt.UTC().Format("2006-01-02T15:04:05Z07:00"),
 					},
 				})
 			}

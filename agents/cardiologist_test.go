@@ -171,7 +171,7 @@ func TestCardiologistNSTEMITroponin(t *testing.T) {
 		wantUrgent bool
 	}{
 		{"sub-threshold troponin 0.01", 0.01, false},
-		{"at threshold 0.04", 0.04, false},   // strictly greater than, not >=
+		{"at threshold 0.04", 0.04, false}, // strictly greater than, not >=
 		{"above threshold 0.05", 0.05, true},
 		{"markedly elevated 2.0", 2.0, true},
 	}
@@ -208,52 +208,52 @@ func TestCardiologistNSTEMITroponin(t *testing.T) {
 // classification from EF and BNP values.
 func TestCardiologistCHFClassification(t *testing.T) {
 	cases := []struct {
-		name      string
-		ef        float64
-		bnp       float64
-		wantClass string // substring match
+		name       string
+		ef         float64
+		bnp        float64
+		wantClass  string // substring match
 		wantUrgent bool
 	}{
 		{
-			name:      "normal EF normal BNP — no CHF",
-			ef:        65,
-			bnp:       50,
-			wantClass: "", // empty
+			name:       "normal EF normal BNP — no CHF",
+			ef:         65,
+			bnp:        50,
+			wantClass:  "", // empty
 			wantUrgent: false,
 		},
 		{
-			name:      "HFrEF EF 30% normal BNP",
-			ef:        30,
-			bnp:       120,
-			wantClass: "HFrEF",
+			name:       "HFrEF EF 30% normal BNP",
+			ef:         30,
+			bnp:        120,
+			wantClass:  "HFrEF",
 			wantUrgent: false, // EF alone does not set urgent
 		},
 		{
-			name:      "HFrEF EF 35% decompensated BNP 850",
-			ef:        35,
-			bnp:       850,
-			wantClass: "decompensated",
+			name:       "HFrEF EF 35% decompensated BNP 850",
+			ef:         35,
+			bnp:        850,
+			wantClass:  "decompensated",
 			wantUrgent: true, // BNP >400 sets urgent
 		},
 		{
-			name:      "HFpEF / decompensated BNP 500 normal EF",
-			ef:        55,
-			bnp:       500,
-			wantClass: "decompensated",
+			name:       "HFpEF / decompensated BNP 500 normal EF",
+			ef:         55,
+			bnp:        500,
+			wantClass:  "decompensated",
 			wantUrgent: true,
 		},
 		{
-			name:      "borderline EF 39.9% just below threshold",
-			ef:        39.9,
-			bnp:       100,
-			wantClass: "HFrEF",
+			name:       "borderline EF 39.9% just below threshold",
+			ef:         39.9,
+			bnp:        100,
+			wantClass:  "HFrEF",
 			wantUrgent: false,
 		},
 		{
-			name:      "EF 0 (not provided) BNP normal — no CHF",
-			ef:        0, // sentinel: EFPercent == 0 means not provided
-			bnp:       50,
-			wantClass: "",
+			name:       "EF 0 (not provided) BNP normal — no CHF",
+			ef:         0, // sentinel: EFPercent == 0 means not provided
+			bnp:        50,
+			wantClass:  "",
 			wantUrgent: false,
 		},
 	}

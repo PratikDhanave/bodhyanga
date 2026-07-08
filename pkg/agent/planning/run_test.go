@@ -46,9 +46,11 @@ func (m *mockSequentialClient) Complete(_ context.Context, req llm.Request) (*ll
 // echoTool is a simple tool that echoes its "message" argument back as JSON.
 type echoTool struct{ name string }
 
-func (e echoTool) Name() string             { return e.name }
-func (e echoTool) Description() string      { return "Echo the message argument back." }
-func (e echoTool) Schema() json.RawMessage  { return json.RawMessage(`{"type":"object","properties":{"message":{"type":"string"}},"required":["message"]}`) }
+func (e echoTool) Name() string        { return e.name }
+func (e echoTool) Description() string { return "Echo the message argument back." }
+func (e echoTool) Schema() json.RawMessage {
+	return json.RawMessage(`{"type":"object","properties":{"message":{"type":"string"}},"required":["message"]}`)
+}
 func (e echoTool) Invoke(_ context.Context, args json.RawMessage) (json.RawMessage, error) {
 	var in struct {
 		Message string `json:"message"`
@@ -319,9 +321,9 @@ func TestExtractJSON_MarkdownFenced(t *testing.T) {
 // ---------------------------------------------------------------------------
 type failingTool struct{ name string }
 
-func (f failingTool) Name() string             { return f.name }
-func (f failingTool) Description() string      { return "Always fails." }
-func (f failingTool) Schema() json.RawMessage  { return json.RawMessage(`{"type":"object"}`) }
+func (f failingTool) Name() string            { return f.name }
+func (f failingTool) Description() string     { return "Always fails." }
+func (f failingTool) Schema() json.RawMessage { return json.RawMessage(`{"type":"object"}`) }
 func (f failingTool) Invoke(_ context.Context, _ json.RawMessage) (json.RawMessage, error) {
 	return nil, fmt.Errorf("synthetic tool failure")
 }

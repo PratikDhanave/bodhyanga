@@ -145,17 +145,17 @@ func TestBulkExporter_AllResourceTypes(t *testing.T) {
 	bpDate := time.Now().UTC()
 	a1cDate := time.Now().UTC()
 	reg.Upsert(medical.PatientRecord{
-		PatientID:     "pt-test",
-		Age:           50,
-		Sex:           "male",
-		Conditions:    []string{"hypertension"},
-		Medications:   []medical.MedicationEntry{{Name: "lisinopril", Dose: "10mg"}},
+		PatientID:      "pt-test",
+		Age:            50,
+		Sex:            "male",
+		Conditions:     []string{"hypertension"},
+		Medications:    []medical.MedicationEntry{{Name: "lisinopril", Dose: "10mg"}},
 		LastSystolicBP: 140,
-		LastBPDate:    bpDate,
-		LastWeightLb:  180,
-		LastSpO2:      95,
-		LastA1c:       7.0,
-		LastA1cDate:   a1cDate,
+		LastBPDate:     bpDate,
+		LastWeightLb:   180,
+		LastSpO2:       95,
+		LastA1c:        7.0,
+		LastA1cDate:    a1cDate,
 	})
 
 	dir := t.TempDir()

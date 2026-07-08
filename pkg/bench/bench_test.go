@@ -61,7 +61,7 @@ type forwardingAgent struct {
 	caps      []string
 	nextAgent string
 	calls     int64
-	done      chan struct{}  // closed when doneAfter calls have been processed
+	done      chan struct{} // closed when doneAfter calls have been processed
 	doneAfter int64
 	once      sync.Once
 }
@@ -100,8 +100,8 @@ func (allowAll) Evaluate(_ context.Context, _ protocol.Message) (governance.Poli
 // measurements of bus/orchestrator throughput.
 type discardEnv struct{}
 
-func (discardEnv) Now() time.Time          { return time.Now() }
-func (discardEnv) Logf(string, ...any)     {}
+func (discardEnv) Now() time.Time      { return time.Now() }
+func (discardEnv) Logf(string, ...any) {}
 
 // ----------------------------------------------------------------------------
 // BenchmarkBusThroughput

@@ -31,10 +31,10 @@ func TestBuildPostMICarePlan_IDs(t *testing.T) {
 func TestBuildPostMICarePlan_Goals(t *testing.T) {
 	plan := BuildPostMICarePlan("case-mi-3", "pt-mi-3", cardiacNow)
 	wantGoals := map[string]bool{
-		"ldl":                     false,
-		"systolic_bp":             false,
-		"smoking_status":          false,
-		"cardiac_rehab_enrolled":  false,
+		"ldl":                    false,
+		"systolic_bp":            false,
+		"smoking_status":         false,
+		"cardiac_rehab_enrolled": false,
 	}
 	for _, g := range plan.Goals {
 		if _, ok := wantGoals[g.Metric]; ok {

@@ -25,8 +25,8 @@ func TestSendPagerDuty_ViaDispatcher(t *testing.T) {
 	// sendPagerDuty call our server by replacing the client's transport.
 	d.client = &http.Client{
 		Transport: &rewriteTransport{
-			base:    http.DefaultTransport,
-			target:  srv.URL,
+			base:   http.DefaultTransport,
+			target: srv.URL,
 		},
 	}
 

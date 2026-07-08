@@ -54,14 +54,14 @@ type NeurologistAgent struct{}
 //   - Glucose: blood glucose in mmol/L (0 = not provided)
 //   - Imaging: free-text imaging results (e.g. "CT shows hyperdense MCA sign")
 type neuroConsultRequest struct {
-	PatientID  string  `json:"patient_id"`
-	CaseID     string  `json:"case_id"`
-	Presentation string `json:"presentation"`
-	OnsetHours float64 `json:"onset_hours"`
-	NIHSSScore *int    `json:"nihss_score,omitempty"`
-	BPSystolic *int    `json:"bp_systolic,omitempty"`
-	Glucose    *float64 `json:"glucose,omitempty"`
-	Imaging    string  `json:"imaging,omitempty"`
+	PatientID    string   `json:"patient_id"`
+	CaseID       string   `json:"case_id"`
+	Presentation string   `json:"presentation"`
+	OnsetHours   float64  `json:"onset_hours"`
+	NIHSSScore   *int     `json:"nihss_score,omitempty"`
+	BPSystolic   *int     `json:"bp_systolic,omitempty"`
+	Glucose      *float64 `json:"glucose,omitempty"`
+	Imaging      string   `json:"imaging,omitempty"`
 }
 
 // neuroReport is the wire format for outgoing neurology_report messages.

@@ -21,8 +21,8 @@ func TestRegister_NilAgent(t *testing.T) {
 
 type emptyIDAgent struct{}
 
-func (e emptyIDAgent) ID() string            { return "" }
-func (e emptyIDAgent) Name() string          { return "empty" }
+func (e emptyIDAgent) ID() string             { return "" }
+func (e emptyIDAgent) Name() string           { return "empty" }
 func (e emptyIDAgent) Capabilities() []string { return nil }
 func (e emptyIDAgent) HandleMessage(_ context.Context, _ agent.Message, _ agent.Environment) ([]agent.Message, error) {
 	return nil, nil

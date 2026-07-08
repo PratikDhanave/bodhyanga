@@ -65,8 +65,8 @@ type GradeItem struct {
 
 // Grade is the judge's verdict.
 type Grade struct {
-	Score             float64            `json:"score"`              // 0.0 - 1.0
-	Pass              bool               `json:"pass"`               // score >= 0.6
+	Score             float64            `json:"score"` // 0.0 - 1.0
+	Pass              bool               `json:"pass"`  // score >= 0.6
 	Rationale         string             `json:"rationale"`
 	DimensionalScores map[string]float64 `json:"dimensional_scores,omitempty"`
 	Provider          string             `json:"provider"`

@@ -27,24 +27,24 @@ type InfectiousDiseaseAgent struct{}
 
 // idConsult is the wire format of an id_consult message Content.
 type idConsult struct {
-	PatientID          string   `json:"patient_id"`
-	CaseID             string   `json:"case_id,omitempty"`
-	SuspectedOrganism  string   `json:"suspected_organism,omitempty"`
-	Site               string   `json:"site"`
-	Severity           string   `json:"severity"`
-	Allergies          []string `json:"allergies,omitempty"`
-	CulturePending     bool     `json:"culture_pending"`
+	PatientID         string   `json:"patient_id"`
+	CaseID            string   `json:"case_id,omitempty"`
+	SuspectedOrganism string   `json:"suspected_organism,omitempty"`
+	Site              string   `json:"site"`
+	Severity          string   `json:"severity"`
+	Allergies         []string `json:"allergies,omitempty"`
+	CulturePending    bool     `json:"culture_pending"`
 }
 
 // idRecommendation is the wire format of an id_recommendation message Content.
 type idRecommendation struct {
-	Antibiotic            string `json:"antibiotic"`
-	Dose                  string `json:"dose"`
-	Route                 string `json:"route"`
-	DurationDays          int    `json:"duration_days"`
-	DeEscalationCriteria  string `json:"de_escalation_criteria"`
-	IsolationPrecautions  string `json:"isolation_precautions"`
-	Rationale             string `json:"rationale"`
+	Antibiotic           string `json:"antibiotic"`
+	Dose                 string `json:"dose"`
+	Route                string `json:"route"`
+	DurationDays         int    `json:"duration_days"`
+	DeEscalationCriteria string `json:"de_escalation_criteria"`
+	IsolationPrecautions string `json:"isolation_precautions"`
+	Rationale            string `json:"rationale"`
 }
 
 func (a *InfectiousDiseaseAgent) ID() string   { return "infectious_disease" }

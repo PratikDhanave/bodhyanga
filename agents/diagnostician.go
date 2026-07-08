@@ -116,17 +116,17 @@ func (a *DiagnosticianAgent) HandleMessage(ctx context.Context, msg agent.Messag
 // Order rationale (high-specificity-first to avoid false fires from the
 // CAP catch-all):
 //
-//	1) ACS    — troponin is highly specific; if it's elevated, fire first.
-//	2) DKA    — triple-criteria (glucose + bicarb + ketones) is hard to
-//	            false-fire from other conditions.
-//	3) Sepsis — lactate + WBC; common signals so guarded by condition tag.
-//	4) CHF    — BNP threshold OR RPM-alert pattern.
-//	5) PE     — tachycardia + hypoxemia / D-dimer / condition tag proxy;
-//	            before CAP so tachycardic hypoxaemic cases don't land on
-//	            pneumonia when CT-PA result is available.
-//	6) CAP    — leukocytosis + infiltrate; the legacy default rule and
-//	            the easiest to false-fire, so last.
-//	7) (fall) — low-confidence Undifferentiated; verifier may reject.
+//  1. ACS    — troponin is highly specific; if it's elevated, fire first.
+//  2. DKA    — triple-criteria (glucose + bicarb + ketones) is hard to
+//     false-fire from other conditions.
+//  3. Sepsis — lactate + WBC; common signals so guarded by condition tag.
+//  4. CHF    — BNP threshold OR RPM-alert pattern.
+//  5. PE     — tachycardia + hypoxemia / D-dimer / condition tag proxy;
+//     before CAP so tachycardic hypoxaemic cases don't land on
+//     pneumonia when CT-PA result is available.
+//  6. CAP    — leukocytosis + infiltrate; the legacy default rule and
+//     the easiest to false-fire, so last.
+//  7. (fall) — low-confidence Undifferentiated; verifier may reject.
 func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
 	// 1. ACS — elevated troponin on the order.
 	//

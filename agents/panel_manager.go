@@ -16,8 +16,9 @@ import (
 // Input message Type:  care_plan_ready  (passively tracks new plans)
 // Output message Type: panel_report     Content: medical.PanelReport JSON
 // Output message Type: engagement_request (per gap) -> engagement, optionally
-//                      HITL-gated so a clinician or panel manager approves each
-//                      outreach before SMS goes out.
+//
+//	HITL-gated so a clinician or panel manager approves each
+//	outreach before SMS goes out.
 type PanelManagerAgent struct {
 	Registry medical.PatientStore
 	Rules    []medical.PanelRule

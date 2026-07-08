@@ -135,14 +135,14 @@ func (m ORMMessage) Encode() string {
 	// PID segment. PID-3 uses CX type: ID^^^ASSIGNING_AUTHORITY^MR
 	pid := strings.Join([]string{
 		"PID",
-		"1",        // PID-1 set id
-		"",         // PID-2 patient id (external, deprecated)
-		m.PID.PatientID + "^^^BODH^MR", // PID-3
-		"",         // PID-4
+		"1",                                    // PID-1 set id
+		"",                                     // PID-2 patient id (external, deprecated)
+		m.PID.PatientID + "^^^BODH^MR",         // PID-3
+		"",                                     // PID-4
 		m.PID.FamilyName + c + m.PID.GivenName, // PID-5
-		"",         // PID-6
-		m.PID.DateOfBirth, // PID-7
-		m.PID.Sex,         // PID-8
+		"",                                     // PID-6
+		m.PID.DateOfBirth,                      // PID-7
+		m.PID.Sex,                              // PID-8
 	}, f)
 
 	// ORC segment.
@@ -169,32 +169,32 @@ func (m ORMMessage) Encode() string {
 	obr := strings.Join([]string{
 		"OBR",
 		"1",                    // OBR-1 set id
-		m.OBR.PlacerOrderNum,  // OBR-2
-		"",                    // OBR-3 filler order num (not set at order time)
-		serviceID,             // OBR-4
-		"",                    // OBR-5
-		"",                    // OBR-6
-		obrDT,                 // OBR-7
-		"",                    // OBR-8
-		"",                    // OBR-9
-		"",                    // OBR-10
-		"",                    // OBR-11
-		"",                    // OBR-12
-		"",                    // OBR-13
-		"",                    // OBR-14
-		"",                    // OBR-15
+		m.OBR.PlacerOrderNum,   // OBR-2
+		"",                     // OBR-3 filler order num (not set at order time)
+		serviceID,              // OBR-4
+		"",                     // OBR-5
+		"",                     // OBR-6
+		obrDT,                  // OBR-7
+		"",                     // OBR-8
+		"",                     // OBR-9
+		"",                     // OBR-10
+		"",                     // OBR-11
+		"",                     // OBR-12
+		"",                     // OBR-13
+		"",                     // OBR-14
+		"",                     // OBR-15
 		m.OBR.OrderingProvider, // OBR-16
-		"",                    // OBR-17
-		"",                    // OBR-18
-		"",                    // OBR-19
-		"",                    // OBR-20
-		"",                    // OBR-21
-		"",                    // OBR-22 results rpt/status change date/time
-		"",                    // OBR-23
-		"",                    // OBR-24
-		m.OBR.ResultStatus,    // OBR-25
-		"",                    // OBR-26
-		priority,              // OBR-27 quantity/timing (priority only)
+		"",                     // OBR-17
+		"",                     // OBR-18
+		"",                     // OBR-19
+		"",                     // OBR-20
+		"",                     // OBR-21
+		"",                     // OBR-22 results rpt/status change date/time
+		"",                     // OBR-23
+		"",                     // OBR-24
+		m.OBR.ResultStatus,     // OBR-25
+		"",                     // OBR-26
+		priority,               // OBR-27 quantity/timing (priority only)
 	}, f)
 
 	return msh + "\r" + pid + "\r" + orc + "\r" + obr + "\r"

@@ -203,8 +203,8 @@ func TestOllamaHappyPathWithJSONSchema(t *testing.T) {
 
 	c := &ollamaClient{host: srv.URL, model: "llama-test", http: http.DefaultClient}
 	got, err := c.Complete(context.Background(), Request{
-		System:   "system",
-		Messages: []Message{{Role: RoleUser, Content: "go"}},
+		System:    "system",
+		Messages:  []Message{{Role: RoleUser, Content: "go"}},
 		MaxTokens: 64,
 		JSONSchema: &JSONSchema{
 			Name:   "emit",

@@ -410,7 +410,7 @@ func TestCleanup_WithDB(t *testing.T) {
 // TestLoadFixture_Synthetic round-trips the basic patients fixture.
 func TestLoadFixture_Synthetic(t *testing.T) {
 	var fx struct {
-		Synthetic bool `json:"_synthetic"`
+		Synthetic bool             `json:"_synthetic"`
 		Patients  []map[string]any `json:"patients"`
 	}
 	if err := LoadFixture("patients_basic.json", &fx); err != nil {

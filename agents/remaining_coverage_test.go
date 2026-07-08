@@ -257,8 +257,8 @@ func TestPanelManagerWithConditionFilter(t *testing.T) {
 func TestPanelManagerHITL(t *testing.T) {
 	reg := medical.NewPatientRegistry()
 	reg.Upsert(medical.PatientRecord{
-		PatientID:  "p1",
-		Conditions: []string{"htn"},
+		PatientID:      "p1",
+		Conditions:     []string{"htn"},
 		LastSystolicBP: 165,
 	})
 	a := &PanelManagerAgent{Registry: reg, HITL: true}

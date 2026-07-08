@@ -26,16 +26,16 @@ func TestDefaultPanelRules(t *testing.T) {
 		},
 		{
 			PatientID: "p4",
-			LastVisit:  now.AddDate(-2, 0, 0),
+			LastVisit: now.AddDate(-2, 0, 0),
 		},
 	}
 	report := BuildPanelReport(patients, DefaultPanelRules(), now)
 	wantRules := map[string]bool{
-		"a1c_uncontrolled":   false,
-		"bp_uncontrolled":    false,
-		"chf_weight_alert":   false,
-		"annual_visit_due":   false,
-		"tcm_followup_open":  false,
+		"a1c_uncontrolled":  false,
+		"bp_uncontrolled":   false,
+		"chf_weight_alert":  false,
+		"annual_visit_due":  false,
+		"tcm_followup_open": false,
 	}
 	for _, g := range report.Gaps {
 		if _, ok := wantRules[g.Rule]; ok {

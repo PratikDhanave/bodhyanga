@@ -47,10 +47,10 @@ type OncologyConsult struct {
 // institutional protocol, patient factors, and drug shortages. These
 // values must not drive real prescribing.
 type DrugOrder struct {
-	Name      string  `json:"name"`
-	DoseMgM2  float64 `json:"dose_mg_m2"`
-	Route     string  `json:"route"`
-	Schedule  string  `json:"schedule"`
+	Name     string  `json:"name"`
+	DoseMgM2 float64 `json:"dose_mg_m2"`
+	Route    string  `json:"route"`
+	Schedule string  `json:"schedule"`
 }
 
 // OncologyRecommendation is the output payload emitted as the

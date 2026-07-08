@@ -64,14 +64,14 @@ func (a *InboxTriageAgent) HandleMessage(_ context.Context, msg agent.Message, e
 	case "urgent_clinical":
 		a.Tasks.Create(tasks.NurseTask{
 			Kind: "inbox", PatientID: item.PatientID, Priority: "urgent",
-			DueAt: time.Now().Add(2 * time.Hour),
+			DueAt:   time.Now().Add(2 * time.Hour),
 			Subject: "Urgent inbox: " + item.Subject,
 			Detail:  item.Body,
 		})
 	default:
 		a.Tasks.Create(tasks.NurseTask{
 			Kind: "inbox", PatientID: item.PatientID, Priority: "normal",
-			DueAt: time.Now().Add(24 * time.Hour),
+			DueAt:   time.Now().Add(24 * time.Hour),
 			Subject: item.Subject, Detail: item.Body,
 		})
 	}

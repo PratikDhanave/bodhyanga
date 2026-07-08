@@ -72,11 +72,11 @@ func (WeightBasedDosing) Schema() json.RawMessage {
 }
 
 type weightBasedDosingInput struct {
-	Drug       string   `json:"drug"`
-	DosePerKg  float64  `json:"dose_per_kg"`
-	WeightKg   float64  `json:"weight_kg"`
-	MaxDoseMg  *float64 `json:"max_dose_mg,omitempty"`
-	Route      string   `json:"route,omitempty"`
+	Drug      string   `json:"drug"`
+	DosePerKg float64  `json:"dose_per_kg"`
+	WeightKg  float64  `json:"weight_kg"`
+	MaxDoseMg *float64 `json:"max_dose_mg,omitempty"`
+	Route     string   `json:"route,omitempty"`
 }
 
 type weightBasedDosingOutput struct {
@@ -203,12 +203,12 @@ func (RenalDosing) Schema() json.RawMessage {
 }
 
 type renalDosingInput struct {
-	Drug            string  `json:"drug"`
-	StandardDoseMg  float64 `json:"standard_dose_mg"`
-	CreatinineMgDl  float64 `json:"creatinine_mg_dl"`
-	Age             int     `json:"age"`
-	WeightKg        float64 `json:"weight_kg"`
-	Sex             string  `json:"sex"`
+	Drug           string  `json:"drug"`
+	StandardDoseMg float64 `json:"standard_dose_mg"`
+	CreatinineMgDl float64 `json:"creatinine_mg_dl"`
+	Age            int     `json:"age"`
+	WeightKg       float64 `json:"weight_kg"`
+	Sex            string  `json:"sex"`
 }
 
 type renalDosingOutput struct {
@@ -406,16 +406,16 @@ func (PediatricDosing) Schema() json.RawMessage {
 }
 
 type pediatricDosingInput struct {
-	Drug       string  `json:"drug"`
-	WeightKg   float64 `json:"weight_kg"`
-	AgeMonths  int     `json:"age_months"`
+	Drug      string  `json:"drug"`
+	WeightKg  float64 `json:"weight_kg"`
+	AgeMonths int     `json:"age_months"`
 }
 
 type pediatricDosingOutput struct {
-	DoseMg      float64 `json:"dose_mg"`
-	Frequency   string  `json:"frequency"`
-	MaxDailyMg  float64 `json:"max_daily_mg"`
-	Notes       string  `json:"notes"`
+	DoseMg     float64 `json:"dose_mg"`
+	Frequency  string  `json:"frequency"`
+	MaxDailyMg float64 `json:"max_daily_mg"`
+	Notes      string  `json:"notes"`
 }
 
 // pediatricDrugEntry holds the dosing parameters for one pediatric drug.
@@ -433,8 +433,8 @@ type pediatricDrugEntry struct {
 // listed in the table with a sentinel and resolved below.
 var pediatricDrugTable = map[string]pediatricDrugEntry{
 	"amoxicillin": {
-		dosePerKgPerDose: 15,   // 45 mg/kg/day ÷ 3 doses
-		maxDailyPerKg:    90,   // AOM high-dose
+		dosePerKgPerDose: 15, // 45 mg/kg/day ÷ 3 doses
+		maxDailyPerKg:    90, // AOM high-dose
 		frequency:        "q8h",
 		notes: func(weightKg float64, _ int, doseMg, maxDaily float64) string {
 			return fmt.Sprintf(
@@ -446,7 +446,7 @@ var pediatricDrugTable = map[string]pediatricDrugEntry{
 		},
 	},
 	"ibuprofen": {
-		dosePerKgPerDose: 7.5,  // midpoint of 5-10 mg/kg/dose
+		dosePerKgPerDose: 7.5, // midpoint of 5-10 mg/kg/dose
 		maxDailyPerKg:    40,
 		frequency:        "q6-8h",
 		notes: func(weightKg float64, _ int, doseMg, maxDaily float64) string {

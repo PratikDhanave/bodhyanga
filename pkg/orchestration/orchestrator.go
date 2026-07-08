@@ -29,11 +29,11 @@ import (
 // docs/architecture.md § Audit pipeline for the rationale on why we
 // suppress non-clinical allow events from the audit log.
 var clinicalMessageTypes = map[string]bool{
-	"presentation":    true,
-	"case_state":      true,
-	"ask_question":    true,
-	"order_test":      true,
-	"diagnosis":       true,
+	"presentation":     true,
+	"case_state":       true,
+	"ask_question":     true,
+	"order_test":       true,
+	"diagnosis":        true,
 	"verify_reasoning": true,
 }
 
@@ -62,13 +62,13 @@ type Orchestrator struct {
 	// reg is the agent registry snapshotted at Start. Today's
 	// implementation captures it once via sync.Once; agents registered
 	// after Start are NOT auto-subscribed (hot-reload is on the roadmap).
-	reg    registry.Registry
+	reg registry.Registry
 
 	// bus is the transport. Subscribe + Publish are the only two methods
 	// the orchestrator calls. In production this is Kafka / NATS /
 	// RabbitMQ behind the same Bus interface — see
 	// docs/architecture.md § Bus semantics for the swap table.
-	bus    comm.Bus
+	bus comm.Bus
 
 	// policy is the composed governance stack (typically a
 	// *governance.CompositePolicy). Evaluate runs synchronously before
@@ -81,7 +81,7 @@ type Orchestrator struct {
 	// Now. Production deployments wrap the inner Logger in
 	// phi.LoggerWrapper before passing it in here (see
 	// docs/architecture.md § Environment and Logger).
-	env    agent.Environment
+	env agent.Environment
 
 	// recorder is the optional HIPAA §164.312(b) audit sink. When non-nil,
 	// the orchestrator records up to four event Kinds per agent hop:
@@ -193,8 +193,8 @@ func (o *Orchestrator) SetEvalStore(s eval.Store) {
 //
 // What the first call does (step-by-step):
 //
-//  1) Snapshot the current agent list from the registry.
-//  2) For each agent:
+//  1. Snapshot the current agent list from the registry.
+//  2. For each agent:
 //     - Subscribe the bus on the agent's ID.
 //     - When a message arrives:
 //     a) Evaluate governance policy (allow/deny).
@@ -489,7 +489,7 @@ type SimpleEnvironment struct {
 	// Tests inject a FakeClock for deterministic timestamps; agents call
 	// env.Now() rather than time.Now() so they pick up the injected
 	// clock automatically.
-	Clock  observability.Clock
+	Clock observability.Clock
 }
 
 // Now returns the current time.
@@ -533,4 +533,3 @@ func (e *SimpleEnvironment) Logf(format string, args ...any) {
 // breaks the build — which is what we want, so the orchestrator and every
 // agent that depends on this concrete type get caught together.
 var _ agent.Environment = (*SimpleEnvironment)(nil)
-

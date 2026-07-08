@@ -8,16 +8,16 @@ import (
 
 // DischargeSummary is the payload for transitional care management (TCM).
 type DischargeSummary struct {
-	CaseID         string             `json:"case_id"`
-	PatientID      string             `json:"patient_id"`
-	DischargedAt   time.Time          `json:"discharged_at"`
-	PrimaryDx      string             `json:"primary_diagnosis"`
-	Disposition    string             `json:"disposition,omitempty"` // home, snf, hospice
-	HomeMeds       []MedicationEntry  `json:"home_meds,omitempty"`
-	NewMeds        []MedicationEntry  `json:"new_meds,omitempty"`
-	StoppedMeds    []string           `json:"stopped_meds,omitempty"`
-	FollowUpDays   []int              `json:"follow_up_days,omitempty"` // e.g. [2,7,30]
-	HighRisk       bool               `json:"high_risk,omitempty"`
+	CaseID       string            `json:"case_id"`
+	PatientID    string            `json:"patient_id"`
+	DischargedAt time.Time         `json:"discharged_at"`
+	PrimaryDx    string            `json:"primary_diagnosis"`
+	Disposition  string            `json:"disposition,omitempty"` // home, snf, hospice
+	HomeMeds     []MedicationEntry `json:"home_meds,omitempty"`
+	NewMeds      []MedicationEntry `json:"new_meds,omitempty"`
+	StoppedMeds  []string          `json:"stopped_meds,omitempty"`
+	FollowUpDays []int             `json:"follow_up_days,omitempty"` // e.g. [2,7,30]
+	HighRisk     bool              `json:"high_risk,omitempty"`
 }
 
 // MedReconciliation summarizes med-list deltas detected against an old list.

@@ -35,14 +35,14 @@ import (
 // SiteReport is the per-site payload submitted by each deployment site.
 // It contains only aggregated metrics — no patient-level data.
 type SiteReport struct {
-	SiteID      string             `json:"site_id"`
-	SiteName    string             `json:"site_name"`
-	TotalCases  int                `json:"total_cases"`
-	Accuracy    float64            `json:"accuracy"`
-	ByCondition map[string]float64 `json:"by_condition"`
-	AvgLatencyMs float64           `json:"avg_latency_ms"`
-	AvgCostUSD  float64            `json:"avg_cost_usd"`
-	ReportedAt  time.Time          `json:"reported_at"`
+	SiteID       string             `json:"site_id"`
+	SiteName     string             `json:"site_name"`
+	TotalCases   int                `json:"total_cases"`
+	Accuracy     float64            `json:"accuracy"`
+	ByCondition  map[string]float64 `json:"by_condition"`
+	AvgLatencyMs float64            `json:"avg_latency_ms"`
+	AvgCostUSD   float64            `json:"avg_cost_usd"`
+	ReportedAt   time.Time          `json:"reported_at"`
 	// Epsilon is the differential-privacy noise parameter applied by the site
 	// before submission (0 means no noise was added).
 	Epsilon float64 `json:"epsilon,omitempty"`

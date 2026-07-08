@@ -358,9 +358,9 @@ type stubTool struct {
 	invokeErr error
 }
 
-func (s *stubTool) Name() string                                             { return s.name }
-func (s *stubTool) Description() string                                      { return s.desc }
-func (s *stubTool) Schema() json.RawMessage                                  { return s.schema }
+func (s *stubTool) Name() string            { return s.name }
+func (s *stubTool) Description() string     { return s.desc }
+func (s *stubTool) Schema() json.RawMessage { return s.schema }
 func (s *stubTool) Invoke(_ context.Context, _ json.RawMessage) (json.RawMessage, error) {
 	return s.invokeOut, s.invokeErr
 }

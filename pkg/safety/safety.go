@@ -164,9 +164,9 @@ func itoa(i int) string {
 // These are intentionally conservative; pkg/phi.Redact is the primary defense
 // applied to inputs before they reach an LLM.
 var phiPatterns = []*regexp.Regexp{
-	regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`),     // SSN
+	regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`),           // SSN
 	regexp.MustCompile(`\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b`), // US phone
-	regexp.MustCompile(`\bMRN[:\s]*\d{6,10}\b`),     // MRN
+	regexp.MustCompile(`\bMRN[:\s]*\d{6,10}\b`),           // MRN
 }
 
 // ContainsPHIPatterns returns Verdict{OK:false} if any PHI-shaped substring

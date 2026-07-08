@@ -129,9 +129,9 @@ func seedPatients() *medical.PatientRegistry {
 	reg := medical.NewPatientRegistry()
 	reg.Upsert(medical.PatientRecord{
 		PatientID: "pt-001", Age: 72, Sex: "F",
-		Conditions: []string{"chf", "htn"},
+		Conditions:     []string{"chf", "htn"},
 		LastSystolicBP: 168, LastBPDate: now.AddDate(0, 0, -5),
-		LastWeightLb:   192,
+		LastWeightLb: 192,
 		Medications: []medical.MedicationEntry{
 			{Name: "Furosemide", Dose: "40 mg", Frequency: "daily"},
 			{Name: "Lisinopril", Dose: "10 mg", Frequency: "daily"},
@@ -174,9 +174,9 @@ func runTCM(ctx context.Context, bus comm.Bus) {
 		DischargedAt: time.Now().AddDate(0, 0, -1),
 		PrimaryDx:    "Acute decompensated heart failure",
 		Disposition:  "home",
-		HomeMeds: []medical.MedicationEntry{{Name: "Lisinopril", Class: "ACEI"}},
-		NewMeds:  []medical.MedicationEntry{{Name: "Furosemide", Class: "Loop diuretic"}},
-		HighRisk: true,
+		HomeMeds:     []medical.MedicationEntry{{Name: "Lisinopril", Class: "ACEI"}},
+		NewMeds:      []medical.MedicationEntry{{Name: "Furosemide", Class: "Loop diuretic"}},
+		HighRisk:     true,
 	}
 	bus.Publish(ctx, agent.NewMessage("user", "tcm_coordinator", agent.RoleUser,
 		"discharge_event", medical.EncodeDischarge(d),

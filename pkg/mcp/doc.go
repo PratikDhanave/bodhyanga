@@ -15,7 +15,7 @@
 //     invocation — server URL, tool name, outcome, duration, tenant/case
 //     correlation IDs. Never tool arguments or results.
 //
-// Why MCP
+// # Why MCP
 //
 // Bodh's existing pkg/tools holds internal Go tool helpers. They work for the
 // demo, but every external lab / imaging / FHIR integration needs a new Go
@@ -35,7 +35,7 @@
 //   - The MCP server façade exposing Bodh's own pkg/tools (Proposal 8).
 //   - Real SPIFFE/SPIRE integration (Proposal 6).
 //
-// JSON-RPC 2.0 contract
+// # JSON-RPC 2.0 contract
 //
 // Every request carries jsonrpc="2.0", a string or integer id, a method name,
 // and a params object. Every response echoes the id and contains exactly one
@@ -43,7 +43,7 @@
 // matching ids and surfacing JSON-RPC errors as *mcp.Error so callers can
 // distinguish protocol failures from transport failures.
 //
-// Audit and PHI hygiene
+// # Audit and PHI hygiene
 //
 // audit.go emits one CallEvent per CallTool. The event records that a call
 // happened (server URL, tool name, duration, outcome, tenant/case/trace

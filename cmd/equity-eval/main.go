@@ -100,17 +100,17 @@ func loadMetrics(path string) ([]eval.CaseMetrics, error) {
 // benchResult mirrors the per-case JSON objects emitted by cmd/bench -json.
 // Only the fields needed by equity analysis are mapped.
 type benchResult struct {
-	Accuracy       float64        `json:"accuracy"`
-	DiagnosisMatch bool           `json:"diagnosis_match"`
-	CostUSD        float64        `json:"cost_usd"`
-	UnderBudget    bool           `json:"under_budget"`
-	RPMAlertCount  int            `json:"rpm_alert_count"`
+	Accuracy       float64 `json:"accuracy"`
+	DiagnosisMatch bool    `json:"diagnosis_match"`
+	CostUSD        float64 `json:"cost_usd"`
+	UnderBudget    bool    `json:"under_budget"`
+	RPMAlertCount  int     `json:"rpm_alert_count"`
 	// Metadata may carry demographic keys or be absent.
-	Metadata       map[string]any `json:"metadata"`
+	Metadata map[string]any `json:"metadata"`
 	// Top-level bench fields that get merged into Metadata when Metadata
 	// doesn't already contain them.
-	CaseID         string         `json:"case_id"`
-	Provider       string         `json:"provider"`
+	CaseID   string `json:"case_id"`
+	Provider string `json:"provider"`
 }
 
 func (r benchResult) toCaseMetrics() eval.CaseMetrics {

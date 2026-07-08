@@ -141,10 +141,10 @@ func (t *transport) readSSE(body io.Reader) (*Response, error) {
 	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
 
 	var (
-		lastResp     *Response
-		accumChunks  []ContentItem
-		isError      bool
-		anyPayload   bool
+		lastResp    *Response
+		accumChunks []ContentItem
+		isError     bool
+		anyPayload  bool
 	)
 
 	// SSE format: blank-line separated event blocks; lines starting with

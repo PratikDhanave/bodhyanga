@@ -24,17 +24,17 @@ func seedPHQ9Registry() *medical.PatientRegistry {
 
 	// pt-dep-2: major_depressive_disorder, PHQ-9 done 100 days ago → gap expected.
 	reg.Upsert(medical.PatientRecord{
-		PatientID:   "pt-dep-2",
-		Conditions:  []string{"major_depressive_disorder"},
-		LastVisit:   now.AddDate(0, -1, 0),
+		PatientID:    "pt-dep-2",
+		Conditions:   []string{"major_depressive_disorder"},
+		LastVisit:    now.AddDate(0, -1, 0),
 		LastPHQ9Date: now.AddDate(0, 0, -100),
 	})
 
 	// pt-dep-3: depression, PHQ-9 done 30 days ago → no gap.
 	reg.Upsert(medical.PatientRecord{
-		PatientID:   "pt-dep-3",
-		Conditions:  []string{"depression"},
-		LastVisit:   now.AddDate(0, -1, 0),
+		PatientID:    "pt-dep-3",
+		Conditions:   []string{"depression"},
+		LastVisit:    now.AddDate(0, -1, 0),
 		LastPHQ9Date: now.AddDate(0, 0, -30),
 	})
 
@@ -53,10 +53,10 @@ func TestPHQ9OverdueRuleUnit(t *testing.T) {
 	now := time.Now()
 
 	cases := []struct {
-		name      string
-		patient   medical.PatientRecord
-		wantGap   bool
-		wantRule  string
+		name     string
+		patient  medical.PatientRecord
+		wantGap  bool
+		wantRule string
 	}{
 		{
 			name: "depression_no_phq9",
@@ -77,8 +77,8 @@ func TestPHQ9OverdueRuleUnit(t *testing.T) {
 		{
 			name: "depression_phq9_overdue_100_days",
 			patient: medical.PatientRecord{
-				PatientID:   "p3",
-				Conditions:  []string{"depression"},
+				PatientID:    "p3",
+				Conditions:   []string{"depression"},
 				LastPHQ9Date: now.AddDate(0, 0, -100),
 			},
 			wantGap:  true,
@@ -87,8 +87,8 @@ func TestPHQ9OverdueRuleUnit(t *testing.T) {
 		{
 			name: "depression_phq9_recent_30_days",
 			patient: medical.PatientRecord{
-				PatientID:   "p4",
-				Conditions:  []string{"depression"},
+				PatientID:    "p4",
+				Conditions:   []string{"depression"},
 				LastPHQ9Date: now.AddDate(0, 0, -30),
 			},
 			wantGap: false,
@@ -96,8 +96,8 @@ func TestPHQ9OverdueRuleUnit(t *testing.T) {
 		{
 			name: "depression_phq9_exactly_90_days",
 			patient: medical.PatientRecord{
-				PatientID:   "p5",
-				Conditions:  []string{"depression"},
+				PatientID:    "p5",
+				Conditions:   []string{"depression"},
 				LastPHQ9Date: now.AddDate(0, 0, -90),
 			},
 			// exactly 90 days is not strictly greater than 90 days so no gap

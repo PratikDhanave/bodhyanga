@@ -162,4 +162,3 @@ func (cp *Checkpointer) AutoFlush(every int64) {
 		}
 	}
 }
-

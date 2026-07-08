@@ -22,9 +22,9 @@ type Patient struct {
 
 // Observation is a slim FHIR R4 Observation resource.
 type Observation struct {
-	ResourceType string `json:"resourceType"`
-	ID           string `json:"id,omitempty"`
-	Status       string `json:"status,omitempty"`
+	ResourceType string          `json:"resourceType"`
+	ID           string          `json:"id,omitempty"`
+	Status       string          `json:"status,omitempty"`
 	Code         CodeableConcept `json:"code"`
 	Subject      Reference       `json:"subject"`
 	EffectiveDT  string          `json:"effectiveDateTime,omitempty"`
@@ -34,12 +34,12 @@ type Observation struct {
 
 // Encounter is a slim FHIR R4 Encounter resource.
 type Encounter struct {
-	ResourceType string    `json:"resourceType"`
-	ID           string    `json:"id"`
-	Status       string    `json:"status,omitempty"` // planned, in-progress, finished
-	Class        Coding    `json:"class,omitempty"`
-	Subject      Reference `json:"subject"`
-	Period       Period    `json:"period,omitempty"`
+	ResourceType string            `json:"resourceType"`
+	ID           string            `json:"id"`
+	Status       string            `json:"status,omitempty"` // planned, in-progress, finished
+	Class        Coding            `json:"class,omitempty"`
+	Subject      Reference         `json:"subject"`
+	Period       Period            `json:"period,omitempty"`
 	ReasonCode   []CodeableConcept `json:"reasonCode,omitempty"`
 }
 

@@ -178,11 +178,11 @@ func sanitizeMeta(meta map[string]any) map[string]any {
 
 // runRequest is the JSON body for POST /api/runs.
 type runRequest struct {
-	Fixture       string                  `json:"fixture,omitempty"`
-	Diagnostician string                  `json:"diagnostician,omitempty"`
+	Fixture       string                       `json:"fixture,omitempty"`
+	Diagnostician string                       `json:"diagnostician,omitempty"`
 	Presentation  *medical.PatientPresentation `json:"presentation,omitempty"`
-	MaxCostUSD    float64                 `json:"max_cost_usd,omitempty"`
-	GoldDiagnosis string                  `json:"gold_diagnosis,omitempty"`
+	MaxCostUSD    float64                      `json:"max_cost_usd,omitempty"`
+	GoldDiagnosis string                       `json:"gold_diagnosis,omitempty"`
 }
 
 // startRunHandler returns a handler that publishes the presentation to the

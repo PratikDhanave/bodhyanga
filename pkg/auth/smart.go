@@ -335,7 +335,6 @@ func verifyRS256(signingInput, sig []byte, pub *rsa.PublicKey) error {
 	return rsa.VerifyPKCS1v15(pub, crypto.SHA256, h[:], sig)
 }
 
-
 // ParseScopes splits a space-separated SMART scope string into a SMARTScopes
 // struct. Each scope token is classified by its prefix:
 //

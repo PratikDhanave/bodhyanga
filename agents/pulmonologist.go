@@ -61,17 +61,17 @@ type PulmonologistAgent struct{}
 //   - CATScore: COPD Assessment Test score (0–40; ≥10 = high symptom burden)
 //   - MMRCDyspnea: Modified Medical Research Council dyspnoea scale (0–4)
 type pulmoConsultRequest struct {
-	PatientID         string  `json:"patient_id"`
-	CaseID            string  `json:"case_id"`
-	FEV1Percent       float64 `json:"fev1_percent,omitempty"`
-	FVCPercent        float64 `json:"fvc_percent,omitempty"`
-	FEV1FVCRatio      float64 `json:"fev1_fvc_ratio,omitempty"`
-	DLCOPercent       float64 `json:"dlco_percent,omitempty"`
-	SpO2              float64 `json:"spo2,omitempty"`
-	SmokingPackYears  float64 `json:"smoking_pack_years,omitempty"`
-	Symptoms          string  `json:"symptoms,omitempty"`
-	CATScore          int     `json:"cat_score,omitempty"`
-	MMRCDyspnea       int     `json:"mmrc_dyspnea,omitempty"`
+	PatientID        string  `json:"patient_id"`
+	CaseID           string  `json:"case_id"`
+	FEV1Percent      float64 `json:"fev1_percent,omitempty"`
+	FVCPercent       float64 `json:"fvc_percent,omitempty"`
+	FEV1FVCRatio     float64 `json:"fev1_fvc_ratio,omitempty"`
+	DLCOPercent      float64 `json:"dlco_percent,omitempty"`
+	SpO2             float64 `json:"spo2,omitempty"`
+	SmokingPackYears float64 `json:"smoking_pack_years,omitempty"`
+	Symptoms         string  `json:"symptoms,omitempty"`
+	CATScore         int     `json:"cat_score,omitempty"`
+	MMRCDyspnea      int     `json:"mmrc_dyspnea,omitempty"`
 }
 
 // pulmoReport is the wire format for outgoing pulmonology_report messages.
@@ -93,14 +93,14 @@ type pulmoConsultRequest struct {
 //     DLCO < 40%)
 //   - Recommendations: prioritised action list
 type pulmoReport struct {
-	Pattern             string   `json:"pattern"`
-	COPDGOLDStage       string   `json:"copd_gold_stage"`
-	AsthmaSeverity      string   `json:"asthma_severity"`
-	ExacerbationRisk    string   `json:"exacerbation_risk"`
-	O2Indicated         bool     `json:"o2_indicated"`
-	PulmRehabIndicated  bool     `json:"pulm_rehab_indicated"`
-	Recommendations     []string `json:"recommendations"`
-	Urgent              bool     `json:"urgent"`
+	Pattern            string   `json:"pattern"`
+	COPDGOLDStage      string   `json:"copd_gold_stage"`
+	AsthmaSeverity     string   `json:"asthma_severity"`
+	ExacerbationRisk   string   `json:"exacerbation_risk"`
+	O2Indicated        bool     `json:"o2_indicated"`
+	PulmRehabIndicated bool     `json:"pulm_rehab_indicated"`
+	Recommendations    []string `json:"recommendations"`
+	Urgent             bool     `json:"urgent"`
 }
 
 func (a *PulmonologistAgent) ID() string   { return "pulmonologist" }

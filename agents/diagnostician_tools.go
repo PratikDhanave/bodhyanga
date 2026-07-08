@@ -25,7 +25,7 @@ import (
 // Image / RAG behaviour is whatever the Base provides — this wrapper only
 // adds the Tools field on the request and the round-trip loop.
 //
-// Multi-round encoding
+// # Multi-round encoding
 //
 // pkg/llm's Message type does not carry a separate "tool result" slot, so
 // each completed tool call is encoded as an extra assistant turn (the call,

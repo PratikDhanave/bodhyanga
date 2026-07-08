@@ -52,25 +52,25 @@ const (
 
 // FailureMode describes one class of failure that can occur in the system.
 type FailureMode struct {
-	ID          string   `json:"id"`                     // e.g. "FM-DX-001"
-	Name        string   `json:"name"`                   // human-readable label
-	Domain      string   `json:"domain"`                 // diagnostic, care, governance, interop, agent, eval
-	Gulf        Gulf     `json:"gulf"`                    // which gulf the failure belongs to
-	Severity    Severity `json:"severity"`                // how dangerous when it fires
-	Category    string   `json:"category"`                // operational, safety, compliance, accuracy
-	Description string   `json:"description"`             // what goes wrong and why it matters
-	Example     string   `json:"example"`                 // concrete scenario illustrating the failure
-	HIPAARef    string   `json:"hipaa_ref,omitempty"`     // HIPAA section reference if applicable
-	Evaluator   string   `json:"evaluator,omitempty"`     // which evaluator or test catches this
+	ID          string   `json:"id"`                  // e.g. "FM-DX-001"
+	Name        string   `json:"name"`                // human-readable label
+	Domain      string   `json:"domain"`              // diagnostic, care, governance, interop, agent, eval
+	Gulf        Gulf     `json:"gulf"`                // which gulf the failure belongs to
+	Severity    Severity `json:"severity"`            // how dangerous when it fires
+	Category    string   `json:"category"`            // operational, safety, compliance, accuracy
+	Description string   `json:"description"`         // what goes wrong and why it matters
+	Example     string   `json:"example"`             // concrete scenario illustrating the failure
+	HIPAARef    string   `json:"hipaa_ref,omitempty"` // HIPAA section reference if applicable
+	Evaluator   string   `json:"evaluator,omitempty"` // which evaluator or test catches this
 }
 
 // TaxonomyStats summarises a FailureTaxonomy for dashboards and reports.
 type TaxonomyStats struct {
-	Total      int            `json:"total"`
-	ByGulf     map[Gulf]int   `json:"by_gulf"`
+	Total      int              `json:"total"`
+	ByGulf     map[Gulf]int     `json:"by_gulf"`
 	BySeverity map[Severity]int `json:"by_severity"`
-	ByDomain   map[string]int `json:"by_domain"`
-	ByCategory map[string]int `json:"by_category"`
+	ByDomain   map[string]int   `json:"by_domain"`
+	ByCategory map[string]int   `json:"by_category"`
 }
 
 // FailureTaxonomy is the registry of all known failure modes. It maintains

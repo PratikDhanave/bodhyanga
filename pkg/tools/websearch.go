@@ -96,13 +96,13 @@ type duckduckgoTopic struct {
 	Text     string `json:"Text"`
 	FirstURL string `json:"FirstURL"`
 	// Name is non-empty for topic groups; we skip those entries.
-	Name   string           `json:"Name"`
+	Name   string            `json:"Name"`
 	Topics []duckduckgoTopic `json:"Topics"`
 }
 
 const (
-	ddgAPIBase  = "https://api.duckduckgo.com/"
-	ddgTimeout  = 10 * time.Second
+	ddgAPIBase        = "https://api.duckduckgo.com/"
+	ddgTimeout        = 10 * time.Second
 	defaultMaxResults = 5
 )
 

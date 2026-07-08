@@ -36,9 +36,9 @@ type TraceStats struct {
 	P99Duration  time.Duration
 	AvgSpans     float64
 	AvgToolCalls float64
-	FeedbackRate float64                    // fraction of traces with user feedback
-	ThumbsUpRate float64                    // of those with feedback, fraction thumbs-up
-	ByMetadata   map[string]map[string]int  // e.g. {"persona": {"investor": 42}}
+	FeedbackRate float64                   // fraction of traces with user feedback
+	ThumbsUpRate float64                   // of those with feedback, fraction thumbs-up
+	ByMetadata   map[string]map[string]int // e.g. {"persona": {"investor": 42}}
 }
 
 // OutlierReport flags a single trace that exceeds normal bounds for a given

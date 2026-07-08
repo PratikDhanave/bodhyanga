@@ -38,11 +38,11 @@ func TestDosingWeightBased_CappedAtMax(t *testing.T) {
 	tool := WeightBasedDosing{}
 	maxDose := 400.0
 	args, _ := json.Marshal(map[string]interface{}{
-		"drug":         "amoxicillin",
-		"dose_per_kg":  25,
-		"weight_kg":    20, // would be 500 mg without cap
-		"max_dose_mg":  maxDose,
-		"route":        "oral",
+		"drug":        "amoxicillin",
+		"dose_per_kg": 25,
+		"weight_kg":   20, // would be 500 mg without cap
+		"max_dose_mg": maxDose,
+		"route":       "oral",
 	})
 	raw, err := tool.Invoke(context.Background(), args)
 	if err != nil {

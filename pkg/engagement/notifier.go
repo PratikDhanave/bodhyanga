@@ -22,16 +22,16 @@ const (
 
 // Notification represents one outreach attempt.
 type Notification struct {
-	ID         string    `json:"id"`
-	PatientID  string    `json:"patient_id"`
-	Channel    Channel   `json:"channel"`
-	Template   string    `json:"template"`
-	Body       string    `json:"body"`
-	Reason     string    `json:"reason,omitempty"`
-	CaseID     string    `json:"case_id,omitempty"`
-	SentAt     time.Time `json:"sent_at"`
-	Acked      bool      `json:"acked,omitempty"`
-	AckedAt    time.Time `json:"acked_at,omitempty"`
+	ID        string    `json:"id"`
+	PatientID string    `json:"patient_id"`
+	Channel   Channel   `json:"channel"`
+	Template  string    `json:"template"`
+	Body      string    `json:"body"`
+	Reason    string    `json:"reason,omitempty"`
+	CaseID    string    `json:"case_id,omitempty"`
+	SentAt    time.Time `json:"sent_at"`
+	Acked     bool      `json:"acked,omitempty"`
+	AckedAt   time.Time `json:"acked_at,omitempty"`
 }
 
 // Notifier is the abstraction. In production this fans out to Twilio / SendGrid.

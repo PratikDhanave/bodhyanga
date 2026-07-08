@@ -24,8 +24,8 @@ func TestInferDiagnosisSpecialtyRules(t *testing.T) {
 			state: medical.CaseState{
 				Condition: "cap",
 				TestResults: map[string]string{
-					"complete_blood_count": "WBC 14.2 K, neutrophil predominance",
-					"chest_xray":           "Right lower lobe infiltrate consistent with consolidation",
+					"complete_blood_count":  "WBC 14.2 K, neutrophil predominance",
+					"chest_xray":            "Right lower lobe infiltrate consistent with consolidation",
 					"basic_metabolic_panel": "Within normal limits",
 				},
 			},
@@ -102,7 +102,7 @@ func TestInferDiagnosisSpecialtyRules(t *testing.T) {
 			name: "no condition, no signals → Undifferentiated (preserved fallback)",
 			state: medical.CaseState{
 				TestResults: map[string]string{
-					"complete_blood_count": "WBC 7.0 K",
+					"complete_blood_count":  "WBC 7.0 K",
 					"basic_metabolic_panel": "Within normal limits",
 				},
 			},

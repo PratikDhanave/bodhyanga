@@ -15,9 +15,9 @@ type CareGap struct {
 
 // PanelReport is the aggregate output of the panel manager.
 type PanelReport struct {
-	GeneratedAt   time.Time `json:"generated_at"`
-	PanelSize     int       `json:"panel_size"`
-	Gaps          []CareGap `json:"gaps,omitempty"`
+	GeneratedAt   time.Time      `json:"generated_at"`
+	PanelSize     int            `json:"panel_size"`
+	Gaps          []CareGap      `json:"gaps,omitempty"`
 	ConditionRoll map[string]int `json:"condition_roll,omitempty"`
 }
 

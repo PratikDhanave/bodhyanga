@@ -70,8 +70,8 @@ func TestAuditPagination_DecodeCursorErrors(t *testing.T) {
 	}{
 		{"empty", ""},
 		{"not base64", "!@#$%"},
-		{"no delimiter", EncodeCursor("", time.Now())}, // empty id
-		{"plain text", "aGVsbG8="}, // base64("hello") — no delimiter
+		{"no delimiter", EncodeCursor("", time.Now())},    // empty id
+		{"plain text", "aGVsbG8="},                        // base64("hello") — no delimiter
 		{"garbage bytes", "dGhpcyBpcyBub3QgYSBjdXJzb3I="}, // "this is not a cursor"
 	}
 

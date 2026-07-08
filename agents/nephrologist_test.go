@@ -235,12 +235,12 @@ func TestNephrologistDialysisIndicatedG5(t *testing.T) {
 // KDIGO creatinine stages.
 func TestNephrologistAKIStaging(t *testing.T) {
 	cases := []struct {
-		name          string
-		scr           float64
-		priorScr      float64
-		wantAKIStage  int
-		wantUrgent    bool
-		wantDialysis  bool
+		name         string
+		scr          float64
+		priorScr     float64
+		wantAKIStage int
+		wantUrgent   bool
+		wantDialysis bool
 	}{
 		// Stage 0 — no AKI
 		{"no AKI ratio 1.2", 1.2, 1.0, 0, false, false},
@@ -321,9 +321,9 @@ func TestNephrologistNoAKIWithoutBaseline(t *testing.T) {
 // assignment across A1/A2/A3 boundaries.
 func TestNephrologistProteinuriaClassification(t *testing.T) {
 	cases := []struct {
-		name     string
-		pcr      float64
-		wantCat  string
+		name    string
+		pcr     float64
+		wantCat string
 	}{
 		{"A1 pcr 0.01", 0.01, "A1"},
 		{"A1 pcr 0.029", 0.029, "A1"},

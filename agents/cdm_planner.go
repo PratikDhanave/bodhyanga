@@ -16,7 +16,8 @@ import (
 // Input message Type:  cdm_request   Content: {"patient_id","condition","case_id"}
 // Output message Type: care_plan_ready  Content: medical.CarePlan JSON
 // Output routes to:    engagement (for outreach, optionally HITL-gated) and
-//                      panel_manager (for tracking, always direct).
+//
+//	panel_manager (for tracking, always direct).
 type CDMPlannerAgent struct {
 	Registry medical.PatientStore
 	// HITL routes the patient-facing engagement message through human_review
@@ -25,9 +26,9 @@ type CDMPlannerAgent struct {
 }
 
 type cdmRequest struct {
-	PatientID string  `json:"patient_id"`
-	Condition string  `json:"condition"`
-	CaseID    string  `json:"case_id,omitempty"`
+	PatientID string `json:"patient_id"`
+	Condition string `json:"condition"`
+	CaseID    string `json:"case_id,omitempty"`
 	// Well-child fields (used when Condition == "well_child").
 	AgeMonths int     `json:"age_months,omitempty"`
 	WeightKg  float64 `json:"weight_kg,omitempty"`

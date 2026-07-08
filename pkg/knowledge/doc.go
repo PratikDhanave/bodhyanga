@@ -13,7 +13,7 @@
 // pgvector / Qdrant / Weaviate without touching agent code — the agents only
 // see the Store interface.
 //
-// Why citations are first-class
+// # Why citations are first-class
 //
 // Clinical AI requires provenance: every claim the diagnostician makes should
 // be traceable back to a guideline or evidence source. The Citation type
@@ -21,7 +21,7 @@
 // its DiagnosisProposal — see agents.LLMDiagnostician for how it weaves
 // retrieved evidence into the prompt and surfaces citations on the way out.
 //
-// Corpus format
+// # Corpus format
 //
 // LoadCorpus reads a JSON file like data/knowledge/corpus.json:
 //

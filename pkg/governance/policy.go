@@ -34,7 +34,7 @@ const (
 	// payload — the fail-closed posture mandated by Bodh design rule 4
 	// (governance runs before HandleMessage) and aligned with HIPAA
 	// §164.312(b) audit-control expectations.
-	DecisionDeny  Decision = "deny"
+	DecisionDeny Decision = "deny"
 )
 
 // PolicyResult captures the decision plus optional explanation.
@@ -50,20 +50,20 @@ type PolicyResult struct {
 	// Decision is the binary verdict. The orchestrator branches on this in
 	// pkg/orchestration.Orchestrator.Start; any value other than
 	// DecisionAllow is treated as deny (fail closed).
-	Decision    Decision
+	Decision Decision
 
 	// Reason is a short PHI-free string that ends up in audit.Event.Reason
 	// and in operational logs via env.Logf. It is therefore part of the
 	// public contract — tests in pkg/governance assert specific Reason
 	// strings, and downstream dashboards group by Reason. See
 	// docs/governance.md § Adding a policy for the conventions.
-	Reason      string
+	Reason string
 
 	// CheckedAt is the UTC timestamp the policy made its decision. Helpers
 	// allow() and deny() (in medical_policy.go) set this via
 	// time.Now().UTC(); CompositePolicy backfills it on the deny path if
 	// a child returned a zero value.
-	CheckedAt   time.Time
+	CheckedAt time.Time
 
 	// CheckedByID is reserved for future per-policy attribution (e.g.
 	// "MaxContentLengthPolicy", "Part2ConsentPolicy"). It is unset by the
@@ -234,4 +234,3 @@ func (p MaxContentLengthPolicy) Evaluate(_ context.Context, msg protocol.Message
 		CheckedAt: time.Now().UTC(),
 	}, nil
 }
-

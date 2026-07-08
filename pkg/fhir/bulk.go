@@ -274,18 +274,18 @@ func rpmObservationsFromRecord(p medical.PatientRecord) []medical.RPMObservation
 	}
 	if p.LastWeightLb > 0 {
 		out = append(out, medical.RPMObservation{
-			Device:  "fhir-export",
-			Metric:  "weight_lb",
-			Value:   p.LastWeightLb,
-			Unit:    "lb",
+			Device: "fhir-export",
+			Metric: "weight_lb",
+			Value:  p.LastWeightLb,
+			Unit:   "lb",
 		})
 	}
 	if p.LastSpO2 > 0 {
 		out = append(out, medical.RPMObservation{
-			Device:  "fhir-export",
-			Metric:  "spo2",
-			Value:   p.LastSpO2,
-			Unit:    "%",
+			Device: "fhir-export",
+			Metric: "spo2",
+			Value:  p.LastSpO2,
+			Unit:   "%",
 		})
 	}
 	if p.LastA1c > 0 {

@@ -59,12 +59,12 @@ func TestPharmacistNoInteractions(t *testing.T) {
 
 func TestPharmacistKnownInteractions(t *testing.T) {
 	tests := []struct {
-		name          string
-		meds          []medicationInput
-		wantSafe      bool
-		wantSeverity  string
-		wantDrugA     string
-		wantDrugB     string
+		name         string
+		meds         []medicationInput
+		wantSafe     bool
+		wantSeverity string
+		wantDrugA    string
+		wantDrugB    string
 	}{
 		{
 			name: "warfarin + aspirin → HIGH bleeding risk",

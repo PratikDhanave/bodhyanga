@@ -214,8 +214,8 @@ func TestOrderSign_OverBudget_ReturnsInfo(t *testing.T) {
 		Hook:         cdshooks.HookOrderSign,
 		HookInstance: "test-order-1",
 		Context: map[string]any{
-			"patientId":         "patient-010",
-			"estimatedCostUSD":  750.0,
+			"patientId":          "patient-010",
+			"estimatedCostUSD":   750.0,
 			"budgetThresholdUSD": 500.0,
 		},
 	}

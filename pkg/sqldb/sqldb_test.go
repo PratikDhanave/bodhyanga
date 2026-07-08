@@ -535,8 +535,8 @@ type errTx struct {
 }
 
 func (et *errTx) Begin(_ context.Context) (pgx.Tx, error) { return nil, nil }
-func (et *errTx) Commit(_ context.Context) error           { return nil }
-func (et *errTx) Rollback(_ context.Context) error         { return nil }
+func (et *errTx) Commit(_ context.Context) error          { return nil }
+func (et *errTx) Rollback(_ context.Context) error        { return nil }
 func (et *errTx) CopyFrom(_ context.Context, _ pgx.Identifier, _ []string, _ pgx.CopyFromSource) (int64, error) {
 	return 0, nil
 }

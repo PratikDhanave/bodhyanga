@@ -100,10 +100,10 @@ func TestRunSelfCorrectAgent_OneRevisionNeeded(t *testing.T) {
 	// critique is above threshold.
 	stub := &sequentialClient{
 		responses: []string{
-			"bad answer",                   // round 1 answer
-			goodCritiqueJSON(0.4, false),   // round 1 critique (below threshold)
-			"improved answer",              // revised answer
-			goodCritiqueJSON(0.92, true),   // round 2 critique (above threshold)
+			"bad answer",                 // round 1 answer
+			goodCritiqueJSON(0.4, false), // round 1 critique (below threshold)
+			"improved answer",            // revised answer
+			goodCritiqueJSON(0.92, true), // round 2 critique (above threshold)
 		},
 	}
 

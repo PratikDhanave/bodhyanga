@@ -227,4 +227,3 @@ func TestExtractStratum_RaceAndEthnicity(t *testing.T) {
 		t.Errorf("expected %q, got %q", expected, s.RaceEthnicity)
 	}
 }
-

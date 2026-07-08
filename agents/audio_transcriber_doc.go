@@ -1,11 +1,12 @@
 // audio_transcriber.go — clinician-dictation audio → text agent.
 //
 // Overview:
-//   Subscribes to audio_transcription_request messages. Decodes the
-//   base64 audio payload, calls the injected pkg/audio.Transcriber
-//   (kronk-backed on-prem Whisper in production, MockTranscriber in
-//   tests and the default build), and emits either an
-//   audio_transcription_result or audio_transcription_failed message.
+//
+//	Subscribes to audio_transcription_request messages. Decodes the
+//	base64 audio payload, calls the injected pkg/audio.Transcriber
+//	(kronk-backed on-prem Whisper in production, MockTranscriber in
+//	tests and the default build), and emits either an
+//	audio_transcription_result or audio_transcription_failed message.
 //
 // Key declarations:
 //   - AudioTranscriberAgentID: the bus address ("audio_transcriber").

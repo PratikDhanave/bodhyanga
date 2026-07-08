@@ -64,13 +64,13 @@ func SeedPatients() []medical.PatientRecord {
 			DischargedAt: now.AddDate(0, 0, -10),
 		},
 		{
-			PatientID:    "patient_test_003",
-			Age:          72,
-			Sex:          "F",
-			Conditions:   []string{"J44.9"}, // COPD
-			RPMEnrolled:  true,
-			LastSpO2:     93,
-			LastVisit:    now.AddDate(0, -3, 0),
+			PatientID:   "patient_test_003",
+			Age:         72,
+			Sex:         "F",
+			Conditions:  []string{"J44.9"}, // COPD
+			RPMEnrolled: true,
+			LastSpO2:    93,
+			LastVisit:   now.AddDate(0, -3, 0),
 		},
 	}
 }

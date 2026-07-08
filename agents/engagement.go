@@ -11,10 +11,11 @@ import (
 )
 
 // EngagementAgent sends patient outreach for several upstream agents:
-//   care_plan_ready      -> intro the new plan
-//   engagement_request   -> gap-in-care SMS
-//   tcm_tasks_created    -> post-discharge check-in
-//   refill_response      -> refill status update
+//
+//	care_plan_ready      -> intro the new plan
+//	engagement_request   -> gap-in-care SMS
+//	tcm_tasks_created    -> post-discharge check-in
+//	refill_response      -> refill status update
 type EngagementAgent struct {
 	Notifier engagement.Notifier
 }

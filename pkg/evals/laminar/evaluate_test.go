@@ -15,8 +15,8 @@ import (
 // fakeLaminar is a minimal stand-in for the Laminar REST API.
 // It handles POST /v1/evals and POST /v1/evals/{id}/datapoints.
 type fakeLaminar struct {
-	initCalls []map[string]any   // bodies received at /v1/evals
-	dpCalls   []map[string]any   // bodies received at /v1/evals/{id}/datapoints
+	initCalls []map[string]any // bodies received at /v1/evals
+	dpCalls   []map[string]any // bodies received at /v1/evals/{id}/datapoints
 	server    *httptest.Server
 }
 

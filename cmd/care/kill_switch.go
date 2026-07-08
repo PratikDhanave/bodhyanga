@@ -12,19 +12,19 @@
 //
 // # Endpoints
 //
-//   GET    /admin/kill-switch          — list all currently-active halt scopes
-//   POST   /admin/kill-switch          — activate a halt scope
-//   DELETE /admin/kill-switch          — clear (re-enable) a halt scope
+//	GET    /admin/kill-switch          — list all currently-active halt scopes
+//	POST   /admin/kill-switch          — activate a halt scope
+//	DELETE /admin/kill-switch          — clear (re-enable) a halt scope
 //
 // # Scope encoding (JSON field "scope")
 //
-//   "global"              — process-wide halt (blocks every message)
-//   "agent:<agentID>"     — halt a single named agent
-//   "capability:<cap>"    — halt a single capability across all agents
+//	"global"              — process-wide halt (blocks every message)
+//	"agent:<agentID>"     — halt a single named agent
+//	"capability:<cap>"    — halt a single capability across all agents
 //
 // # Reason values
 //
-//   "policy_violation" | "security_incident" | "operator_request" | "error_budget_exhausted"
+//	"policy_violation" | "security_incident" | "operator_request" | "error_budget_exhausted"
 //
 // # Security note
 //
@@ -51,9 +51,9 @@ type killSwitchServer struct {
 // killSwitchActivateReq is the POST /admin/kill-switch body.
 type killSwitchActivateReq struct {
 	// Scope is one of "global", "agent:<agentID>", "capability:<cap>".
-	Scope   string `json:"scope"`
+	Scope string `json:"scope"`
 	// Reason is one of the KillSwitchReason constants.
-	Reason  string `json:"reason"`
+	Reason string `json:"reason"`
 	// Message is a free-text operator note (PHI-free; stored in history).
 	Message string `json:"message"`
 }

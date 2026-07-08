@@ -22,7 +22,7 @@ const (
 // at which point the original action resumes onto the bus.
 type ReviewRequest struct {
 	ID           string         `json:"id"`
-	Kind         string         `json:"kind"`     // diagnosis_review, care_plan_review, ...
+	Kind         string         `json:"kind"` // diagnosis_review, care_plan_review, ...
 	Status       ReviewStatus   `json:"status"`
 	PatientID    string         `json:"patient_id,omitempty"`
 	CaseID       string         `json:"case_id,omitempty"`

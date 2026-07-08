@@ -193,9 +193,9 @@ func TestNeurologistBPContraindication(t *testing.T) {
 // TestNeurologistLVODetection verifies LVO is suspected when NIHSS ≥ 6.
 func TestNeurologistLVODetection(t *testing.T) {
 	cases := []struct {
-		name         string
-		nihss        int
-		wantLVO      bool
+		name    string
+		nihss   int
+		wantLVO bool
 	}{
 		{"NIHSS 5 — below LVO threshold", 5, false},
 		{"NIHSS 6 — at LVO threshold", 6, true},
@@ -226,9 +226,9 @@ func TestNeurologistLVODetection(t *testing.T) {
 // LVO suspected AND onset < 24h (or unknown).
 func TestNeurologistThrombectomyWindow(t *testing.T) {
 	cases := []struct {
-		name            string
-		nihss           int
-		onsetHours      float64
+		name             string
+		nihss            int
+		onsetHours       float64
 		wantThrombectomy bool
 	}{
 		{"NIHSS 10, onset 6h — in window", 10, 6.0, true},

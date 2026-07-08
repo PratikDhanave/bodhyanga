@@ -73,12 +73,12 @@ type cardioConsultRequest struct {
 //   - Urgent: true when immediate escalation is warranted
 //   - Recommendations: prioritised action list
 type cardioReport struct {
-	Interpretation     string   `json:"interpretation"`
-	STEMIEquivalent    bool     `json:"stemi_equivalent"`
-	HeartFailureClass  string   `json:"heart_failure_class"`
-	RiskScore          float64  `json:"risk_score"`
-	Urgent             bool     `json:"urgent"`
-	Recommendations    []string `json:"recommendations"`
+	Interpretation    string   `json:"interpretation"`
+	STEMIEquivalent   bool     `json:"stemi_equivalent"`
+	HeartFailureClass string   `json:"heart_failure_class"`
+	RiskScore         float64  `json:"risk_score"`
+	Urgent            bool     `json:"urgent"`
+	Recommendations   []string `json:"recommendations"`
 }
 
 func (a *CardiologistAgent) ID() string   { return "cardiologist" }

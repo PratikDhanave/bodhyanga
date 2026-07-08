@@ -48,9 +48,9 @@ func TestOphthalmologistAgent_Identity(t *testing.T) {
 		t.Errorf("Name: want Ophthalmology Specialist, got %q", a.Name())
 	}
 	wantCaps := map[string]bool{
-		"retinopathy_screening":    true,
-		"glaucoma_assessment":      true,
-		"eye_exam_interpretation":  true,
+		"retinopathy_screening":   true,
+		"glaucoma_assessment":     true,
+		"eye_exam_interpretation": true,
 	}
 	for _, c := range a.Capabilities() {
 		wantCaps[c] = false
@@ -120,8 +120,8 @@ func TestOphthalmologist_HandleMessage_InvalidJSON(t *testing.T) {
 
 func TestOphthalmologist_DR_NoDR(t *testing.T) {
 	req := ophthalConsultRequest{
-		PatientID:        "p1",
-		DiagnosisContext: "Type 2 DM",
+		PatientID:         "p1",
+		DiagnosisContext:  "Type 2 DM",
 		FundusDescription: "Normal fundus. No diabetic changes identified.",
 	}
 	r := interpretOphthalmology(req)

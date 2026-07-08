@@ -16,9 +16,9 @@
 //
 // # Architecture
 //
-//   executor  — runs the agent loop against mocked tools (deterministic, no I/O)
-//   evaluators — score the result: tool order, forbidden tools, LLM-as-judge
-//   runner    — loads a JSON dataset, runs executor + evaluators, reports scores
+//	executor  — runs the agent loop against mocked tools (deterministic, no I/O)
+//	evaluators — score the result: tool order, forbidden tools, LLM-as-judge
+//	runner    — loads a JSON dataset, runs executor + evaluators, reports scores
 //
 // # Why Mocked Tools?
 //

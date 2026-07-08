@@ -75,7 +75,7 @@ func TestParseLimit_RejectsBadInput(t *testing.T) {
 	}{
 		{"10", 10, true},
 		{"1", 1, true},
-		{"0", 0, false},     // zero is not a useful limit
+		{"0", 0, false}, // zero is not a useful limit
 		{"-5", 0, false},
 		{"abc", 0, false},
 		{"", 0, false},
@@ -140,4 +140,3 @@ func joinFormat(format string, args ...any) string {
 	}
 	return out
 }
-

@@ -58,7 +58,7 @@ func (a *RefillManagerAgent) HandleMessage(_ context.Context, msg agent.Message,
 	if status == "review" {
 		a.Tasks.Create(tasks.NurseTask{
 			Kind: "refill", PatientID: req.PatientID, Priority: "normal",
-			DueAt: time.Now().Add(24 * time.Hour),
+			DueAt:   time.Now().Add(24 * time.Hour),
 			Subject: "Refill review: " + req.Medication,
 			Detail:  reason,
 		})

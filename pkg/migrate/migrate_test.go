@@ -343,10 +343,10 @@ func TestLoad_EmptyDirectory(t *testing.T) {
 // ignores directories and non-.sql files in the migration root.
 func TestLoad_SkipsNonSQLFilesAndDirectories(t *testing.T) {
 	mfs := fstest.MapFS{
-		"0001_init.sql":  &fstest.MapFile{Data: []byte("SELECT 1;")},
-		"README.md":      &fstest.MapFile{Data: []byte("# docs")},
-		"notes.txt":      &fstest.MapFile{Data: []byte("ignore me")},
-		"subdir":         &fstest.MapFile{Mode: fs.ModeDir},
+		"0001_init.sql": &fstest.MapFile{Data: []byte("SELECT 1;")},
+		"README.md":     &fstest.MapFile{Data: []byte("# docs")},
+		"notes.txt":     &fstest.MapFile{Data: []byte("ignore me")},
+		"subdir":        &fstest.MapFile{Mode: fs.ModeDir},
 	}
 	got, err := Load(mfs)
 	if err != nil {
@@ -996,7 +996,7 @@ func (f *fakeDirFile) Stat() (fs.FileInfo, error) {
 	return fakeFileInfo{name: ".", isDir: true}, nil
 }
 func (f *fakeDirFile) Read([]byte) (int, error) { return 0, errors.New("not a regular file") }
-func (f *fakeDirFile) Close() error              { return nil }
+func (f *fakeDirFile) Close() error             { return nil }
 func (f *fakeDirFile) ReadDir(n int) ([]fs.DirEntry, error) {
 	if f.read {
 		return nil, nil
@@ -1012,9 +1012,9 @@ type fakeDirEntry struct {
 }
 
 func (e fakeDirEntry) Name() string               { return e.name }
-func (e fakeDirEntry) IsDir() bool                 { return e.isDir }
-func (e fakeDirEntry) Type() fs.FileMode           { return 0 }
-func (e fakeDirEntry) Info() (fs.FileInfo, error)   { return fakeFileInfo{name: e.name}, nil }
+func (e fakeDirEntry) IsDir() bool                { return e.isDir }
+func (e fakeDirEntry) Type() fs.FileMode          { return 0 }
+func (e fakeDirEntry) Info() (fs.FileInfo, error) { return fakeFileInfo{name: e.name}, nil }
 
 // fakeFileInfo implements fs.FileInfo.
 type fakeFileInfo struct {
@@ -1022,12 +1022,12 @@ type fakeFileInfo struct {
 	isDir bool
 }
 
-func (i fakeFileInfo) Name() string      { return i.name }
-func (i fakeFileInfo) Size() int64       { return 0 }
-func (i fakeFileInfo) Mode() fs.FileMode { return 0 }
+func (i fakeFileInfo) Name() string       { return i.name }
+func (i fakeFileInfo) Size() int64        { return 0 }
+func (i fakeFileInfo) Mode() fs.FileMode  { return 0 }
 func (i fakeFileInfo) ModTime() time.Time { return time.Time{} }
-func (i fakeFileInfo) IsDir() bool       { return i.isDir }
-func (i fakeFileInfo) Sys() any          { return nil }
+func (i fakeFileInfo) IsDir() bool        { return i.isDir }
+func (i fakeFileInfo) Sys() any           { return nil }
 
 // fakeBeginner implements sqldb.Beginner for testing error paths that
 // don't need a real Postgres connection.
@@ -1058,7 +1058,7 @@ func (fb *fakeBeginner) Begin(ctx context.Context) (pgx.Tx, error) {
 
 // fakeTx implements pgx.Tx with configurable failures.
 type fakeTx struct {
-	pgx.Tx // embed to satisfy the interface; unused methods panic
+	pgx.Tx    // embed to satisfy the interface; unused methods panic
 	execErr   error
 	execCount int
 	queryErr  error
@@ -1094,7 +1094,7 @@ func (tx *fakeTx) Rollback(ctx context.Context) error {
 
 // fakeRows implements pgx.Rows with configurable Next/Scan behavior.
 type fakeRows struct {
-	pgx.Rows // embed; unused methods panic
+	pgx.Rows  // embed; unused methods panic
 	nextCount int
 	scanErr   error
 	callCount int
@@ -1122,13 +1122,13 @@ func (r *fakeRows) Scan(dest ...any) error {
 	return nil
 }
 
-func (r *fakeRows) Close()                        {}
-func (r *fakeRows) Err() error                    { return nil }
-func (r *fakeRows) CommandTag() pgconn.CommandTag  { return pgconn.CommandTag{} }
+func (r *fakeRows) Close()                                       {}
+func (r *fakeRows) Err() error                                   { return nil }
+func (r *fakeRows) CommandTag() pgconn.CommandTag                { return pgconn.CommandTag{} }
 func (r *fakeRows) FieldDescriptions() []pgconn.FieldDescription { return nil }
-func (r *fakeRows) RawValues() [][]byte           { return nil }
-func (r *fakeRows) Conn() *pgx.Conn               { return nil }
-func (r *fakeRows) Values() ([]any, error)         { return nil, nil }
+func (r *fakeRows) RawValues() [][]byte                          { return nil }
+func (r *fakeRows) Conn() *pgx.Conn                              { return nil }
+func (r *fakeRows) Values() ([]any, error)                       { return nil, nil }
 
 // countingBeginner is a Beginner that returns a working fakeTx for
 // the first `failAfter` calls and then returns failErr. This lets
@@ -1173,7 +1173,7 @@ func (pb *phasedBeginner) Begin(ctx context.Context) (pgx.Tx, error) {
 // INSERT (2nd Exec) or the audit_events INSERT (3rd Exec) independently.
 type countingExecTx struct {
 	pgx.Tx
-	failOnExec int   // 0 means never fail on exec
+	failOnExec int // 0 means never fail on exec
 	failErr    error
 	commitErr  error
 	execCalls  int

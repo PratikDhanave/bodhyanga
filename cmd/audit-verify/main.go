@@ -85,7 +85,7 @@ func main() {
 // chainedEvent mirrors audit.ChainedEvent for local parsing (avoids exporting
 // the struct fields we only need here).
 type chainedEvent struct {
-	Event    struct {
+	Event struct {
 		ID   string    `json:"id"`
 		At   time.Time `json:"at"`
 		Kind string    `json:"kind"`

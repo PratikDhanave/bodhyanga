@@ -23,12 +23,12 @@ type preVisitRequest struct {
 }
 
 type preVisitSummary struct {
-	PatientID    string   `json:"patient_id"`
-	EncounterID  string   `json:"encounter_id,omitempty"`
-	Highlights   []string `json:"highlights"`
-	OpenGaps     []string `json:"open_gaps,omitempty"`
-	SuggestedDx  []string `json:"suggested_diagnoses,omitempty"`
-	Headline     string   `json:"headline"`
+	PatientID   string   `json:"patient_id"`
+	EncounterID string   `json:"encounter_id,omitempty"`
+	Highlights  []string `json:"highlights"`
+	OpenGaps    []string `json:"open_gaps,omitempty"`
+	SuggestedDx []string `json:"suggested_diagnoses,omitempty"`
+	Headline    string   `json:"headline"`
 }
 
 func (a *PreVisitPrepAgent) ID() string   { return "pre_visit_prep" }

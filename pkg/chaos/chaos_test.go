@@ -81,7 +81,7 @@ func (e errorPolicy) Evaluate(_ context.Context, _ protocol.Message) (governance
 // panicAgent panics inside HandleMessage on every call. Used to verify
 // the bus safeHandle recovers the panic without crashing the process.
 type panicAgent struct {
-	id      string
+	id        string
 	panicWith any
 }
 

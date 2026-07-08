@@ -28,9 +28,9 @@ func TestReadmissionTrackerAdmitEvent(t *testing.T) {
 	reg := medical.NewPatientRegistry()
 	a := &ReadmissionTrackerAgent{Registry: reg}
 	e := medical.ADTEvent{
-		EventID:   "e1",
-		PatientID: "p1",
-		Type:      medical.ADTAdmit,
+		EventID:    "e1",
+		PatientID:  "p1",
+		Type:       medical.ADTAdmit,
 		OccurredAt: time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC),
 	}
 	msg := agent.NewMessage("hl7", "readmission_tracker", agent.RoleAgent,
@@ -114,12 +114,12 @@ func TestReadmissionTrackerDischargeHighRiskPriority(t *testing.T) {
 	// Set up a high-risk patient (age >= 75, conditions, recent discharge).
 	reg := medical.NewPatientRegistry()
 	reg.Upsert(medical.PatientRecord{
-		PatientID:    "p3",
-		Age:          80,
-		Conditions:   []string{"chf", "dm", "ckd", "copd", "htn", "af", "cad", "stroke"},
-		DischargedAt: time.Date(2026, 5, 10, 0, 0, 0, 0, time.UTC),
+		PatientID:      "p3",
+		Age:            80,
+		Conditions:     []string{"chf", "dm", "ckd", "copd", "htn", "af", "cad", "stroke"},
+		DischargedAt:   time.Date(2026, 5, 10, 0, 0, 0, 0, time.UTC),
 		LastSystolicBP: 165,
-		LastA1c: 9.5,
+		LastA1c:        9.5,
 	})
 	a := &ReadmissionTrackerAgent{Registry: reg, HITL: true}
 	e := medical.ADTEvent{
@@ -189,7 +189,7 @@ func TestReadmissionTrackerMediumRiskPriority(t *testing.T) {
 	reg := medical.NewPatientRegistry()
 	reg.Upsert(medical.PatientRecord{
 		PatientID:  "p4",
-		Age:        66, // +0.15
+		Age:        66,                    // +0.15
 		Conditions: []string{"dm", "htn"}, // +0.16
 	})
 	a := &ReadmissionTrackerAgent{Registry: reg, HITL: true}

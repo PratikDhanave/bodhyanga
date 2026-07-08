@@ -6,7 +6,7 @@ import (
 
 func TestBuildSeizureDiagnosis(t *testing.T) {
 	cases := []struct {
-		seizureType string
+		seizureType  string
 		wantNonEmpty bool
 	}{
 		{"generalized tonic-clonic", true},

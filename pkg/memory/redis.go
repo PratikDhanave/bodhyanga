@@ -56,11 +56,11 @@ import (
 // Reconnect: if a command fails due to a network error the client makes one
 // reconnect attempt before surfacing the error to the caller.
 type RedisKV struct {
-	addr string      // TCP address: "host:port"
-	ns   string      // namespace prefix applied to every key
-	conn net.Conn    // live TCP connection to Redis
+	addr string   // TCP address: "host:port"
+	ns   string   // namespace prefix applied to every key
+	conn net.Conn // live TCP connection to Redis
 	rd   *bufio.Reader
-	mu   sync.Mutex  // serialises all network I/O
+	mu   sync.Mutex // serialises all network I/O
 }
 
 // NewRedisKV dials a Redis server over TCP and returns a RedisKV.

@@ -25,11 +25,11 @@
 //
 // 3. Compare models — does a smaller model still call the right tool?
 //
-//	go run ./cmd/toolcalling/... -model llama3.2
-//	go run ./cmd/toolcalling/... -provider anthropic -model claude-haiku-4-5
+//		go run ./cmd/toolcalling/... -model llama3.2
+//		go run ./cmd/toolcalling/... -provider anthropic -model claude-haiku-4-5
 //
-// 4. Add a new tool: implement a localTool in pkg/agent/toolcalling/,
-//    register it in the registry in tools.go, and re-run.
+//	 4. Add a new tool: implement a localTool in pkg/agent/toolcalling/,
+//	    register it in the registry in tools.go, and re-run.
 //
 // # Environment variables
 //

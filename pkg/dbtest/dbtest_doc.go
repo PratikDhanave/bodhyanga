@@ -18,7 +18,7 @@
 // particular:
 //
 //   - business/sdk/dbtest/dbtest.go       (Database type, container spin-up,
-//                                          per-test scope, t.Cleanup teardown)
+//     per-test scope, t.Cleanup teardown)
 //   - business/sdk/dbtest/business.go     (BusDomain grouping of test fixtures)
 //   - business/sdk/unittest/unittest.go   (Run / Table / WithSkip)
 //   - business/sdk/unittest/model.go      (SeedData)

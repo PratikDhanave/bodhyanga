@@ -3,8 +3,8 @@ package multiturneval
 import (
 	"context"
 	"fmt"
-	"text/tabwriter"
 	"os"
+	"text/tabwriter"
 
 	"github.com/PratikDhanave/bodh/pkg/llm"
 )

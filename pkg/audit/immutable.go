@@ -430,4 +430,3 @@ func hostFromEndpoint(endpoint, bucket string) string {
 	}
 	return endpoint
 }
-

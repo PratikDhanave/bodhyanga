@@ -241,9 +241,9 @@ func TestWebSearch_SubgroupTopicsFlattened(t *testing.T) {
 // TestWebSearch_SplitTitleSnippet unit-tests the helper directly.
 func TestWebSearch_SplitTitleSnippet(t *testing.T) {
 	cases := []struct {
-		text    string
-		wantT   string
-		wantS   string
+		text  string
+		wantT string
+		wantS string
 	}{
 		{"Title - Snippet here.", "Title", "Snippet here."},
 		{"No separator at all", "", "No separator at all"},

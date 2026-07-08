@@ -129,7 +129,7 @@ func TestCheckDrift_MultipleProviders(t *testing.T) {
 	m.SetBaseline("rule", "flu", 0.80)
 	m.SetBaseline("llm-openai", "flu", 0.85)
 
-	m.Record(makeDP("rule", "flu", 0.60))      // 20 pp drop — critical
+	m.Record(makeDP("rule", "flu", 0.60))       // 20 pp drop — critical
 	m.Record(makeDP("llm-openai", "flu", 0.82)) // 3 pp drop — no alert
 
 	alerts := m.CheckDrift()

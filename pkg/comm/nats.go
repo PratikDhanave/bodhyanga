@@ -105,7 +105,7 @@ type NATSBus struct {
 type natsSub struct {
 	consumer jetstream.Consumer
 	cancel   context.CancelFunc // stops the consume goroutine
-	done     chan struct{}       // closed when the goroutine exits
+	done     chan struct{}      // closed when the goroutine exits
 }
 
 // NewNATSBus connects to a NATS server, ensures the BODH_MESSAGES stream

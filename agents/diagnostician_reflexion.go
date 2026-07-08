@@ -59,10 +59,10 @@ func (a *ReflexionDiagnostician) Capabilities() []string {
 // can distinguish "unverified but has nothing better to offer" from
 // "unverified, here is a better one".
 type critiqueOutput struct {
-	Verified        bool                         `json:"verified"`
-	Reason          string                       `json:"reason"`
-	VerificationQA  []critiqueQA                 `json:"verification_qa,omitempty"`
-	RevisedProposal *medical.DiagnosisProposal   `json:"revised_proposal,omitempty"`
+	Verified        bool                       `json:"verified"`
+	Reason          string                     `json:"reason"`
+	VerificationQA  []critiqueQA               `json:"verification_qa,omitempty"`
+	RevisedProposal *medical.DiagnosisProposal `json:"revised_proposal,omitempty"`
 }
 
 type critiqueQA struct {

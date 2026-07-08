@@ -50,7 +50,7 @@ func (a *PriorAuthAgent) HandleMessage(_ context.Context, msg agent.Message, env
 	if status != "approved" {
 		a.Tasks.Create(tasks.NurseTask{
 			Kind: "prior_auth", PatientID: req.PatientID, Priority: "high",
-			DueAt: time.Now().Add(48 * time.Hour),
+			DueAt:   time.Now().Add(48 * time.Hour),
 			Subject: "PA pending: " + req.Code,
 			Detail:  "Payer=" + req.Payer,
 		})

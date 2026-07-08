@@ -33,7 +33,7 @@
 // helpers Bodh stores use to pass []string / []int64 / etc through pgx
 // without writing a custom encoder per call site.
 //
-// Why not use pgx's native array support
+// # Why not use pgx's native array support
 //
 // pgx already decodes Postgres arrays into []string, []int32, etc when
 // the destination slice has the right element type — domain stores

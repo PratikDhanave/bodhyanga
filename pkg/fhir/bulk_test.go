@@ -29,12 +29,12 @@ func seedRegistry() *medical.PatientRegistry {
 		},
 	})
 	reg.Upsert(medical.PatientRecord{
-		PatientID:  "p2",
-		Age:        60,
-		Sex:        "male",
-		Conditions: []string{"chf"},
+		PatientID:    "p2",
+		Age:          60,
+		Sex:          "male",
+		Conditions:   []string{"chf"},
 		LastWeightLb: 195,
-		LastSpO2:   94,
+		LastSpO2:     94,
 		Medications: []medical.MedicationEntry{
 			{Name: "Furosemide", Dose: "40 mg", Frequency: "daily", Class: "Loop diuretic"},
 		},

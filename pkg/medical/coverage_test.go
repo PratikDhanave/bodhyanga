@@ -316,13 +316,13 @@ func TestSpo2Scale2_AllBranches(t *testing.T) {
 		spo2 float64
 		want int
 	}{
-		{80, 3},   // <= 83
-		{84, 2},   // 84-85
-		{86, 1},   // 86-87
-		{90, 0},   // 88-92
-		{93, 1},   // 93-94
-		{95, 2},   // 95-96
-		{98, 3},   // >= 97
+		{80, 3}, // <= 83
+		{84, 2}, // 84-85
+		{86, 1}, // 86-87
+		{90, 0}, // 88-92
+		{93, 1}, // 93-94
+		{95, 2}, // 95-96
+		{98, 3}, // >= 97
 	}
 	for _, tc := range cases {
 		got := spo2Scale2Score(tc.spo2)
@@ -339,12 +339,12 @@ func TestHeartRateScore_AllBranches(t *testing.T) {
 		hr   int
 		want int
 	}{
-		{35, 3},   // <= 40
-		{45, 1},   // 41-50
-		{70, 0},   // 51-90
-		{100, 1},  // 91-110
-		{120, 2},  // 111-130
-		{135, 3},  // >= 131
+		{35, 3},  // <= 40
+		{45, 1},  // 41-50
+		{70, 0},  // 51-90
+		{100, 1}, // 91-110
+		{120, 2}, // 111-130
+		{135, 3}, // >= 131
 	}
 	for _, tc := range cases {
 		got := heartRateScore(tc.hr)
@@ -450,7 +450,7 @@ func TestBpUncontrolledRule_AllBranches(t *testing.T) {
 
 func TestChfWeightRule_NoGap(t *testing.T) {
 	gaps := chfWeightRule(PatientRecord{
-		Conditions:  []string{"chf"},
+		Conditions:   []string{"chf"},
 		LastWeightLb: 180,
 	}, time.Now())
 	if len(gaps) != 0 {
@@ -548,10 +548,10 @@ func TestNextWellChildVisit_AllBranches(t *testing.T) {
 		age  int
 		want time.Time
 	}{
-		{3, now.AddDate(0, 2, 0)},   // < 6
-		{9, now.AddDate(0, 3, 0)},   // 6-17
-		{30, now.AddDate(0, 6, 0)},  // 18-35
-		{48, now.AddDate(1, 0, 0)},  // >= 36
+		{3, now.AddDate(0, 2, 0)},  // < 6
+		{9, now.AddDate(0, 3, 0)},  // 6-17
+		{30, now.AddDate(0, 6, 0)}, // 18-35
+		{48, now.AddDate(1, 0, 0)}, // >= 36
 	}
 	for _, tc := range cases {
 		got := nextWellChildVisit(tc.age, now)

@@ -81,14 +81,14 @@ type nephroConsultRequest struct {
 //   - Recommendations: prioritised action list
 //   - Urgent: true when immediate escalation is warranted
 type nephroReport struct {
-	EGFRMlMin            float64  `json:"egfr_ml_min"`
-	CKDStage             string   `json:"ckd_stage"`
-	AKIStage             int      `json:"aki_stage"`
-	AKICause             string   `json:"aki_cause"`
-	ProteinuriaCategory  string   `json:"proteinuria_category"`
-	DialysisIndicated    bool     `json:"dialysis_indicated"`
-	Recommendations      []string `json:"recommendations"`
-	Urgent               bool     `json:"urgent"`
+	EGFRMlMin           float64  `json:"egfr_ml_min"`
+	CKDStage            string   `json:"ckd_stage"`
+	AKIStage            int      `json:"aki_stage"`
+	AKICause            string   `json:"aki_cause"`
+	ProteinuriaCategory string   `json:"proteinuria_category"`
+	DialysisIndicated   bool     `json:"dialysis_indicated"`
+	Recommendations     []string `json:"recommendations"`
+	Urgent              bool     `json:"urgent"`
 }
 
 func (a *NephrologistAgent) ID() string   { return "nephrologist" }
@@ -404,12 +404,13 @@ func calcEGFR(scrMgDl float64, age int, sex string) float64 {
 // descriptive string for a given eGFR value (mL/min/1.73 m²).
 //
 // Stages follow KDIGO 2012 Clinical Practice Guideline for CKD:
-//   G1  ≥ 90:  normal or high
-//   G2  60–89: mildly decreased
-//   G3a 45–59: mild-to-moderately decreased
-//   G3b 30–44: moderately to severely decreased
-//   G4  15–29: severely decreased
-//   G5  < 15:  kidney failure
+//
+//	G1  ≥ 90:  normal or high
+//	G2  60–89: mildly decreased
+//	G3a 45–59: mild-to-moderately decreased
+//	G3b 30–44: moderately to severely decreased
+//	G4  15–29: severely decreased
+//	G5  < 15:  kidney failure
 //
 // **Illustrative:** a single eGFR value is insufficient to diagnose CKD
 // per KDIGO; persistent abnormality ≥3 months is required.

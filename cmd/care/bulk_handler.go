@@ -39,7 +39,7 @@ func bulkKickOffHandler(exp *fhir.BulkExporter) http.HandlerFunc {
 		// Parse optional _type parameter.
 		var types []string
 		var body struct {
-			Type string   `json:"_type"`
+			Type     string   `json:"_type"`
 			TypeList []string `json:"_typeList,omitempty"`
 		}
 		if r.ContentLength > 0 {

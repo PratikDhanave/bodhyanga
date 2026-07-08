@@ -9,15 +9,15 @@ import (
 
 // CarePlan is a condition-specific plan emitted by the CDM agent.
 type CarePlan struct {
-	CaseID      string             `json:"case_id"`
-	PatientID   string             `json:"patient_id,omitempty"`
-	Condition   string             `json:"condition"`
-	Goals       []GoalEntry        `json:"goals,omitempty"`
-	Medications []MedicationEntry  `json:"medications,omitempty"`
-	Monitoring  []MonitoringEntry  `json:"monitoring,omitempty"`
-	Education   []string           `json:"education,omitempty"`
-	NextReview  time.Time          `json:"next_review"`
-	CreatedAt   time.Time          `json:"created_at"`
+	CaseID      string            `json:"case_id"`
+	PatientID   string            `json:"patient_id,omitempty"`
+	Condition   string            `json:"condition"`
+	Goals       []GoalEntry       `json:"goals,omitempty"`
+	Medications []MedicationEntry `json:"medications,omitempty"`
+	Monitoring  []MonitoringEntry `json:"monitoring,omitempty"`
+	Education   []string          `json:"education,omitempty"`
+	NextReview  time.Time         `json:"next_review"`
+	CreatedAt   time.Time         `json:"created_at"`
 }
 
 // GoalEntry is a single SMART-style goal in a CarePlan.
@@ -38,9 +38,9 @@ type MedicationEntry struct {
 
 // MonitoringEntry says what device/test to track and how often.
 type MonitoringEntry struct {
-	Metric    string `json:"metric"`
-	Cadence   string `json:"cadence"` // "daily" / "weekly" / "monthly"
-	Source    string `json:"source"`  // "rpm" / "lab" / "self_report"
+	Metric       string  `json:"metric"`
+	Cadence      string  `json:"cadence"` // "daily" / "weekly" / "monthly"
+	Source       string  `json:"source"`  // "rpm" / "lab" / "self_report"
 	ThresholdMin float64 `json:"threshold_min,omitempty"`
 	ThresholdMax float64 `json:"threshold_max,omitempty"`
 }

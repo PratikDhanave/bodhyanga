@@ -48,11 +48,11 @@ type AnalysisStats struct {
 // supports both open coding (freeform annotation) and axial coding (grouping
 // observations into named categories).
 type ErrorAnalysisSession struct {
-	ID         string     `json:"id"`
-	OpenCodes  []OpenCode `json:"open_codes"`
+	ID         string      `json:"id"`
+	OpenCodes  []OpenCode  `json:"open_codes"`
 	AxialCodes []AxialCode `json:"axial_codes"`
-	Saturated  bool       `json:"saturated"`
-	CreatedAt  time.Time  `json:"created_at"`
+	Saturated  bool        `json:"saturated"`
+	CreatedAt  time.Time   `json:"created_at"`
 }
 
 // NewErrorAnalysisSession creates a new session with a random UUID and the
@@ -202,7 +202,7 @@ func (s *ErrorAnalysisSession) CheckSaturation(window int) bool {
 
 // sessionFile is the on-disk JSON representation.
 type sessionFile struct {
-	Version int                  `json:"version"`
+	Version int                   `json:"version"`
 	Session *ErrorAnalysisSession `json:"session"`
 }
 

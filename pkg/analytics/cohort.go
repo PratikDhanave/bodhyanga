@@ -9,11 +9,11 @@ import (
 
 // CohortMetrics summarizes a set of recorded cases.
 type CohortMetrics struct {
-	Cases           int     `json:"cases"`
-	MeanAccuracy    float64 `json:"mean_accuracy"`
-	MeanCostUSD     float64 `json:"mean_cost_usd"`
-	UnderBudgetPct  float64 `json:"under_budget_pct"`
-	RPMAlertRate    float64 `json:"rpm_alert_rate"`
+	Cases          int     `json:"cases"`
+	MeanAccuracy   float64 `json:"mean_accuracy"`
+	MeanCostUSD    float64 `json:"mean_cost_usd"`
+	UnderBudgetPct float64 `json:"under_budget_pct"`
+	RPMAlertRate   float64 `json:"rpm_alert_rate"`
 }
 
 // SummarizeCases produces CohortMetrics from a list of interaction records.

@@ -22,8 +22,8 @@ import (
 // but lives in this package.
 type silentEnv struct{}
 
-func (silentEnv) Now() time.Time                        { return time.Date(2026, 5, 26, 12, 0, 0, 0, time.UTC) }
-func (silentEnv) Logf(format string, args ...any)       {}
+func (silentEnv) Now() time.Time                  { return time.Date(2026, 5, 26, 12, 0, 0, 0, time.UTC) }
+func (silentEnv) Logf(format string, args ...any) {}
 
 // buildMultipartAudio constructs a multipart/form-data body with the
 // supplied audio bytes, media type, and form fields. Returns the body

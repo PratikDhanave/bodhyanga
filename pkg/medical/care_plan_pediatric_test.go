@@ -13,8 +13,8 @@ var pediatricTestTime = time.Date(2026, 5, 31, 0, 0, 0, 0, time.UTC)
 // age milestone for correct vaccines and developmental notes.
 func TestPediatricWellChildCarePlan_FixedVisits(t *testing.T) {
 	cases := []struct {
-		ageMonths    int
-		wantVaccines []string
+		ageMonths     int
+		wantVaccines  []string
 		wantEdKeyword string
 	}{
 		{
@@ -139,11 +139,11 @@ func TestPediatricWellChildCarePlan_StandardGoals(t *testing.T) {
 // antipyretic dosing note reflects the provided weight.
 func TestPediatricWellChildCarePlan_WeightBasedDosing(t *testing.T) {
 	cases := []struct {
-		weightKg      float64
-		wantAcetoMin  float64 // 10 mg/kg
-		wantAcetoMax  float64 // 15 mg/kg
-		wantIbuMin    float64 // 5 mg/kg
-		wantIbuMax    float64 // 10 mg/kg
+		weightKg     float64
+		wantAcetoMin float64 // 10 mg/kg
+		wantAcetoMax float64 // 15 mg/kg
+		wantIbuMin   float64 // 5 mg/kg
+		wantIbuMax   float64 // 10 mg/kg
 	}{
 		{weightKg: 5.0, wantAcetoMin: 50, wantAcetoMax: 75, wantIbuMin: 25, wantIbuMax: 50},
 		{weightKg: 10.0, wantAcetoMin: 100, wantAcetoMax: 150, wantIbuMin: 50, wantIbuMax: 100},

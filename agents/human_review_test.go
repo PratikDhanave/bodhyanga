@@ -12,13 +12,13 @@ import (
 func envelopedMsg(payload string) agent.Message {
 	return agent.NewMessage("cdm_planner", "human_review", agent.RoleAgent,
 		"review_request", payload, map[string]any{
-			"case_id":         "c1",
-			"patient_id":      "p1",
-			"hitl_kind":       "care_plan_review",
-			"hitl_next_to":    "engagement",
-			"hitl_next_type":  "care_plan_ready",
-			"hitl_priority":   "high",
-			"hitl_subject":    "Approve plan",
+			"case_id":          "c1",
+			"patient_id":       "p1",
+			"hitl_kind":        "care_plan_review",
+			"hitl_next_to":     "engagement",
+			"hitl_next_type":   "care_plan_ready",
+			"hitl_priority":    "high",
+			"hitl_subject":     "Approve plan",
 			"hitl_sla_minutes": 60.0,
 		})
 }

@@ -49,7 +49,7 @@ type Endpoint struct {
 
 // WebhookPayload is the JSON envelope posted to each endpoint.
 type WebhookPayload struct {
-	ID        string    `json:"id"`        // uuid
+	ID        string    `json:"id"` // uuid
 	Event     EventType `json:"event"`
 	TenantID  string    `json:"tenant_id"`
 	Data      any       `json:"data"`

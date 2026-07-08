@@ -78,8 +78,8 @@ func TestCascade_LowConfidenceEscalates(t *testing.T) {
 	small := &llm.Mock{Resp: &llm.Response{Content: smallResp}}
 	large := &llm.Mock{Resp: &llm.Response{Content: largeResp}}
 	cascade := &CascadeDiagnostician{
-		SmallTier: &LLMDiagnostician{Client: small, Fallback: &DiagnosticianAgent{}, MinConfidence: 0.01},
-		LargeTier: &LLMDiagnostician{Client: large, Fallback: &DiagnosticianAgent{}, MinConfidence: 0.01},
+		SmallTier:  &LLMDiagnostician{Client: small, Fallback: &DiagnosticianAgent{}, MinConfidence: 0.01},
+		LargeTier:  &LLMDiagnostician{Client: large, Fallback: &DiagnosticianAgent{}, MinConfidence: 0.01},
 		EscalateAt: 0.6,
 	}
 

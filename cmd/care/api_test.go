@@ -149,9 +149,9 @@ func TestAPIPanelReport_FlagsDiabetesWithoutA1c(t *testing.T) {
 		t.Fatalf("status: %d", rec.Code)
 	}
 	var resp struct {
-		Patients    int                  `json:"patients"`
-		Gaps        []map[string]any     `json:"gaps"`
-		ByCondition map[string]int       `json:"by_condition"`
+		Patients    int              `json:"patients"`
+		Gaps        []map[string]any `json:"gaps"`
+		ByCondition map[string]int   `json:"by_condition"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("decode: %v", err)

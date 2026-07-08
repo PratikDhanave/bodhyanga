@@ -16,9 +16,9 @@ type fakeTool struct {
 	desc string
 }
 
-func (f fakeTool) Name() string                { return f.name }
-func (f fakeTool) Description() string         { return f.desc }
-func (f fakeTool) Schema() json.RawMessage      { return json.RawMessage(`{"type":"object"}`) }
+func (f fakeTool) Name() string            { return f.name }
+func (f fakeTool) Description() string     { return f.desc }
+func (f fakeTool) Schema() json.RawMessage { return json.RawMessage(`{"type":"object"}`) }
 func (f fakeTool) Invoke(_ context.Context, _ json.RawMessage) (json.RawMessage, error) {
 	return json.RawMessage(`{"ok":true}`), nil
 }

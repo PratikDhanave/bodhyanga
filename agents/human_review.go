@@ -172,11 +172,11 @@ func (a *HumanReviewAgent) HandleMessage(_ context.Context, msg agent.Message, e
 	// SubmittedBy is the upstream agent's ID — auditable provenance
 	// for who asked for review of what.
 	req := a.Queue.Submit(medical.ReviewRequest{
-		Kind:        kind,
-		PatientID:   metadataString(msg.Metadata, "patient_id"),
-		CaseID:      metadataString(msg.Metadata, "case_id"),
-		Priority:    priority,
-		Subject:     subject,
+		Kind:      kind,
+		PatientID: metadataString(msg.Metadata, "patient_id"),
+		CaseID:    metadataString(msg.Metadata, "case_id"),
+		Priority:  priority,
+		Subject:   subject,
 		// Detail and Payload both carry the original Content. Detail
 		// is what the reviewer's UI shows (may be reformatted by the
 		// HTTP layer); Payload is the byte-for-byte payload that

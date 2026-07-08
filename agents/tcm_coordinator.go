@@ -16,7 +16,8 @@ import (
 // Side effects:        creates NurseTasks (med reconciliation + N follow-ups)
 // Output message Type: tcm_tasks_created  Content: JSON {task_ids,...}
 // Output routes to:    engagement (to notify the patient), optionally HITL-gated
-//                      so a nurse confirms the welcome message and task plan.
+//
+//	so a nurse confirms the welcome message and task plan.
 type TCMCoordinatorAgent struct {
 	Tasks    tasks.TaskStore
 	Registry medical.PatientStore

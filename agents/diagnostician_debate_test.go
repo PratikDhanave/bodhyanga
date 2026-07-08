@@ -234,10 +234,10 @@ func TestDebate_DefaultSpecialistsCountIs4(t *testing.T) {
 		t.Fatalf("DefaultSpecialists len=%d, want 4", len(got))
 	}
 	wantNames := map[string]bool{
-		"Cardiology":          false,
-		"Infectious Disease":  false,
-		"Pulmonology":         false,
-		"Emergency Medicine":  false,
+		"Cardiology":         false,
+		"Infectious Disease": false,
+		"Pulmonology":        false,
+		"Emergency Medicine": false,
 	}
 	for _, s := range got {
 		if _, ok := wantNames[s.Name]; !ok {

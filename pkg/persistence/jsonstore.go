@@ -15,9 +15,9 @@ import (
 // FileStore persists eval.InteractionRecord and a flat key-value map under a
 // single JSON file. It loads on open and flushes on every write.
 type FileStore struct {
-	mu      sync.Mutex
-	path    string
-	state   fileState
+	mu    sync.Mutex
+	path  string
+	state fileState
 }
 
 type fileState struct {

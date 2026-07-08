@@ -281,8 +281,8 @@ func explainHandler(tenantID string, rec audit.Recorder, store eval.Store, queue
 			TenantID:    tenantID,
 			GeneratedAt: time.Now().UTC(),
 			// Start "unknown"; passes 1 and 2 may upgrade this.
-			Status:    "unknown",
-			AgentHops: []AgentHop{},
+			Status:          "unknown",
+			AgentHops:       []AgentHop{},
 			HumanReviews:    []HumanReviewSummary{},
 			PolicyDecisions: []PolicyDecisionSummary{},
 			EventCounts:     map[string]int{},

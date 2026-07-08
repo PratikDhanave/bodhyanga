@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	commonpb "go.opentelemetry.io/proto/otlp/common/v1"
 	collectortracepb "go.opentelemetry.io/proto/otlp/collector/trace/v1"
+	commonpb "go.opentelemetry.io/proto/otlp/common/v1"
 	tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
 	"google.golang.org/protobuf/proto"
 )
@@ -125,7 +125,7 @@ func TestOTLPLLMExporter_ExportsSpansAndShutdownFlushes(t *testing.T) {
 			StartedAt: start.Add(2 * time.Second), DurationMs: 15,
 			Provider: "ollama", Model: "nomic-embed-text", AgentID: "rag",
 			InputTokens: 200,
-			Kind: "embedding",
+			Kind:        "embedding",
 		},
 	}
 	for _, tr := range traces {

@@ -1239,4 +1239,4 @@ type coverageLedger struct {
 }
 
 func (m *coverageLedger) MonthlySpendUSD(_, _ time.Time) float64 { return m.spend }
-func (m *coverageLedger) RecordUsage(_, _ string, _, _, _ int)    {}
+func (m *coverageLedger) RecordUsage(_, _ string, _, _, _ int)   {}

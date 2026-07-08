@@ -655,13 +655,13 @@ func TestParseHL7Time_YYYYMMDDHHMM(t *testing.T) {
 func TestORMEncode_EmptyTimestamp(t *testing.T) {
 	orm := ORMMessage{
 		MSH: MSHSegment{
-			SendingApp:    "APP",
-			ReceivingApp:  "EHR",
-			MessageType:   "ORM",
-			TriggerEvent:  "O01",
-			ControlID:     "CTRL1",
-			ProcessingID:  "P",
-			VersionID:     "2.5",
+			SendingApp:   "APP",
+			ReceivingApp: "EHR",
+			MessageType:  "ORM",
+			TriggerEvent: "O01",
+			ControlID:    "CTRL1",
+			ProcessingID: "P",
+			VersionID:    "2.5",
 			// Timestamp intentionally empty.
 		},
 		PID: PIDSegment{PatientID: "PT1"},

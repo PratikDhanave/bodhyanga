@@ -139,7 +139,7 @@ func TestPart2_AllowsWithConsent(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			meta := map[string]any{
-				"condition":    tc.condition,
+				"condition":     tc.condition,
 				"part2_consent": "true",
 			}
 			res, err := policy.Evaluate(ctx, newPart2Msg(meta))
@@ -158,7 +158,7 @@ func TestPart2_AllowsWithConsent(t *testing.T) {
 	// part2_consent values other than "true" must NOT grant access.
 	t.Run("consent value false is not consent", func(t *testing.T) {
 		meta := map[string]any{
-			"condition":    "opioid_use_disorder",
+			"condition":     "opioid_use_disorder",
 			"part2_consent": "false",
 		}
 		res, err := policy.Evaluate(ctx, newPart2Msg(meta))
@@ -172,7 +172,7 @@ func TestPart2_AllowsWithConsent(t *testing.T) {
 
 	t.Run("consent value 1 is not accepted", func(t *testing.T) {
 		meta := map[string]any{
-			"condition":    "opioid_use_disorder",
+			"condition":     "opioid_use_disorder",
 			"part2_consent": "1",
 		}
 		res, err := policy.Evaluate(ctx, newPart2Msg(meta))
@@ -257,9 +257,9 @@ func TestPart2_AllowsBreakGlass(t *testing.T) {
 	// Both consent and break_glass present: consent check fires first.
 	t.Run("both consent and break_glass present", func(t *testing.T) {
 		meta := map[string]any{
-			"condition":    "opioid_use_disorder",
+			"condition":     "opioid_use_disorder",
 			"part2_consent": "true",
-			"break_glass":  "true",
+			"break_glass":   "true",
 		}
 		res, err := policy.Evaluate(ctx, newPart2Msg(meta))
 		if err != nil {

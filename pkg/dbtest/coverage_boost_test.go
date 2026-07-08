@@ -923,4 +923,3 @@ func TestWipe_CancelledContext(t *testing.T) {
 	}
 	// Either way the test passes — we just want to exercise the code path.
 }
-

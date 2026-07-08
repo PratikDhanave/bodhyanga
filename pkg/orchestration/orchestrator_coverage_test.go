@@ -273,8 +273,8 @@ type mockAgent struct {
 	out []agent.Message
 }
 
-func (m *mockAgent) ID() string           { return m.id }
-func (m *mockAgent) Name() string         { return m.id }
+func (m *mockAgent) ID() string             { return m.id }
+func (m *mockAgent) Name() string           { return m.id }
 func (m *mockAgent) Capabilities() []string { return nil }
 func (m *mockAgent) HandleMessage(_ context.Context, msg agent.Message, _ agent.Environment) ([]agent.Message, error) {
 	return m.out, m.err
@@ -310,7 +310,7 @@ func (r *mockRegistry) Get(_ context.Context, id string) (agent.Agent, error) {
 	}
 	return nil, fmt.Errorf("not found: %s", id)
 }
-func (r *mockRegistry) List(_ context.Context) []agent.Agent { return r.agents }
+func (r *mockRegistry) List(_ context.Context) []agent.Agent                       { return r.agents }
 func (r *mockRegistry) FindByCapability(_ context.Context, _ string) []agent.Agent { return nil }
 
 type memAuditRecorder struct {

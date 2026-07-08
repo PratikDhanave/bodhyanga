@@ -269,10 +269,10 @@ func (s *apiServer) fineTuneStatus(w http.ResponseWriter, _ *http.Request) {
 		}
 	}
 	writeJSON(w, map[string]any{
-		"sft_lines":        sft,
-		"dpo_pairs":        dpo,
-		"decided_reviews":  decided,
-		"pending_reviews":  pending,
+		"sft_lines":       sft,
+		"dpo_pairs":       dpo,
+		"decided_reviews": decided,
+		"pending_reviews": pending,
 	})
 }
 

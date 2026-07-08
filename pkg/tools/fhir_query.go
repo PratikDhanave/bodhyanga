@@ -74,15 +74,15 @@ type fhirInput struct {
 
 // fhirPatient is the synthetic record shape returned on a hit.
 type fhirPatient struct {
-	Resource    string   `json:"resource"`
-	ID          string   `json:"id"`
-	Name        string   `json:"name"`
-	DOB         string   `json:"dob"`
-	Sex         string   `json:"sex"`
-	Conditions  []string `json:"conditions"`
-	Medications []string `json:"medications"`
-	Allergies   []string `json:"allergies,omitempty"`
-	Found       bool     `json:"found"`
+	Resource    string         `json:"resource"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	DOB         string         `json:"dob"`
+	Sex         string         `json:"sex"`
+	Conditions  []string       `json:"conditions"`
+	Medications []string       `json:"medications"`
+	Allergies   []string       `json:"allergies,omitempty"`
+	Found       bool           `json:"found"`
 	Metadata    map[string]any `json:"metadata"`
 }
 

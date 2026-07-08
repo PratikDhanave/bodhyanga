@@ -129,7 +129,7 @@ func callDebater(ctx context.Context, client llm.Client, question string, d Deba
 	prompt := fmt.Sprintf("Question: %s\n\nArgue your position clearly based on your perspective. Return JSON with your argument and confidence score (0.0-1.0).", question)
 
 	resp, err := client.Complete(ctx, llm.Request{
-		System:    d.Perspective,
+		System:      d.Perspective,
 		CacheSystem: true,
 		Messages: []llm.Message{
 			{Role: llm.RoleUser, Content: prompt},
@@ -183,7 +183,7 @@ func callChair(ctx context.Context, client llm.Client, question string, position
 	b.WriteString("Synthesise the best answer drawing on the strongest arguments above.")
 
 	resp, err := client.Complete(ctx, llm.Request{
-		System:    chairSystemPrompt,
+		System:      chairSystemPrompt,
 		CacheSystem: true,
 		Messages: []llm.Message{
 			{Role: llm.RoleUser, Content: b.String()},

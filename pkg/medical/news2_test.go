@@ -41,14 +41,14 @@ func TestNEWS2(t *testing.T) {
 		{
 			name: "high risk — all extremes (total >= 7)",
 			input: NEWS2Input{
-				RespiratoryRate: 30,  // score 3
-				SpO2:            88,  // score 3 (scale 1)
+				RespiratoryRate: 30,   // score 3
+				SpO2:            88,   // score 3 (scale 1)
 				OnO2:            true, // score 2
 				COPD:            false,
-				SystolicBP:      85,  // score 3
-				HeartRate:       135, // score 3
+				SystolicBP:      85,             // score 3
+				HeartRate:       135,            // score 3
 				Consciousness:   "unresponsive", // score 3
-				Temperature:     34.5, // score 3
+				Temperature:     34.5,           // score 3
 			},
 			wantTotal:    20,
 			wantRisk:     "high",
@@ -427,8 +427,8 @@ func TestNEWS2(t *testing.T) {
 		{
 			name: "total 5 without single score 3 — low-medium",
 			input: NEWS2Input{
-				RespiratoryRate: 22, // 2
-				SpO2:            94, // 1
+				RespiratoryRate: 22,   // 2
+				SpO2:            94,   // 1
 				OnO2:            true, // 2
 				COPD:            false,
 				SystolicBP:      120,
@@ -443,8 +443,8 @@ func TestNEWS2(t *testing.T) {
 		{
 			name: "high risk escalate — total 7",
 			input: NEWS2Input{
-				RespiratoryRate: 30,  // 3
-				SpO2:            92,  // 2
+				RespiratoryRate: 30, // 3
+				SpO2:            92, // 2
 				OnO2:            false,
 				COPD:            false,
 				SystolicBP:      100, // 2

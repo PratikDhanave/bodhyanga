@@ -59,9 +59,9 @@ type Observation struct {
 // LabResult groups an OBR (observation request) with all of its OBX rows.
 // A single ORU^R01 message may carry multiple LabResults (one per panel).
 type LabResult struct {
-	PanelName   string        // OBR-4.2 (universal service ID display name)
-	OrderNumber string        // OBR-3 (filler order number)
-	CollectedAt time.Time     // OBR-7 (observation date/time; zero if absent)
+	PanelName    string    // OBR-4.2 (universal service ID display name)
+	OrderNumber  string    // OBR-3 (filler order number)
+	CollectedAt  time.Time // OBR-7 (observation date/time; zero if absent)
 	Observations []Observation
 }
 

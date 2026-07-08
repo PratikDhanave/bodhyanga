@@ -7,7 +7,7 @@
 //   - Dimension: the vector size (so callers can pre-allocate or check store compatibility)
 //   - Provider/Model: identity for logs and bench
 //
-// Adapters
+// # Adapters
 //
 // Three are shipped:
 //

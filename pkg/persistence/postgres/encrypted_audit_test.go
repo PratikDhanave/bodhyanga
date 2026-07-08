@@ -147,11 +147,11 @@ func TestEncryptedPatientRoundTrip(t *testing.T) {
 	}
 
 	p := medical.PatientRecord{
-		PatientID:  "enc-pt-1",
-		Age:        65,
-		Sex:        "M",
-		Conditions: []string{"E11.9", "I10"},
-		LastA1c:    9.2,
+		PatientID:   "enc-pt-1",
+		Age:         65,
+		Sex:         "M",
+		Conditions:  []string{"E11.9", "I10"},
+		LastA1c:     9.2,
 		RPMEnrolled: true,
 	}
 	if err := s.UpsertPatient(ctx, tenant, p); err != nil {

@@ -43,7 +43,7 @@
 //   - The description is free-form and is recorded in
 //     audit_events.reason.
 //
-// Up vs the previous in-package migrator
+// # Up vs the previous in-package migrator
 //
 // pkg/persistence/postgres has its own migration runner today
 // (migrations.go). Up is the more general version: it accepts any

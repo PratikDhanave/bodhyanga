@@ -212,8 +212,8 @@ func TestReflexion_InitialFailsFallsBack(t *testing.T) {
 func TestReflexion_MultipleRoundsConverge(t *testing.T) {
 	client := newScriptedLLM(
 		scriptedStep{Resp: draftResponse()},
-		scriptedStep{Resp: critiqueRejectWithRevision(revisedDiagnosis)},  // round 1: revise
-		scriptedStep{Resp: critiqueRejectWithRevision(secondRevision)},    // round 2: revise again
+		scriptedStep{Resp: critiqueRejectWithRevision(revisedDiagnosis)}, // round 1: revise
+		scriptedStep{Resp: critiqueRejectWithRevision(secondRevision)},   // round 2: revise again
 	)
 	d := &ReflexionDiagnostician{
 		Base:      &LLMDiagnostician{Client: client, Fallback: &DiagnosticianAgent{}},

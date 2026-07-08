@@ -97,14 +97,14 @@ type providerRun struct {
 // (Accuracy fraction divided by mean cost in USD) — a higher number is
 // strictly better, capturing "more correct diagnoses per dollar spent".
 type providerSummary struct {
-	Provider        string  `json:"provider"`
-	Cases           int     `json:"cases"`
-	AccuracyPct     float64 `json:"accuracy_pct"`
-	MeanCostUSD     float64 `json:"mean_cost_usd"`
-	MeanSteps       float64 `json:"mean_steps"`
-	UnderBudgetPct  float64 `json:"under_budget_pct"`
-	MeanRPMAlerts   float64 `json:"mean_rpm_alerts"`
-	Pareto          float64 `json:"pareto"`
+	Provider       string  `json:"provider"`
+	Cases          int     `json:"cases"`
+	AccuracyPct    float64 `json:"accuracy_pct"`
+	MeanCostUSD    float64 `json:"mean_cost_usd"`
+	MeanSteps      float64 `json:"mean_steps"`
+	UnderBudgetPct float64 `json:"under_budget_pct"`
+	MeanRPMAlerts  float64 `json:"mean_rpm_alerts"`
+	Pareto         float64 `json:"pareto"`
 }
 
 // baselineEntry is one provider's pass/fail thresholds recorded in
@@ -112,16 +112,16 @@ type providerSummary struct {
 // is a floor (regression = current < baseline - tolerance); MeanCostUSD is a
 // ceiling (regression = current > baseline + tolerance).
 type baselineEntry struct {
-	Provider       string  `json:"provider"`
-	Cases          int     `json:"cases"`
-	AccuracyPct    float64 `json:"accuracy_pct"`
-	MeanCostUSD    float64 `json:"mean_cost_usd"`
-	RecordedAt     string  `json:"recorded_at"`
+	Provider    string  `json:"provider"`
+	Cases       int     `json:"cases"`
+	AccuracyPct float64 `json:"accuracy_pct"`
+	MeanCostUSD float64 `json:"mean_cost_usd"`
+	RecordedAt  string  `json:"recorded_at"`
 }
 
 type baselineFile struct {
-	Version    int             `json:"version"`
-	Providers  []baselineEntry `json:"providers"`
+	Version   int             `json:"version"`
+	Providers []baselineEntry `json:"providers"`
 }
 
 // regressionTolerance allows tiny numerical jitter without flagging a
@@ -630,9 +630,9 @@ func emitJSON(runs []providerRun, summaries []providerSummary) {
 		}
 	}
 	_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
-		"results":   out,
-		"summary":   summaries,
-		"skipped":   skips,
+		"results": out,
+		"summary": summaries,
+		"skipped": skips,
 	})
 }
 

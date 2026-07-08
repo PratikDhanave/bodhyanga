@@ -206,10 +206,10 @@ func patientViewHandler(_ context.Context, req CDSRequest) (CDSResponse, error) 
 // ddiTable is a minimal hard-coded drug-drug interaction table for demonstration.
 // Keys use the lexicographic sorted pair "smaller|larger" produced by sortedPair.
 var ddiTable = map[string]string{
-	"aspirin|warfarin":      "HIGH",
-	"contrast|metformin":    "HIGH",
-	"maoi|ssri":             "HIGH",
-	"amiodarone|digoxin":    "HIGH",
+	"aspirin|warfarin":       "HIGH",
+	"contrast|metformin":     "HIGH",
+	"maoi|ssri":              "HIGH",
+	"amiodarone|digoxin":     "HIGH",
 	"clopidogrel|omeprazole": "MODERATE",
 }
 

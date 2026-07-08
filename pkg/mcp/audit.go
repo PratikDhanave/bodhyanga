@@ -51,16 +51,16 @@ func (r *Recorder) Record(ev CallEvent) error {
 		return nil
 	}
 	return r.Sink.Record(audit.Event{
-		Kind:     audit.KindMessage,
-		AgentID:  "mcp_client",
-		Type:     "mcp_call_tool",
-		To:       ev.Endpoint,
-		From:     ev.ToolName,
-		TenantID: ev.TenantID,
-		CaseID:   ev.CaseID,
-		TraceID:  ev.TraceID,
-		Decision: ev.Outcome,
-		Reason:   formatDuration(ev.Duration),
+		Kind:      audit.KindMessage,
+		AgentID:   "mcp_client",
+		Type:      "mcp_call_tool",
+		To:        ev.Endpoint,
+		From:      ev.ToolName,
+		TenantID:  ev.TenantID,
+		CaseID:    ev.CaseID,
+		TraceID:   ev.TraceID,
+		Decision:  ev.Outcome,
+		Reason:    formatDuration(ev.Duration),
 		ErrorText: ev.ErrorText,
 	})
 }

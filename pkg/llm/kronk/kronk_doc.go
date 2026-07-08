@@ -2,22 +2,24 @@
 // the Bodh provider-agnostic llm.Client interface.
 //
 // Overview:
-//   Implements pkg/llm.Client by driving Ardan Labs' kronk library, which
-//   wraps llama.cpp (via yzma + bucky) for direct CGO inference inside the
-//   Go binary. No daemon, no network, no API keys — the model runs in the
-//   same process as the rest of Bodh. This is the HIPAA-friendly path:
-//   no PHI ever leaves the box, because there is no "box" to leave.
+//
+//	Implements pkg/llm.Client by driving Ardan Labs' kronk library, which
+//	wraps llama.cpp (via yzma + bucky) for direct CGO inference inside the
+//	Go binary. No daemon, no network, no API keys — the model runs in the
+//	same process as the rest of Bodh. This is the HIPAA-friendly path:
+//	no PHI ever leaves the box, because there is no "box" to leave.
 //
 // Build tag:
-//   Every file in this package carries `//go:build kronk` (or
-//   `//go:build !kronk` for the stub). The default Bodh build is unaffected:
-//   no llama.cpp, no yzma, no bucky, no CGO. To enable, build with
 //
-//     go build -tags kronk ./cmd/care
+//	Every file in this package carries `//go:build kronk` (or
+//	`//go:build !kronk` for the stub). The default Bodh build is unaffected:
+//	no llama.cpp, no yzma, no bucky, no CGO. To enable, build with
 //
-//   and the constructor returned by NewClient links the native dependencies.
-//   This mirrors the pkg/observability/otel pattern: large or platform-
-//   specific deps are gated behind a tag so go.sum stays small.
+//	  go build -tags kronk ./cmd/care
+//
+//	and the constructor returned by NewClient links the native dependencies.
+//	This mirrors the pkg/observability/otel pattern: large or platform-
+//	specific deps are gated behind a tag so go.sum stays small.
 //
 // Key declarations:
 //   - ProviderName: "kronk" (returned by Client.Provider()).
@@ -36,10 +38,11 @@
 //     grammar track populates this later; the public API is stable today.
 //
 // Fallback contract:
-//   This provider, like every LLM-backed agent in Bodh, must be wired
-//   behind a deterministic rule-based fallback (see AGENTS.md invariant #3).
-//   The agents/diagnostician_factory.go arm for "llm-kronk" wraps the
-//   client in LLMDiagnostician with DiagnosticianAgent as the Fallback.
+//
+//	This provider, like every LLM-backed agent in Bodh, must be wired
+//	behind a deterministic rule-based fallback (see AGENTS.md invariant #3).
+//	The agents/diagnostician_factory.go arm for "llm-kronk" wraps the
+//	client in LLMDiagnostician with DiagnosticianAgent as the Fallback.
 //
 // See kronk_stub.go for the default-build no-op shim.
 package kronk

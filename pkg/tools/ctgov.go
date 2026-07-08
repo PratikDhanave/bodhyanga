@@ -118,16 +118,16 @@ type ctgovAPIStudy struct {
 }
 
 type ctgovProtocolSection struct {
-	IdentificationModule   ctgovIdentification   `json:"identificationModule"`
-	StatusModule           ctgovStatus           `json:"statusModule"`
-	DesignModule           ctgovDesign           `json:"designModule"`
-	SponsorCollaborators   ctgovSponsors         `json:"sponsorCollaboratorsModule"`
-	DescriptionModule      ctgovDescription      `json:"descriptionModule"`
+	IdentificationModule ctgovIdentification `json:"identificationModule"`
+	StatusModule         ctgovStatus         `json:"statusModule"`
+	DesignModule         ctgovDesign         `json:"designModule"`
+	SponsorCollaborators ctgovSponsors       `json:"sponsorCollaboratorsModule"`
+	DescriptionModule    ctgovDescription    `json:"descriptionModule"`
 }
 
 type ctgovIdentification struct {
-	NCTID         string `json:"nctId"`
-	BriefTitle    string `json:"briefTitle"`
+	NCTID      string `json:"nctId"`
+	BriefTitle string `json:"briefTitle"`
 }
 
 type ctgovStatus struct {

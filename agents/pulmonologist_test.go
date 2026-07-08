@@ -225,11 +225,11 @@ func TestPulmonologistCOPDGOLDGrading(t *testing.T) {
 // TestPulmonologistCOPDGOLDGroups verifies the ABE group classification.
 func TestPulmonologistCOPDGOLDGroups(t *testing.T) {
 	cases := []struct {
-		name        string
-		catScore    int
-		mmrc        int
-		symptoms    string
-		wantGroup   string // "A", "B", or "E"
+		name      string
+		catScore  int
+		mmrc      int
+		symptoms  string
+		wantGroup string // "A", "B", or "E"
 	}{
 		{
 			name:      "Group A — low symptoms (CAT < 10, mMRC 0)",
@@ -325,9 +325,9 @@ func TestPulmonologistO2Indication(t *testing.T) {
 // escalation and appropriate recommendations.
 func TestPulmonologistDLCOImpairment(t *testing.T) {
 	cases := []struct {
-		name        string
-		dlco        float64
-		wantUrgent  bool
+		name       string
+		dlco       float64
+		wantUrgent bool
 	}{
 		{"DLCO 60% — no urgency", 60, false},
 		{"DLCO 40% — threshold, no urgency (strict <)", 40, false},

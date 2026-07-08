@@ -179,9 +179,9 @@ type spyTool struct {
 	calls int
 }
 
-func (s *spyTool) Name() string                 { return s.inner.Name() }
-func (s *spyTool) Description() string          { return s.inner.Description() }
-func (s *spyTool) Schema() json.RawMessage      { return s.inner.Schema() }
+func (s *spyTool) Name() string            { return s.inner.Name() }
+func (s *spyTool) Description() string     { return s.inner.Description() }
+func (s *spyTool) Schema() json.RawMessage { return s.inner.Schema() }
 func (s *spyTool) Invoke(ctx context.Context, args json.RawMessage) (json.RawMessage, error) {
 	s.calls++
 	return s.inner.Invoke(ctx, args)

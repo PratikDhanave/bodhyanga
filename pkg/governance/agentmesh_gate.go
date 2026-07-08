@@ -68,36 +68,36 @@ import (
 // path and must not initiate diagnosis or care-plan actions.
 var ringAssignments = map[string]agentmesh.Ring{
 	// --- Ring 1: Standard clinical pipeline ---
-	"intake_agent":           agentmesh.RingStandard,
-	"diagnostic_supervisor":  agentmesh.RingStandard,
-	"questioner":             agentmesh.RingStandard,
-	"test_planner":           agentmesh.RingStandard,
-	"cost_guardian":          agentmesh.RingStandard,
-	"diagnostician":          agentmesh.RingStandard,
-	"reasoning_verifier":     agentmesh.RingStandard,
-	"cdm_planner":            agentmesh.RingStandard,
-	"tcm_coordinator":        agentmesh.RingStandard,
-	"panel_manager":          agentmesh.RingStandard,
-	"pre_visit_prep":         agentmesh.RingStandard,
-	"refill_manager":         agentmesh.RingStandard,
-	"prior_auth":             agentmesh.RingStandard,
-	"readmission_tracker":    agentmesh.RingStandard,
-	"human_review":           agentmesh.RingStandard,
+	"intake_agent":          agentmesh.RingStandard,
+	"diagnostic_supervisor": agentmesh.RingStandard,
+	"questioner":            agentmesh.RingStandard,
+	"test_planner":          agentmesh.RingStandard,
+	"cost_guardian":         agentmesh.RingStandard,
+	"diagnostician":         agentmesh.RingStandard,
+	"reasoning_verifier":    agentmesh.RingStandard,
+	"cdm_planner":           agentmesh.RingStandard,
+	"tcm_coordinator":       agentmesh.RingStandard,
+	"panel_manager":         agentmesh.RingStandard,
+	"pre_visit_prep":        agentmesh.RingStandard,
+	"refill_manager":        agentmesh.RingStandard,
+	"prior_auth":            agentmesh.RingStandard,
+	"readmission_tracker":   agentmesh.RingStandard,
+	"human_review":          agentmesh.RingStandard,
 
 	// --- Ring 2: Restricted routing / triage ---
-	"inbox_triage":           agentmesh.RingRestricted,
-	"rpm_monitor":            agentmesh.RingRestricted,
+	"inbox_triage": agentmesh.RingRestricted,
+	"rpm_monitor":  agentmesh.RingRestricted,
 
 	// --- Ring 3: Sandboxed peripheral agents ---
-	"audio_transcriber":      agentmesh.RingSandboxed,
-	"engagement":             agentmesh.RingSandboxed,
+	"audio_transcriber": agentmesh.RingSandboxed,
+	"engagement":        agentmesh.RingSandboxed,
 }
 
 // ringPermissions maps rings to the set of allowed message Type values.
 // "*" means the ring may perform any action (Ring 1).
 var ringPermissions = map[agentmesh.Ring][]string{
-	agentmesh.RingAdmin:      {"*"},
-	agentmesh.RingStandard:   {"*"},
+	agentmesh.RingAdmin:    {"*"},
+	agentmesh.RingStandard: {"*"},
 	agentmesh.RingRestricted: {
 		"inbox_message", "rpm_observation",
 		"routing_decision", "triage_result",

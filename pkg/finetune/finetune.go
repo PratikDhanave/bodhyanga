@@ -400,11 +400,11 @@ func PollOpenAIJob(apiKey, jobID string) (FineTuneJob, error) {
 // provider, model, trainFile, valFile override the parsed values when non-empty.
 func parseOpenAIJob(provider, model, trainFile, valFile string, body []byte) (FineTuneJob, error) {
 	var raw struct {
-		ID            string `json:"id"`
-		Status        string `json:"status"`
-		Model         string `json:"model"`
-		TrainingFile  string `json:"training_file"`
-		CreatedAt     int64  `json:"created_at"`
+		ID           string `json:"id"`
+		Status       string `json:"status"`
+		Model        string `json:"model"`
+		TrainingFile string `json:"training_file"`
+		CreatedAt    int64  `json:"created_at"`
 	}
 	if err := json.Unmarshal(body, &raw); err != nil {
 		return FineTuneJob{}, fmt.Errorf("finetune: parse job response: %w", err)

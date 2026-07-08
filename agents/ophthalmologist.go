@@ -57,18 +57,18 @@ func (a *OphthalmologistAgent) Capabilities() []string {
 //   - BPSystolic: systolic blood pressure in mmHg
 //   - DurationDiabetesYears: years since diabetes diagnosis
 type ophthalConsultRequest struct {
-	PatientID              string   `json:"patient_id"`
-	CaseID                 string   `json:"case_id,omitempty"`
-	DiagnosisContext       string   `json:"diagnosis_context"`
-	VARightEye             string   `json:"va_right,omitempty"`
-	VALeftEye              string   `json:"va_left,omitempty"`
-	IOPRight               *float64 `json:"iop_right,omitempty"`
-	IOPLeft                *float64 `json:"iop_left,omitempty"`
-	FundusDescription      string   `json:"fundus_description,omitempty"`
-	CupDiscRatio           *float64 `json:"cup_disc_ratio,omitempty"`
-	HbA1c                  *float64 `json:"hba1c,omitempty"`
-	BPSystolic             *int     `json:"bp_systolic,omitempty"`
-	DurationDiabetesYears  *int     `json:"duration_diabetes_years,omitempty"`
+	PatientID             string   `json:"patient_id"`
+	CaseID                string   `json:"case_id,omitempty"`
+	DiagnosisContext      string   `json:"diagnosis_context"`
+	VARightEye            string   `json:"va_right,omitempty"`
+	VALeftEye             string   `json:"va_left,omitempty"`
+	IOPRight              *float64 `json:"iop_right,omitempty"`
+	IOPLeft               *float64 `json:"iop_left,omitempty"`
+	FundusDescription     string   `json:"fundus_description,omitempty"`
+	CupDiscRatio          *float64 `json:"cup_disc_ratio,omitempty"`
+	HbA1c                 *float64 `json:"hba1c,omitempty"`
+	BPSystolic            *int     `json:"bp_systolic,omitempty"`
+	DurationDiabetesYears *int     `json:"duration_diabetes_years,omitempty"`
 }
 
 // ophthalReport is the wire format for outgoing ophthalmology_report messages.
@@ -200,8 +200,8 @@ var vaSnellenTable = map[string]float64{
 	"20/100": 0.20,
 	"20/200": 0.10, // legal blindness
 	"20/400": 0.05,
-	"cf":     0.02, // counting fingers
-	"hm":     0.01, // hand motion
+	"cf":     0.02,  // counting fingers
+	"hm":     0.01,  // hand motion
 	"lp":     0.005, // light perception
 	"nlp":    0.0,   // no light perception
 }
@@ -285,13 +285,13 @@ func detectDME(fundusLower string) bool {
 // ETDRS staging hierarchy (evaluated highest-first so the most severe
 // matching stage wins):
 //
-//   PDR:              neovascularisation of any kind present.
-//   Severe NPDR:      4-2-1 rule — haemorrhages in 4 quadrants, venous
-//                     beading in 2+, IRMA in 1+.
-//   Moderate NPDR:    microaneurysms + any of cotton-wool spots, hard
-//                     exudates, haemorrhage (not meeting severe criteria).
-//   Mild NPDR:        microaneurysms only.
-//   No DR:            no retinopathy indicators found.
+//	PDR:              neovascularisation of any kind present.
+//	Severe NPDR:      4-2-1 rule — haemorrhages in 4 quadrants, venous
+//	                  beading in 2+, IRMA in 1+.
+//	Moderate NPDR:    microaneurysms + any of cotton-wool spots, hard
+//	                  exudates, haemorrhage (not meeting severe criteria).
+//	Mild NPDR:        microaneurysms only.
+//	No DR:            no retinopathy indicators found.
 //
 // **Illustrative keyword matching — not a validated clinical algorithm.**
 func stageDiabeticRetinopathy(fundusLower string) string {
@@ -397,9 +397,9 @@ func assessGlaucoma(iopRight, iopLeft *float64, cdr *float64) (suspect, urgent, 
 //
 // Hierarchy (highest first):
 //
-//   "same-day":      PDR, legal blindness, IOP > 35 mmHg.
-//   "within-1-week": DME, new vision change (driving-limit impairment), IOP > 25 mmHg.
-//   "routine":       stable findings, screening, Mild/Moderate NPDR without DME.
+//	"same-day":      PDR, legal blindness, IOP > 35 mmHg.
+//	"within-1-week": DME, new vision change (driving-limit impairment), IOP > 25 mmHg.
+//	"routine":       stable findings, screening, Mild/Moderate NPDR without DME.
 func computeOphthUrgency(drStage string, dme, vaImpaired, vaLegalBlind bool, iopUrgent, iopSameDay bool) string {
 	if drStage == "PDR" || vaLegalBlind || iopSameDay {
 		return "same-day"
@@ -529,13 +529,13 @@ func buildOphthRecommendations(
 // Interval logic (based on ADA Standards of Medical Care in Diabetes,
 // illustrative — not a clinical guideline):
 //
-//   PDR or DME:                              3 months (intensive follow-up)
-//   Severe NPDR:                             3–4 months
-//   Moderate NPDR:                           6 months
-//   High-risk profile (HbA1c ≥ 8% AND duration > 10 years): 6 months
-//   Mild NPDR:                               12 months
-//   No DR, HbA1c < 7%, short duration:       12 months
-//   Default (No DR, otherwise):              12 months
+//	PDR or DME:                              3 months (intensive follow-up)
+//	Severe NPDR:                             3–4 months
+//	Moderate NPDR:                           6 months
+//	High-risk profile (HbA1c ≥ 8% AND duration > 10 years): 6 months
+//	Mild NPDR:                               12 months
+//	No DR, HbA1c < 7%, short duration:       12 months
+//	Default (No DR, otherwise):              12 months
 func computeNextExamInterval(drStage string, dme bool, hba1c *float64, durationYears *int) int {
 	switch {
 	case drStage == "PDR" || dme:

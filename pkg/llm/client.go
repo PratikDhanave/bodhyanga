@@ -116,7 +116,7 @@ type Tool struct {
 // ID is the provider-generated correlation identifier (e.g. "toolu_xxxx"
 // for Anthropic) used to match tool_result content blocks in the next turn.
 type ToolCall struct {
-	ID        string          // provider-generated correlation ID; empty for providers that omit it
+	ID        string // provider-generated correlation ID; empty for providers that omit it
 	Name      string
 	Arguments json.RawMessage
 }

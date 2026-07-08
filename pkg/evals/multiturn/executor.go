@@ -87,9 +87,9 @@ func MultiTurnWithMocks(ctx context.Context, agentClient llm.Client, data MultiT
 	}
 
 	var (
-		steps         []Step
-		allToolCalls  []string
-		finalText     string
+		steps        []Step
+		allToolCalls []string
+		finalText    string
 	)
 
 	for stepIdx := 0; stepIdx < maxSteps; stepIdx++ {
