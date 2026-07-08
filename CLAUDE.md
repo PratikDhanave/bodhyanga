@@ -2,10 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Bodh is a **HIPAA-grade medical AI orchestration platform** written in Go. It implements the
-Multi-Agent Reference Architecture (MARA) for clinical decision support: intake → test-planning
-→ diagnostics → care-plan generation, with full audit trails, human-in-the-loop feedback, and
-LLM-agnostic provider abstraction.
+Bodh is a **HIPAA-aware reference architecture** for medical AI orchestration, written in Go — a
+**research and education codebase, not a medical device and not for clinical use** (see `NOTICE`).
+It implements the Multi-Agent Reference Architecture (MARA) for clinical decision *support*:
+intake → test-planning → diagnostics → care-plan generation, with audit trails, human-in-the-loop
+feedback, and LLM-agnostic provider abstraction.
+
+> **Identity note (ADR-0006):** the running binary defaults to research-grade substrate — an
+> in-process bus, in-memory audit, and no auth middleware wired in `cmd/care`. Treat "HIPAA-aware"
+> as *architectural intent*, not certified compliance. Clinical-grade controls (tamper-evident
+> audit, authenticated API, durable bus) are a documented roadmap, not the current default.
 
 ---
 
