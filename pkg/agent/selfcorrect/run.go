@@ -251,10 +251,7 @@ func runCritique(ctx context.Context, client llm.Client, task, answer string) (C
 		cj.Suggestions = []string{}
 	}
 
-	return CritiqueResult{
-		IsCorrect:   cj.IsCorrect,
-		Issues:      cj.Issues,
-		Suggestions: cj.Suggestions,
-		Score:       cj.Score,
-	}, nil
+	// critiqueJSON and CritiqueResult have identical field types; convert
+	// directly rather than restating each field.
+	return CritiqueResult(cj), nil
 }

@@ -214,10 +214,9 @@ func (t *transport) readSSE(body io.Reader) (*Response, error) {
 				dataBuf.WriteByte('\n')
 			}
 			dataBuf.WriteString(data)
-		case strings.HasPrefix(line, "event:"), strings.HasPrefix(line, "id:"), strings.HasPrefix(line, "retry:"):
-			// Field present but unused for JSON-RPC payloads.
 		default:
-			// Unknown line: ignore per the SSE spec.
+			// Other SSE fields (event:, id:, retry:) and unknown lines carry
+			// nothing relevant to a JSON-RPC payload; ignore per the SSE spec.
 		}
 	}
 	// Flush any trailing data block.

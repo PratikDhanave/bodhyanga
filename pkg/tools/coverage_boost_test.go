@@ -1034,11 +1034,7 @@ func TestSplitTitleSnippet_EmptyText(t *testing.T) {
 
 func TestStripHTMLTags_Entities(t *testing.T) {
 	input := `&amp; &lt; &gt; &quot; &#39; &nbsp;`
-	got := stripHTMLTags(input)
-	want := `& < > " ' `
-	// After whitespace collapsing.
-	got = strings.TrimSpace(got)
-	want = strings.TrimSpace(want)
+	got := strings.TrimSpace(stripHTMLTags(input)) // after whitespace collapsing
 	if !strings.Contains(got, "&") || !strings.Contains(got, "<") || !strings.Contains(got, ">") {
 		t.Errorf("entity decoding failed: got %q", got)
 	}

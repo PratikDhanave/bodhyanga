@@ -80,7 +80,6 @@ func (r *runState) subscribe() (<-chan traceEvent, func(), []traceEvent) {
 	ch := make(chan traceEvent, 64)
 	r.mu.Lock()
 	r.subscribers[ch] = struct{}{}
-	closed := r.closed
 	snap := append([]traceEvent(nil), r.events...)
 	r.mu.Unlock()
 	cancel := func() {
@@ -89,10 +88,10 @@ func (r *runState) subscribe() (<-chan traceEvent, func(), []traceEvent) {
 		r.mu.Unlock()
 		close(ch)
 	}
-	if closed {
-		// Send one synthetic "closed" event so the SSE client tears down.
-		// Use the cancel function to close the channel after the snapshot.
-	}
+	// TODO: subscribing to an already-closed run currently returns a live
+	// channel that never receives a terminal event; the SSE client relies on
+	// its own timeout to tear down. Synthesizing a close event here is a known
+	// gap (previously a dead `if r.closed {}` block that asserted nothing).
 	return ch, cancel, snap
 }
 

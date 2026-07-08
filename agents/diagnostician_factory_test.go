@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -473,7 +474,7 @@ func TestDefaultEmbedderForProvider(t *testing.T) {
 
 func TestLoadDefaultKnowledgeNoPath(t *testing.T) {
 	os.Unsetenv("BODH_KNOWLEDGE_CORPUS")
-	store, err := LoadDefaultKnowledge(nil, nil)
+	store, err := LoadDefaultKnowledge(context.TODO(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -484,7 +485,7 @@ func TestLoadDefaultKnowledgeNoPath(t *testing.T) {
 
 func TestLoadDefaultKnowledgeNilEmbedder(t *testing.T) {
 	t.Setenv("BODH_KNOWLEDGE_CORPUS", "/some/path")
-	_, err := LoadDefaultKnowledge(nil, nil)
+	_, err := LoadDefaultKnowledge(context.TODO(), nil)
 	if err == nil {
 		t.Error("nil embedder should error")
 	}

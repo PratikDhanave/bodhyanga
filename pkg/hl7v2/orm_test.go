@@ -50,9 +50,8 @@ func TestORMRoundTrip(t *testing.T) {
 	if parsed.ORC.PlacerID != "CASE-42" {
 		t.Errorf("ORC placer order num %q want CASE-42", parsed.ORC.PlacerID)
 	}
-	if "IP" != "IP" {
-		t.Errorf("ORC order status %q want IP", "IP")
-	}
+	// (No order-status assertion: the ORM ORC parser extracts OrderControl,
+	// PlacerID and FillerID only — it does not surface ORC-5 order status.)
 	if parsed.OBR.ObservationTime.IsZero() {
 		t.Error("ORC DateTime should not be zero")
 	}
@@ -180,9 +179,7 @@ func TestORMParseInline(t *testing.T) {
 	if parsed.ORC.PlacerID != "CASE-INLINE" {
 		t.Errorf("placer order num %q want CASE-INLINE", parsed.ORC.PlacerID)
 	}
-	if "IP" != "IP" {
-		t.Errorf("order status %q want IP", "IP")
-	}
+	// (No order-status assertion: see the note in the sibling test above.)
 	if parsed.OBR.ObservationTime.IsZero() {
 		t.Error("ORC DateTime should not be zero for populated ORC-9")
 	}
