@@ -269,9 +269,15 @@ func currentPanicHook() func(recovered any, stack []byte, msg protocol.Message) 
 // expected follow-up message). That's an acceptable trade-off for a
 // research demo; production audit pipelines would surface the panic as a
 // KindAgentError event via the panic hook.
-func safeHandle(ctx context.Context, msg protocol.Message, h Handler) {
+// The boolean return reports whether the handler completed WITHOUT panicking
+// (true) or was recovered from a panic (false). InMemoryBus callers launch it
+// with `go safeHandle(...)` and discard the result; NATSBus uses it
+// synchronously to decide between Ack (success) and Nak/dead-letter (panic) —
+// which is what gives the durable bus its at-least-once guarantee.
+func safeHandle(ctx context.Context, msg protocol.Message, h Handler) (ok bool) {
 	defer func() {
 		if r := recover(); r != nil {
+			ok = false
 			stack := debug.Stack()
 			if fn := currentPanicHook(); fn != nil {
 				// Hook is best-effort; if it itself panics we
@@ -284,6 +290,7 @@ func safeHandle(ctx context.Context, msg protocol.Message, h Handler) {
 		}
 	}()
 	h(ctx, msg)
+	return true
 }
 
 // Compile-time assertion that InMemoryBus satisfies Bus. If this stops

@@ -186,27 +186,9 @@ func TestSubscribe_Duplicate(t *testing.T) {
 	}
 }
 
-// ---- NATSBus stub (0%) ----
-
-func TestNATSBus_Stub(t *testing.T) {
-	bus, err := NewNATSBus()
-	if err == nil {
-		t.Error("expected error from NATS stub")
-	}
-	if bus != nil {
-		t.Error("expected nil bus from NATS stub")
-	}
-
-	// Exercise the stub methods to get coverage (they are no-ops).
-	var stub NATSBus
-	unsub := stub.Subscribe("agent1", func(_ context.Context, _ protocol.Message) {})
-	if unsub == nil {
-		t.Error("Subscribe should return non-nil unsubscribe")
-	}
-	unsub() // Should not panic.
-
-	stub.Publish(context.Background(), protocol.Message{}) // Should not panic.
-}
+// (TestNATSBus_Stub lives in nats_stub_test.go under //go:build !nats — it
+// asserts the stub's return-an-error contract, which only holds when the real
+// JetStream implementation is NOT linked.)
 
 // ---- PanicHook ----
 

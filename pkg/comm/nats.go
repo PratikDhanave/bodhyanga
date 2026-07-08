@@ -66,6 +66,24 @@ const (
 	// natsBroadcastSegment is the final subject segment used for broadcast
 	// subscribers (agentID == "").
 	natsBroadcastSegment = "broadcast"
+
+	// natsAckWait is how long JetStream waits for an Ack before treating an
+	// in-flight message as failed and redelivering it. This is the safety net
+	// for a consumer that CRASHES mid-processing (no Ack, no Nak): the message
+	// is redelivered to a live consumer after this window. Sized generously
+	// because an agent handler may make a slow LLM call before acking.
+	natsAckWait = 30 * time.Second
+
+	// natsMaxDeliver caps redelivery attempts. After this many deliveries a
+	// still-failing message is dead-lettered and Term'd rather than looping
+	// forever (a poison message must not wedge a consumer).
+	natsMaxDeliver = 5
+
+	// natsDLQSegment namespaces dead-lettered messages:
+	// bodh.{tenant}.dlq.{agentID}. DLQ subjects are stored in the stream (so
+	// they are inspectable) but match no agent consumer's FilterSubject, so a
+	// dead-lettered message is never redelivered to an agent.
+	natsDLQSegment = "dlq"
 )
 
 // NATSBus implements Bus using NATS JetStream for durable, distributed
@@ -207,6 +225,8 @@ func (b *NATSBus) Subscribe(agentID string, h Handler) (unsubscribe func()) {
 		Durable:       durableName,
 		FilterSubject: subj,
 		AckPolicy:     jetstream.AckExplicitPolicy,
+		AckWait:       natsAckWait,
+		MaxDeliver:    natsMaxDeliver,
 		DeliverPolicy: jetstream.DeliverNewPolicy,
 	}
 
@@ -250,21 +270,40 @@ func (b *NATSBus) Subscribe(agentID string, h Handler) (unsubscribe func()) {
 
 			for msg := range msgs.Messages() {
 				if ctx.Err() != nil {
+					// Shutting down before we processed this one: Nak so it
+					// redelivers to a live consumer rather than waiting out
+					// AckWait. No message is dropped on shutdown.
 					_ = msg.Nak()
 					return
 				}
 				var pm protocol.Message
 				if err := json.Unmarshal(msg.Data(), &pm); err != nil {
-					// Malformed message: ack it to prevent redelivery loop.
-					_ = msg.Ack()
-					fmt.Fprintf(os.Stderr,
-						"comm.NATSBus: unmarshal msg for agentID=%q: %v\n", agentID, err)
+					// Poison message: it will never parse, so redelivery is
+					// pointless and would loop until MaxDeliver. Dead-letter it
+					// for inspection and Term to stop redelivery immediately.
+					b.deadLetter(agentID, msg, "unmarshal: "+err.Error())
+					_ = msg.Term()
 					continue
 				}
-				_ = msg.Ack()
-				// Deliver in a goroutine to match InMemoryBus async semantics
-				// and avoid blocking the fetch loop.
-				go safeHandle(ctx, pm, h)
+				// At-least-once core: process SYNCHRONOUSLY and Ack ONLY after
+				// the handler returns without panicking. If the process crashes
+				// or the handler panics before the Ack, the message stays
+				// in-flight and JetStream redelivers it — so no clinical
+				// message is silently lost (the at-most-once bug this replaces).
+				// Handlers must therefore be idempotent; redelivery is expected.
+				if safeHandle(ctx, pm, h) {
+					_ = msg.Ack()
+					continue
+				}
+				// Handler panicked (safeHandle recovered it). Redeliver via Nak
+				// until MaxDeliver is reached, then dead-letter + Term so a
+				// reproducibly-panicking message cannot wedge the consumer.
+				if md, mderr := msg.Metadata(); mderr == nil && md.NumDelivered >= natsMaxDeliver {
+					b.deadLetter(agentID, msg, "handler panicked; exhausted redeliveries")
+					_ = msg.Term()
+				} else {
+					_ = msg.Nak()
+				}
 			}
 
 			if msgs.Error() != nil && ctx.Err() == nil {
@@ -330,6 +369,32 @@ func (b *NATSBus) Publish(ctx context.Context, msg protocol.Message) {
 			fmt.Fprintf(os.Stderr,
 				"comm.NATSBus: publish msg %s to broadcast: %v\n", msg.ID, err)
 		}
+	}
+}
+
+// deadLetter republishes an unprocessable message to the DLQ subject
+// (bodh.{tenant}.dlq.{agentID}) with the failure reason in a header, for
+// operator inspection. It is best-effort: a DLQ publish failure is logged but
+// not retried, because the caller is about to Term the original to stop an
+// unbounded redelivery loop — losing visibility on a poison message is the
+// lesser harm versus wedging the consumer. The raw bytes are preserved so a
+// human can see exactly what failed to parse or process.
+func (b *NATSBus) deadLetter(agentID string, msg jetstream.Msg, reason string) {
+	seg := strings.NewReplacer(" ", "_", "*", "_", ">", "_").Replace(agentID)
+	if seg == "" {
+		seg = natsBroadcastSegment
+	}
+	subj := fmt.Sprintf("%s.%s.%s.%s", natsSubjectPrefix, b.tenantID, natsDLQSegment, seg)
+
+	hdr := nats.Header{}
+	hdr.Set("X-Bodh-DLQ-Reason", reason)
+	hdr.Set("X-Bodh-DLQ-Agent", agentID)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if _, err := b.js.PublishMsg(ctx, &nats.Msg{Subject: subj, Data: msg.Data(), Header: hdr}); err != nil {
+		fmt.Fprintf(os.Stderr,
+			"comm.NATSBus: dead-letter publish for agentID=%q to %s: %v\n", agentID, subj, err)
 	}
 }
 
