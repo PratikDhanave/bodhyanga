@@ -77,6 +77,10 @@ zarf/keys/*.pem
 # Claude Code local settings and worktrees (gitignored by convention)
 .claude/settings.local.json
 .claude/worktrees/
+# Session scratchpad — rewritten every session, not source of record
+.claude/memory.md
+# Spec Kit runtime state — points at the active feature dir, ephemeral
+.specify/feature.json
 /bin/
 
 # Internal cross-model review artifact — kept local, not tracked
