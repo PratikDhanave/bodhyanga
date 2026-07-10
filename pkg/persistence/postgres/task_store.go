@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -122,7 +123,13 @@ func (a *TaskStoreAdapter) Create(t tasks.NurseTask) tasks.NurseTask {
 	if t.Status == "" {
 		t.Status = tasks.StatusOpen
 	}
-	_ = a.s.CreateTask(context.Background(), a.tenantID, t)
+	// tasks.TaskStore has no error return; until it is widened, fail LOUD rather
+	// than silent so a dropped nurse task (a missed follow-up) is detectable.
+	// The task ID is a UUID, not PHI.
+	if err := a.s.CreateTask(context.Background(), a.tenantID, t); err != nil {
+		log.Printf("TASK_PERSIST_FAILURE TaskStoreAdapter.Create: nurse task NOT durably stored (id=%q tenant=%q): %v",
+			t.ID, a.tenantID, err)
+	}
 	return t
 }
 

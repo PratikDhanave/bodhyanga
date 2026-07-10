@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -462,10 +463,15 @@ type PatientRegistryAdapter struct {
 	tenantID string
 }
 
-// Upsert mirrors medical.PatientRegistry.Upsert. Errors are swallowed to
-// preserve the interface; use UpsertPatient on Store when you need them.
+// Upsert mirrors medical.PatientRegistry.Upsert. The interface has no error
+// return; until it is widened, a persistence failure is logged loudly rather
+// than swallowed silently. No patient identifier is logged (it may be an MRN —
+// audit finding M5); only the tenant and error.
 func (a *PatientRegistryAdapter) Upsert(p medical.PatientRecord) {
-	_ = a.s.UpsertPatient(context.Background(), a.tenantID, p)
+	if err := a.s.UpsertPatient(context.Background(), a.tenantID, p); err != nil {
+		log.Printf("PATIENT_PERSIST_FAILURE PatientRegistryAdapter.Upsert: patient upsert NOT durably stored (tenant=%q): %v",
+			a.tenantID, err)
+	}
 }
 
 // Get mirrors medical.PatientRegistry.Get.

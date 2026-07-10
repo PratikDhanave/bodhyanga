@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -244,16 +245,33 @@ type ReviewStoreAdapter struct {
 // Compile-time proof the adapter satisfies the interface its consumers depend on.
 var _ hitl.ReviewStore = (*ReviewStoreAdapter)(nil)
 
-// Submit mirrors hitl.Queue.Submit. The persistence error is swallowed to
-// satisfy the interface (use Store.SubmitReview when you need it).
+// Submit mirrors hitl.Queue.Submit.
+//
+// The hitl.ReviewStore interface has no error return, so a persistence failure
+// cannot be propagated to the human_review agent (it would receive a populated,
+// success-shaped ReviewRequest that was never durably stored — audit finding
+// F1). Until the interface is widened to return an error, we FAIL LOUD instead
+// of silent: a dropped clinical review is logged at a greppable/alertable
+// marker so an operator can detect and recover it. PHI (PatientID, Payload) is
+// deliberately excluded from the log line; Kind is a non-PHI template string.
 func (a *ReviewStoreAdapter) Submit(r medical.ReviewRequest) medical.ReviewRequest {
-	out, _ := a.s.SubmitReview(context.Background(), a.tenantID, r)
+	out, err := a.s.SubmitReview(context.Background(), a.tenantID, r)
+	if err != nil {
+		log.Printf("HITL_PERSIST_FAILURE ReviewStoreAdapter.Submit: review NOT durably stored (kind=%q tenant=%q): %v",
+			r.Kind, a.tenantID, err)
+	}
 	return out
 }
 
-// Decide mirrors hitl.Queue.Decide.
+// Decide mirrors hitl.Queue.Decide. Like Submit, a persistence failure cannot
+// be propagated through the interface, so it is logged loudly (F2): a lost
+// reviewer decision must not vanish silently. The review ID is a UUID, not PHI.
 func (a *ReviewStoreAdapter) Decide(id, reviewerID, decision, reason, modification string) (medical.ReviewRequest, bool) {
-	out, ok, _ := a.s.DecideReview(context.Background(), a.tenantID, id, reviewerID, decision, reason, modification)
+	out, ok, err := a.s.DecideReview(context.Background(), a.tenantID, id, reviewerID, decision, reason, modification)
+	if err != nil {
+		log.Printf("HITL_PERSIST_FAILURE ReviewStoreAdapter.Decide: decision NOT durably applied (reviewID=%q tenant=%q): %v",
+			id, a.tenantID, err)
+	}
 	return out, ok
 }
 
