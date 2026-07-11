@@ -100,6 +100,22 @@ func (p *Pipeline) Admit(ctx context.Context, msg protocol.Message) bool {
 	return true
 }
 
+// RecordAgentError audits a KindAgentError event for a message whose agent
+// handler returned a non-nil error. It is the post-admission counterpart to
+// Admit: Admit covers Steps 1–2 (governance + KindMessage), and a per-agent
+// runtime calls this after HandleMessage fails, mirroring
+// orchestrator.recordAgentError exactly.
+//
+// The event carries err.Error() in ErrorText and NEVER msg.Content — the same
+// PHI-safety contract Admit honours. Audit stays fail-open: a nil Recorder or a
+// sink error is swallowed, never surfaced to the caller.
+func (p *Pipeline) RecordAgentError(msg protocol.Message, err error) {
+	e := audit.FromMessage(p.AgentID, msg)
+	e.Kind = audit.KindAgentError
+	e.ErrorText = err.Error()
+	p.record(e)
+}
+
 // recordBlock audits an extra-middleware block as a policy_decision deny so the
 // trail is uniform with governance denies.
 func (p *Pipeline) recordBlock(msg protocol.Message, reason string) {
