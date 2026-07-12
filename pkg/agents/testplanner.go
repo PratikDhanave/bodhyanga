@@ -41,32 +41,34 @@ func SimulatedLab(test string, _ PatientCase) TestResult {
 // NewTestPlanner builds the planner executor. Round 0 sends the symptom-only
 // workup (no tests); later rounds order catalog tests for the case's symptoms
 // that have not been run yet.
-func NewTestPlanner(id string, lab Lab) *workflow.Executor {
+func NewTestPlanner(id string, lab Lab, guard Guard) *workflow.Executor {
 	if lab == nil {
 		lab = SimulatedLab
 	}
 	return workflow.NewExecutor(id, func(ctx *workflow.Context, q DiagnosticQuery) error {
-		var results []TestResult
-		if q.Round > 0 {
-			done := make(map[string]bool, len(q.PriorTests))
-			for _, t := range q.PriorTests {
-				done[t.Name] = true
-			}
-			var order []string
-			for _, s := range q.Case.Symptoms {
-				for _, test := range testCatalog[s] {
-					if !done[test] {
-						done[test] = true
-						order = append(order, test)
+		return guarded(guard, ctx, id, "diagnostic_query", HashCaseID(q.Case.CaseID), func() error {
+			var results []TestResult
+			if q.Round > 0 {
+				done := make(map[string]bool, len(q.PriorTests))
+				for _, t := range q.PriorTests {
+					done[t.Name] = true
+				}
+				var order []string
+				for _, s := range q.Case.Symptoms {
+					for _, test := range testCatalog[s] {
+						if !done[test] {
+							done[test] = true
+							order = append(order, test)
+						}
 					}
 				}
+				sort.Strings(order) // deterministic runs → diffable audit trails
+				for _, test := range order {
+					results = append(results, lab(test, q.Case))
+				}
 			}
-			sort.Strings(order) // deterministic runs → diffable audit trails
-			for _, test := range order {
-				results = append(results, lab(test, q.Case))
-			}
-		}
-		return ctx.SendMessage("", Workup{Query: q, Results: append(q.PriorTests, results...)})
+			return ctx.SendMessage("", Workup{Query: q, Results: append(q.PriorTests, results...)})
+		})
 	}).Extend(&workflow.Executor{
 		ConfigureProtocol: func(rb *workflow.ProtocolBuilder) (*workflow.ProtocolBuilder, error) {
 			rb.SendsMessageType(reflect.TypeFor[Workup]())

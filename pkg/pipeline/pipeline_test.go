@@ -1,60 +1,34 @@
-package pipeline
+package pipeline_test
 
 import (
-	"context"
 	"testing"
 
-	"github.com/microsoft/agent-framework-go/workflow"
-	"github.com/microsoft/agent-framework-go/workflow/inproc"
-
+	"github.com/PratikDhanave/bodh-maf/internal/slicetest"
 	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodh-maf/pkg/pipeline"
 )
 
-// runCase executes one case and returns the care plan plus any forced-progression events.
-func runCase(t *testing.T, cfg Config, pc agents.PatientCase) (agents.CarePlan, []agents.ForcedProgressionEvent) {
+// runCase builds a workflow from cfg and runs one case, failing the test on
+// executor failures — the right default for pipeline-semantics tests.
+// Admission tests (admission_test.go) use slicetest.Run directly instead.
+func runCase(t *testing.T, cfg pipeline.Config, pc agents.PatientCase) (agents.CarePlan, []agents.ForcedProgressionEvent) {
 	t.Helper()
-	wf, err := New(cfg)
+	wf, err := pipeline.New(cfg)
 	if err != nil {
 		t.Fatalf("build workflow: %v", err)
 	}
-	ctx := context.Background()
-	run, err := inproc.Default.RunStreaming(ctx, wf, pc)
-	if err != nil {
-		t.Fatalf("run: %v", err)
+	res := slicetest.Run(t, wf, pc)
+	for _, f := range res.Failures {
+		t.Fatalf("executor %s failed: %v", f.ExecutorID, f.Error)
 	}
-	defer func() { _ = run.Close(ctx) }()
-
-	var (
-		plan   agents.CarePlan
-		got    bool
-		forced []agents.ForcedProgressionEvent
-	)
-	for evt, err := range run.WatchStream(ctx) {
-		if err != nil {
-			t.Fatalf("stream: %v", err)
-		}
-		switch e := evt.(type) {
-		case workflow.ExecutorFailedEvent:
-			t.Fatalf("executor %s failed: %v", e.ExecutorID, e.Error)
-		case workflow.ErrorEvent:
-			t.Fatalf("workflow error: %v", e.Error)
-		case agents.ForcedProgressionEvent:
-			forced = append(forced, e)
-		case workflow.OutputEvent:
-			plan, got = e.Output.(agents.CarePlan)
-			if !got {
-				t.Fatalf("unexpected output type %T", e.Output)
-			}
-		}
-	}
-	if !got {
+	if res.Plan == nil {
 		t.Fatal("workflow produced no CarePlan output")
 	}
-	return plan, forced
+	return *res.Plan, res.Forced
 }
 
 func TestHappyPathLoopsThenDiagnoses(t *testing.T) {
-	plan, forced := runCase(t, Config{}, agents.PatientCase{
+	plan, forced := runCase(t, pipeline.Config{}, agents.PatientCase{
 		CaseID:   "case-acs",
 		Symptoms: []string{"chest pain"},
 	})
@@ -68,15 +42,13 @@ func TestHappyPathLoopsThenDiagnoses(t *testing.T) {
 	if len(forced) != 0 {
 		t.Errorf("got %d forced-progression events, want 0", len(forced))
 	}
-	// Round 0 is symptom-only (confidence 0.55 ≤ τ) so the loop-back edge
-	// MUST have fired at least once before tests confirmed the diagnosis.
 	if len(plan.Steps) == 0 {
 		t.Error("care plan has no steps")
 	}
 }
 
 func TestForcedProgressionAtMaxRounds(t *testing.T) {
-	plan, forced := runCase(t, Config{Tau: 0.99, MaxRounds: 2}, agents.PatientCase{
+	plan, forced := runCase(t, pipeline.Config{Tau: 0.99, MaxRounds: 2}, agents.PatientCase{
 		CaseID:   "case-stubborn",
 		Symptoms: []string{"chest pain"},
 	})
@@ -96,14 +68,13 @@ func TestForcedProgressionAtMaxRounds(t *testing.T) {
 	if forced[0].CaseIDHash == "case-stubborn" {
 		t.Error("PHI rule violation: raw case ID on a domain event")
 	}
-	// Forced plans must route to review, not a protocol plan.
 	if plan.Steps[0] != "refer for specialist review" {
 		t.Errorf("forced plan step[0] = %q, want specialist review", plan.Steps[0])
 	}
 }
 
 func TestUnknownPresentationForcesReview(t *testing.T) {
-	plan, forced := runCase(t, Config{}, agents.PatientCase{
+	plan, forced := runCase(t, pipeline.Config{}, agents.PatientCase{
 		CaseID:   "case-mystery",
 		Symptoms: []string{"unexplained rash"},
 	})
@@ -119,7 +90,7 @@ func TestUnknownPresentationForcesReview(t *testing.T) {
 
 func TestDeidentifySeamRunsBeforePipeline(t *testing.T) {
 	deidentified := false
-	plan, _ := runCase(t, Config{
+	plan, _ := runCase(t, pipeline.Config{
 		Deidentify: func(pc agents.PatientCase) agents.PatientCase {
 			deidentified = true
 			pc.CaseID = "deid-" + agents.HashCaseID(pc.CaseID)

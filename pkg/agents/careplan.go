@@ -28,17 +28,19 @@ var planCatalog = map[string][]string{
 // NewCarePlan builds the terminal executor: DiagnosisResult → CarePlan,
 // yielded as the workflow output. Forced (low-confidence) diagnoses always
 // route to specialist review rather than a protocol plan.
-func NewCarePlan(id string) *workflow.Executor {
+func NewCarePlan(id string, guard Guard) *workflow.Executor {
 	return workflow.NewExecutor(id, func(ctx *workflow.Context, d DiagnosisResult) error {
-		steps, ok := planCatalog[d.Diagnosis]
-		if !ok || d.Forced {
-			steps = []string{"refer for specialist review", "schedule follow-up assessment"}
-		}
-		return ctx.YieldOutput(CarePlan{
-			CaseID:    d.CaseID,
-			Diagnosis: d.Diagnosis,
-			Forced:    d.Forced,
-			Steps:     steps,
+		return guarded(guard, ctx, id, "diagnosis_result", HashCaseID(d.CaseID), func() error {
+			steps, ok := planCatalog[d.Diagnosis]
+			if !ok || d.Forced {
+				steps = []string{"refer for specialist review", "schedule follow-up assessment"}
+			}
+			return ctx.YieldOutput(CarePlan{
+				CaseID:    d.CaseID,
+				Diagnosis: d.Diagnosis,
+				Forced:    d.Forced,
+				Steps:     steps,
+			})
 		})
 	}).Extend(&workflow.Executor{
 		ConfigureProtocol: func(rb *workflow.ProtocolBuilder) (*workflow.ProtocolBuilder, error) {
