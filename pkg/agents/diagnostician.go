@@ -53,39 +53,10 @@ type DiagnosticianConfig struct {
 // NewRuleDiagnostician builds the rule-path diagnostician executor. It sends
 // DiagnosisResult when confident (or forced) and DiagnosticQuery to loop back
 // otherwise — the graph's conditional edges route on those types.
-func NewRuleDiagnostician(id string, cfg DiagnosticianConfig) *workflow.Executor {
+func NewRuleDiagnostician(id string, cfg DiagnosticianConfig, guard Guard) *workflow.Executor {
 	return workflow.NewExecutor(id, func(ctx *workflow.Context, wu Workup) error {
-		diagnosis, confidence, evidence := evaluateRules(wu)
-		rounds := wu.Query.Round + 1
-
-		if confidence > cfg.Tau {
-			return ctx.SendMessage("", DiagnosisResult{
-				CaseID:     wu.Query.Case.CaseID,
-				Diagnosis:  diagnosis,
-				Confidence: confidence,
-				Rounds:     rounds,
-				Evidence:   evidence,
-			})
-		}
-		if rounds >= cfg.MaxRounds {
-			ctx.AddEvent(ForcedProgressionEvent{
-				CaseIDHash: HashCaseID(wu.Query.Case.CaseID),
-				Confidence: confidence,
-				Rounds:     rounds,
-			})
-			return ctx.SendMessage("", DiagnosisResult{
-				CaseID:     wu.Query.Case.CaseID,
-				Diagnosis:  diagnosis,
-				Confidence: confidence,
-				Rounds:     rounds,
-				Forced:     true,
-				Evidence:   evidence,
-			})
-		}
-		return ctx.SendMessage("", DiagnosticQuery{
-			Case:       wu.Query.Case,
-			Round:      wu.Query.Round + 1,
-			PriorTests: wu.Results,
+		return guarded(guard, ctx, id, "workup", HashCaseID(wu.Query.Case.CaseID), func() error {
+			return diagnose(ctx, cfg, wu)
 		})
 	}).Extend(&workflow.Executor{
 		ConfigureProtocol: func(rb *workflow.ProtocolBuilder) (*workflow.ProtocolBuilder, error) {
@@ -93,6 +64,42 @@ func NewRuleDiagnostician(id string, cfg DiagnosticianConfig) *workflow.Executor
 			rb.SendsMessageType(reflect.TypeFor[DiagnosticQuery]())
 			return rb, nil
 		},
+	})
+}
+
+// diagnose is the rule path's per-workup body, shared unguarded logic.
+func diagnose(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup) error {
+	diagnosis, confidence, evidence := evaluateRules(wu)
+	rounds := wu.Query.Round + 1
+
+	if confidence > cfg.Tau {
+		return ctx.SendMessage("", DiagnosisResult{
+			CaseID:     wu.Query.Case.CaseID,
+			Diagnosis:  diagnosis,
+			Confidence: confidence,
+			Rounds:     rounds,
+			Evidence:   evidence,
+		})
+	}
+	if rounds >= cfg.MaxRounds {
+		ctx.AddEvent(ForcedProgressionEvent{
+			CaseIDHash: HashCaseID(wu.Query.Case.CaseID),
+			Confidence: confidence,
+			Rounds:     rounds,
+		})
+		return ctx.SendMessage("", DiagnosisResult{
+			CaseID:     wu.Query.Case.CaseID,
+			Diagnosis:  diagnosis,
+			Confidence: confidence,
+			Rounds:     rounds,
+			Forced:     true,
+			Evidence:   evidence,
+		})
+	}
+	return ctx.SendMessage("", DiagnosticQuery{
+		Case:       wu.Query.Case,
+		Round:      wu.Query.Round + 1,
+		PriorTests: wu.Results,
 	})
 }
 

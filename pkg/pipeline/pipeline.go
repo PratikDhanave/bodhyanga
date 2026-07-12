@@ -6,6 +6,7 @@ package pipeline
 import (
 	"github.com/microsoft/agent-framework-go/workflow"
 
+	"github.com/PratikDhanave/bodh-maf/pkg/admit"
 	"github.com/PratikDhanave/bodh-maf/pkg/agents"
 )
 
@@ -16,8 +17,12 @@ type Config struct {
 	MaxRounds  int
 	Deidentify func(agents.PatientCase) agents.PatientCase
 	Lab        agents.Lab
+	// Boundary is the admission boundary applied to EVERY hop (spec FR-001).
+	// nil disables admission — step-1 behavior, acceptable only in tests.
+	Boundary *admit.Boundary
 	// Diagnostician overrides the rule executor (step 4 binds the LLM agent
-	// here). It must consume Workup and send DiagnosisResult/DiagnosticQuery.
+	// here). It must consume Workup and send DiagnosisResult/DiagnosticQuery,
+	// and is responsible for honoring the same Boundary.
 	Diagnostician *workflow.Executor
 }
 
@@ -30,18 +35,23 @@ func New(cfg Config) (*workflow.Workflow, error) {
 	if cfg.MaxRounds == 0 {
 		cfg.MaxRounds = 3
 	}
+	var guard agents.Guard
+	if cfg.Boundary != nil {
+		guard = cfg.Boundary.Guard
+	}
+
 	dx := cfg.Diagnostician
 	if dx == nil {
 		dx = agents.NewRuleDiagnostician("diagnostician", agents.DiagnosticianConfig{
 			Tau:       cfg.Tau,
 			MaxRounds: cfg.MaxRounds,
-		})
+		}, guard)
 	}
 
-	intake := agents.NewIntake("intake", cfg.Deidentify).Bind()
-	planner := agents.NewTestPlanner("test_planner", cfg.Lab).Bind()
+	intake := agents.NewIntake("intake", cfg.Deidentify, guard).Bind()
+	planner := agents.NewTestPlanner("test_planner", cfg.Lab, guard).Bind()
 	diagnostician := dx.Bind()
-	carePlan := agents.NewCarePlan("care_plan").Bind()
+	carePlan := agents.NewCarePlan("care_plan", guard).Bind()
 
 	return workflow.NewBuilder(intake).
 		AddEdge(intake, planner).
