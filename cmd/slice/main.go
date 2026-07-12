@@ -4,13 +4,14 @@
 //
 //	go run ./cmd/slice                      # built-in demo case
 //	go run ./cmd/slice -case case.json      # case from file
+//	go run ./cmd/slice -policy deny         # admission demo (exit code 2)
+//	go run ./cmd/slice -trail               # print the audit trail
 //	go run ./cmd/slice -tau 0.9 -max-rounds 2 -verbose
 package main
 
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -19,7 +20,6 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/audit"
 	"github.com/PratikDhanave/bodh/pkg/governance"
 	"github.com/microsoft/agent-framework-go/workflow"
-	"github.com/microsoft/agent-framework-go/workflow/inproc"
 
 	"github.com/PratikDhanave/bodh-maf/pkg/admit"
 	"github.com/PratikDhanave/bodh-maf/pkg/agents"
@@ -31,6 +31,7 @@ func main() {
 	tau := flag.Float64("tau", 0.85, "diagnostician confidence bar")
 	maxRounds := flag.Int("max-rounds", 3, "workups before forced progression")
 	policy := flag.String("policy", "allow", "admission policy: allow | deny | deny-agent=<id>")
+	trail := flag.Bool("trail", false, "print the audit trail after the run")
 	verbose := flag.Bool("verbose", false, "log every executor hop")
 	flag.Parse()
 
@@ -38,8 +39,6 @@ func main() {
 	if err != nil {
 		fatal(err)
 	}
-	recorder := audit.NewInMemory()
-	boundary := admit.New(pol, recorder, nil)
 
 	pc := agents.PatientCase{
 		CaseID:   "demo-001",
@@ -56,54 +55,70 @@ func main() {
 		}
 	}
 
-	wf, err := pipeline.New(pipeline.Config{Tau: *tau, MaxRounds: *maxRounds, Boundary: boundary})
+	recorder := audit.NewInMemory()
+	runner, err := pipeline.NewRunner(pipeline.Config{
+		Tau: *tau, MaxRounds: *maxRounds,
+		Boundary: admit.New(pol, recorder, nil),
+	}, recorder)
 	if err != nil {
 		fatal(err)
 	}
 
-	ctx := context.Background()
-	run, err := inproc.Default.RunStreaming(ctx, wf, pc)
+	fmt.Printf("case %s → pipeline (τ=%.2f, max %d rounds, policy=%s)\n",
+		runner.CaseToken(pc), *tau, *maxRounds, *policy)
+
+	out, err := runner.Run(context.Background(), pc)
 	if err != nil {
 		fatal(err)
 	}
-	defer func() { _ = run.Close(ctx) }()
 
-	hash := agents.HashCaseID(pc.CaseID)
-	fmt.Printf("case %s → pipeline (τ=%.2f, max %d rounds)\n", hash, *tau, *maxRounds)
-
-	for evt, err := range run.WatchStream(ctx) {
-		if err != nil {
-			fatal(err)
-		}
-		switch e := evt.(type) {
-		case workflow.ExecutorInvokedEvent:
-			if *verbose {
+	if *verbose {
+		for _, evt := range out.Events {
+			if e, ok := evt.(workflow.ExecutorInvokedEvent); ok {
 				fmt.Printf("  hop: %s\n", e.ExecutorID)
 			}
-		case workflow.ExecutorFailedEvent:
-			if errors.Is(e.Error, admit.ErrDenied) {
-				fmt.Fprintf(os.Stderr, "slice: hop %s denied by governance:\n", e.ExecutorID)
-				for _, ev := range recorder.List() {
-					if ev.Kind == audit.KindPolicyDecision && ev.Decision == string(governance.DecisionDeny) {
-						fmt.Fprintf(os.Stderr, "  deny agent=%s type=%s case=%s reason=%s\n",
-							ev.AgentID, ev.Type, ev.CaseID, ev.Reason)
-					}
-				}
-				os.Exit(2)
-			}
-			fatal(fmt.Errorf("executor %s failed: %w", e.ExecutorID, e.Error))
-		case workflow.ErrorEvent:
-			fatal(e.Error)
-		case agents.ForcedProgressionEvent:
-			fmt.Printf("  forced progression: case %s at confidence %.2f after %d rounds\n",
-				e.CaseIDHash, e.Confidence, e.Rounds)
-		case workflow.OutputEvent:
-			plan, ok := e.Output.(agents.CarePlan)
-			if !ok {
-				fatal(fmt.Errorf("unexpected output type %T", e.Output))
-			}
-			printPlan(plan)
 		}
+	}
+	for _, f := range out.Forced {
+		fmt.Printf("  forced progression: case %s at confidence %.2f after %d rounds\n",
+			f.CaseIDHash, f.Confidence, f.Rounds)
+	}
+	if *trail {
+		printTrail(recorder.List())
+	}
+
+	switch {
+	case out.Denied:
+		fmt.Fprintln(os.Stderr, "slice: case denied by governance (see -trail)")
+		os.Exit(2)
+	case out.Plan != nil:
+		printPlan(*out.Plan)
+	default:
+		for _, f := range out.Failures {
+			fmt.Fprintf(os.Stderr, "slice: executor %s failed: %v\n", f.ExecutorID, f.Error)
+		}
+		os.Exit(1)
+	}
+}
+
+func printTrail(events []audit.Event) {
+	fmt.Printf("\naudit trail (%d events):\n", len(events))
+	for _, e := range events {
+		line := fmt.Sprintf("  %-16s", string(e.Kind))
+		if e.Decision != "" {
+			line += " decision=" + e.Decision
+		}
+		if e.AgentID != "" {
+			line += " agent=" + e.AgentID
+		}
+		if e.Type != "" {
+			line += " type=" + e.Type
+		}
+		if e.Reason != "" {
+			line += " reason=" + e.Reason
+		}
+		line += " case=" + e.CaseID
+		fmt.Println(line)
 	}
 }
 
