@@ -1,0 +1,60 @@
+// Package pipeline assembles the MARA slice workflow graph
+// (architecture.md §1): intake → test_planner → diagnostician → care_plan,
+// with the diagnostician's conditional loop-back to the planner.
+package pipeline
+
+import (
+	"github.com/microsoft/agent-framework-go/workflow"
+
+	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+)
+
+// Config parameterizes the graph. Zero values get slice defaults
+// (τ=0.85, 3 rounds), matching architecture.md §6.
+type Config struct {
+	Tau        float64
+	MaxRounds  int
+	Deidentify func(agents.PatientCase) agents.PatientCase
+	Lab        agents.Lab
+	// Diagnostician overrides the rule executor (step 4 binds the LLM agent
+	// here). It must consume Workup and send DiagnosisResult/DiagnosticQuery.
+	Diagnostician *workflow.Executor
+}
+
+// New builds the workflow. The two edges out of the diagnostician route on
+// message type: DiagnosisResult proceeds, DiagnosticQuery loops back.
+func New(cfg Config) (*workflow.Workflow, error) {
+	if cfg.Tau == 0 {
+		cfg.Tau = 0.85
+	}
+	if cfg.MaxRounds == 0 {
+		cfg.MaxRounds = 3
+	}
+	dx := cfg.Diagnostician
+	if dx == nil {
+		dx = agents.NewRuleDiagnostician("diagnostician", agents.DiagnosticianConfig{
+			Tau:       cfg.Tau,
+			MaxRounds: cfg.MaxRounds,
+		})
+	}
+
+	intake := agents.NewIntake("intake", cfg.Deidentify).Bind()
+	planner := agents.NewTestPlanner("test_planner", cfg.Lab).Bind()
+	diagnostician := dx.Bind()
+	carePlan := agents.NewCarePlan("care_plan").Bind()
+
+	return workflow.NewBuilder(intake).
+		AddEdge(intake, planner).
+		AddEdge(planner, diagnostician).
+		AddDirectEdge(diagnostician, carePlan, false, func(msg any) bool {
+			_, ok := msg.(agents.DiagnosisResult)
+			return ok
+		}).
+		AddDirectEdge(diagnostician, planner, false, func(msg any) bool {
+			_, ok := msg.(agents.DiagnosticQuery)
+			return ok
+		}).
+		WithOutputFrom(carePlan).
+		WithName("bodh-maf MARA slice").
+		Build()
+}
