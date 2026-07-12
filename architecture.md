@@ -223,7 +223,8 @@ downstream — LLM calls, checkpoints, audit, evals — sees de-identified conte
 
 ```
 bodh-maf/
-  cmd/slice/            single binary: flags, graph assembly, run loop, audit bridge
+  cmd/slice/            single binary: flags, run loop, event printing (later: audit bridge)
+  pkg/pipeline/         graph assembly (testable seam; cmd/slice stays thin)
   pkg/admit/            §3 wrapper + agent.Middleware variant   ← semantics live here
   pkg/agents/           intake, testplanner, diagnostician (rule+llm), careplan
   pkg/auditbridge/      §4 event-stream → bodh audit mapping
@@ -240,8 +241,8 @@ publish). Test conventions follow bodh: table-driven, `pkg/dbtest.TestDB()`
 
 | # | Step | Proves |
 |---|---|---|
-| 0 | this document + module scaffold | design approval gate ← **you are here** |
-| 1 | graph skeleton: 4 pure-Go executors, loop-back, in-memory run, `cmd/slice` | pipeline + loop semantics |
+| 0 | this document + module scaffold | design approval gate — **approved 2026-07-12** |
+| 1 | graph skeleton: 4 pure-Go executors, loop-back, in-memory run, `cmd/slice` | pipeline + loop semantics — **done** |
 | 2 | `pkg/admit` + audit bridge (bodh governance/audit wired) | exit criteria 1–2 |
 | 3 | `RequestPort` + Postgres checkpoint store + kill/resume test | exit criterion 3 |
 | 4 | LLM diagnostician (Anthropic + Ollama) behind the flag | exit criterion 4 |
