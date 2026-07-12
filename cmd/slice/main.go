@@ -19,10 +19,12 @@ import (
 
 	"github.com/PratikDhanave/bodh/pkg/audit"
 	"github.com/PratikDhanave/bodh/pkg/governance"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/microsoft/agent-framework-go/workflow"
 
 	"github.com/PratikDhanave/bodh-maf/pkg/admit"
 	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodh-maf/pkg/ckptpg"
 	"github.com/PratikDhanave/bodh-maf/pkg/pipeline"
 )
 
@@ -33,6 +35,12 @@ func main() {
 	policy := flag.String("policy", "allow", "admission policy: allow | deny | deny-agent=<id>")
 	trail := flag.Bool("trail", false, "print the audit trail after the run")
 	verbose := flag.Bool("verbose", false, "log every executor hop")
+	review := flag.Bool("review", true, "pause at the physician-review gate")
+	db := flag.String("db", os.Getenv("SLICE_DB"), "postgres URL for durable checkpoints (enables -resume)")
+	resume := flag.String("resume", "", "resume a paused session by ID (requires -db)")
+	approve := flag.Bool("approve", false, "answer the pending review with approval")
+	reject := flag.Bool("reject", false, "answer the pending review with rejection")
+	reviewer := flag.String("reviewer", "", "reviewer ID for -approve/-reject")
 	flag.Parse()
 
 	pol, err := parsePolicy(*policy)
@@ -55,19 +63,55 @@ func main() {
 		}
 	}
 
+	ctx := context.Background()
 	recorder := audit.NewInMemory()
 	runner, err := pipeline.NewRunner(pipeline.Config{
-		Tau: *tau, MaxRounds: *maxRounds,
+		Tau: *tau, MaxRounds: *maxRounds, Review: *review,
 		Boundary: admit.New(pol, recorder, nil),
 	}, recorder)
 	if err != nil {
 		fatal(err)
 	}
 
-	fmt.Printf("case %s → pipeline (τ=%.2f, max %d rounds, policy=%s)\n",
-		runner.CaseToken(pc), *tau, *maxRounds, *policy)
+	if *db != "" {
+		pool, err := pgxpool.New(ctx, *db)
+		if err != nil {
+			fatal(fmt.Errorf("connect -db: %w", err))
+		}
+		defer pool.Close()
+		store := ckptpg.New(pool)
+		if err := store.EnsureSchema(ctx); err != nil {
+			fatal(err)
+		}
+		runner.WithCheckpointStore(store)
+	}
 
-	out, err := runner.Run(context.Background(), pc)
+	if *approve || *reject {
+		if *reviewer == "" {
+			fatal(fmt.Errorf("-approve/-reject require -reviewer <id>"))
+		}
+		dec := agents.ReviewDecision{Approved: *approve, ReviewerID: *reviewer}
+		runner.Responder = func(req *workflow.ExternalRequest) (*workflow.ExternalResponse, error) {
+			if r, ok := workflow.PortableValueAs[agents.ReviewRequest](req.Data); ok {
+				fmt.Printf("  review: case %s %q conf=%.2f → %s by %s\n",
+					r.CaseToken, r.Diagnosis, r.Confidence, decisionWord(*approve), *reviewer)
+			}
+			return req.CreateResponse(dec)
+		}
+	}
+
+	var out *pipeline.Outcome
+	if *resume != "" {
+		if *db == "" {
+			fatal(fmt.Errorf("-resume requires -db"))
+		}
+		fmt.Printf("resuming session %s\n", *resume)
+		out, err = runner.Resume(ctx, *resume)
+	} else {
+		fmt.Printf("case %s → pipeline (τ=%.2f, max %d rounds, policy=%s, review=%v)\n",
+			runner.CaseToken(pc), *tau, *maxRounds, *policy, *review)
+		out, err = runner.Run(ctx, pc, "")
+	}
 	if err != nil {
 		fatal(err)
 	}
@@ -91,6 +135,13 @@ func main() {
 	case out.Denied:
 		fmt.Fprintln(os.Stderr, "slice: case denied by governance (see -trail)")
 		os.Exit(2)
+	case out.Paused:
+		fmt.Printf("\ncase awaiting physician review — session %s\n", out.SessionID)
+		fmt.Printf("resume with: slice -db <url> -resume %s -approve -reviewer <id>\n", out.SessionID)
+		os.Exit(3)
+	case out.Rejected != nil:
+		fmt.Printf("\ncase %s: diagnosis %q REJECTED by %s — no care plan\n",
+			agents.HashCaseID(out.Rejected.CaseID), out.Rejected.Diagnosis, out.Rejected.ReviewerID)
 	case out.Plan != nil:
 		printPlan(*out.Plan)
 	default:
@@ -99,6 +150,13 @@ func main() {
 		}
 		os.Exit(1)
 	}
+}
+
+func decisionWord(approved bool) string {
+	if approved {
+		return "APPROVE"
+	}
+	return "REJECT"
 }
 
 func printTrail(events []audit.Event) {
