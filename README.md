@@ -12,9 +12,10 @@ clinical use**.
 
 ## Status
 
-**Design phase.** See [`architecture.md`](architecture.md) — no production code until the
-design is approved. Decision context lives in `../bodh/session.md` (2026-07-11 review of
-MAF-go at commit `75d0a64`, which this module pins).
+**Slice complete — all five exit criteria proven by tests (2026-07-12).**
+`go test ./...` runs the proof (`pkg/pipeline/exitcriteria_test.go` + the
+Postgres kill/resume test in `pkg/ckptpg`). Design record: [`architecture.md`](architecture.md);
+spec chain: `specs/001-slice-safety-boundary/`; verdict: `../bodh/session.md`.
 
 ## Scope of the slice
 
@@ -39,17 +40,12 @@ Bodh's compliance layer is **imported, not rewritten**: `pkg/audit`, `pkg/phi`,
 Care API + SPA, FHIR/HL7 ingestion, RAG/knowledge, the full eval harness, the remaining
 ~20 agents, and any distribution story (MAF-go is in-process; A2A comes later if ever).
 
-## Exit criteria
+## Exit criteria — all proven ✅
 
-The slice succeeds if it demonstrates, with tests:
-
-1. **Admission fidelity** — a governance denial blocks the handler and is audited,
-   identically to bodh's `gateway.Pipeline.Admit` semantics.
-2. **Audit parity** — one case produces an audit trail equivalent to the monolith's.
-3. **Durable HITL** — a case paused at physician review survives a process restart and
-   resumes from the Postgres checkpoint.
-4. **Provider swap** — rule ↔ LLM diagnostician switch is a flag, not a graph change.
-5. **Eval mirror closed** — the terminal hop writes an `eval.InteractionRecord`.
-
-If any of these can't be met cleanly, that is itself the answer, and bodh's specs/002
-resumes.
+| # | Criterion | Proof |
+|---|---|---|
+| 1 | **Admission fidelity** — denial blocks the handler, audited, fail-closed | `TestExitCriterion1_AdmissionFidelity`, `pkg/admit` suite |
+| 2 | **Audit parity** — PHI-free trail reconstructs the case lifecycle | `TestExitCriterion2_AuditParity`, `trail_test.go` (per-hop parity; BSP ordering note in contracts/audit-trail.md) |
+| 3 | **Durable HITL** — paused review survives process death, same request republished | `pkg/ckptpg.TestKillResume` (Postgres/testcontainers) + `TestExitCriterion3_DurableReview` (file store) |
+| 4 | **Provider swap** — rule ↔ LLM is a flag, not a graph change; malformed output never becomes a diagnosis | `TestExitCriterion4_EngineSwap`, `engine_swap_test.go` |
+| 5 | **Eval mirror closed** — exactly one `eval.InteractionRecord` per terminal case | `TestExitCriterion5_EvalMirrorClosed` |

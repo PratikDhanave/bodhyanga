@@ -1,12 +1,15 @@
 package pipeline
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodh/pkg/eval"
 	"github.com/microsoft/agent-framework-go/workflow"
 	"github.com/microsoft/agent-framework-go/workflow/checkpoint"
 	"github.com/microsoft/agent-framework-go/workflow/inproc"
@@ -14,6 +17,7 @@ import (
 	"github.com/PratikDhanave/bodh-maf/pkg/admit"
 	"github.com/PratikDhanave/bodh-maf/pkg/agents"
 	"github.com/PratikDhanave/bodh-maf/pkg/auditbridge"
+	"github.com/PratikDhanave/bodh-maf/pkg/evalhook"
 )
 
 // Runner owns one case's execution: it runs the workflow, feeds the audit
@@ -41,6 +45,8 @@ type Outcome struct {
 	Forced    []agents.ForcedProgressionEvent
 	Failures  []workflow.ExecutorFailedEvent
 	Events    []workflow.Event
+	// Eval is the terminal-hop record written to Config.EvalStore (US5).
+	Eval *eval.InteractionRecord
 }
 
 // NewRunner builds the workflow from cfg and pairs it with the audit sink.
@@ -117,8 +123,10 @@ func (r *Runner) Resume(ctx context.Context, sessionID string) (*Outcome, error)
 }
 
 func (r *Runner) drain(ctx context.Context, run *inproc.StreamingRun, caseToken string) (*Outcome, error) {
+	started := time.Now().UTC()
 	bridge := auditbridge.New(r.rec, caseToken)
 	out := &Outcome{SessionID: run.SessionID()}
+	defer func() { r.recordEval(out, started) }()
 	for evt, err := range run.WatchStream(ctx) {
 		if err != nil {
 			return out, err
@@ -178,4 +186,51 @@ func (r *Runner) drain(ctx context.Context, run *inproc.StreamingRun, caseToken 
 		}
 	}
 	return out, nil
+}
+
+// recordEval writes the one-per-terminal-case eval record (US5, closing
+// bodh's eval-mirror gap). Eval storage is quality telemetry: failures are
+// logged by the store's owner, never fatal to care flow.
+func (r *Runner) recordEval(out *Outcome, started time.Time) {
+	if r.cfg.EvalStore == nil || (out.Plan == nil && out.Rejected == nil) {
+		return
+	}
+	o := evalhook.CaseOutcome{
+		Diagnostician: cmp.Or(r.cfg.EngineName, "rule"),
+		StartedAt:     started,
+		EndedAt:       time.Now().UTC(),
+	}
+	// The diagnosis under decision and the reviewer's verdict ride the event
+	// stream as executor invocations — recover them from there.
+	for _, evt := range out.Events {
+		inv, ok := evt.(workflow.ExecutorInvokedEvent)
+		if !ok {
+			continue
+		}
+		switch m := inv.Message.(type) {
+		case agents.DiagnosisResult:
+			o.CaseToken = agents.HashCaseID(m.CaseID)
+			o.Diagnosis = m.Diagnosis
+			o.Confidence = m.Confidence
+			o.Rounds = m.Rounds
+			o.Forced = m.Forced
+		case agents.ReviewDecision:
+			o.ReviewerID = m.ReviewerID
+		}
+	}
+	switch {
+	case out.Rejected != nil:
+		o.Rejected = true
+		o.ReviewerID = out.Rejected.ReviewerID
+	case out.Plan != nil:
+		o.Approved = true
+		if o.CaseToken == "" {
+			o.CaseToken = agents.HashCaseID(out.Plan.CaseID)
+		}
+	}
+	rec, err := evalhook.Record(r.cfg.EvalStore, o)
+	if err != nil {
+		return
+	}
+	out.Eval = &rec
 }

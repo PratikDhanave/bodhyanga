@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodh/pkg/eval"
 	"github.com/PratikDhanave/bodh/pkg/governance"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/microsoft/agent-framework-go/workflow"
@@ -72,9 +73,11 @@ func main() {
 	if err != nil {
 		fatal(err)
 	}
+	evalStore := eval.NewInMemoryStore()
 	runner, err := pipeline.NewRunner(pipeline.Config{
 		Tau: *tau, MaxRounds: *maxRounds, Review: *review,
 		Boundary: boundary, Diagnostician: dx,
+		EvalStore: evalStore, EngineName: *diagnostician,
 	}, recorder)
 	if err != nil {
 		fatal(err)
@@ -136,6 +139,11 @@ func main() {
 	}
 	if *trail {
 		printTrail(recorder.List())
+	}
+	if out.Eval != nil {
+		fmt.Printf("\neval: scenario=%s success=%v confidence=%.2f rounds=%.0f forced=%.0f decision=%v\n",
+			out.Eval.Scenario, out.Eval.Success, out.Eval.Metrics["confidence"],
+			out.Eval.Metrics["rounds"], out.Eval.Metrics["forced"], out.Eval.Metadata["review_decision"])
 	}
 
 	switch {
