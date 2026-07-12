@@ -67,9 +67,17 @@ func NewRuleDiagnostician(id string, cfg DiagnosticianConfig, guard Guard) *work
 	})
 }
 
-// diagnose is the rule path's per-workup body, shared unguarded logic.
+// diagnose is the rule path's per-workup body.
 func diagnose(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup) error {
 	diagnosis, confidence, evidence := evaluateRules(wu)
+	return routeDiagnosis(ctx, cfg, wu, diagnosis, confidence, evidence)
+}
+
+// routeDiagnosis applies the loop-back guard shared by ALL diagnostician
+// engines (spec FR-010): confident → DiagnosisResult; round budget exhausted
+// → forced DiagnosisResult + domain event; otherwise → loop back to the
+// planner with accumulated results.
+func routeDiagnosis(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup, diagnosis string, confidence float64, evidence []string) error {
 	rounds := wu.Query.Round + 1
 
 	if confidence > cfg.Tau {

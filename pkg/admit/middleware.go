@@ -6,21 +6,17 @@ import (
 
 	"github.com/microsoft/agent-framework-go/agent"
 	"github.com/microsoft/agent-framework-go/message"
+
+	"github.com/PratikDhanave/bodh-maf/pkg/agents"
 )
 
-type caseTokenKey struct{}
-
-// WithCaseToken attaches the opaque case fingerprint to a context so the
-// middleware can stamp envelopes/audit for the run it guards.
-func WithCaseToken(ctx context.Context, token string) context.Context {
-	return context.WithValue(ctx, caseTokenKey{}, token)
-}
-
-// CaseTokenFrom returns the attached token ("" when absent).
-func CaseTokenFrom(ctx context.Context) string {
-	t, _ := ctx.Value(caseTokenKey{}).(string)
-	return t
-}
+// WithCaseToken / CaseTokenFrom live in pkg/agents (the LLM executor sets
+// them; agents cannot import admit). Re-exported here for callers that only
+// know the boundary package.
+var (
+	WithCaseToken = agents.WithCaseToken
+	CaseTokenFrom = agents.CaseTokenFrom
+)
 
 // Middleware guards an LLM agent's provider run with the identical
 // evaluate/record semantics as Guard — defense-in-depth on the actual model
