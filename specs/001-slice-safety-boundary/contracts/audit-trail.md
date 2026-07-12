@@ -23,6 +23,17 @@ MUST contain, in a causally coherent order:
 Deny-all variant: rows 1 (deny) only, then run halt — one `policy_decision/deny` per
 attempted hop, zero `message` execution rows.
 
+**BSP ordering (verified 2026-07-12)**: MAF executes in super-steps, so the trail
+interleaves differently than the naive table: admission rows (written synchronously
+inside the hop) appear in exact causal order, while the bridge's execution rows for
+super-step N land after step N+1's admission rows, and `case_finalized` can precede
+the final hop's execution row. The table above therefore binds as: (a) the admission
+rows form an ordered subsequence exactly as listed, (b) each hop's execution row
+appears after its own admission row (invariant 1), with per-hop counts matching, and
+(c) exactly one `case_finalized` row exists. This is the monolith-vs-BSP ordering
+difference anticipated in plan.md § risks — parity holds at per-hop granularity, not
+global interleaving.
+
 **Machine-checkable invariants** (enforced by `pkg/auditbridge` tests):
 
 1. Completeness: every executed hop has an `allow` row strictly before its `message` row.

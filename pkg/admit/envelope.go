@@ -6,6 +6,8 @@ import (
 
 	"github.com/PratikDhanave/bodh/pkg/protocol"
 	"github.com/google/uuid"
+
+	"github.com/PratikDhanave/bodh-maf/pkg/agents"
 )
 
 // Message-type labels — the wire-level catalog governance and audit see.
@@ -25,6 +27,26 @@ var knownTypes = map[string]bool{
 	TypeWorkup:          true,
 	TypeDiagnosisResult: true,
 	TypeCarePlan:        true,
+}
+
+// LabelFor maps a pipeline payload to its wire-level label — the single
+// source of truth the audit bridge uses so trail rows and admission
+// envelopes agree on type names.
+func LabelFor(payload any) (string, bool) {
+	switch payload.(type) {
+	case agents.PatientCase:
+		return TypePatientCase, true
+	case agents.DiagnosticQuery:
+		return TypeDiagnosticQuery, true
+	case agents.Workup:
+		return TypeWorkup, true
+	case agents.DiagnosisResult:
+		return TypeDiagnosisResult, true
+	case agents.CarePlan:
+		return TypeCarePlan, true
+	default:
+		return "", false
+	}
 }
 
 // buildEnvelope synthesizes the PHI-free protocol.Message a hop presents to
