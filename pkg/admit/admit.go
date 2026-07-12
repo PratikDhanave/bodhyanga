@@ -83,6 +83,17 @@ func (b *Boundary) RecordAgentError(agentID, caseToken string, err error) {
 	})
 }
 
+// RecordReviewDecision audits a physician's verdict (or a stale-response
+// rejection). This is the 21 USC §360j(o) anchor row — ReviewerID names the
+// licensed reviewer; reason "stale_response" marks audited discards.
+func (b *Boundary) RecordReviewDecision(caseToken, reviewerID, decision, reason string) {
+	b.record(audit.Event{
+		Kind: audit.KindReviewDecision, AgentID: "physician_review",
+		CaseID: caseToken, Decision: decision, Reason: reason,
+		ReviewerID: reviewerID,
+	})
+}
+
 // Guard wraps one hop's body: admit, run, audit failure. The signature is
 // deliberately generic-free so pkg/agents can accept it without importing
 // this package (see agents.Guard).

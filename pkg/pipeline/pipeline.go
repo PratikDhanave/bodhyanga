@@ -20,6 +20,9 @@ type Config struct {
 	// Boundary is the admission boundary applied to EVERY hop (spec FR-001).
 	// nil disables admission — step-1 behavior, acceptable only in tests.
 	Boundary *admit.Boundary
+	// Review inserts the physician-review gate between diagnostician and
+	// care plan (spec US3). cmd/slice always enables it; tests opt in.
+	Review bool
 	// Diagnostician overrides the rule executor (step 4 binds the LLM agent
 	// here). It must consume Workup and send DiagnosisResult/DiagnosticQuery,
 	// and is responsible for honoring the same Boundary.
@@ -53,18 +56,35 @@ func New(cfg Config) (*workflow.Workflow, error) {
 	diagnostician := dx.Bind()
 	carePlan := agents.NewCarePlan("care_plan", guard).Bind()
 
-	return workflow.NewBuilder(intake).
+	isDiagnosis := func(msg any) bool { _, ok := msg.(agents.DiagnosisResult); return ok }
+	isQuery := func(msg any) bool { _, ok := msg.(agents.DiagnosticQuery); return ok }
+
+	b := workflow.NewBuilder(intake).
 		AddEdge(intake, planner).
 		AddEdge(planner, diagnostician).
-		AddDirectEdge(diagnostician, carePlan, false, func(msg any) bool {
-			_, ok := msg.(agents.DiagnosisResult)
+		AddDirectEdge(diagnostician, planner, false, isQuery).
+		WithName("bodh-maf MARA slice")
+
+	if !cfg.Review {
+		return b.
+			AddDirectEdge(diagnostician, carePlan, false, isDiagnosis).
+			WithOutputFrom(carePlan).
+			Build()
+	}
+
+	gate := newReviewGate("review_gate", guard).Bind()
+	port := newReviewPort().Bind()
+	decision := newReviewDecision("review_decision", guard, cfg.Boundary).Bind()
+
+	return b.
+		AddDirectEdge(diagnostician, gate, false, isDiagnosis).
+		AddEdge(gate, port).
+		AddEdge(port, decision).
+		AddDirectEdge(decision, carePlan, false, isDiagnosis).
+		AddDirectEdge(decision, port, false, func(msg any) bool {
+			_, ok := msg.(agents.ReviewRequest) // stale re-ask
 			return ok
 		}).
-		AddDirectEdge(diagnostician, planner, false, func(msg any) bool {
-			_, ok := msg.(agents.DiagnosticQuery)
-			return ok
-		}).
-		WithOutputFrom(carePlan).
-		WithName("bodh-maf MARA slice").
+		WithOutputFrom(carePlan, decision).
 		Build()
 }

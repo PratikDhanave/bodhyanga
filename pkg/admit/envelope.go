@@ -19,6 +19,7 @@ const (
 	TypeWorkup          = "workup"
 	TypeDiagnosisResult = "diagnosis_result"
 	TypeCarePlan        = "care_plan"
+	TypeReviewDecision  = "review_decision"
 )
 
 var knownTypes = map[string]bool{
@@ -27,6 +28,7 @@ var knownTypes = map[string]bool{
 	TypeWorkup:          true,
 	TypeDiagnosisResult: true,
 	TypeCarePlan:        true,
+	TypeReviewDecision:  true,
 }
 
 // LabelFor maps a pipeline payload to its wire-level label — the single
@@ -44,6 +46,8 @@ func LabelFor(payload any) (string, bool) {
 		return TypeDiagnosisResult, true
 	case agents.CarePlan:
 		return TypeCarePlan, true
+	case agents.ReviewDecision:
+		return TypeReviewDecision, true
 	default:
 		return "", false
 	}

@@ -24,7 +24,7 @@ func canonicalRun(t *testing.T, rec audit.Recorder) *pipeline.Outcome {
 	out, err := r.Run(context.Background(), agents.PatientCase{
 		CaseID:   "case-acs",
 		Symptoms: []string{"chest pain"},
-	})
+	}, "")
 	if err != nil {
 		t.Fatalf("run: %v", err)
 	}
@@ -127,7 +127,7 @@ func TestDenyTrailIsCompleteAndTerminal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err := r.Run(context.Background(), agents.PatientCase{CaseID: "x", Symptoms: []string{"fever"}})
+	out, err := r.Run(context.Background(), agents.PatientCase{CaseID: "x", Symptoms: []string{"fever"}}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +167,7 @@ func TestAuditSinkDownCareContinues(t *testing.T) {
 	}
 	out, err := r.Run(context.Background(), agents.PatientCase{
 		CaseID: "case-acs", Symptoms: []string{"chest pain"},
-	})
+	}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
