@@ -4,6 +4,7 @@
 package pipeline
 
 import (
+	"github.com/PratikDhanave/bodh/pkg/eval"
 	"github.com/microsoft/agent-framework-go/workflow"
 
 	"github.com/PratikDhanave/bodh-maf/pkg/admit"
@@ -23,6 +24,11 @@ type Config struct {
 	// Review inserts the physician-review gate between diagnostician and
 	// care plan (spec US3). cmd/slice always enables it; tests opt in.
 	Review bool
+	// EvalStore receives one InteractionRecord per terminal case (spec US5).
+	// nil disables eval recording.
+	EvalStore eval.Store
+	// EngineName labels the diagnostician in eval metadata (rule | llm-*).
+	EngineName string
 	// Diagnostician overrides the rule executor (step 4 binds the LLM agent
 	// here). It must consume Workup and send DiagnosisResult/DiagnosticQuery,
 	// and is responsible for honoring the same Boundary.

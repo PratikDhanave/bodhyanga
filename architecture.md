@@ -243,10 +243,28 @@ publish). Test conventions follow bodh: table-driven, `pkg/dbtest.TestDB()`
 |---|---|---|
 | 0 | this document + module scaffold | design approval gate — **approved 2026-07-12** |
 | 1 | graph skeleton: 4 pure-Go executors, loop-back, in-memory run, `cmd/slice` | pipeline + loop semantics — **done** |
-| 2 | `pkg/admit` + audit bridge (bodh governance/audit wired) | exit criteria 1–2 |
-| 3 | `RequestPort` + Postgres checkpoint store + kill/resume test | exit criterion 3 |
-| 4 | LLM diagnostician (Anthropic + Ollama) behind the flag | exit criterion 4 |
-| 5 | eval recorder + SD-Bench smoke case; write findings back to `bodh/session.md` | exit criterion 5 + the verdict |
+| 2 | `pkg/admit` + audit bridge (bodh governance/audit wired) | exit criteria 1–2 — **done** (BSP-ordering finding documented) |
+| 3 | `RequestPort` + Postgres checkpoint store + kill/resume test | exit criterion 3 — **done** (shared-state-scope finding) |
+| 4 | LLM diagnostician (Anthropic + Ollama) behind the flag | exit criterion 4 — **done** (executor-hosted, not agentworkflow — see below) |
+| 5 | eval recorder + exit-criteria suite; verdict in `bodh/session.md` | exit criterion 5 + the verdict — **done 2026-07-12** |
+
+**Implementation findings that amend this design** (discovered by tests, all documented
+in code and specs/001 contracts):
+
+1. **BSP event batching** (§4 amendment): admission rows are causally ordered; the
+   bridge's execution rows lag by a super-step. Audit parity holds per hop, not as one
+   global interleaving.
+2. **State scopes are per-executor by default**: the review gate and decision executor
+   share the pending diagnosis via a NAMED scope (`ReviewState`) — default-scope writes
+   are invisible across executors.
+3. **`checkpoint.Manager` is opaque**: resume-by-session-ID needs the *store's* index,
+   so `Runner.WithCheckpointStore` takes the store, not a manager.
+4. **LLM diagnostician is executor-hosted** (amends research R6's agentworkflow plan):
+   the graph exchanges typed structs, not chat messages, so the node's handler calls
+   `agent.RunText` + structured output itself — identical protocol to the rule engine,
+   and both the hop guard and provider middleware apply.
+5. **A paused run's stream stays open**: the Runner detaches only after the super-step
+   checkpoint capturing the pending request has committed.
 
 Each step lands green (`go test ./...`) before the next starts. After step 5, the
 go/no-go decision on reimplementing the wider platform — and the fate of bodh's
