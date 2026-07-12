@@ -36,6 +36,7 @@ func main() {
 	trail := flag.Bool("trail", false, "print the audit trail after the run")
 	verbose := flag.Bool("verbose", false, "log every executor hop")
 	review := flag.Bool("review", true, "pause at the physician-review gate")
+	diagnostician := flag.String("diagnostician", "rule", "diagnostic engine: rule | llm-anthropic | llm-ollama")
 	db := flag.String("db", os.Getenv("SLICE_DB"), "postgres URL for durable checkpoints (enables -resume)")
 	resume := flag.String("resume", "", "resume a paused session by ID (requires -db)")
 	approve := flag.Bool("approve", false, "answer the pending review with approval")
@@ -65,9 +66,15 @@ func main() {
 
 	ctx := context.Background()
 	recorder := audit.NewInMemory()
+	boundary := admit.New(pol, recorder, nil)
+	dx, err := buildDiagnostician(*diagnostician, boundary,
+		agents.DiagnosticianConfig{Tau: *tau, MaxRounds: *maxRounds}, boundary.Guard)
+	if err != nil {
+		fatal(err)
+	}
 	runner, err := pipeline.NewRunner(pipeline.Config{
 		Tau: *tau, MaxRounds: *maxRounds, Review: *review,
-		Boundary: admit.New(pol, recorder, nil),
+		Boundary: boundary, Diagnostician: dx,
 	}, recorder)
 	if err != nil {
 		fatal(err)

@@ -15,3 +15,18 @@ func guarded(g Guard, ctx context.Context, agentID, msgType, caseToken string, f
 	}
 	return g(ctx, agentID, msgType, caseToken, fn)
 }
+
+type caseTokenKey struct{}
+
+// WithCaseToken attaches the opaque case fingerprint to a context so
+// admission middleware on LLM provider runs can stamp envelopes and audit
+// events for the run it guards.
+func WithCaseToken(ctx context.Context, token string) context.Context {
+	return context.WithValue(ctx, caseTokenKey{}, token)
+}
+
+// CaseTokenFrom returns the attached token ("" when absent).
+func CaseTokenFrom(ctx context.Context) string {
+	t, _ := ctx.Value(caseTokenKey{}).(string)
+	return t
+}
