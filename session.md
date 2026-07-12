@@ -173,6 +173,57 @@ inter-process story), per-message boundary uniformity shim.
 
 specs/002 in bodh: PAUSED pending slice results (step 5 writes verdict back here).
 
+---
+
+# VERDICT — MAF-go slice complete (2026-07-12)
+
+All five exit criteria proven by automated tests in `../bodh-maf`
+(branch `feat/slice-safety-boundary`, `go test ./...` + testcontainers kill/resume).
+Built via Spec Kit (specs/001-slice-safety-boundary: spec → plan → 33 tasks), five
+story commits, each pushed green.
+
+## What MAF-go carried cleanly
+
+- **The safety boundary**: fail-closed governance / fail-open audit / synchronous deny
+  writes reproduced exactly, importing bodh pkg/governance + pkg/audit unchanged.
+  One `admit.Boundary` guards pure-Go hops (handler decorator) AND LLM provider runs
+  (agent middleware) — the per-message closure of orchestrator.Start reassembles on
+  MAF primitives with less code than pkg/gateway + pkg/runtime.
+- **Durable human oversight** (the hardest bet): RequestPort + checkpoint store over
+  Postgres — pause at physician review, kill everything, resume by session ID, the
+  SAME request ID is republished, decision lands, trail continuous + PHI-free across
+  lifetimes. MAF's pending-request republish worked as documented.
+- **Engine pluggability**: rule executor ↔ LLM agent behind a flag, identical typed
+  node protocol, structured output + post-validation (malformed model output →
+  agent_error, never a fabricated diagnosis).
+- **Eval mirror**: pkg/runtime/doc.go's gap closed via its option (b) — the Runner
+  writes one eval.InteractionRecord per terminal case.
+
+## What needed shims (all small, all test-discovered)
+
+1. Per-message admission uniformity: guard decorator threaded through executors
+   (MAF middleware only covers agent runs).
+2. BSP super-step batching reorders bridge telemetry vs synchronous admission rows —
+   audit parity holds per hop, not global interleaving (monolith ordering is NOT
+   byte-identical; compliance-equivalent though).
+3. Named state scope for cross-executor review state; `checkpoint.Manager` opacity
+   (store doubles as resume index); paused-stream detach logic.
+4. LLM node is executor-hosted (typed graph messages ≠ agentworkflow chat messages).
+
+## Recommendation
+
+- **Adopt MAF-go as the orchestration substrate for the reimplementation.** The slice
+  answers ADR-0007: no 24 NATS services — in-process MAF workflows + selective A2A if
+  distribution is ever justified.
+- **bodh specs/002 should NOT resume as designed.** pkg/gateway semantics survive as
+  pkg/admit in bodh-maf; pkg/runtime's role is subsumed by MAF + Runner. Keep bodh
+  maintenance-only; grow bodh-maf story by story (next candidates: FHIR/HL7 intake,
+  knowledge/RAG, cmd/care API on the Runner, SD-Bench harness port).
+- **Risks to carry forward**: MAF-go is still preview (stay pinned, upgrade via
+  dedicated PRs); evaluation + RAG have no MAF-go equivalent (bodh packages remain
+  the source); coverage on bridge/evalhook is exercised cross-package — add direct
+  unit tests when they grow.
+
 ### Housekeeping notes
 
 - CLAUDE.md edits + session.md are uncommitted in the working tree on
