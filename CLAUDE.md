@@ -4,6 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Bodh is a **HIPAA-aware reference architecture** for medical AI orchestration, written in Go — a
 **research and education codebase, not a medical device and not for clinical use** (see `NOTICE`).
+Source-available under **PolyForm Noncommercial 1.0.0** (relicensed from Apache-2.0).
 It implements the Multi-Agent Reference Architecture (MARA) for clinical decision *support*:
 intake → test-planning → diagnostics → care-plan generation, with audit trails, human-in-the-loop
 feedback, and LLM-agnostic provider abstraction.
@@ -89,7 +90,7 @@ Key direct dependencies: `jackc/pgx/v5`, `google/uuid`, `testcontainers-go`,
 ## Repository layout
 
 ```
-cmd/                  CLI binaries (one subdirectory per binary)
+cmd/                  CLI binaries, one subdirectory per binary (~36; run `ls cmd/`)
   bench/              SD-Bench regression runner
   bodhadmin/          admin CLI (migrations, config)
   bodhctl/            control-plane CLI
@@ -97,18 +98,24 @@ cmd/                  CLI binaries (one subdirectory per binary)
   caredemo/           CDM/TCM/Panel demo
   demo/               sequential diagnosis walkthrough
   evals/              multi-turn evaluation runner
-  export-hitl-feedback/
   laminar-eval/       Go equivalent of Python lmnr.evaluate()
+  intro/, toolcalling/, agentloop/, ...   lesson binaries (lesson-01 … lesson-13)
+  ... plus eval/demo/integration binaries (a2aserver, cdshooks, mcpserver,
+      shadow, drift-monitor, redteameval, scribe, ...)
 
-pkg/                  library packages (~45; run `ls pkg/` for the current set)
+pkg/                  library packages (~46; run `ls pkg/` for the current set)
   agent/              agent orchestration core
   audio/              audio processing (+ kronk/ subpkg)
   audit/              HIPAA append-only audit log
   auth/               OPA Rego + JWT auth
+  comm/               NATS bus transport (nats tag; at-least-once + DLQ)
   evals/
     laminar/          lmnr.evaluate() API client
     multiturn/        multi-turn benchmark harness
   eval/               single-turn evaluation
+  gateway/            admission-control pipeline (decoupling substrate, see below)
+  governance/         composable policy stack + kill switches (see below)
+  graduation/         agent-autonomy lifecycle ladder (see below)
   hitl/               human-in-the-loop feedback
   hl7v2/              HL7 v2 ADT parser
   knowledge/          RAG corpus + retrieval (+ rerank/)
@@ -118,6 +125,7 @@ pkg/                  library packages (~45; run `ls pkg/` for the current set)
   orchestration/      clinical message bus
   persistence/        data layer (+ postgres/)
   phi/                PHI de-identification
+  runtime/            per-agent message loop (decoupling substrate, see below)
   safety/             safety checks
   web/                HTTP handlers + routing
   ... (see pkg/ for the full list)
@@ -179,7 +187,7 @@ Key architectural decisions:
 
 ### Agent-decoupling substrate (Phase 1)
 
-These three packages form the per-message safety boundary that must survive splitting the
+These four packages form the per-message safety boundary that must survive splitting the
 monolith into per-agent processes. Understand them together before touching agent admission:
 
 - **`pkg/governance`** — a composable policy stack (`medical_policy`, `break_glass_policy`,
@@ -198,6 +206,13 @@ monolith into per-agent processes. Understand them together before touching agen
   *into* autopilot requires an explicit authorized override, because unsupervised clinical
   decisioning is a regulated SaMD change, not a statistics threshold (ADR-0012). Currently a
   library with no production caller yet — start at `pkg/graduation/stage.go`.
+- **`pkg/runtime`** — the per-agent message loop: reassembles the orchestrator's per-message
+  closure (admit via `gateway.Pipeline` → `agent.HandleMessage` → audit handler errors →
+  republish outputs) around ONE agent so it can run as its own binary, plus `/healthz` +
+  `/readyz` probes matching `cmd/care`'s contract. **Known fidelity gap:** the monolith's
+  eval-mirror (step 4 of `orchestration.Orchestrator.Start`) is NOT reproduced — decoupling
+  `diagnostic_supervisor` before closing it breaks `GET /explain/{case_id}` case-status
+  reporting. Start at `pkg/runtime/doc.go`, which documents the gap and both closure options.
 
 ### Architecture decision records
 
@@ -231,7 +246,8 @@ go test -tags otel ./pkg/observability/...
 
 ## Adding a new lesson / command
 
-Follow the pattern established by lesson-01 (`cmd/intro`) and lesson-02 (`cmd/toolcalling`):
+Lessons `lesson-01` … `lesson-13` exist (see the Makefile). Follow the pattern established by
+lesson-01 (`cmd/intro`), lesson-02 (`cmd/toolcalling`), and lesson-03 (`cmd/agentloop`):
 
 1. Create `pkg/agent/<name>/` with `types.go`, `run.go`, and any tool files
 2. Create `cmd/<name>/main.go` with `-provider`, `-model`, `-message`, `-verbose` flags
