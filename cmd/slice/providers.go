@@ -14,6 +14,8 @@ import (
 	"github.com/openai/openai-go/v3"
 	openaioption "github.com/openai/openai-go/v3/option"
 
+	"github.com/PratikDhanave/bodh/pkg/embeddings"
+
 	"github.com/PratikDhanave/bodh-maf/pkg/admit"
 	"github.com/PratikDhanave/bodh-maf/pkg/agents"
 )
@@ -24,7 +26,7 @@ const diagnosticianInstructions = "You are a diagnostic decision-support engine 
 // buildDiagnostician maps -diagnostician to a graph-node binding. The graph
 // itself never changes (spec US4): rule returns nil so pipeline.New binds its
 // default rule executor; LLM engines return the same-protocol executor.
-func buildDiagnostician(kind string, boundary *admit.Boundary, dxCfg agents.DiagnosticianConfig, guard agents.Guard) (*workflow.Executor, error) {
+func buildDiagnostician(kind string, boundary *admit.Boundary, dxCfg agents.DiagnosticianConfig, guard agents.Guard, retriever *agents.Retriever) (*workflow.Executor, error) {
 	var llm *agent.Agent
 	switch kind {
 	case "rule":
@@ -56,7 +58,23 @@ func buildDiagnostician(kind string, boundary *admit.Boundary, dxCfg agents.Diag
 	default:
 		return nil, fmt.Errorf("unknown -diagnostician %q (rule | llm-anthropic | llm-ollama)", kind)
 	}
-	return agents.NewLLMDiagnostician("diagnostician", llm, dxCfg, guard), nil
+	return agents.NewLLMDiagnostician("diagnostician", llm, dxCfg, guard, retriever), nil
+}
+
+// buildEmbedder maps -embedder to a RAG embedding backend. mock is the
+// deterministic offline default (no network, no creds); ollama uses a local
+// server. The automated suite never selects a networked backend (spec FR-010).
+func buildEmbedder(kind string) (embeddings.Embedder, error) {
+	switch kind {
+	case "mock":
+		return &embeddings.Mock{}, nil
+	case "ollama":
+		host := cmp.Or(os.Getenv("OLLAMA_HOST"), "http://localhost:11434")
+		model := cmp.Or(os.Getenv("BODH_OLLAMA_EMBED_MODEL"), "nomic-embed-text")
+		return embeddings.NewOllama(host, model), nil
+	default:
+		return nil, fmt.Errorf("unknown -embedder %q (mock | ollama)", kind)
+	}
 }
 
 // llmAgentConfig gives every LLM engine the same identity and defense-in-depth

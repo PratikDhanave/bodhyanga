@@ -67,17 +67,19 @@ func NewRuleDiagnostician(id string, cfg DiagnosticianConfig, guard Guard) *work
 	})
 }
 
-// diagnose is the rule path's per-workup body.
+// diagnose is the rule path's per-workup body. The rule engine has no
+// retrieval, so it carries no citations.
 func diagnose(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup) error {
 	diagnosis, confidence, evidence := evaluateRules(wu)
-	return routeDiagnosis(ctx, cfg, wu, diagnosis, confidence, evidence)
+	return routeDiagnosis(ctx, cfg, wu, diagnosis, confidence, evidence, nil)
 }
 
 // routeDiagnosis applies the loop-back guard shared by ALL diagnostician
 // engines (spec FR-010): confident → DiagnosisResult; round budget exhausted
 // → forced DiagnosisResult + domain event; otherwise → loop back to the
-// planner with accumulated results.
-func routeDiagnosis(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup, diagnosis string, confidence float64, evidence []string) error {
+// planner with accumulated results. citations is the RAG provenance (nil for
+// the rule path); it rides only the terminal DiagnosisResult, never a loop-back.
+func routeDiagnosis(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup, diagnosis string, confidence float64, evidence []string, citations []Citation) error {
 	rounds := wu.Query.Round + 1
 
 	if confidence > cfg.Tau {
@@ -87,6 +89,7 @@ func routeDiagnosis(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup, d
 			Confidence: confidence,
 			Rounds:     rounds,
 			Evidence:   evidence,
+			Citations:  citations,
 		})
 	}
 	if rounds >= cfg.MaxRounds {
@@ -102,6 +105,7 @@ func routeDiagnosis(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup, d
 			Rounds:     rounds,
 			Forced:     true,
 			Evidence:   evidence,
+			Citations:  citations,
 		})
 	}
 	return ctx.SendMessage("", DiagnosticQuery{

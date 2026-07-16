@@ -38,6 +38,8 @@ func main() {
 	verbose := flag.Bool("verbose", false, "log every executor hop")
 	review := flag.Bool("review", true, "pause at the physician-review gate")
 	diagnostician := flag.String("diagnostician", "rule", "diagnostic engine: rule | llm-anthropic | llm-ollama")
+	corpus := flag.String("corpus", "", "knowledge corpus JSON for RAG grounding (empty = RAG off; llm-* engines only)")
+	embedder := flag.String("embedder", "mock", "RAG embedder: mock | ollama")
 	db := flag.String("db", os.Getenv("SLICE_DB"), "postgres URL for durable checkpoints (enables -resume)")
 	resume := flag.String("resume", "", "resume a paused session by ID (requires -db)")
 	approve := flag.Bool("approve", false, "answer the pending review with approval")
@@ -68,8 +70,24 @@ func main() {
 	ctx := context.Background()
 	recorder := audit.NewInMemory()
 	boundary := admit.New(pol, recorder, nil)
+
+	// RAG is opt-in and additive: -corpus "" leaves retriever nil (disabled),
+	// so the diagnostician node behaves exactly as before (spec US2/US3).
+	var retriever *agents.Retriever
+	if *corpus != "" {
+		emb, err := buildEmbedder(*embedder)
+		if err != nil {
+			fatal(err)
+		}
+		retriever, err = agents.LoadRetriever(*corpus, emb, 0)
+		if err != nil {
+			fatal(err)
+		}
+		fmt.Printf("RAG enabled: corpus=%s embedder=%s\n", *corpus, *embedder)
+	}
+
 	dx, err := buildDiagnostician(*diagnostician, boundary,
-		agents.DiagnosticianConfig{Tau: *tau, MaxRounds: *maxRounds}, boundary.Guard)
+		agents.DiagnosticianConfig{Tau: *tau, MaxRounds: *maxRounds}, boundary.Guard, retriever)
 	if err != nil {
 		fatal(err)
 	}
