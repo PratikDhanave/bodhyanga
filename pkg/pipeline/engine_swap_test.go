@@ -49,7 +49,7 @@ func runEngine(t *testing.T, dxBody string) (*pipeline.Outcome, *audit.InMemory,
 	cfg := pipeline.Config{Boundary: b}
 	if dxBody != "" {
 		cfg.Diagnostician = agents.NewLLMDiagnostician("diagnostician",
-			fakeLLM(b, dxBody), dxCfg, b.Guard)
+			fakeLLM(b, dxBody), dxCfg, b.Guard, nil)
 	}
 	r, err := pipeline.NewRunner(cfg, rec)
 	if err != nil {

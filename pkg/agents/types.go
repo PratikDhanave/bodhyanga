@@ -47,6 +47,22 @@ type DiagnosisResult struct {
 	// bar was met (architecture.md §6 termination guarantee).
 	Forced   bool
 	Evidence []string
+	// Citations are the retrieved guideline snippets that grounded the
+	// diagnosis (specs/003 RAG). Empty when RAG is disabled or retrieval
+	// found nothing. Provenance only — never patient data.
+	Citations []Citation `json:"citations,omitempty"`
+}
+
+// Citation is a retrieved knowledge snippet with provenance and a relevance
+// score. It is a slice-local mirror of knowledge.Citation /
+// medical.DiagnosisCitation, kept here deliberately so the lean agents types
+// do not import the whole pkg/medical (care-plan generators, ADT, registry)
+// just for a 4-field struct (plan §import-vs-adapt).
+type Citation struct {
+	Source  string  `json:"source"`
+	Title   string  `json:"title"`
+	Snippet string  `json:"snippet"`
+	Score   float64 `json:"score"`
 }
 
 // CarePlan is the workflow output.
