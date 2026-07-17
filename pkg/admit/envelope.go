@@ -14,6 +14,7 @@ import (
 // One label per payload type; an unlabeled type is a design error and is
 // DENIED, not waved through (fail-closed, data-model.md).
 const (
+	TypeInboundMessage  = "inbound_message" // raw front-door message (specs/002)
 	TypePatientCase     = "patient_case"
 	TypeDiagnosticQuery = "diagnostic_query"
 	TypeWorkup          = "workup"
@@ -23,6 +24,7 @@ const (
 )
 
 var knownTypes = map[string]bool{
+	TypeInboundMessage:  true,
 	TypePatientCase:     true,
 	TypeDiagnosticQuery: true,
 	TypeWorkup:          true,
@@ -36,6 +38,8 @@ var knownTypes = map[string]bool{
 // envelopes agree on type names.
 func LabelFor(payload any) (string, bool) {
 	switch payload.(type) {
+	case agents.Inbound:
+		return TypeInboundMessage, true
 	case agents.PatientCase:
 		return TypePatientCase, true
 	case agents.DiagnosticQuery:
