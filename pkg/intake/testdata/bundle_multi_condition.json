@@ -1,0 +1,30 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "PT-MRN-902",
+        "name": [{"family": "ROE", "given": ["RICHARD"]}],
+        "gender": "male"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Condition",
+        "id": "cond-1",
+        "subject": {"reference": "Patient/PT-MRN-902"},
+        "code": {"coding": [{"code": "E11.9", "display": "Type 2 diabetes mellitus"}]}
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Condition",
+        "id": "cond-2",
+        "subject": {"reference": "Patient/PT-MRN-902"},
+        "code": {"coding": [{"code": "I10", "display": "Essential hypertension"}]}
+      }
+    }
+  ]
+}
