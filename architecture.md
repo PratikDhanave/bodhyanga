@@ -187,6 +187,33 @@ still lands. MAF documents pending-request republish on resume; we verify it aga
 
 ---
 
+## 5b. Translation front door (specs/002)
+
+An **opt-in** hop turns an inbound clinical message (HL7 v2 ADT or FHIR R4 bundle) into a
+`PatientCase` before intake, so the graph below the front door is format-agnostic:
+
+```
+Inbound ──translator──► PatientCase ──intake──► DiagnosticQuery ──► ... (unchanged)
+```
+
+- **`Config.Translate=false` ⇒ the graph is byte-identical** to the JSON-only slice; the
+  Runner is fed a `PatientCase`. `true` ⇒ the translator is the start node and the Runner is
+  fed an `agents.Inbound` via `RunInbound`; the case token is learned from the first hop.
+- The translator sits **inside the admission boundary** (`inbound_message` is a first-class
+  admit type — an unlabeled type is denied, fail-closed). A `deny` halts before any case is
+  emitted.
+- **Import-unchanged:** `bodh/pkg/hl7v2` (ADT parse) and `bodh/pkg/fhir` (R4 resources) are
+  used as-is; only a `medical.*→PatientCase` mapper and a minimal FHIR `Bundle` envelope are
+  new. `Inbound`/`Format` live in `pkg/agents` (with the other message types) so the
+  dependency runs one-way `intake → agents`; `Translate` is injected into the executor.
+- **PHI-free rejection taxonomy:** un-translatable input yields a `*RejectError` whose message
+  is a category (`malformed`, `unsupported_type`, `unsupported_trigger`, `missing_segment`,
+  `missing_resource`, `ambiguous_subject`) — never payload content. The mapping is
+  demo-grade: an ADT/FHIR feed carries identifiers and diagnoses, not a symptom workup, so an
+  undifferentiated case is a designed outcome, not an error.
+
+---
+
 ## 6. Component decisions
 
 **Diagnostician duality (exit criterion 4).** `-diagnostician=rule` binds a pure-Go

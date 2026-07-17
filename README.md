@@ -35,10 +35,21 @@ workflow graph, with:
 Bodh's compliance layer is **imported, not rewritten**: `pkg/audit`, `pkg/phi`,
 `pkg/governance` (via a local `replace` directive during development).
 
+## Beyond the slice
+
+The safety-boundary slice is done; the reimplementation now grows story by story
+(`specs/`). Landed since:
+
+- **RAG grounding** on the LLM diagnostician (`specs/003`) — bodh's hybrid knowledge
+  store imported unchanged, retrieval fail-open inside the admitted hop.
+- **FHIR/HL7 ingestion** (`specs/002`) — an opt-in translation front door turns an HL7 v2
+  ADT message or a FHIR R4 bundle into a `PatientCase` before intake, inside the admission
+  boundary, with a PHI-free rejection taxonomy. See `-format hl7|fhir` on `cmd/slice`.
+
 ## Explicit non-goals
 
-Care API + SPA, FHIR/HL7 ingestion, RAG/knowledge, the full eval harness, the remaining
-~20 agents, and any distribution story (MAF-go is in-process; A2A comes later if ever).
+Care API + SPA, the full eval harness, the remaining ~20 agents, and any distribution
+story (MAF-go is in-process; A2A comes later if ever).
 
 ## Exit criteria — all proven ✅
 

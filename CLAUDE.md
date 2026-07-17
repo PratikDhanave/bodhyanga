@@ -37,8 +37,9 @@ go test ./pkg/ckptpg -run TestKillResume -v   # durable-HITL integration test
 
 ```
 cmd/slice/        thin CLI: flags, run loop, physician inbox
-pkg/agents/       intake, test_planner, diagnostician (rule + llm), care_plan
-pkg/pipeline/     graph assembly (edges, loop-back, review gate)
+pkg/agents/       intake, translator, test_planner, diagnostician (rule + llm + RAG), care_plan
+pkg/intake/       front door: HL7 v2 ADT / FHIR R4 → PatientCase (specs/002)
+pkg/pipeline/     graph assembly (edges, loop-back, review gate, opt-in translation hop)
 pkg/admit/        THE admission boundary (decorator + agent middleware)
 pkg/auditbridge/  workflow events → bodh audit trail
 pkg/ckptpg/       Postgres checkpoint.Store
@@ -46,9 +47,14 @@ pkg/evalhook/     terminal-hop eval records
 specs/            Spec Kit artifacts (spec → plan → tasks)
 ```
 
+Ingestion: `go run ./cmd/slice -format hl7 -case msg.hl7` (or `-format fhir bundle.json`)
+drives the translation front door; default `-format json` keeps the native path. RAG:
+`-corpus corpus.json -embedder mock|ollama` grounds the `-diagnostician=llm-*` engines.
+
 <!-- SPECKIT START -->
-For technologies, structure, commands, and design decisions, read the current plan.
-The active feature is specs/001-slice-safety-boundary (branch
-`feat/slice-safety-boundary`): specs/001-slice-safety-boundary/plan.md, with
-research.md, data-model.md, contracts/, and quickstart.md alongside it.
+For technologies, structure, commands, and design decisions, read the relevant plan.
+The safety-boundary slice (specs/001-slice-safety-boundary) is complete; the repo now
+grows story by story. Shipped: specs/003-knowledge-rag (RAG grounding), specs/002-fhir-hl7-intake
+(HL7/FHIR front door). Each specs/NNN-*/ holds spec.md → plan.md → tasks.md; drafted-but-
+unbuilt next: specs/004-care-api-runner, specs/005-sdbench-harness.
 <!-- SPECKIT END -->
