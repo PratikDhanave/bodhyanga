@@ -46,6 +46,24 @@ func TestTranslateFHIR_NoConditionIsUndifferentiated(t *testing.T) {
 	}
 }
 
+// A recognized Observation contributes a symptom (FR-002).
+func TestTranslateFHIR_ObservationSeedsSymptoms(t *testing.T) {
+	pc, err := translateFHIR(readFixture(t, "bundle_observation.json"))
+	if err != nil {
+		t.Fatalf("observation bundle rejected: %v", err)
+	}
+	if len(pc.Symptoms) != 1 || pc.Symptoms[0] != "heart_rate" {
+		t.Errorf("Symptoms = %v, want [heart_rate]", pc.Symptoms)
+	}
+}
+
+// A structurally invalid resource (id not a string) is malformed, not silently
+// dropped.
+func TestTranslateFHIR_BadInnerResourceIsMalformed(t *testing.T) {
+	_, err := translateFHIR(readFixture(t, "bundle_bad_patient.json"))
+	assertReason(t, err, ReasonMalformed)
+}
+
 func TestTranslateFHIR_NoPatientIsMissingResource(t *testing.T) {
 	_, err := translateFHIR(readFixture(t, "bundle_no_patient.json"))
 	assertReason(t, err, ReasonMissingResource)
