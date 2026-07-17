@@ -9,6 +9,7 @@ import (
 
 	"github.com/PratikDhanave/bodh-maf/pkg/admit"
 	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodh-maf/pkg/intake"
 )
 
 // Config parameterizes the graph. Zero values get slice defaults
@@ -33,6 +34,11 @@ type Config struct {
 	// here). It must consume Workup and send DiagnosisResult/DiagnosticQuery,
 	// and is responsible for honoring the same Boundary.
 	Diagnostician *workflow.Executor
+	// Translate prepends the front-door translation hop (Inbound → PatientCase)
+	// before intake (specs/002). When false the graph is byte-identical to the
+	// JSON-only slice, and the Runner is fed a PatientCase; when true the Runner
+	// is fed an agents.Inbound via RunInbound.
+	Translate bool
 }
 
 // New builds the workflow. The two edges out of the diagnostician route on
@@ -57,7 +63,7 @@ func New(cfg Config) (*workflow.Workflow, error) {
 		}, guard)
 	}
 
-	intake := agents.NewIntake("intake", cfg.Deidentify, guard).Bind()
+	intakeNode := agents.NewIntake("intake", cfg.Deidentify, guard).Bind()
 	planner := agents.NewTestPlanner("test_planner", cfg.Lab, guard).Bind()
 	diagnostician := dx.Bind()
 	carePlan := agents.NewCarePlan("care_plan", guard).Bind()
@@ -65,8 +71,20 @@ func New(cfg Config) (*workflow.Workflow, error) {
 	isDiagnosis := func(msg any) bool { _, ok := msg.(agents.DiagnosisResult); return ok }
 	isQuery := func(msg any) bool { _, ok := msg.(agents.DiagnosticQuery); return ok }
 
-	b := workflow.NewBuilder(intake).
-		AddEdge(intake, planner).
+	// Opt-in front door: a translation hop that turns an Inbound (HL7/FHIR/JSON)
+	// into a PatientCase feeds intake. When disabled, intake is the start node
+	// and the graph is byte-identical to the JSON-only slice (spec SC-006).
+	var b *workflow.Builder
+	if cfg.Translate {
+		translator := agents.NewTranslator("translator", intake.Translate, guard).Bind()
+		b = workflow.NewBuilder(translator).
+			AddEdge(translator, intakeNode).
+			AddEdge(intakeNode, planner)
+	} else {
+		b = workflow.NewBuilder(intakeNode).
+			AddEdge(intakeNode, planner)
+	}
+	b = b.
 		AddEdge(planner, diagnostician).
 		AddDirectEdge(diagnostician, planner, false, isQuery).
 		WithName("bodh-maf MARA slice")

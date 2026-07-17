@@ -16,6 +16,25 @@ type PatientCase struct {
 	History  []string `json:"history"`
 }
 
+// Format identifies the wire encoding of an inbound clinical message
+// (specs/002). It lives here with the other workflow message types so the
+// translation logic (pkg/intake) can depend on pkg/agents one-way, without a
+// cycle.
+type Format string
+
+const (
+	FormatJSON Format = "json" // native PatientCase JSON (today's default)
+	FormatHL7  Format = "hl7"  // HL7 v2 ADT message
+	FormatFHIR Format = "fhir" // FHIR R4 bundle
+)
+
+// Inbound is the raw, untranslated front-door message the translator executor
+// consumes. Payload is opaque bytes; it is never logged or audited raw.
+type Inbound struct {
+	Format  Format
+	Payload []byte
+}
+
 // DiagnosticQuery asks the test planner for a (further) workup. Round 0 is
 // the initial symptom-only pass; the diagnostician re-emits it with an
 // incremented round when unconfident.

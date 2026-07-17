@@ -40,6 +40,7 @@ func main() {
 	diagnostician := flag.String("diagnostician", "rule", "diagnostic engine: rule | llm-anthropic | llm-ollama")
 	corpus := flag.String("corpus", "", "knowledge corpus JSON for RAG grounding (empty = RAG off; llm-* engines only)")
 	embedder := flag.String("embedder", "mock", "RAG embedder: mock | ollama")
+	format := flag.String("format", "json", "inbound format: json | hl7 | fhir (non-json requires -case and enables the translation front door)")
 	db := flag.String("db", os.Getenv("SLICE_DB"), "postgres URL for durable checkpoints (enables -resume)")
 	resume := flag.String("resume", "", "resume a paused session by ID (requires -db)")
 	approve := flag.Bool("approve", false, "answer the pending review with approval")
@@ -52,18 +53,34 @@ func main() {
 		fatal(err)
 	}
 
-	pc := agents.PatientCase{
-		CaseID:   "demo-001",
-		Symptoms: []string{"chest pain"},
-		History:  []string{"hypertension"},
-	}
-	if *casePath != "" {
+	// Non-JSON formats (HL7/FHIR) enable the translation front door and are fed
+	// to the pipeline as raw bytes; JSON keeps the native PatientCase path.
+	translate := *format != "json"
+	var pc agents.PatientCase
+	var inbound agents.Inbound
+	if translate {
+		if *casePath == "" {
+			fatal(fmt.Errorf("-format %s requires -case <file>", *format))
+		}
 		data, err := os.ReadFile(*casePath)
 		if err != nil {
 			fatal(err)
 		}
-		if err := json.Unmarshal(data, &pc); err != nil {
-			fatal(fmt.Errorf("parse %s: %w", *casePath, err))
+		inbound = agents.Inbound{Format: agents.Format(*format), Payload: data}
+	} else {
+		pc = agents.PatientCase{
+			CaseID:   "demo-001",
+			Symptoms: []string{"chest pain"},
+			History:  []string{"hypertension"},
+		}
+		if *casePath != "" {
+			data, err := os.ReadFile(*casePath)
+			if err != nil {
+				fatal(err)
+			}
+			if err := json.Unmarshal(data, &pc); err != nil {
+				fatal(fmt.Errorf("parse %s: %w", *casePath, err))
+			}
 		}
 	}
 
@@ -94,7 +111,7 @@ func main() {
 	evalStore := eval.NewInMemoryStore()
 	runner, err := pipeline.NewRunner(pipeline.Config{
 		Tau: *tau, MaxRounds: *maxRounds, Review: *review,
-		Boundary: boundary, Diagnostician: dx,
+		Boundary: boundary, Diagnostician: dx, Translate: translate,
 		EvalStore: evalStore, EngineName: *diagnostician,
 	}, recorder)
 	if err != nil {
@@ -135,6 +152,10 @@ func main() {
 		}
 		fmt.Printf("resuming session %s\n", *resume)
 		out, err = runner.Resume(ctx, *resume)
+	} else if translate {
+		fmt.Printf("inbound %s → pipeline (τ=%.2f, max %d rounds, policy=%s, review=%v)\n",
+			*format, *tau, *maxRounds, *policy, *review)
+		out, err = runner.RunInbound(ctx, inbound, "")
 	} else {
 		fmt.Printf("case %s → pipeline (τ=%.2f, max %d rounds, policy=%s, review=%v)\n",
 			runner.CaseToken(pc), *tau, *maxRounds, *policy, *review)

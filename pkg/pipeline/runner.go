@@ -98,6 +98,23 @@ func (r *Runner) Run(ctx context.Context, pc agents.PatientCase, sessionID strin
 	return r.drain(ctx, run, r.CaseToken(pc))
 }
 
+// RunInbound executes one case starting from a raw Inbound message, driving
+// the translation front door (Config.Translate must be true). The case token
+// is unknown until translation succeeds, so — like Resume — the audit bridge
+// learns it from the first executor invocation rather than the input.
+func (r *Runner) RunInbound(ctx context.Context, in agents.Inbound, sessionID string) (*Outcome, error) {
+	var opts []inproc.ExecutionOption
+	if sessionID != "" {
+		opts = append(opts, inproc.WithSessionID(sessionID))
+	}
+	run, err := r.env().RunStreaming(ctx, r.wf, in, opts...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = run.Close(ctx) }()
+	return r.drain(ctx, run, "")
+}
+
 // Resume restarts a paused session from its latest checkpoint — typically in
 // a NEW process after the original died. The pending review request is
 // republished by MAF; the Responder (if set) answers it.
