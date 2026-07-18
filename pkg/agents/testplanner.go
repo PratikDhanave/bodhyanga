@@ -20,8 +20,20 @@ var testCatalog = map[string][]string{
 // real integrations can replace the simulation.
 type Lab func(test string, c PatientCase) TestResult
 
+// testCostUSD is the virtual price of each investigation (specs/006).
+// Illustrative only (see NOTICE) — a real fee schedule is a governance artifact.
+var testCostUSD = map[string]float64{
+	"troponin":      45,
+	"ecg":           30,
+	"cbc":           25,
+	"blood culture": 60,
+	"chest xray":    80,
+	"bnp":           55,
+}
+
 // SimulatedLab returns the canonical abnormal finding for each known test —
-// a toy world in which ordered tests confirm the underlying condition.
+// a toy world in which ordered tests confirm the underlying condition — priced
+// from testCostUSD (an unknown test is $0).
 func SimulatedLab(test string, _ PatientCase) TestResult {
 	values := map[string]string{
 		"troponin":      "elevated",
@@ -35,7 +47,7 @@ func SimulatedLab(test string, _ PatientCase) TestResult {
 	if !ok {
 		v = "normal"
 	}
-	return TestResult{Name: test, Value: v}
+	return TestResult{Name: test, Value: v, CostUSD: testCostUSD[test]}
 }
 
 // NewTestPlanner builds the planner executor. Round 0 sends the symptom-only

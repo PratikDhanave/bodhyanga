@@ -22,7 +22,8 @@ type CaseOutcome struct {
 	Confidence    float64
 	Rounds        int
 	Forced        bool
-	Diagnostician string // rule | llm-anthropic | llm-ollama | fake-llm
+	CostUSD       float64 // total virtual test cost for the case (specs/006)
+	Diagnostician string  // rule | llm-anthropic | llm-ollama | fake-llm
 	StartedAt     time.Time
 	EndedAt       time.Time
 }
@@ -50,6 +51,7 @@ func Record(store eval.Store, o CaseOutcome) (eval.InteractionRecord, error) {
 			"confidence": o.Confidence,
 			"rounds":     float64(o.Rounds),
 			"forced":     forced,
+			"cost_usd":   o.CostUSD,
 		},
 		Metadata: map[string]any{
 			"review_decision": decision,

@@ -44,10 +44,14 @@ type DiagnosticQuery struct {
 	PriorTests []TestResult
 }
 
-// TestResult is one completed test.
+// TestResult is one completed test. CostUSD is the virtual price of running it
+// (specs/006) — illustrative, not a real fee schedule (see NOTICE). Cost-aware
+// diagnosis is bodh's MAI-DxO thesis; the Lab assigns the price when it produces
+// the result.
 type TestResult struct {
-	Name  string
-	Value string
+	Name    string
+	Value   string
+	CostUSD float64
 }
 
 // Workup is a query plus the results of the tests the planner ordered.
@@ -66,6 +70,9 @@ type DiagnosisResult struct {
 	// bar was met (architecture.md §6 termination guarantee).
 	Forced   bool
 	Evidence []string
+	// CostUSD is the total virtual cost of the tests run for this case
+	// (specs/006) — the Pareto cost axis alongside diagnostic accuracy.
+	CostUSD float64 `json:"cost_usd,omitempty"`
 	// Citations are the retrieved guideline snippets that grounded the
 	// diagnosis (specs/003 RAG). Empty when RAG is disabled or retrieval
 	// found nothing. Provenance only — never patient data.
@@ -90,6 +97,9 @@ type CarePlan struct {
 	Diagnosis string
 	Forced    bool
 	Steps     []string
+	// CostUSD carries the case's total test cost through to the terminal
+	// output (specs/006), so the HTTP/eval surfaces can report it.
+	CostUSD float64 `json:"cost_usd,omitempty"`
 }
 
 // HashCaseID follows bodh's PHI rule: identifiers on events, spans, and audit

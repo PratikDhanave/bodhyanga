@@ -56,6 +56,7 @@ func RunSuite(ctx context.Context, fixtures []Fixture, cfg Config) ([]CaseResult
 		}
 		r.Produced = out.Plan.Diagnosis
 		r.Forced = out.Plan.Forced
+		r.CostUSD = out.Plan.CostUSD
 		r.Status = Score(f.Gold, r.Produced)
 		results = append(results, r)
 	}

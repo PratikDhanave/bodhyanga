@@ -27,6 +27,24 @@ func TestRunSuite_BenignCaseReachesPlanAndScores(t *testing.T) {
 	}
 }
 
+// Per-case cost flows from the priced Lab through to the result (specs/006):
+// a chest-pain case runs troponin ($45) + ecg ($30) = $75.
+func TestRunSuite_CarriesPerCaseCost(t *testing.T) {
+	fixtures := []Fixture{
+		{ID: "acs", Gold: "acute coronary syndrome", Case: agents.PatientCase{CaseID: "c", Symptoms: []string{"chest pain"}}},
+	}
+	results, err := RunSuite(context.Background(), fixtures, Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := results[0].CostUSD; got != 75 {
+		t.Errorf("cost = $%.0f, want $75 (troponin 45 + ecg 30)", got)
+	}
+	if s := Aggregate(results); s.MeanCostUSD != 75 {
+		t.Errorf("mean cost = $%.0f, want $75", s.MeanCostUSD)
+	}
+}
+
 // Two runs of the same suite are identical (determinism, SC-002).
 func TestRunSuite_Deterministic(t *testing.T) {
 	fixtures := []Fixture{

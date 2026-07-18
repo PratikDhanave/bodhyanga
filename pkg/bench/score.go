@@ -19,11 +19,12 @@ const (
 
 // CaseResult is the scored outcome for one fixture.
 type CaseResult struct {
-	ID       string `json:"id"`
-	Gold     string `json:"gold"`
-	Produced string `json:"produced"`
-	Forced   bool   `json:"forced"`
-	Status   Status `json:"status"`
+	ID       string  `json:"id"`
+	Gold     string  `json:"gold"`
+	Produced string  `json:"produced"`
+	Forced   bool    `json:"forced"`
+	Status   Status  `json:"status"`
+	CostUSD  float64 `json:"cost_usd"` // total test cost for this case (specs/006)
 }
 
 // Score classifies a produced diagnosis against a gold label, mirroring bodh's

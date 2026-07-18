@@ -74,6 +74,15 @@ func diagnose(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup) error {
 	return routeDiagnosis(ctx, cfg, wu, diagnosis, confidence, evidence, nil)
 }
 
+// totalCostUSD sums the virtual cost of every test run for the case (specs/006).
+func totalCostUSD(results []TestResult) float64 {
+	var sum float64
+	for _, r := range results {
+		sum += r.CostUSD
+	}
+	return sum
+}
+
 // routeDiagnosis applies the loop-back guard shared by ALL diagnostician
 // engines (spec FR-010): confident → DiagnosisResult; round budget exhausted
 // → forced DiagnosisResult + domain event; otherwise → loop back to the
@@ -81,6 +90,7 @@ func diagnose(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup) error {
 // the rule path); it rides only the terminal DiagnosisResult, never a loop-back.
 func routeDiagnosis(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup, diagnosis string, confidence float64, evidence []string, citations []Citation) error {
 	rounds := wu.Query.Round + 1
+	cost := totalCostUSD(wu.Results)
 
 	if confidence > cfg.Tau {
 		return ctx.SendMessage("", DiagnosisResult{
@@ -90,6 +100,7 @@ func routeDiagnosis(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup, d
 			Rounds:     rounds,
 			Evidence:   evidence,
 			Citations:  citations,
+			CostUSD:    cost,
 		})
 	}
 	if rounds >= cfg.MaxRounds {
@@ -106,6 +117,7 @@ func routeDiagnosis(ctx *workflow.Context, cfg DiagnosticianConfig, wu Workup, d
 			Forced:     true,
 			Evidence:   evidence,
 			Citations:  citations,
+			CostUSD:    cost,
 		})
 	}
 	return ctx.SendMessage("", DiagnosticQuery{

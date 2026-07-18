@@ -56,16 +56,16 @@ drives the translation front door; default `-format json` keeps the native path.
 `-corpus corpus.json -embedder mock|ollama` grounds the `-diagnostician=llm-*` engines.
 HTTP: `go run ./cmd/care` serves the pipeline (submit/status/reviews/audit); `-db <pg>` makes
 paused reviews survive restart. Loopback + auth-gap banner — auth is a non-goal (ADR-0006).
-Eval: `go run ./cmd/bench` runs the SD-Bench suite (accuracy-only; cost is a flagged pipeline
-prerequisite, specs/006); `-fail-on-regression` gates CI, `-update-baseline` refreshes it. The
-gate also runs as a unit test (`go test ./pkg/bench`).
+Eval: `go run ./cmd/bench` runs the SD-Bench suite — accuracy AND mean cost (the Pareto axis;
+specs/006 added per-case cost through the pipeline); `-fail-on-regression` gates CI on accuracy,
+`-update-baseline` refreshes it. The gate also runs as a unit test (`go test ./pkg/bench`).
 
 <!-- SPECKIT START -->
 For technologies, structure, commands, and design decisions, read the relevant plan.
 The safety-boundary slice (specs/001-slice-safety-boundary) is complete; the repo now
 grows story by story. Shipped: specs/003-knowledge-rag (RAG grounding), specs/002-fhir-hl7-intake
 (HL7/FHIR front door), specs/004-care-api-runner (HTTP care API), specs/005-sdbench-harness
-(accuracy-only eval + baseline gate). Each specs/NNN-*/ holds spec.md → plan.md → tasks.md.
-Next: specs/006 per-case-cost (the keystone gap — the pipeline tracks no cost, blocking
-SD-Bench's Pareto axis and bodh's MAI-DxO cost-aware thesis).
+(accuracy eval + baseline gate), specs/006-per-case-cost (Pareto cost axis through the
+pipeline — bodh's MAI-DxO cost-aware thesis, reproduced). Each specs/NNN-*/ holds
+spec.md → plan.md → tasks.md. The originally-planned slice stories are all shipped.
 <!-- SPECKIT END -->
