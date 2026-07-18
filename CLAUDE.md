@@ -37,8 +37,10 @@ go test ./pkg/ckptpg -run TestKillResume -v   # durable-HITL integration test
 
 ```
 cmd/slice/        thin CLI: flags, run loop, physician inbox
+cmd/care/         HTTP server over the Runner (specs/004)
 pkg/agents/       intake, translator, test_planner, diagnostician (rule + llm + RAG), care_plan
 pkg/intake/       front door: HL7 v2 ADT / FHIR R4 → PatientCase (specs/002)
+pkg/careapi/      HTTP handlers over pipeline.Runner: submit/status/reviews/audit (specs/004)
 pkg/pipeline/     graph assembly (edges, loop-back, review gate, opt-in translation hop)
 pkg/admit/        THE admission boundary (decorator + agent middleware)
 pkg/auditbridge/  workflow events → bodh audit trail
@@ -50,11 +52,14 @@ specs/            Spec Kit artifacts (spec → plan → tasks)
 Ingestion: `go run ./cmd/slice -format hl7 -case msg.hl7` (or `-format fhir bundle.json`)
 drives the translation front door; default `-format json` keeps the native path. RAG:
 `-corpus corpus.json -embedder mock|ollama` grounds the `-diagnostician=llm-*` engines.
+HTTP: `go run ./cmd/care` serves the pipeline (submit/status/reviews/audit); `-db <pg>` makes
+paused reviews survive restart. Loopback + auth-gap banner — auth is a non-goal (ADR-0006).
 
 <!-- SPECKIT START -->
 For technologies, structure, commands, and design decisions, read the relevant plan.
 The safety-boundary slice (specs/001-slice-safety-boundary) is complete; the repo now
 grows story by story. Shipped: specs/003-knowledge-rag (RAG grounding), specs/002-fhir-hl7-intake
-(HL7/FHIR front door). Each specs/NNN-*/ holds spec.md → plan.md → tasks.md; drafted-but-
-unbuilt next: specs/004-care-api-runner, specs/005-sdbench-harness.
+(HL7/FHIR front door), specs/004-care-api-runner (HTTP care API). Each specs/NNN-*/ holds
+spec.md → plan.md → tasks.md; drafted-but-unbuilt next: specs/005-sdbench-harness (blocked on
+a per-case-cost pipeline gap — candidate specs/006).
 <!-- SPECKIT END -->

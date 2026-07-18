@@ -214,6 +214,36 @@ Inbound ──translator──► PatientCase ──intake──► DiagnosticQu
 
 ---
 
+## 5c. HTTP surface (specs/004)
+
+`cmd/care` serves the pipeline over HTTP; `pkg/careapi` wraps `pipeline.Runner` in a
+`net/http` handler. Reads are served from a PHI-free in-memory registry the write paths
+populate — no handler re-runs pipeline logic.
+
+| Method + path | Runner call | Purpose |
+|---|---|---|
+| `POST /v1/cases` | `Run` | submit → `{session_id, case_token, status}`; deny = 201 `denied`, not 500 |
+| `GET /v1/cases/{token}` | — (registry) | status + terminal result |
+| `GET /v1/reviews` | — (registry) | cases awaiting physician review |
+| `POST /v1/reviews/{session}` | `Responder`+`Resume` | answer a review; **durable across restart** with `-db` |
+| `GET /v1/cases/{token}/audit` | `Recorder.List` | case-filtered PHI-free trail |
+| `GET /healthz`, `/readyz` | — | probes |
+
+Decisions:
+- **PHI-free by construction** — every response and registry `Entry` carries only opaque
+  fingerprints (case token, session id) and decision-support output (diagnosis, plan steps).
+- **Durability lives in the Runner's checkpoint store**, not the API. Paused reviews survive
+  restart only with `-db`; on restart the in-memory registry is rebuilt from the store via
+  `RecoverPending` (the API persists the session-id set it started, since the store has no
+  cross-session "pending" query). Proven by an HTTP restart test — the analog of §5's kill/resume.
+- **One `execMu` serializes all executions** (`Run`+`Resume`): the Runner wraps a single
+  in-process workflow + checkpoint manager + mutable `Responder`, unsafe for interleaved runs.
+  Cases stay independent; parallelism is a future Runner-pool concern.
+- **Auth is a non-goal** (ADR-0006): loopback bind + an auth-gap banner; front with
+  authenticated ingress for real use.
+
+---
+
 ## 6. Component decisions
 
 **Diagnostician duality (exit criterion 4).** `-diagnostician=rule` binds a pure-Go

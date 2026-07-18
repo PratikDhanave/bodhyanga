@@ -45,6 +45,16 @@ The safety-boundary slice is done; the reimplementation now grows story by story
 - **FHIR/HL7 ingestion** (`specs/002`) — an opt-in translation front door turns an HL7 v2
   ADT message or a FHIR R4 bundle into a `PatientCase` before intake, inside the admission
   boundary, with a PHI-free rejection taxonomy. See `-format hl7|fhir` on `cmd/slice`.
+- **Care API** (`specs/004`) — an HTTP service (`cmd/care`) over the pipeline Runner: submit a
+  case, poll status/result, list and answer physician reviews (durable across restart with
+  `-db`), read a case's PHI-free audit trail. Loopback + auth-gap banner (auth is a non-goal).
+
+```bash
+go run ./cmd/care                                   # rule engine, http://127.0.0.1:8088
+curl -XPOST localhost:8088/v1/cases -d '{"case_id":"c1","symptoms":["chest pain"]}'
+curl localhost:8088/v1/reviews                      # → parked case
+curl -XPOST localhost:8088/v1/reviews/<session> -d '{"approved":true,"reviewer_id":"dr-x"}'
+```
 
 ## Explicit non-goals
 
