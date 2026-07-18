@@ -40,6 +40,7 @@ func NewCarePlan(id string, guard Guard) *workflow.Executor {
 				Diagnosis: d.Diagnosis,
 				Forced:    d.Forced,
 				Steps:     steps,
+				CostUSD:   d.CostUSD,
 			})
 		})
 	}).Extend(&workflow.Executor{

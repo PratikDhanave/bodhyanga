@@ -231,6 +231,7 @@ func (r *Runner) recordEval(out *Outcome, started time.Time) {
 			o.Confidence = m.Confidence
 			o.Rounds = m.Rounds
 			o.Forced = m.Forced
+			o.CostUSD = m.CostUSD
 		case agents.ReviewDecision:
 			o.ReviewerID = m.ReviewerID
 		}
