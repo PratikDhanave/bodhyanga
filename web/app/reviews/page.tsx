@@ -65,10 +65,11 @@ export default function Reviews() {
         subtitle="Every AI diagnosis pauses here before a care plan is issued. Approve to proceed, or reject to end the case without one. Decisions are recorded against your reviewer ID."
         action={
           <div className="w-56">
-            <label className="mb-1 block text-right text-xs font-medium text-ink-500">
+            <label htmlFor="reviewer-id" className="mb-1 block text-right text-xs font-medium text-ink-500">
               Reviewer ID
             </label>
             <input
+              id="reviewer-id"
               className="field"
               placeholder="e.g. dr-okafor"
               value={reviewerId}
@@ -124,8 +125,7 @@ export default function Reviews() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      className="btn-ghost btn-danger-ghost"
-                      style={{ color: "#b42318", borderColor: "#f6c8c2" }}
+                      className="btn-ghost-danger"
                       disabled={!reviewerId.trim() || pending === r.session_id}
                       onClick={() => answer(r.session_id, false)}
                     >
