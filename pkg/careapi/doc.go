@@ -17,6 +17,12 @@
 //     server binds loopback by default and prints an auth-gap banner. A real
 //     deployment fronts it with authenticated ingress.
 //   - Durability comes from the Runner's checkpoint store, not this package.
-//     Paused cases survive restart only with -db; the in-memory registry is
-//     rebuilt from the store via RecoverPending (recover.go).
+//     With -db, a paused case is durably checkpointed and resumable by session
+//     id across a process restart (proven by restart_test.go). KNOWN GAP: the
+//     running cmd/care binary does NOT yet auto-rebuild the in-memory
+//     pending-review LIST after a restart — RecoverPending (recover.go) is the
+//     mechanism, but wiring it at boot needs durable session-summary
+//     persistence (the API's `started` set is in-memory only). Until then, a
+//     restart leaves a durably-checkpointed review unlisted by GET /v1/reviews.
+//     This is a documented follow-up, not a claim the binary currently meets.
 package careapi

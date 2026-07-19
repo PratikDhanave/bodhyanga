@@ -48,6 +48,7 @@ func newReviewGate(id string, guard agents.Guard) *workflow.Executor {
 				Confidence: d.Confidence,
 				Forced:     d.Forced,
 				Rounds:     d.Rounds,
+				CostUSD:    d.CostUSD,
 			})
 		})
 	}).Extend(&workflow.Executor{
@@ -96,6 +97,7 @@ func newReviewDecision(id string, guard agents.Guard, boundary *admit.Boundary) 
 						Confidence: pending.Confidence,
 						Forced:     pending.Forced,
 						Rounds:     pending.Rounds,
+						CostUSD:    pending.CostUSD,
 					})
 				}
 				return nil

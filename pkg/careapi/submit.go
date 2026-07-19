@@ -56,6 +56,7 @@ func (a *API) outcomeToEntry(caseToken string, out *pipeline.Outcome) Entry {
 			e.Diagnosis = req.Diagnosis
 			e.Confidence = req.Confidence
 			e.Forced = req.Forced
+			e.CostUSD = req.CostUSD
 		}
 	case out.Rejected != nil:
 		e.Status = StatusRejected
@@ -67,6 +68,7 @@ func (a *API) outcomeToEntry(caseToken string, out *pipeline.Outcome) Entry {
 		e.Diagnosis = out.Plan.Diagnosis
 		e.Forced = out.Plan.Forced
 		e.PlanSteps = out.Plan.Steps
+		e.CostUSD = out.Plan.CostUSD
 	default:
 		e.Status = StatusFailed
 	}

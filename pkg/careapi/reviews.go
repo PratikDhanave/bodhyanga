@@ -16,6 +16,7 @@ type reviewSummary struct {
 	Diagnosis  string  `json:"diagnosis"`
 	Confidence float64 `json:"confidence"`
 	Forced     bool    `json:"forced"`
+	CostUSD    float64 `json:"cost_usd"`
 }
 
 // listReviews returns every case awaiting physician review.
@@ -29,6 +30,7 @@ func (a *API) listReviews(w http.ResponseWriter, _ *http.Request) {
 			Diagnosis:  e.Diagnosis,
 			Confidence: e.Confidence,
 			Forced:     e.Forced,
+			CostUSD:    e.CostUSD,
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"reviews": out})

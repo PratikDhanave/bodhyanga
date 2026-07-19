@@ -29,6 +29,7 @@ type Entry struct {
 	ReviewerID string   `json:"reviewer_id,omitempty"`
 	PlanSteps  []string `json:"plan_steps,omitempty"`
 	Note       string   `json:"note,omitempty"`
+	CostUSD    float64  `json:"cost_usd,omitempty"` // total test cost (specs/006 Pareto axis)
 }
 
 // Registry stores case Entries keyed by the opaque case token, with a
