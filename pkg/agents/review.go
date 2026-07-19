@@ -9,6 +9,7 @@ type ReviewRequest struct {
 	Confidence float64
 	Forced     bool
 	Rounds     int
+	CostUSD    float64 // total test cost so the reviewer sees the Pareto (specs/006)
 }
 
 // ReviewDecision is the physician's explicit verdict. ReviewerID is
