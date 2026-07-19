@@ -61,13 +61,14 @@ export default function Overview() {
           <div className="card-head">New case</div>
           <form onSubmit={submit} className="card-pad space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-600">
+              <label htmlFor="case-id" className="mb-1 block text-xs font-medium text-ink-600">
                 Case ID{" "}
                 <span className="font-normal text-ink-400">
                   (optional — a token is generated if blank)
                 </span>
               </label>
               <input
+                id="case-id"
                 className="field mono"
                 placeholder="e.g. MRN-4821 (never shown or logged raw)"
                 value={caseId}
@@ -75,24 +76,32 @@ export default function Overview() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-600">Symptoms</label>
+              <label htmlFor="symptoms" className="mb-1 block text-xs font-medium text-ink-600">
+                Symptoms
+              </label>
               <input
+                id="symptoms"
                 className="field"
                 placeholder="chest pain, diaphoresis"
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
+                aria-describedby="symptoms-hint"
               />
-              <p className="mt-1 text-xs text-ink-400">Comma-separated.</p>
+              <p id="symptoms-hint" className="mt-1 text-xs text-ink-400">Comma-separated.</p>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-600">History</label>
+              <label htmlFor="history" className="mb-1 block text-xs font-medium text-ink-600">
+                History
+              </label>
               <input
+                id="history"
                 className="field"
                 placeholder="hypertension, smoker"
                 value={history}
                 onChange={(e) => setHistory(e.target.value)}
+                aria-describedby="history-hint"
               />
-              <p className="mt-1 text-xs text-ink-400">Comma-separated.</p>
+              <p id="history-hint" className="mt-1 text-xs text-ink-400">Comma-separated.</p>
             </div>
 
             {error && (

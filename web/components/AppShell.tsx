@@ -64,6 +64,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
+      <a
+        href="#main-content"
+        className="sr-only rounded-md bg-clinical-700 px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50"
+      >
+        Skip to content
+      </a>
       {open && (
         <div
           className="fixed inset-0 z-30 bg-ink-900/30 lg:hidden"
@@ -141,7 +147,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 lg:px-8 lg:py-8">
+        <main
+          id="main-content"
+          className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 lg:px-8 lg:py-8"
+        >
           {children}
         </main>
       </div>

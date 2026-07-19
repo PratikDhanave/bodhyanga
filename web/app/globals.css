@@ -108,6 +108,15 @@
   .btn-ghost:hover { background: var(--color-ink-50); border-color: var(--color-ink-300); }
   .btn-danger { background: #b42318; }
   .btn-danger:hover { background: #912018; }
+  .btn-ghost-danger {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.5rem 0.9rem; border-radius: 0.5rem;
+    font-size: 0.8125rem; font-weight: 600;
+    background: #fff; color: #b42318; border: 1px solid #f6c8c2;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .btn-ghost-danger:hover { background: #fef1f0; border-color: #eda99f; }
+  .btn-ghost-danger:disabled { color: var(--color-ink-400); border-color: var(--color-ink-200); cursor: not-allowed; background: #fff; }
 
   /* Status pills — the clinical vocabulary. A dot + label, quiet and legible. */
   .pill {
