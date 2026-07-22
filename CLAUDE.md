@@ -130,7 +130,9 @@ pkg/                  library packages (~46; run `ls pkg/` for the current set)
   web/                HTTP handlers + routing
   ... (see pkg/ for the full list)
 
-agents/               YAML/Go agent definitions (~145)
+agents/               agent implementations, all Go (~146 .go files, no YAML): the
+                      physician panel + care-services agents, each with LLM variants
+                      (diagnostician_{llm,debate,reflexion,cascade,vision,tools}.go, etc.)
 data/                 knowledge corpus, clinical case data
 db/                   SQL migrations
 docs/                 markdown documentation (+ docs/adr/ decision records)
@@ -184,6 +186,12 @@ Key architectural decisions:
 - **`pkg/audit`** writes an append-only audit log for every clinical action (HIPAA requirement)
 - **`pkg/hitl`** captures human feedback for every AI decision
 - **Build tags** (`otel`, `kronk`, `nats`) keep the default binary small; stubs satisfy all interfaces
+- **LLM agents fall back to rule-based twins.** Every `*_llm.go` agent wraps an `llm.Client` and
+  degrades to its deterministic rule-based equivalent on *any* per-call failure (timeout, JSON parse
+  error, transport error, confidence below `MinConfidence`). The case always finalizes — an LLM
+  outage degrades quality, never breaks the pipeline. The LLM variant emits the *same*
+  `DiagnosisProposal` JSON shape as the rule agent, so cost guardian / reasoning verifier / HITL are
+  unchanged. Preserve this contract when touching any `agents/*_llm.go` file.
 
 ### Agent-decoupling substrate (Phase 1)
 
