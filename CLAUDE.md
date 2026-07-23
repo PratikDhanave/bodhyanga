@@ -14,6 +14,10 @@ feedback, and LLM-agnostic provider abstraction.
 > as *architectural intent*, not certified compliance. Clinical-grade controls (tamper-evident
 > audit, authenticated API, durable bus) are a documented roadmap, not the current default.
 
+> **Also read `AGENTS.md`.** It is the dense, assistant-facing field guide and encodes three
+> **load-bearing invariants that get changes reverted** — summarized under "Invariants" below.
+> This file (`CLAUDE.md`) covers commands + architecture; `AGENTS.md` covers what must never break.
+
 ---
 
 ## Quick reference
@@ -186,6 +190,19 @@ Key architectural decisions:
 - **`pkg/audit`** writes an append-only audit log for every clinical action (HIPAA requirement)
 - **`pkg/hitl`** captures human feedback for every AI decision
 - **Build tags** (`otel`, `kronk`, `nats`) keep the default binary small; stubs satisfy all interfaces
+
+#### Invariants (violating any of these gets a change reverted — see `AGENTS.md`)
+
+1. **Never bypass the HITL gate for clinically consequential actions.** Diagnosis conclusions,
+   treatment recommendations, discharge plans, prior-auth/refill approvals, and outreach to patients
+   on 42 CFR Part 2 conditions must flow through `agents/human_review.go` → `pkg/hitl.Queue` →
+   clinician decision. Without the gate, Bodh becomes a regulated medical device.
+2. **Never widen the PHI surface of the audit log.** `pkg/audit` records IDs, kinds, timestamps,
+   agent IDs, verdicts, and *redacted* reasons — never chief complaints, HPI, lab values, med
+   names/doses, or free text. `cmd/care/explain.go` inherits this; its tests assert forbidden JSON
+   keys are absent (`TestExplainHandler_PHIFreeFieldSelection`).
+3. **Every LLM-backed agent has a rule-based fallback, and the fallback is the contract** (detailed
+   below). Bench fixtures in `data/cases/` are graded on the rule path, so regressions show up in CI.
 - **LLM agents fall back to rule-based twins.** Every `*_llm.go` agent wraps an `llm.Client` and
   degrades to its deterministic rule-based equivalent on *any* per-call failure (timeout, JSON parse
   error, transport error, confidence below `MinConfidence`). The case always finalizes — an LLM
