@@ -37,6 +37,7 @@ package memory
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -271,7 +272,11 @@ func (r *RedisKV) readResponse() (string, bool, error) {
 		}
 		// Read exactly n bytes of payload plus the trailing \r\n (2 bytes).
 		buf := make([]byte, n+2)
-		if _, err := r.rd.Read(buf); err != nil {
+		// bufio.Reader.Read may return fewer than len(buf) bytes from a single
+		// underlying read; use io.ReadFull to read the whole payload (+CRLF),
+		// otherwise large values are silently truncated and the stream is left
+		// mis-aligned for the next reply.
+		if _, err := io.ReadFull(r.rd, buf); err != nil {
 			return "", false, fmt.Errorf("redis: read bulk data: %w", err)
 		}
 		// Payload is everything except the trailing \r\n.
