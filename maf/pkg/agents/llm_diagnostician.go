@@ -78,10 +78,12 @@ func assessWithModel(ctx *workflow.Context, a *agent.Agent, wu Workup, evidence 
 	// Post-validation: a malformed or out-of-range verdict never becomes a
 	// diagnosis (FR-011).
 	if strings.TrimSpace(assess.Diagnosis) == "" {
-		return llmAssessment{}, fmt.Errorf("llm diagnostician: model returned empty diagnosis")
+		// Static, PHI-free message → audit-safe (kept verbatim in the trail).
+		return llmAssessment{}, auditSafeErr("llm diagnostician: model returned empty diagnosis")
 	}
 	if assess.Confidence < 0 || assess.Confidence > 1 {
-		return llmAssessment{}, fmt.Errorf("llm diagnostician: confidence %v out of [0,1]", assess.Confidence)
+		// Confidence is decision-support data, not PHI → audit-safe.
+		return llmAssessment{}, auditSafeErr(fmt.Sprintf("llm diagnostician: confidence %v out of [0,1]", assess.Confidence))
 	}
 	return assess, nil
 }

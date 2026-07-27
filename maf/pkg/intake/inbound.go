@@ -32,5 +32,10 @@ func (e *RejectError) Error() string {
 	return "inbound rejected: " + string(e.Reason)
 }
 
+// AuditSafe marks RejectError's message as PHI-free (category + optional hashed
+// fingerprint only), so admit.SafeErrorText records it verbatim instead of
+// redacting it. Satisfied structurally — no dependency on pkg/admit.
+func (*RejectError) AuditSafe() {}
+
 // reject is a small constructor for the common no-fingerprint case.
 func reject(r RejectReason) error { return &RejectError{Reason: r} }

@@ -3,6 +3,7 @@ package admit
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"testing"
 
@@ -127,12 +128,18 @@ func TestHandlerErrorIsAuditedAndPropagated(t *testing.T) {
 	err := b.Guard(context.Background(), "care_plan", TypeDiagnosisResult, "abcd1234", func() error {
 		return boom
 	})
+	// The full error still propagates to the caller (control flow is unchanged)...
 	if !errors.Is(err, boom) {
 		t.Fatalf("Guard = %v, want handler error propagated", err)
 	}
 	evs := rec.List()
-	if len(evs) != 2 || evs[1].Kind != audit.KindAgentError || evs[1].ErrorText != "handler exploded" {
+	// ...but an unmarked error's message is redacted before it reaches the trail
+	// (SafeErrorText guard). See TestSafeErrorText for the passthrough case.
+	if len(evs) != 2 || evs[1].Kind != audit.KindAgentError {
 		t.Fatalf("agent_error record missing/malformed: %+v", evs)
+	}
+	if evs[1].ErrorText == "handler exploded" || !strings.Contains(evs[1].ErrorText, "redacted") {
+		t.Fatalf("agent_error ErrorText not redacted: %q", evs[1].ErrorText)
 	}
 }
 
