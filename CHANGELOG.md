@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **`maf/` — bodh-maf** vendored as a nested Go module (`github.com/PratikDhanave/bodh-maf`): a vertical-slice reimplementation of the MARA clinical pipeline on `microsoft/agent-framework-go` (MAF-go). Imports bodh's `pkg/governance` / `pkg/audit` / `pkg/phi` / `pkg/eval` unchanged; swaps only the orchestration substrate. Built/tested separately (`cd maf && go build ./... && go test ./...`); ships `cmd/care` HTTP API and a `web/` Next.js clinician console. Research/education only.
 - Ambient clinical scribe — NLP pipeline converting voice transcripts to structured PatientPresentation (`pkg/medical/scribe.go`)
 - Shadow mode deployment — parallel AI evaluation with concordance capture (`pkg/shadow/`)
 - Cost-based model routing — budget-aware 3-tier cascade with hard caps (`pkg/llm/budget.go`)
