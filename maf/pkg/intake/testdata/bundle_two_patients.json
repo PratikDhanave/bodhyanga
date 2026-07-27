@@ -1,0 +1,20 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "PT-MRN-111",
+        "name": [{"family": "DOE", "given": ["JOHN"]}]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "PT-MRN-222",
+        "name": [{"family": "DOE", "given": ["JANE"]}]
+      }
+    }
+  ]
+}
