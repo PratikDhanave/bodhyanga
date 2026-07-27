@@ -2,7 +2,7 @@ module github.com/PratikDhanave/bodh-maf
 
 go 1.26
 
-replace github.com/PratikDhanave/bodh => ../bodh
+replace github.com/PratikDhanave/bodh => ..
 
 require (
 	github.com/PratikDhanave/bodh v0.0.0-00010101000000-000000000000
