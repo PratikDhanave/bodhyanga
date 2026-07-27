@@ -3,7 +3,11 @@ import { type NextRequest } from "next/server";
 // Same-origin proxy to the care API (cmd/care), which binds loopback and sends
 // no CORS headers. The browser calls /api/care/* here; this forwards to the Go
 // server server-side. Override the target with CARE_API_URL.
-const CARE = process.env.CARE_API_URL ?? "http://localhost:8088";
+//
+// NB: default is 127.0.0.1, not "localhost" — Node's fetch resolves "localhost"
+// to IPv6 (::1) first, but cmd/care binds IPv4 (127.0.0.1:8088), so "localhost"
+// would miss it (or hit an unrelated IPv6 listener).
+const CARE = process.env.CARE_API_URL ?? "http://127.0.0.1:8088";
 
 async function handler(
   req: NextRequest,
@@ -11,6 +15,7 @@ async function handler(
 ) {
   const { path } = await ctx.params;
   const url = `${CARE}/${path.join("/")}${req.nextUrl.search}`;
+  console.log("[proxy] method=%s path=%o url=%s", req.method, path, url);
 
   const init: RequestInit = {
     method: req.method,
