@@ -1,0 +1,23 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "PT-MRN-778",
+        "name": [{"family": "DOE", "given": ["JANE"]}],
+        "gender": "female",
+        "birthDate": "1955-04-12"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Condition",
+        "id": "cond-1",
+        "subject": {"reference": "Patient/PT-MRN-778"},
+        "code": {"coding": [{"system": "http://hl7.org/fhir/sid/icd-10", "code": "I50.9", "display": "Heart failure, unspecified"}], "text": "Heart failure"}
+      }
+    }
+  ]
+}
