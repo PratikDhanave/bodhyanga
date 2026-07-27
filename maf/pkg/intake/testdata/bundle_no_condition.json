@@ -1,0 +1,14 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "PT-MRN-555",
+        "name": [{"family": "POE", "given": ["PAT"]}],
+        "gender": "other"
+      }
+    }
+  ]
+}

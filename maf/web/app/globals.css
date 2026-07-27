@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   Bodh — Clinical Instrument design system
+   A calm, precise console for reviewing AI diagnostic decisions.
+   Palette: cool "ink" slate neutrals + a single clinical-teal accent.
+   Status color is reserved strictly for clinical meaning.
+   ========================================================================== */
+@theme {
+  /* Neutral structure — cool slate */
+  --color-ink-50:  #f5f7f9;
+  --color-ink-100: #e9edf1;
+  --color-ink-200: #d4dce3;
+  --color-ink-300: #b0bdc9;
+  --color-ink-400: #7f909f;
+  --color-ink-500: #59697a;
+  --color-ink-600: #43515f;
+  --color-ink-700: #333f4b;
+  --color-ink-800: #212a33;
+  --color-ink-900: #141b21;
+  --color-ink-950: #0c1116;
+
+  /* Accent — clinical teal (trust / health / calm; not generic admin blue) */
+  --color-clinical-50:  #eafaf9;
+  --color-clinical-100: #cbf0ee;
+  --color-clinical-200: #99e0dd;
+  --color-clinical-300: #5ec9c6;
+  --color-clinical-400: #2caeac;
+  --color-clinical-500: #128f8f;
+  --color-clinical-600: #0d7378;
+  --color-clinical-700: #0e5c61;
+  --color-clinical-800: #114a4e;
+  --color-clinical-900: #123d41;
+
+  --radius-card: 0.625rem;
+
+  --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: #ffffff;
+    color: var(--color-ink-800);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-feature-settings: "cv11", "ss01";
+  }
+  /* Data reads as an instrument: aligned, tabular figures wherever numbers matter */
+  .tnum, table, .metric { font-variant-numeric: tabular-nums; }
+  :focus-visible {
+    outline: 2px solid var(--color-clinical-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  ::selection { background: var(--color-clinical-200); }
+}
+
+@layer components {
+  /* Surfaces ---------------------------------------------------------------- */
+  /* Clean and flat: white cards defined by a single hairline, no shadow. */
+  .card {
+    background: #fff;
+    border: 1px solid var(--color-ink-200);
+    border-radius: var(--radius-card);
+  }
+  .card-pad { padding: 1.25rem 1.5rem; }
+  .card-head {
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid var(--color-ink-200);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    letter-spacing: 0.01em;
+    color: var(--color-ink-700);
+  }
+
+  /* Eyebrow / section label — encodes structure, not decoration */
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-ink-400);
+  }
+
+  /* Buttons ----------------------------------------------------------------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 0.5rem;
+    font-size: 0.8125rem; font-weight: 600;
+    background: var(--color-clinical-600); color: #fff;
+    transition: background .15s ease, transform .05s ease;
+  }
+  .btn:hover { background: var(--color-clinical-700); }
+  .btn:active { transform: translateY(0.5px); }
+  .btn:disabled { background: var(--color-ink-200); color: var(--color-ink-400); cursor: not-allowed; }
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.5rem 0.9rem; border-radius: 0.5rem;
+    font-size: 0.8125rem; font-weight: 600;
+    background: #fff; color: var(--color-ink-700);
+    border: 1px solid var(--color-ink-200);
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .btn-ghost:hover { background: var(--color-ink-50); border-color: var(--color-ink-300); }
+  .btn-danger { background: #b42318; }
+  .btn-danger:hover { background: #912018; }
+  .btn-ghost-danger {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.5rem 0.9rem; border-radius: 0.5rem;
+    font-size: 0.8125rem; font-weight: 600;
+    background: #fff; color: #b42318; border: 1px solid #f6c8c2;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .btn-ghost-danger:hover { background: #fef1f0; border-color: #eda99f; }
+  .btn-ghost-danger:disabled { color: var(--color-ink-400); border-color: var(--color-ink-200); cursor: not-allowed; background: #fff; }
+
+  /* Status pills — the clinical vocabulary. A dot + label, quiet and legible. */
+  .pill {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.15rem 0.55rem 0.15rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.75rem; font-weight: 600;
+    border: 1px solid transparent;
+  }
+  .pill::before { content: ""; width: 0.4rem; height: 0.4rem; border-radius: 999px; background: currentColor; }
+  .pill-running   { color: #0d7378; background: var(--color-clinical-50);  border-color: var(--color-clinical-200); }
+  .pill-review    { color: #92600a; background: #fef6e7; border-color: #f6d488; }
+  .pill-completed { color: #067647; background: #ebfaf0; border-color: #a6e8c3; }
+  .pill-rejected  { color: #b42318; background: #fef1f0; border-color: #f6c8c2; }
+  .pill-denied    { color: #6b3410; background: #fbf0e8; border-color: #f0c9a8; }
+  .pill-failed    { color: #4a5560; background: var(--color-ink-100); border-color: var(--color-ink-200); }
+
+  /* Fields ------------------------------------------------------------------ */
+  .field {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--color-ink-200);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    background: #fff; color: var(--color-ink-800);
+  }
+  .field:focus { border-color: var(--color-clinical-400); outline: none; box-shadow: 0 0 0 3px var(--color-clinical-100); }
+
+  /* Data table -------------------------------------------------------------- */
+  .dtable { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8125rem; }
+  .dtable thead th {
+    text-align: left; font-weight: 600; color: var(--color-ink-400);
+    font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.5rem 0.9rem; border-bottom: 1px solid var(--color-ink-200);
+  }
+  .dtable tbody td { padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--color-ink-100); color: var(--color-ink-700); }
+  .dtable tbody tr:last-child td { border-bottom: 0; }
+  .dtable tbody tr:hover td { background: var(--color-ink-50); }
+
+  .mono { font-family: var(--font-mono); font-size: 0.8125rem; }
+}

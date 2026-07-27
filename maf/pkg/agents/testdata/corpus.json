@@ -1,0 +1,26 @@
+{
+  "_notice": "demo-synth — synthetic teaching prose written for the bodh-maf RAG slice test suite. NOT real clinical guidelines; must never be used for patient care. Every document's source is 'demo-synth'.",
+  "documents": [
+    {
+      "id": "acs-001",
+      "source": "demo-synth",
+      "title": "Acute Coronary Syndrome — Chest Pain Evaluation",
+      "content": "Suspect acute coronary syndrome in adults with acute chest pain, pressure radiating to the arm or jaw, diaphoresis, or dyspnea. Obtain a 12-lead ECG and serial troponin. Elevated troponin with ischemic symptoms supports myocardial infarction; new ST changes escalate urgency.",
+      "metadata": {"condition": "acs", "evidence_level": "demo"}
+    },
+    {
+      "id": "cap-001",
+      "source": "demo-synth",
+      "title": "Community-Acquired Pneumonia — Diagnosis",
+      "content": "Suspect pneumonia in adults with new cough, fever, pleuritic pain, or focal crackles plus a new infiltrate on chest radiograph. Stratify severity with CURB-65 and obtain sputum and blood cultures when admitted.",
+      "metadata": {"condition": "cap", "evidence_level": "demo"}
+    },
+    {
+      "id": "derm-001",
+      "source": "demo-synth",
+      "title": "Contact Dermatitis — Rash Management",
+      "content": "Contact dermatitis presents as a pruritic erythematous rash in the distribution of an allergen or irritant. Management is avoidance of the trigger and topical corticosteroids; systemic steroids are reserved for severe or widespread involvement.",
+      "metadata": {"condition": "dermatitis", "evidence_level": "demo"}
+    }
+  ]
+}

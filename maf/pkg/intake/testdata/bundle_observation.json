@@ -1,0 +1,23 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "PT-MRN-640",
+        "name": [{"family": "NOE", "given": ["NORA"]}]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "obs-1",
+        "status": "final",
+        "code": {"text": "heart rate"},
+        "subject": {"reference": "Patient/PT-MRN-640"},
+        "valueQuantity": {"value": 112, "unit": "bpm"}
+      }
+    }
+  ]
+}
