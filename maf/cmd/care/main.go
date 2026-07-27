@@ -81,6 +81,7 @@ func main() {
 
 func banner(addr, engine, policy string, durable bool) {
 	fmt.Printf("care API on http://%s  (engine=%s policy=%s)\n", addr, engine, policy)
+	fmt.Println("  ⚠  NOT A MEDICAL DEVICE — research/education only, not for clinical use.")
 	fmt.Println("  ⚠  RESEARCH SERVER — no authentication is wired (ADR-0006). Bind loopback; front with authenticated ingress for any real use.")
 	if durable {
 		fmt.Println("  ⚠  -db durably checkpoints paused cases, but this binary does NOT yet auto-recover the pending-review list after a restart (a durably-checkpointed review would be unlisted by GET /v1/reviews). See pkg/careapi/doc.go.")

@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Care console (web)
 
-## Getting Started
+A [Next.js](https://nextjs.org) clinician console for the Bodh care API (`maf/cmd/care`).
+Submit a case, poll status, list and answer physician reviews, and read a case's PHI-free
+audit trail.
 
-First, run the development server:
+> **Not a medical device — research/education only, not for clinical use.**
+
+## Run it
+
+The console talks to the Go care API through a same-origin proxy (`app/api/care/[...path]`),
+so start the API first:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# from maf/
+go run ./cmd/care                 # care API on http://127.0.0.1:8088
+
+# from maf/web/
+npm install
+npm run dev                       # console on http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Override the API target with `CARE_API_URL` (default `http://127.0.0.1:8088` — the IPv4
+literal, deliberately not `localhost`, since Node's fetch resolves `localhost` to IPv6 `::1`
+first while `cmd/care` binds IPv4).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment — read before you ship
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Do not deploy this publicly as-is.** The care API wires **no authentication** (ADR-0006)
+and handles clinical/PHI-bearing input. The console must sit **behind authenticated ingress**,
+and the care API it proxies to must not be exposed. This is a research console, not a
+production clinical product.
