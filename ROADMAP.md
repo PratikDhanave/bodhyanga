@@ -129,6 +129,7 @@ Reproducible measurement and adversarial robustness.
 - ⚪ IRB-eligible pragmatic trial protocol template
 - ⚪ Bodh-Bench: open red-team cases + scoring rubric for the community
 - 🟢 Federated eval — cross-site accuracy with Laplace noise (PR #44)
+- 🟢 **MAF-go substrate slice** — bodh-maf vendored under [`maf/`](maf/): the MARA pipeline reimplemented on `microsoft/agent-framework-go`, importing bodh's compliance packages unchanged, to test whether MAF-go can carry the safety boundary. All five exit criteria proven by tests (nested Go module, built/tested separately)
 
 ---
 
