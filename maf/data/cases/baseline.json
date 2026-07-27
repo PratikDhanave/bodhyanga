@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "providers": [
+    {
+      "provider": "rule",
+      "cases": 4,
+      "accuracy_pct": 100,
+      "recorded_at": "2026-07-18T04:24:02Z"
+    }
+  ]
+}

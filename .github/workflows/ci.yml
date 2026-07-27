@@ -58,6 +58,38 @@ jobs:
       - name: smoke — integration (full MARA pipeline)
         run: go test -run TestIntegration ./pkg/orchestration/... -v -timeout=30s 2>&1 | tail -10
 
+  maf:
+    name: maf · build · vet · test
+    runs-on: ubuntu-latest
+    # Nested module (github.com/PratikDhanave/bodh-maf) — the parent module's
+    # `go build ./...` does not descend into maf/, so it is built and tested here
+    # as its own unit. It uses `replace github.com/PratikDhanave/bodh => ..`, so
+    # the checkout of this repo supplies the parent source. Requires Go 1.26.
+    defaults:
+      run:
+        working-directory: maf
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+          cache-dependency-path: maf/go.sum
+
+      - name: go build
+        run: go build ./...
+
+      - name: go vet
+        run: go vet ./...
+
+      # pkg/ckptpg uses testcontainers (Docker + Postgres); Docker is preinstalled
+      # on ubuntu-latest (see the `docker` job), so those tests run natively. If a
+      # container cannot start the ckptpg tests skip themselves rather than fail.
+      - name: go test
+        run: go test -race ./...
+
   vuln:
     name: govulncheck
     runs-on: ubuntu-latest

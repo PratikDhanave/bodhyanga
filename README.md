@@ -77,6 +77,26 @@ Beyond this README, the [docs/](docs/) tree has deep dives for each subsystem:
 
 ---
 
+## Companion: `maf/` — the MARA pipeline on Microsoft Agent Framework (Go)
+
+The [`maf/`](maf/) subdirectory is **bodh-maf**, a vertical-slice reimplementation of bodh's MARA clinical pipeline on [`microsoft/agent-framework-go`](https://github.com/microsoft/agent-framework-go) (MAF-go, public preview). It exists to answer one question with test evidence: *can MAF-go carry bodh's safety boundary?* Like bodh, it is **research/education code — not a medical device, not for clinical use**.
+
+It reuses bodh, it does not fork it. The compliance layer — `pkg/governance`, `pkg/audit`, `pkg/phi`, `pkg/eval` — is **imported unchanged** (fail-closed governance, fail-open audit, zero PHI in audit/checkpoint/logs). Only the orchestration substrate is swapped: the 4-agent pipeline (intake → test planner → diagnostician → care plan) becomes a MAF workflow graph, with the diagnostician loop-back as a conditional edge, a physician-review HITL gate that survives process restart via a Postgres `checkpoint.Store`, and rule/LLM diagnosticians swappable by flag. All five exit criteria are proven by tests.
+
+`maf/` is a **nested Go module** (`github.com/PratikDhanave/bodh-maf`) — built and tested separately from the parent `bodh` module:
+
+```bash
+cd maf
+go build ./... && go test ./...          # everything; no network except testcontainers
+go run ./cmd/slice -verbose              # demo case through the pipeline
+go run ./cmd/care                         # HTTP care API — submit/status/reviews/audit on :8088
+go run ./cmd/bench                        # SD-Bench accuracy + mean-cost (the Pareto axis)
+```
+
+`maf/web/` is a **Next.js clinician console** for the care API. Full scope, the five exit criteria, and design record: [`maf/README.md`](maf/README.md) and [`maf/architecture.md`](maf/architecture.md).
+
+---
+
 ## What is Bodh?
 
 Bodh is two things in one repository:
