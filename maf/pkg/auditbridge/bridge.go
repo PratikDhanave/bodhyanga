@@ -50,7 +50,7 @@ func (b *Bridge) Handle(evt workflow.Event) {
 		}
 		b.record(audit.Event{
 			Kind: audit.KindAgentError, AgentID: e.ExecutorID,
-			CaseID: b.caseToken, ErrorText: e.Error.Error(),
+			CaseID: b.caseToken, ErrorText: admit.SafeErrorText(e.Error),
 		})
 	case workflow.SuperStepCompletedEvent:
 		if e.CompletionInfo != nil && e.CompletionInfo.CheckpointInfo != nil {

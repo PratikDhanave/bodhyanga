@@ -3,6 +3,11 @@
 // Rows are append-only; the data column carries the framework's opaque —
 // and PHI-bearing — checkpoint payload, so it is never logged and never
 // appears in error messages.
+//
+// By default the payload is stored as-is, which is safe only when the database
+// is encrypted at rest. For defense in depth, Store.WithCipher enables
+// application-layer AES-256-GCM encryption (see NewAESGCM) so the data column
+// never holds plaintext; cmd/care wires it from the CKPT_ENC_KEY env var.
 package ckptpg
 
 import (
@@ -24,13 +29,20 @@ var schemaSQL string
 
 // Store implements checkpoint.Store[json.RawMessage] over pgx.
 type Store struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
+	cipher Cipher // nil = payloads stored verbatim (rely on DB-level encryption)
 }
 
 var _ checkpoint.Store[json.RawMessage] = (*Store)(nil)
 
 // New wraps an existing pool. The caller owns the pool's lifecycle.
 func New(pool *pgxpool.Pool) *Store { return &Store{pool: pool} }
+
+// WithCipher enables application-layer encryption of checkpoint payloads at
+// rest: data is sealed before INSERT and opened after SELECT, so the data
+// column never holds plaintext PHI. Legacy plaintext rows written before a
+// Cipher was set still read back unchanged. Returns s for chaining.
+func (s *Store) WithCipher(c Cipher) *Store { s.cipher = c; return s }
 
 // EnsureSchema applies db/0001_checkpoints.sql (idempotent). Deployments
 // with managed migrations can skip this and run the file themselves.
@@ -48,6 +60,13 @@ func (s *Store) CreateCheckpoint(ctx context.Context, sessionID string, data jso
 	var parentID *string
 	if parent != nil {
 		parentID = &parent.CheckpointID
+	}
+	if s.cipher != nil {
+		sealed, err := sealPayload(s.cipher, data)
+		if err != nil {
+			return workflow.CheckpointInfo{}, fmt.Errorf("ckptpg: seal checkpoint for session %s: %w", sessionID, err)
+		}
+		data = sealed
 	}
 	_, err := s.pool.Exec(ctx,
 		`INSERT INTO checkpoints (id, session_id, parent_id, data) VALUES ($1, $2, $3, $4)`,
@@ -70,6 +89,9 @@ func (s *Store) RetrieveCheckpoint(ctx context.Context, sessionID string, info w
 	}
 	if err != nil {
 		return nil, fmt.Errorf("ckptpg: retrieve checkpoint %s: %w", info.CheckpointID, err)
+	}
+	if s.cipher != nil {
+		return openPayload(s.cipher, data)
 	}
 	return data, nil
 }

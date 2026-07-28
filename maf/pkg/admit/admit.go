@@ -75,11 +75,13 @@ func (b *Boundary) Admit(ctx context.Context, agentID, msgType, caseToken string
 }
 
 // RecordAgentError audits a handler failure after an admitted hop. ErrorText
-// carries err.Error() only — never payload (bodh audit discipline).
+// is passed through SafeErrorText, so only errors explicitly marked AuditSafe
+// keep their message; any other error is redacted to its type — the "zero PHI
+// in audit events" invariant is enforced here, not left to upstream discipline.
 func (b *Boundary) RecordAgentError(agentID, caseToken string, err error) {
 	b.record(audit.Event{
 		Kind: audit.KindAgentError, AgentID: agentID, CaseID: caseToken,
-		ErrorText: err.Error(),
+		ErrorText: SafeErrorText(err),
 	})
 }
 
