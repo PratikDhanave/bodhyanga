@@ -70,6 +70,49 @@ func (c *openaiClient) buildPayload(req Request) (map[string]any, error) {
 		})
 	}
 	for _, m := range req.Messages {
+		// Tool-result turn: OpenAI uses a dedicated "tool" role, one message per
+		// result, correlated to the assistant's tool call by tool_call_id.
+		if len(m.ToolResults) > 0 {
+			for _, tr := range m.ToolResults {
+				msgs = append(msgs, map[string]any{
+					"role":         "tool",
+					"tool_call_id": tr.ToolUseID,
+					"content":      tr.Content,
+				})
+			}
+			continue
+		}
+
+		// Assistant turn that called tools: serialize the tool_calls array so
+		// the following tool messages have matching ids. OpenAI expects
+		// function.arguments as a JSON string.
+		if len(m.ToolCalls) > 0 {
+			calls := make([]map[string]any, 0, len(m.ToolCalls))
+			for _, tc := range m.ToolCalls {
+				args := string(tc.Arguments)
+				if args == "" {
+					args = "{}"
+				}
+				calls = append(calls, map[string]any{
+					"id":   tc.ID,
+					"type": "function",
+					"function": map[string]any{
+						"name":      tc.Name,
+						"arguments": args,
+					},
+				})
+			}
+			entry := map[string]any{
+				"role":       "assistant",
+				"tool_calls": calls,
+			}
+			if m.Content != "" {
+				entry["content"] = m.Content
+			}
+			msgs = append(msgs, entry)
+			continue
+		}
+
 		if len(m.Images) > 0 {
 			parts := make([]map[string]any, 0, len(m.Images)+1)
 			if m.Content != "" {
@@ -211,7 +254,7 @@ func (c *openaiClient) parseResponse(body []byte, expectJSON bool) (*Response, e
 		if len(args) == 0 {
 			args = json.RawMessage("{}")
 		}
-		toolCalls = append(toolCalls, ToolCall{Name: tc.Function.Name, Arguments: args})
+		toolCalls = append(toolCalls, ToolCall{ID: tc.ID, Name: tc.Function.Name, Arguments: args})
 	}
 
 	if expectJSON {
