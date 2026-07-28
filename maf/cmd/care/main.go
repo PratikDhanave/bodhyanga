@@ -10,6 +10,7 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"os"
@@ -65,6 +66,11 @@ func main() {
 		}
 		defer pool.Close()
 		store := ckptpg.New(pool)
+		if cipher, err := checkpointCipher(); err != nil {
+			fatal(err)
+		} else if cipher != nil {
+			store.WithCipher(cipher)
+		}
 		if err := store.EnsureSchema(context.Background()); err != nil {
 			fatal(err)
 		}
@@ -77,6 +83,21 @@ func main() {
 	if err := http.ListenAndServe(*addr, api.Handler()); err != nil {
 		fatal(err)
 	}
+}
+
+// checkpointCipher builds an at-rest cipher for checkpoint payloads from the
+// CKPT_ENC_KEY env var (64 hex chars = 32 bytes, AES-256). Unset → nil (no
+// application-layer encryption; rely on DB-level encryption at rest).
+func checkpointCipher() (ckptpg.Cipher, error) {
+	raw := os.Getenv("CKPT_ENC_KEY")
+	if raw == "" {
+		return nil, nil
+	}
+	key, err := hex.DecodeString(strings.TrimSpace(raw))
+	if err != nil {
+		return nil, fmt.Errorf("CKPT_ENC_KEY: not valid hex: %w", err)
+	}
+	return ckptpg.NewAESGCM(key)
 }
 
 func banner(addr, engine, policy string, durable bool) {
