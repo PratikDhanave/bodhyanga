@@ -173,6 +173,15 @@ help:
 	@echo "  make bodhctl         build + install cmd/bodhctl"
 	@echo "  make export-hitl     export HITL feedback to /tmp/bodh-ft"
 	@echo ""
+	@echo "━━━ maf/ subproject (MAF-go MARA slice — nested module) ━━━━━━━"
+	@echo "  make maf-build       cd maf && go build ./..."
+	@echo "  make maf-test        cd maf && go test ./..."
+	@echo "  make maf-ci          maf vet + test"
+	@echo "  make maf-care        maf care API (loopback :8088, no auth)"
+	@echo "  make maf-slice       maf demo case through the pipeline"
+	@echo "  make maf-bench       maf SD-Bench accuracy + cost harness"
+	@echo "  make maf-web         maf Next.js clinician console (npm dev)"
+	@echo ""
 	@echo "━━━ Analysis & Evaluation tools ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  make hl7-oru         parse HL7 ORU lab result messages (cmd/hl7oru)"
 	@echo "  make equity-eval     stratified equity evaluation (cmd/equity-eval)"
@@ -883,3 +892,44 @@ k8s-status:
 .PHONY: k8s-logs
 k8s-logs:
 	$(KUBECTL) $(_k8s_ctx) logs -n bodh -l app=bodh-care -f $(ARGS)
+
+# ===========================================================================
+# MAF SUBPROJECT (maf/ — MARA pipeline on Microsoft Agent Framework for Go)
+# ===========================================================================
+# maf/ is a NESTED Go module; the parent build/test targets above do NOT descend
+# into it. These run inside maf/ (its go.mod uses `replace => ..` against this
+# checkout). LLM/Ollama env is shared via LLM_ENV; ANTHROPIC_API_KEY, SLICE_DB,
+# and CKPT_ENC_KEY come from your shell env (see maf/.env.example). See maf/README.md.
+
+MAF ?= maf
+
+.PHONY: maf-build
+maf-build:
+	cd $(MAF) && $(GO) build ./...
+
+.PHONY: maf-vet
+maf-vet:
+	cd $(MAF) && $(GO) vet ./...
+
+.PHONY: maf-test
+maf-test:
+	cd $(MAF) && $(GO) test ./...
+
+.PHONY: maf-ci
+maf-ci: maf-vet maf-test
+
+.PHONY: maf-care
+maf-care:
+	cd $(MAF) && $(LLM_ENV) $(GO) run ./cmd/care -diagnostician=$(DIAGNOSTICIAN) $(ARGS)
+
+.PHONY: maf-slice
+maf-slice:
+	cd $(MAF) && $(LLM_ENV) $(GO) run ./cmd/slice $(ARGS)
+
+.PHONY: maf-bench
+maf-bench:
+	cd $(MAF) && $(LLM_ENV) $(GO) run ./cmd/bench $(ARGS)
+
+.PHONY: maf-web
+maf-web:
+	cd $(MAF)/web && $(NPM) install && $(NPM) run dev
