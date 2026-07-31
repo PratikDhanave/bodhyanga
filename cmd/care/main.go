@@ -146,10 +146,11 @@ func main() {
 	mux.Handle("GET /metrics", observability.PrometheusHandler())
 
 	// Real-time HITL review stream (WebSocket). The SPA connects to
-	// /ws/hitl?tenant_id=<id> for live review push. Without this mount every
-	// page logs a WebSocket handshake 404. Not under /api/, so it bypasses the
-	// Bearer gate (the upgrade carries no Authorization header).
-	mux.Handle("/ws/hitl", hitl.NewHub(reviews))
+	// /ws/hitl?tenant_id=<id>&access_token=<short-lived ticket> for live review
+	// push. streamAuth validates the ticket and same-origin before the upgrade
+	// (the WS handshake carries no Authorization header). Wired after authStore
+	// is constructed below via wsHitlHandler.
+	wsHitl := hitl.NewHub(reviews)
 
 	mux.HandleFunc("/patients", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -427,6 +428,10 @@ func main() {
 	_ = authStore.AddUser("clinician@hospital.org", "clinic123", auth.RoleClinician)
 	authSecret := auth.JWTSecret()
 	(&authServer{store: authStore, secret: authSecret}).mountAuth(mux)
+
+	// Gate the HITL WebSocket behind a short-lived stream ticket + same-origin
+	// check (see streamAuth). wsHitl was constructed above with the review queue.
+	mux.Handle("/ws/hitl", streamAuth(authStore, authSecret, wsHitl))
 
 	if h, ok := spaHandler(); ok {
 		mux.Handle("/ui/", h)
