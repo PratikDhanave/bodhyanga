@@ -1,9 +1,40 @@
-# Bodh — CLAUDE.md
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 Bodh is a **HIPAA-grade medical AI orchestration platform** written in Go. It implements the
 Multi-Agent Reference Architecture (MARA) for clinical decision support: intake → test-planning
 → diagnostics → care-plan generation, with full audit trails, human-in-the-loop feedback, and
 LLM-agnostic provider abstraction.
+
+> **Not a medical device.** Bodh is a research/engineering reference, not approved for clinical
+> use. Every file preserves that disclaimer chain. Demo agents use simulated/rule-based inference;
+> all clinical thresholds are illustrative, not guidelines.
+
+---
+
+## Load-bearing invariants (violating these gets a change reverted)
+
+These are architectural contracts, not style. `AGENTS.md` is the dense field guide that documents
+them in full — read it before proposing changes that touch orchestration, audit, or HITL.
+
+1. **Never bypass the HITL gate for clinically consequential actions.** Diagnosis conclusions,
+   treatment/discharge recommendations, prior-auth and refill approvals, and outreach on protected
+   conditions (42 CFR Part 2) must flow through `agents/human_review.go` → `pkg/hitl.Queue` →
+   clinician decision. This gate is what keeps Bodh from being a regulated medical device.
+
+2. **Never widen the PHI surface of the audit log.** `pkg/audit` records *enough to reconstruct,
+   never enough to leak*: IDs (case/patient/tenant/trace), kinds, timestamps, agent IDs, verdicts,
+   redacted reasons — **never** chief complaints, HPI narrative, lab values, med names+doses, or
+   free text. The right-to-explanation handler (`cmd/care/explain.go`) inherits this;
+   `TestExplainHandler_PHIFreeFieldSelection` asserts forbidden JSON keys are absent. On spans,
+   `bodh.case_id` is always `sha256(caseID)[:8]` — raw MRNs never reach collectors or logs.
+
+3. **Every LLM-backed agent has a deterministic rule-based fallback, and the fallback is the
+   contract.** On LLM timeout, a refusal pattern (`pkg/safety.IsRefusal`), or failed grounding
+   (`pkg/safety.CheckHallucination`), the agent must degrade to its rule sibling and continue the
+   case — not raise, crash, or skip. Bench fixtures (`data/cases/`) are graded on the rule path,
+   so regressions surface in CI.
 
 ---
 
@@ -85,7 +116,7 @@ cmd/                  CLI binaries (one subdirectory per binary)
   export-hitl-feedback/
   laminar-eval/       Go equivalent of Python lmnr.evaluate()
 
-pkg/                  library packages (36 total)
+pkg/                  library packages (43 total)
   agent/              agent orchestration core
   audio/              audio processing (+ kronk/ subpkg)
   audit/              HIPAA append-only audit log
@@ -107,7 +138,7 @@ pkg/                  library packages (36 total)
   web/                HTTP handlers + routing
   ... (see pkg/ for the full list)
 
-agents/               96 YAML/Go agent definitions
+agents/               Go agent implementations (one <name>.go + <name>_doc.go + <name>_test.go each)
 data/                 knowledge corpus, clinical case data
 db/                   SQL migrations
 docs/                 18 markdown documentation files
