@@ -37,6 +37,9 @@
 package observability
 
 import (
+	"bufio"
+	"errors"
+	"net"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -119,6 +122,28 @@ func (r *statusRecorder) WriteHeader(code int) {
 		r.status = code
 	}
 	r.ResponseWriter.WriteHeader(code)
+}
+
+// Flush forwards to the underlying ResponseWriter when it is an http.Flusher.
+// Server-Sent Events (e.g. the case-run trace stream at /api/runs/{id}/events)
+// require Flush after each event; without this pass-through the wrapped writer
+// silently swallows Flush and events never reach the client.
+func (r *statusRecorder) Flush() {
+	if f, ok := r.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+// Hijack forwards to the underlying ResponseWriter when it is an http.Hijacker.
+// The HITL WebSocket endpoint (/ws/hitl) hijacks the connection to complete the
+// upgrade; without this the wrapped writer fails the type assertion and the
+// handshake returns 500.
+func (r *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hj, ok := r.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("observability: underlying ResponseWriter is not an http.Hijacker")
+	}
+	return hj.Hijack()
 }
 
 func (r *statusRecorder) code() int {

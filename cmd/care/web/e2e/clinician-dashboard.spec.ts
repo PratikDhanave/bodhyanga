@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 async function login(page: Page): Promise<void> {
   await page.goto('/ui/login');
-  await page.locator('#email').fill('clinician');
+  await page.locator('#email').fill('clinician@hospital.org');
   await page.locator('#password').fill('clinic123');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL(/\/ui\/?$/);

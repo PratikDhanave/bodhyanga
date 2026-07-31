@@ -145,6 +145,12 @@ func main() {
 	// to the API gateway / monitoring namespace in Kubernetes.
 	mux.Handle("GET /metrics", observability.PrometheusHandler())
 
+	// Real-time HITL review stream (WebSocket). The SPA connects to
+	// /ws/hitl?tenant_id=<id> for live review push. Without this mount every
+	// page logs a WebSocket handshake 404. Not under /api/, so it bypasses the
+	// Bearer gate (the upgrade carries no Authorization header).
+	mux.Handle("/ws/hitl", hitl.NewHub(reviews))
+
 	mux.HandleFunc("/patients", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:

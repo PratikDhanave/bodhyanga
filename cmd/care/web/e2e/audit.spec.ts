@@ -17,7 +17,7 @@ import { test, expect } from '@playwright/test';
 // Shared auth helper.
 async function login(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('/ui/login');
-  await page.locator('#email').fill('clinician');
+  await page.locator('#email').fill('clinician@hospital.org');
   await page.locator('#password').fill('clinic123');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL(/\/ui\/?$/);
@@ -39,10 +39,10 @@ test('audit log page loads with empty state message', async ({ page }) => {
   const emptyStateCell = page.locator('td', { hasText: 'No audit events found.' });
   const firstRow = page.locator('table tbody tr').first();
 
-  await expect(emptyStateCell.or(firstRow)).toBeVisible({ timeout: 10_000 });
+  await expect(emptyStateCell.or(firstRow).first()).toBeVisible({ timeout: 10_000 });
 
   // The filter form must always be rendered regardless of data state.
-  await expect(page.locator('input[placeholder*="case"]')).toBeVisible();
+  await expect(page.locator('input[placeholder*="a3f1b9c2"]')).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -60,7 +60,7 @@ test('audit log filters by case_id', async ({ page }) => {
   // Enter a case_id that is very unlikely to match any audit event — an
   // unknown case causes the backend to return an empty page, which puts the
   // component into the "No audit events found." state.
-  const caseIdInput = page.locator('input[placeholder*="case"]');
+  const caseIdInput = page.locator('input[placeholder*="a3f1b9c2"]');
   await expect(caseIdInput).toBeVisible();
   await caseIdInput.fill('00000000');
 
