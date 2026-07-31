@@ -11,6 +11,7 @@ import type {
   RunSummary,
   BenchResult,
   NurseTask,
+  CostAnalytics,
 } from '../types';
 import { getToken, clearToken } from '../hooks/useAuth';
 
@@ -54,6 +55,8 @@ export const api = {
   panel: () => http<PanelReport>('/panel/report'),
   bench: () => http<BenchResult[]>('/bench/latest'),
   llmTraces: (limit = 100) => http<LLMTraceLog[]>(`/llm-traces?limit=${limit}`),
+  costAnalytics: (tenant: string, from: string, to: string) =>
+    http<CostAnalytics>(`/analytics/cost?tenant=${encodeURIComponent(tenant)}&from=${from}&to=${to}`),
   fineTuneStatus: () =>
     http<{
       sft_lines: number;
