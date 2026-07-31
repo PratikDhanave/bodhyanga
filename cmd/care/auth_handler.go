@@ -67,13 +67,20 @@ func authMiddleware(store *auth.CredentialStore, secret string) func(http.Handle
 				}
 			}
 
-			// Require Authorization: Bearer <token>.
-			authHeader := r.Header.Get("Authorization")
-			if !strings.HasPrefix(authHeader, "Bearer ") {
+			// Accept the token from Authorization: Bearer <token>, or — for
+			// EventSource/WebSocket clients that cannot set request headers —
+			// from an ?access_token=<token> query parameter (e.g. the case-run
+			// SSE stream at /api/runs/{id}/events).
+			var rawToken string
+			if authHeader := r.Header.Get("Authorization"); strings.HasPrefix(authHeader, "Bearer ") {
+				rawToken = strings.TrimPrefix(authHeader, "Bearer ")
+			} else {
+				rawToken = r.URL.Query().Get("access_token")
+			}
+			if rawToken == "" {
 				http.Error(w, "authorization required", http.StatusUnauthorized)
 				return
 			}
-			rawToken := strings.TrimPrefix(authHeader, "Bearer ")
 			u, err := store.ValidateToken(rawToken, secret)
 			if err != nil {
 				http.Error(w, "invalid or expired token", http.StatusUnauthorized)

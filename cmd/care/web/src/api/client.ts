@@ -71,9 +71,12 @@ export const api = {
   startRun: (req: RunRequest) =>
     http<RunSummary>('/runs', { method: 'POST', body: JSON.stringify(req) }),
 
-  // SSE
+  // SSE. EventSource cannot set an Authorization header, so the JWT is passed
+  // as an access_token query param (authMiddleware accepts either).
   traceEvents: (runId: string, onEvent: (e: MessageEvent) => void, onError?: (e: Event) => void) => {
-    const es = new EventSource(`${BASE}/runs/${runId}/events`);
+    const token = getToken();
+    const q = token ? `?access_token=${encodeURIComponent(token)}` : '';
+    const es = new EventSource(`${BASE}/runs/${runId}/events${q}`);
     es.onmessage = onEvent;
     if (onError) es.onerror = onError;
     return () => es.close();

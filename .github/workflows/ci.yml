@@ -28,18 +28,26 @@ jobs:
       - name: go vet
         run: go vet ./...
 
-      - name: go test
-        run: go test -race -coverprofile=coverage.out ./...
+      - name: go test (race, whole module)
+        run: go test -race ./...
+
+      # Coverage is gated on library code (./pkg/...), not on cmd/* entrypoints.
+      # main() functions bind sockets, call os.Exit and parse flags — they are
+      # exercised by the smoke jobs below (demo, bench, integration), not by unit
+      # coverage. Gating the whole module is unachievable by construction and hid
+      # a red gate; gating pkg/ measures the code that unit tests actually own.
+      - name: go test (coverage, pkg/)
+        run: go test -coverprofile=coverage.out ./pkg/...
 
       - name: coverage summary
         run: go tool cover -func=coverage.out | tail -20
 
-      - name: coverage gate (fail below 80%)
+      - name: coverage gate (pkg/, fail below 85%)
         run: |
           TOTAL=$(go tool cover -func=coverage.out | grep "^total:" | awk '{print $3}' | tr -d '%')
-          echo "Total coverage: ${TOTAL}%"
-          if [ "$(echo "$TOTAL < 80" | bc -l)" = "1" ]; then
-            echo "::error::Coverage ${TOTAL}% is below 80% threshold"
+          echo "pkg/ coverage: ${TOTAL}%"
+          if [ "$(echo "$TOTAL < 85" | bc -l)" = "1" ]; then
+            echo "::error::pkg/ coverage ${TOTAL}% is below 85% threshold"
             exit 1
           fi
 
@@ -103,6 +111,29 @@ jobs:
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
       - name: govulncheck
         run: govulncheck ./...
+
+  frontend:
+    name: frontend · build · test
+    runs-on: ubuntu-latest
+    # The clinician SPA is go:embed'd into cmd/care and committed under
+    # cmd/care/web/dist/. It was never gated here, so src/ could stop compiling
+    # while a stale dist/ kept serving — this job closes that gap.
+    defaults:
+      run:
+        working-directory: cmd/care/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: cmd/care/web/package-lock.json
+      - name: npm ci
+        run: npm ci
+      - name: typecheck + build
+        run: npm run build
+      - name: unit tests
+        run: npm run test
 
   docker:
     name: docker build
