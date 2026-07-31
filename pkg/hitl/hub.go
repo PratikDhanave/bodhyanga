@@ -98,10 +98,14 @@ func (h *Hub) Subscribe(tenantID string) (ch <-chan Event, unsub func()) {
 // keepalive is acceptable; a missed review notification will be delivered on
 // the next submit/decide or discovered on the next UI poll.
 func (h *Hub) Broadcast(tenantID string, ev Event) {
+	// Hold the read lock across the whole loop: `set` is the same map object
+	// stored in h.clients, and the unsubscribe closure deletes from it and
+	// closes the channel under the write lock. Ranging/sending without the lock
+	// races with that (concurrent map iteration + write, or send on a closed
+	// channel). The non-blocking select keeps the critical section short.
 	h.mu.RLock()
-	set := h.clients[tenantID]
-	h.mu.RUnlock()
-	for c := range set {
+	defer h.mu.RUnlock()
+	for c := range h.clients[tenantID] {
 		select {
 		case c <- ev:
 		default:
