@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Audit & Observability",
+    "subtitle": "Every message forks into a PHI-minimized append-only audit log and hashed-case_id spans",
+    "output": "audit.dataflow.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1280,
+      620
+    ],
+    "views": [
+      {
+        "id": "audit",
+        "label": "Audit trail",
+        "focus": [
+          "msg",
+          "audit_tap",
+          "minimize",
+          "audit_log",
+          "explain"
+        ],
+        "note": "The audit recorder minimizes PHI and appends to a tamper-evident log the explanation handler reads."
+      },
+      {
+        "id": "traces",
+        "label": "Traces",
+        "focus": [
+          "msg",
+          "otel_tap",
+          "hash",
+          "spans",
+          "collector"
+        ],
+        "note": "Spans carry a hashed case_id so raw MRNs never reach a third-party collector."
+      }
+    ]
+  },
+  "stages": [
+    {
+      "label": "Message"
+    },
+    {
+      "label": "Tap"
+    },
+    {
+      "label": "Minimize"
+    },
+    {
+      "label": "Sink"
+    },
+    {
+      "label": "Consumer"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "msg",
+      "type": "messagebus",
+      "label": "clinical message",
+      "sublabel": "every bus hop",
+      "stage": 0,
+      "row": 1
+    },
+    {
+      "id": "audit_tap",
+      "type": "backend",
+      "label": "audit recorder",
+      "sublabel": "pkg/audit",
+      "stage": 1,
+      "row": 0
+    },
+    {
+      "id": "otel_tap",
+      "type": "backend",
+      "label": "OTel hook",
+      "sublabel": "pkg/observability",
+      "stage": 1,
+      "row": 2
+    },
+    {
+      "id": "minimize",
+      "type": "security",
+      "label": "PHI-minimize",
+      "sublabel": "IDs · verdicts · no narrative",
+      "stage": 2,
+      "row": 0
+    },
+    {
+      "id": "hash",
+      "type": "security",
+      "label": "hash case_id",
+      "sublabel": "sha256(caseID)[:8]",
+      "stage": 2,
+      "row": 2
+    },
+    {
+      "id": "audit_log",
+      "type": "database",
+      "label": "audit_events",
+      "sublabel": "append-only · Merkle",
+      "stage": 3,
+      "row": 0
+    },
+    {
+      "id": "spans",
+      "type": "cloud",
+      "label": "OTLP export",
+      "sublabel": "spans",
+      "stage": 3,
+      "row": 2
+    },
+    {
+      "id": "explain",
+      "type": "backend",
+      "label": "explanation API",
+      "sublabel": "PHI-free · §164.312",
+      "stage": 4,
+      "row": 0
+    },
+    {
+      "id": "collector",
+      "type": "external",
+      "label": "collector",
+      "sublabel": "Jaeger / Laminar",
+      "stage": 4,
+      "row": 2
+    }
+  ],
+  "flows": [
+    {
+      "id": "f-audit-fork",
+      "from": "msg",
+      "to": "audit_tap",
+      "label": "every message",
+      "classification": "clinical action",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "f-otel-fork",
+      "from": "msg",
+      "to": "otel_tap",
+      "label": "every span",
+      "classification": "trace",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "f-minimize",
+      "from": "audit_tap",
+      "to": "minimize",
+      "label": "record",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "id": "f-append",
+      "from": "minimize",
+      "to": "audit_log",
+      "label": "append",
+      "classification": "PHI-minimized",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "id": "f-explain",
+      "from": "audit_log",
+      "to": "explain",
+      "label": "read",
+      "route": "straight"
+    },
+    {
+      "id": "f-hash",
+      "from": "otel_tap",
+      "to": "hash",
+      "label": "annotate",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "id": "f-spans",
+      "from": "hash",
+      "to": "spans",
+      "label": "export",
+      "classification": "no raw MRN",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "id": "f-collect",
+      "from": "spans",
+      "to": "collector",
+      "label": "OTLP",
+      "variant": "dashed",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "PHI minimization",
+      "items": [
+        "Records enough to reconstruct, never enough to leak",
+        "IDs, kinds, timestamps, verdicts, redacted reasons",
+        "No chief complaint, HPI, labs, meds or free text"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Tamper-evident",
+      "items": [
+        "audit_events is append-only (SELECT + INSERT grants)",
+        "Merkle SHA-256 chain-hash; VerifyChain() detects tampering",
+        "The right-to-explanation handler inherits PHI-freedom"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Hashed traces",
+      "items": [
+        "bodh.case_id is sha256(caseID)[:8] on every span",
+        "Raw MRNs never reach a third-party collector",
+        "OTLP export is isolated behind the otel build tag"
+      ]
+    }
+  ]
+}
