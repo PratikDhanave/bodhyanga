@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Authentication & Session",
+    "subtitle": "JWT login (HS256, bcrypt) → Bearer-gated /api/* → 401 clears the token and redirects",
+    "output": "auth.sequence.html",
+    "quality_profile": "showcase",
+    "visual_preset": "signal-flow",
+    "viewBox": [1200, 840],
+    "views": [
+      { "id": "login", "label": "Login", "focus": ["spa", "login", "authapi", "store"], "note": "Credentials are verified with bcrypt and exchanged for an 8h HS256 token." },
+      { "id": "call", "label": "Authed call", "focus": ["spa", "api", "store"], "note": "authMiddleware validates the Bearer token on every /api/* request." },
+      { "id": "expiry", "label": "Expiry", "focus": ["spa", "api", "login"], "note": "A 401 clears the stored token and bounces the user back to /ui/login." }
+    ]
+  },
+  "participants": [
+    { "id": "spa", "type": "external", "label": "SPA", "sublabel": "clinician console" },
+    { "id": "login", "type": "frontend", "label": "Login page", "sublabel": "/ui/login" },
+    { "id": "authapi", "type": "backend", "label": "Auth API", "sublabel": "/api/auth/*" },
+    { "id": "store", "type": "database", "label": "Store", "sublabel": "CredentialStore" },
+    { "id": "api", "type": "backend", "label": "API", "sublabel": "gated /api/*" }
+  ],
+  "segments": [
+    { "from": 160, "to": 400, "label": "Login" },
+    { "from": 400, "to": 600, "label": "Authenticated call" },
+    { "from": 600, "to": 760, "label": "Expiry" }
+  ],
+  "messages": [
+    { "from": "spa", "to": "login", "y": 180, "label": "open /ui/login" },
+    { "from": "login", "to": "authapi", "y": 220, "label": "POST credentials", "variant": "emphasis" },
+    { "from": "authapi", "to": "store", "y": 260, "label": "Verify (bcrypt)" },
+    { "from": "store", "to": "authapi", "y": 300, "label": "user + role", "variant": "return" },
+    { "from": "authapi", "to": "login", "y": 340, "label": "JWT (HS256, 8h)", "variant": "emphasis" },
+    { "from": "login", "to": "spa", "y": 380, "label": "store bodh_jwt → /ui/", "variant": "return" },
+    { "from": "spa", "to": "api", "y": 440, "label": "GET /api/* + Bearer", "variant": "emphasis" },
+    { "from": "api", "to": "store", "y": 480, "label": "ValidateToken" },
+    { "from": "store", "to": "api", "y": 520, "label": "authenticated user", "variant": "return" },
+    { "from": "api", "to": "spa", "y": 560, "label": "200 + JSON", "variant": "return" },
+    { "from": "spa", "to": "api", "y": 640, "label": "request w/ expired token", "variant": "dashed" },
+    { "from": "api", "to": "spa", "y": 680, "label": "401 unauthorized", "variant": "security" },
+    { "from": "spa", "to": "login", "y": 720, "label": "clearToken → redirect", "variant": "dashed" }
+  ],
+  "activations": [
+    { "participant": "authapi", "from": 220, "to": 340, "type": "backend" },
+    { "participant": "api", "from": 440, "to": 560, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Token", "items": ["HS256 JWT signed with BODH_JWT_SECRET", "Claims: sub, email, role, 8h expiry", "Stored client-side as bodh_jwt"] },
+    { "dot": "rose", "title": "Gate", "items": ["authMiddleware guards every /api/* route", "POST /api/auth/login, /healthz, /readyz are public", "Bcrypt-hashed credentials; demo users are illustrative"] },
+    { "dot": "amber", "title": "Expiry", "items": ["A 401 clears the token and redirects to login", "Refresh exchanges a valid token for a fresh one", "No silent re-use of an expired session"] }
+  ]
+}
