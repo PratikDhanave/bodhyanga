@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Human-in-the-Loop Gate",
+    "subtitle": "Fail-closed clinical oversight: no consequential action proceeds without clinician approval",
+    "output": "hitl.workflow.html",
+    "quality_profile": "showcase",
+    "viewBox": [1200, 720],
+    "views": [
+      { "id": "gate", "label": "The gate", "focus": ["propose", "review_req", "pending", "clinician"], "note": "Every consequential action is wrapped as a review_request and queued for a clinician." },
+      { "id": "decide", "label": "Decision", "focus": ["clinician", "resume", "rejected"], "note": "Approve resumes the held message; reject halts it — no clinical action is taken." },
+      { "id": "act", "label": "Act", "focus": ["resume", "downstream"], "note": "Only an approved action is published to downstream agents." }
+    ]
+  },
+  "lanes": [
+    { "id": "agent", "label": "Agents" },
+    { "id": "queue", "label": "HITL Queue" },
+    { "id": "clinician", "label": "Clinician" },
+    { "id": "outcome", "label": "Outcome" },
+    { "id": "exceptions", "label": "Rejected", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "propose_p", "label": "Propose", "fromCol": 0, "toCol": 0 },
+    { "id": "gate_p", "label": "Gate & queue", "fromCol": 1, "toCol": 3, "variant": "security" },
+    { "id": "review_p", "label": "Human review", "fromCol": 4, "toCol": 4 },
+    { "id": "act_p", "label": "Act", "fromCol": 5, "toCol": 5, "variant": "emphasis" }
+  ],
+  "groups": [
+    { "id": "gatezone", "label": "Fail-closed gate", "lane": "queue", "fromCol": 1, "toCol": 3, "variant": "security" }
+  ],
+  "mainPath": ["propose", "review_req", "pending", "clinician", "resume", "downstream"],
+  "nodes": [
+    { "id": "propose", "lane": "agent", "col": 0, "type": "backend", "label": "Agent action", "sublabel": "consequential" },
+    { "id": "review_req", "lane": "queue", "col": 1, "type": "security", "label": "human_review", "sublabel": "wrap request" },
+    { "id": "pending", "lane": "queue", "col": 3, "type": "messagebus", "label": "Pending", "sublabel": "pkg/hitl.Queue" },
+    { "id": "clinician", "lane": "clinician", "col": 4, "type": "security", "label": "Clinician", "sublabel": "approve/reject" },
+    { "id": "resume", "lane": "outcome", "col": 5, "type": "backend", "label": "Resume", "sublabel": "publish held" },
+    { "id": "downstream", "lane": "agent", "col": 5, "type": "backend", "label": "Downstream", "sublabel": "on approval" },
+    { "id": "rejected", "lane": "exceptions", "col": 4, "type": "security", "label": "Halt", "sublabel": "no action" }
+  ],
+  "edges": [
+    { "id": "e-gate", "from": "propose", "to": "review_req", "label": "gate", "variant": "security", "role": "main" },
+    { "id": "e-enqueue", "from": "review_req", "to": "pending", "label": "enqueue", "role": "main" },
+    { "id": "e-notify", "from": "pending", "to": "clinician", "label": "notify", "role": "main" },
+    { "id": "e-approve", "from": "clinician", "to": "resume", "label": "approve", "variant": "emphasis", "role": "branch" },
+    { "id": "e-reject", "from": "clinician", "to": "rejected", "label": "reject", "variant": "security", "role": "error", "fromSide": "bottom", "toSide": "top" },
+    { "id": "e-resume", "from": "resume", "to": "downstream", "label": "resume", "role": "main", "fromSide": "top", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "Fail-closed", "items": ["No consequential action proceeds without approval", "The gate is the Cures Act independent-review criterion, in code", "Bypassing it makes Bodh a regulated medical device"] },
+    { "dot": "cyan", "title": "What is gated", "items": ["Diagnosis conclusions & treatment plans", "Discharge, refill and prior-auth approvals", "Outreach on 42 CFR Part 2 protected conditions"] },
+    { "dot": "amber", "title": "Cascades", "items": ["An approved action can trigger a downstream agent", "That agent may emit its own review_request", "The queue drains across rounds until quiet"] }
+  ]
+}

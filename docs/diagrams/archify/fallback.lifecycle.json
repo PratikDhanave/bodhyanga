@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "LLM → Rule Fallback",
+    "subtitle": "Every LLM-backed agent degrades to its deterministic rule sibling — the fallback is the contract",
+    "output": "fallback.lifecycle.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1040,
+      600
+    ],
+    "views": [
+      {
+        "id": "happy",
+        "label": "LLM path",
+        "focus": [
+          "request",
+          "llm_call",
+          "verdict",
+          "accepted",
+          "proposal"
+        ],
+        "note": "When the model is grounded and does not refuse, its proposal is accepted."
+      },
+      {
+        "id": "degrade",
+        "label": "Degrade",
+        "focus": [
+          "verdict",
+          "degraded",
+          "rule",
+          "proposal"
+        ],
+        "note": "On refusal, timeout or failed grounding the agent falls back to deterministic rules."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "LLM path"
+    },
+    {
+      "id": "fallback",
+      "label": "Rule fallback"
+    }
+  ],
+  "states": [
+    {
+      "id": "request",
+      "type": "start",
+      "label": "Request",
+      "sublabel": "diagnose case",
+      "lane": "main",
+      "col": 0,
+      "step": "01"
+    },
+    {
+      "id": "llm_call",
+      "type": "active",
+      "label": "LLM call",
+      "sublabel": "provider",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "Anthropic / OpenAI / Ollama"
+    },
+    {
+      "id": "verdict",
+      "type": "decision",
+      "label": "Validate",
+      "sublabel": "grounding + refusal",
+      "lane": "main",
+      "col": 2,
+      "step": "03"
+    },
+    {
+      "id": "accepted",
+      "type": "success",
+      "label": "LLM proposal",
+      "sublabel": "grounded",
+      "lane": "main",
+      "col": 3,
+      "step": "04"
+    },
+    {
+      "id": "proposal",
+      "type": "success",
+      "label": "diagnosis_proposal",
+      "sublabel": "→ verifier",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "tag": "case always finalizes"
+    },
+    {
+      "id": "degraded",
+      "type": "failure",
+      "label": "Degraded",
+      "sublabel": "refusal / timeout",
+      "lane": "fallback",
+      "col": 0
+    },
+    {
+      "id": "rule",
+      "type": "active",
+      "label": "Rule diagnostician",
+      "sublabel": "deterministic",
+      "lane": "fallback",
+      "col": 2,
+      "tag": "graded in CI"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-degrade",
+      "from": "verdict",
+      "to": "degraded",
+      "label": "refusal / timeout",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight",
+      "labelDy": 55
+    },
+    {
+      "id": "t-fallback",
+      "from": "degraded",
+      "to": "rule",
+      "label": "rule sibling",
+      "variant": "emphasis"
+    },
+    {
+      "id": "t-rule-emit",
+      "from": "rule",
+      "to": "proposal",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Fallback is the contract",
+      "items": [
+        "Every LLM agent has a rule-based sibling",
+        "LLMDiagnostician → rule diagnostician",
+        "The case always finalizes — never crash or skip"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Degrade triggers",
+      "items": [
+        "pkg/safety.IsRefusal — provider refusal pattern",
+        "pkg/safety.CheckHallucination — failed grounding",
+        "Timeout on the LLM call"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Why it matters",
+      "items": [
+        "Bench fixtures are graded on the rule path",
+        "Regressions surface in CI, not in production",
+        "Deterministic behavior under adversarial input"
+      ]
+    }
+  ]
+}

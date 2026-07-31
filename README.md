@@ -6,7 +6,7 @@ Go · MARA · Medical AI · Sequential Diagnosis · FHIR · HL7 v2 · HIPAA-awar
 
 **Module path:** `github.com/PratikDhanave/bodh`
 
-**Architecture diagrams:** [Architecture.png](Architecture.png) (MARA platform) · [architectureflow.png](architectureflow.png) (sequential diagnosis flow) · [docs/diagrams.md](docs/diagrams.md) (25 mermaid views)
+**Architecture diagrams:** [Architecture.png](Architecture.png) (MARA platform) · [architectureflow.png](architectureflow.png) (sequential diagnosis flow) · [6 interactive Archify flows](#flow-diagrams--every-flow-end-to-end) · [docs/diagrams.md](docs/diagrams.md) (25 mermaid views)
 
 ---
 
@@ -303,6 +303,70 @@ End-to-end **sequential diagnosis** for one case: presentation → RPM monitor �
 <p align="center">
   <img src="./architectureflow.png" alt="Sequential diagnosis flow — virtual physician panel" width="820"/>
 </p>
+
+### Flow diagrams — every flow, end to end
+
+The six diagrams below cover **all** of Bodh's flows, generated with [Archify](https://github.com/tt-a1i/archify) and validated against the codebase. The SVG previews render inline on GitHub; each links to a **self-contained interactive HTML** (pan, zoom, light/dark theme, guided views) under [`docs/diagrams/`](docs/diagrams/) — open it locally or serve it. Source specs live in [`docs/diagrams/archify/`](docs/diagrams/archify/).
+
+#### 1 · Platform architecture (MARA)
+
+One Go binary: clients → orchestrator → in-process bus → agents, gated by governance, HITL, and an append-only audit log.
+
+<p align="center">
+  <a href="docs/diagrams/platform.architecture.html"><img src="docs/diagrams/platform.architecture.svg" alt="Bodh platform architecture (MARA)" width="880"/></a>
+</p>
+
+<sub>▶ <a href="docs/diagrams/platform.architecture.html">Interactive version</a></sub>
+
+#### 2 · Sequential diagnosis — virtual physician panel
+
+The MAI-DxO / SD-Bench loop: `presentation` → history → cost-guarded tests → `diagnosis_proposal` → verify → HITL gate → final `diagnosis`.
+
+<p align="center">
+  <a href="docs/diagrams/diagnosis.sequence.html"><img src="docs/diagrams/diagnosis.sequence.svg" alt="Sequential diagnosis panel loop" width="880"/></a>
+</p>
+
+<sub>▶ <a href="docs/diagrams/diagnosis.sequence.html">Interactive version</a></sub>
+
+#### 3 · Human-in-the-loop gate
+
+Fail-closed oversight: every consequential action is wrapped as a `review_request`, queued, and either approved (resumed) or rejected (halted).
+
+<p align="center">
+  <a href="docs/diagrams/hitl.workflow.html"><img src="docs/diagrams/hitl.workflow.svg" alt="Human-in-the-loop gate workflow" width="760"/></a>
+</p>
+
+<sub>▶ <a href="docs/diagrams/hitl.workflow.html">Interactive version</a></sub>
+
+#### 4 · Care-services workflows
+
+Chronic-disease (CDM), transitions (TCM) and panel pathways run on the same bus and fan into patient engagement.
+
+<p align="center">
+  <a href="docs/diagrams/care-services.dataflow.html"><img src="docs/diagrams/care-services.dataflow.svg" alt="Care-services fan-in dataflow" width="880"/></a>
+</p>
+
+<sub>▶ <a href="docs/diagrams/care-services.dataflow.html">Interactive version</a></sub>
+
+#### 5 · LLM → rule fallback
+
+Every LLM-backed agent degrades to its deterministic rule sibling on refusal, timeout or failed grounding — the fallback is the contract, so the case always finalizes.
+
+<p align="center">
+  <a href="docs/diagrams/fallback.lifecycle.html"><img src="docs/diagrams/fallback.lifecycle.svg" alt="LLM to rule fallback lifecycle" width="880"/></a>
+</p>
+
+<sub>▶ <a href="docs/diagrams/fallback.lifecycle.html">Interactive version</a></sub>
+
+#### 6 · Audit &amp; observability
+
+Every message forks into a PHI-minimized, append-only audit log (Merkle-chained) and hashed-`case_id` spans — raw MRNs never leave the process.
+
+<p align="center">
+  <a href="docs/diagrams/audit.dataflow.html"><img src="docs/diagrams/audit.dataflow.svg" alt="Audit and observability dataflow" width="880"/></a>
+</p>
+
+<sub>▶ <a href="docs/diagrams/audit.dataflow.html">Interactive version</a></sub>
 
 ### How each box maps to the Go code
 
