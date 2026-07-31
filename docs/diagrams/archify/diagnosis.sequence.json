@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sequential Diagnosis — Virtual Physician Panel",
+    "subtitle": "MAI-DxO / SD-Bench loop: intake → history → cost-guarded tests → diagnosis → verify → HITL gate",
+    "output": "diagnosis.sequence.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1360,
+      840
+    ],
+    "views": [
+      {
+        "id": "intake",
+        "label": "Intake & history",
+        "focus": [
+          "user",
+          "intake",
+          "supervisor",
+          "questioner"
+        ],
+        "note": "The presentation is parsed into case state; the questioner gathers history until complete."
+      },
+      {
+        "id": "tests",
+        "label": "Cost-guarded tests",
+        "focus": [
+          "supervisor",
+          "test_planner",
+          "cost_guardian"
+        ],
+        "note": "Test Planner proposes tests; Cost Guardian enforces the per-case budget (MaxDiagnosticCost)."
+      },
+      {
+        "id": "verify",
+        "label": "Diagnose & gate",
+        "focus": [
+          "diagnostician",
+          "verifier",
+          "hitl",
+          "supervisor"
+        ],
+        "note": "The diagnosis proposal is verified, then gated by human review before it becomes final."
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Clinician",
+      "sublabel": "case input"
+    },
+    {
+      "id": "intake",
+      "type": "backend",
+      "label": "Intake",
+      "sublabel": "parse presentation"
+    },
+    {
+      "id": "supervisor",
+      "type": "backend",
+      "label": "Supervisor",
+      "sublabel": "diagnostic orchestrator"
+    },
+    {
+      "id": "questioner",
+      "type": "backend",
+      "label": "Questioner",
+      "sublabel": "history"
+    },
+    {
+      "id": "test_planner",
+      "type": "backend",
+      "label": "Test Planner",
+      "sublabel": "select tests"
+    },
+    {
+      "id": "cost_guardian",
+      "type": "backend",
+      "label": "Cost Guardian",
+      "sublabel": "budget check"
+    },
+    {
+      "id": "diagnostician",
+      "type": "backend",
+      "label": "Diagnostician",
+      "sublabel": "LLM / rule"
+    },
+    {
+      "id": "verifier",
+      "type": "backend",
+      "label": "Verifier",
+      "sublabel": "reasoning / grounding"
+    },
+    {
+      "id": "hitl",
+      "type": "security",
+      "label": "HITL Gate",
+      "sublabel": "clinician review"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 320,
+      "label": "Intake & history"
+    },
+    {
+      "from": 320,
+      "to": 440,
+      "label": "Tests under budget"
+    },
+    {
+      "from": 440,
+      "to": 720,
+      "label": "Diagnose · verify · HITL gate"
+    }
+  ],
+  "messages": [
+    {
+      "from": "user",
+      "to": "intake",
+      "y": 180,
+      "label": "presentation",
+      "variant": "emphasis"
+    },
+    {
+      "from": "intake",
+      "to": "supervisor",
+      "y": 220,
+      "label": "case_state (parsed)"
+    },
+    {
+      "from": "supervisor",
+      "to": "questioner",
+      "y": 260,
+      "label": "gather history"
+    },
+    {
+      "from": "questioner",
+      "to": "supervisor",
+      "y": 300,
+      "label": "questions_complete",
+      "variant": "return"
+    },
+    {
+      "from": "supervisor",
+      "to": "test_planner",
+      "y": 340,
+      "label": "plan tests"
+    },
+    {
+      "from": "test_planner",
+      "to": "cost_guardian",
+      "y": 380,
+      "label": "proposed tests"
+    },
+    {
+      "from": "cost_guardian",
+      "to": "supervisor",
+      "y": 420,
+      "label": "tests_complete",
+      "variant": "return",
+      "note": "MaxDiagnosticCost policy caps per-case spend"
+    },
+    {
+      "from": "supervisor",
+      "to": "diagnostician",
+      "y": 460,
+      "label": "request diagnosis"
+    },
+    {
+      "from": "diagnostician",
+      "to": "verifier",
+      "y": 500,
+      "label": "diagnosis_proposal",
+      "variant": "emphasis",
+      "note": "LLM refusal / timeout → deterministic rule fallback"
+    },
+    {
+      "from": "verifier",
+      "to": "hitl",
+      "y": 560,
+      "label": "review_request",
+      "variant": "security"
+    },
+    {
+      "from": "hitl",
+      "to": "verifier",
+      "y": 600,
+      "label": "clinician approves",
+      "variant": "return"
+    },
+    {
+      "from": "verifier",
+      "to": "supervisor",
+      "y": 640,
+      "label": "diagnosis (final)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "supervisor",
+      "to": "user",
+      "y": 680,
+      "label": "diagnosis + care plan",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "supervisor",
+      "from": 220,
+      "to": 660,
+      "type": "backend"
+    },
+    {
+      "participant": "diagnostician",
+      "from": 460,
+      "to": 500,
+      "type": "backend"
+    },
+    {
+      "participant": "hitl",
+      "from": 560,
+      "to": 600,
+      "type": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Bounded loop",
+      "items": [
+        "Intake → history → tests → diagnosis → verify",
+        "The Supervisor routes every hop; agents never call each other directly"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Cost control",
+      "items": [
+        "Cost Guardian enforces the per-case budget",
+        "Reproduces the SD-Bench accuracy-vs-cost thesis"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Safety",
+      "items": [
+        "Diagnostician degrades LLM → rule on refusal / timeout",
+        "The final diagnosis is gated by HITL clinician review"
+      ]
+    }
+  ]
+}
