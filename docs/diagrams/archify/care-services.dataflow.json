@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Care-Services Workflows",
+    "subtitle": "Chronic-disease, transitions and panel pathways run on the same bus and fan into patient engagement",
+    "output": "care-services.dataflow.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1240,
+      720
+    ],
+    "views": [
+      {
+        "id": "cdm",
+        "label": "Chronic disease",
+        "focus": [
+          "cdm_req",
+          "cdm_planner",
+          "care_plan",
+          "engagement"
+        ],
+        "note": "A CDM request produces a care plan that drives engagement."
+      },
+      {
+        "id": "tcm",
+        "label": "Transitions",
+        "focus": [
+          "disch",
+          "tcm_coord",
+          "tcm_tasks",
+          "engagement"
+        ],
+        "note": "A discharge event creates transition-of-care tasks."
+      },
+      {
+        "id": "panel",
+        "label": "Panel management",
+        "focus": [
+          "panel_req",
+          "panel_mgr",
+          "panel_report",
+          "engagement"
+        ],
+        "note": "Panel review surfaces care gaps that request engagement."
+      }
+    ]
+  },
+  "stages": [
+    {
+      "label": "Triggers"
+    },
+    {
+      "label": "Care agents"
+    },
+    {
+      "label": "Artifacts"
+    },
+    {
+      "label": "Fan-in"
+    },
+    {
+      "label": "Delivery"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "cdm_req",
+      "type": "external",
+      "label": "cdm_request",
+      "sublabel": "condition",
+      "stage": 0,
+      "row": 0
+    },
+    {
+      "id": "disch",
+      "type": "external",
+      "label": "discharge_event",
+      "sublabel": "ADT / summary",
+      "stage": 0,
+      "row": 2
+    },
+    {
+      "id": "panel_req",
+      "type": "external",
+      "label": "panel_request",
+      "sublabel": "cohort",
+      "stage": 0,
+      "row": 4
+    },
+    {
+      "id": "cdm_planner",
+      "type": "backend",
+      "label": "cdm_planner",
+      "sublabel": "care plan",
+      "stage": 1,
+      "row": 0
+    },
+    {
+      "id": "tcm_coord",
+      "type": "backend",
+      "label": "tcm_coordinator",
+      "sublabel": "TCM tasks",
+      "stage": 1,
+      "row": 2
+    },
+    {
+      "id": "panel_mgr",
+      "type": "backend",
+      "label": "panel_manager",
+      "sublabel": "gap rules",
+      "stage": 1,
+      "row": 4
+    },
+    {
+      "id": "care_plan",
+      "type": "database",
+      "label": "care_plan_ready",
+      "sublabel": "CarePlan JSON",
+      "stage": 2,
+      "row": 0
+    },
+    {
+      "id": "tcm_tasks",
+      "type": "database",
+      "label": "tcm_tasks_created",
+      "sublabel": "nurse queue",
+      "stage": 2,
+      "row": 2
+    },
+    {
+      "id": "panel_report",
+      "type": "database",
+      "label": "panel_report",
+      "sublabel": "care gaps",
+      "stage": 2,
+      "row": 4
+    },
+    {
+      "id": "engagement",
+      "type": "backend",
+      "label": "engagement",
+      "sublabel": "outreach planner",
+      "stage": 3,
+      "row": 2
+    },
+    {
+      "id": "outreach",
+      "type": "external",
+      "label": "engagement_sent",
+      "sublabel": "SMS / portal",
+      "stage": 4,
+      "row": 2
+    }
+  ],
+  "flows": [
+    {
+      "id": "f-cdm1",
+      "from": "cdm_req",
+      "to": "cdm_planner",
+      "label": "cdm_request",
+      "classification": "condition",
+      "route": "straight"
+    },
+    {
+      "id": "f-cdm2",
+      "from": "cdm_planner",
+      "to": "care_plan",
+      "label": "generate",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "f-cdm3",
+      "from": "care_plan",
+      "to": "engagement",
+      "label": "care_plan_ready",
+      "classification": "CarePlan",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "f-tcm1",
+      "from": "disch",
+      "to": "tcm_coord",
+      "label": "discharge_event",
+      "classification": "ADT",
+      "route": "straight"
+    },
+    {
+      "id": "f-tcm2",
+      "from": "tcm_coord",
+      "to": "tcm_tasks",
+      "label": "coordinate",
+      "route": "straight"
+    },
+    {
+      "id": "f-tcm3",
+      "from": "tcm_tasks",
+      "to": "engagement",
+      "label": "tcm_tasks_created",
+      "route": "straight",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "f-panel1",
+      "from": "panel_req",
+      "to": "panel_mgr",
+      "label": "panel_request",
+      "classification": "cohort",
+      "route": "straight"
+    },
+    {
+      "id": "f-panel2",
+      "from": "panel_mgr",
+      "to": "panel_report",
+      "label": "assess gaps",
+      "route": "straight"
+    },
+    {
+      "id": "f-panel3",
+      "from": "panel_report",
+      "to": "engagement",
+      "label": "engagement_request",
+      "classification": "CareGap",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "f-out",
+      "from": "engagement",
+      "to": "outreach",
+      "label": "engagement_sent",
+      "variant": "emphasis",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Same bus",
+      "items": [
+        "Care-services agents share the diagnostic bus",
+        "Composition adds pathways with zero platform change",
+        "Each pathway is a typed message contract"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Fan-in",
+      "items": [
+        "Care plans, TCM tasks and care gaps converge on engagement",
+        "Engagement is the single outreach planner",
+        "Nurse task queue drains transition work"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Oversight",
+      "items": [
+        "Refill / prior-auth approvals route through HITL",
+        "Outreach on protected conditions is gated",
+        "Every message still produces an audit event"
+      ]
+    }
+  ]
+}
