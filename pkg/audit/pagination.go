@@ -15,6 +15,7 @@ package audit
 import (
 	"encoding/base64"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 )
@@ -154,6 +155,17 @@ func DecodeCursor(s string) (lastID string, lastAt time.Time, err error) {
 // which provides a deterministic but not meaningful order for ties).
 func PageFromRecorder(rec Recorder, q AuditQuery) AuditPage {
 	all := rec.List()
+	// Recorder.List() returns events in insertion order, but the cursor skip
+	// below (and nextCursor) assume a total (At, ID) order — otherwise, on a
+	// timestamp tie, the cursorPassed shortcut re-includes events from the
+	// previous page (duplicates) and can drop others. Sort to the documented
+	// (At asc, ID asc) order first.
+	sort.SliceStable(all, func(i, j int) bool {
+		if !all[i].At.Equal(all[j].At) {
+			return all[i].At.Before(all[j].At)
+		}
+		return all[i].ID < all[j].ID
+	})
 	limit := q.ResolvedLimit()
 
 	// Decode cursor once; we'll use it in the filter loop.

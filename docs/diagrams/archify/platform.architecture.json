@@ -1,0 +1,381 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Bodh Platform Architecture (MARA)",
+    "subtitle": "One Go binary: clients \u2192 orchestrator \u2192 in-process bus \u2192 agents, gated by governance, HITL and append-only audit",
+    "output": "platform.architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "pipeline",
+        "label": "Core pipeline",
+        "focus": [
+          "clients",
+          "careapi",
+          "orchestrator",
+          "bus",
+          "diagpanel"
+        ],
+        "note": "Follow a clinical message from the edge through the orchestrator and message bus to the diagnostic panel."
+      },
+      {
+        "id": "controls",
+        "label": "HIPAA controls",
+        "focus": [
+          "governance",
+          "hitl",
+          "audit"
+        ],
+        "note": "The three load-bearing invariants: policy gate, human review, and append-only audit."
+      },
+      {
+        "id": "ai",
+        "label": "AI providers",
+        "focus": [
+          "diagpanel",
+          "careagents",
+          "knowledge",
+          "llm"
+        ],
+        "note": "Agents call an LLM-agnostic client with a RAG store; every agent has a deterministic rule fallback."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "clients",
+      "type": "external",
+      "label": "Clients",
+      "sublabel": "Clinician / EHR / CLI",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "careapi",
+      "type": "backend",
+      "label": "cmd/care",
+      "sublabel": "HTTP API + Vue SPA",
+      "pos": [
+        260,
+        340
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "orchestrator",
+      "type": "backend",
+      "label": "Orchestrator",
+      "sublabel": "clinical message router",
+      "pos": [
+        480,
+        340
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "bus",
+      "type": "messagebus",
+      "label": "Message Bus",
+      "sublabel": "in-process (swappable)",
+      "pos": [
+        700,
+        340
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "diagpanel",
+      "type": "backend",
+      "label": "Diagnostic Panel",
+      "sublabel": "intake \u2192 verifier (6 agents)",
+      "pos": [
+        940,
+        230
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "careagents",
+      "type": "backend",
+      "label": "Care-Services",
+      "sublabel": "CDM \u00b7 TCM \u00b7 panel \u00b7 inbox (8)",
+      "pos": [
+        940,
+        450
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "governance",
+      "type": "security",
+      "label": "Governance",
+      "sublabel": "policy gate",
+      "pos": [
+        480,
+        120
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "knowledge",
+      "type": "database",
+      "label": "Knowledge / RAG",
+      "sublabel": "hybrid vector + BM25",
+      "pos": [
+        940,
+        40
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "llm",
+      "type": "external",
+      "label": "LLM Providers",
+      "sublabel": "Anthropic \u00b7 OpenAI \u00b7 Ollama",
+      "pos": [
+        1180,
+        340
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "hitl",
+      "type": "security",
+      "label": "HITL Gate",
+      "sublabel": "human review queue",
+      "pos": [
+        700,
+        560
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "audit",
+      "type": "database",
+      "label": "Audit Log",
+      "sublabel": "append-only, PHI-min",
+      "pos": [
+        260,
+        560
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "persistence",
+      "type": "database",
+      "label": "Persistence",
+      "sublabel": "Postgres RLS / file",
+      "pos": [
+        480,
+        560
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Single Go binary \u2014 in-process runtime",
+      "wraps": [
+        "careapi",
+        "orchestrator",
+        "bus",
+        "diagpanel",
+        "careagents",
+        "governance",
+        "knowledge",
+        "hitl",
+        "audit",
+        "persistence"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "HIPAA controls",
+      "wraps": [
+        "governance",
+        "hitl",
+        "audit"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "clients-care",
+      "from": "clients",
+      "to": "careapi",
+      "label": "HTTPS / CLI",
+      "variant": "emphasis"
+    },
+    {
+      "id": "care-orch",
+      "from": "careapi",
+      "to": "orchestrator",
+      "label": "publish"
+    },
+    {
+      "id": "gov-orch",
+      "from": "governance",
+      "to": "orchestrator",
+      "label": "enforce policy",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        555,
+        255
+      ]
+    },
+    {
+      "id": "orch-bus",
+      "from": "orchestrator",
+      "to": "bus",
+      "label": "route"
+    },
+    {
+      "id": "bus-diag",
+      "from": "bus",
+      "to": "diagpanel",
+      "label": "dispatch"
+    },
+    {
+      "id": "bus-care",
+      "from": "bus",
+      "to": "careagents",
+      "label": "dispatch"
+    },
+    {
+      "id": "know-diag",
+      "from": "knowledge",
+      "to": "diagpanel",
+      "label": "retrieve",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1020,
+        160
+      ]
+    },
+    {
+      "id": "diag-llm",
+      "from": "diagpanel",
+      "to": "llm",
+      "label": "LLM call"
+    },
+    {
+      "id": "care-llm",
+      "from": "careagents",
+      "to": "llm",
+      "variant": "dashed"
+    },
+    {
+      "id": "bus-hitl",
+      "from": "bus",
+      "to": "hitl",
+      "label": "review_request",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        775,
+        470
+      ]
+    },
+    {
+      "id": "orch-audit",
+      "from": "orchestrator",
+      "to": "audit",
+      "label": "every message",
+      "variant": "dashed"
+    },
+    {
+      "id": "orch-persist",
+      "from": "orchestrator",
+      "to": "persistence",
+      "label": "case state",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        555,
+        470
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Pipeline",
+      "items": [
+        "clients \u2192 cmd/care \u2192 orchestrator \u2192 bus \u2192 agents",
+        "Bus is in-process; swap NATS/Kafka without touching agents"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Agents",
+      "items": [
+        "Diagnostic panel: intake, questioner, test planner, cost guardian, diagnostician, verifier",
+        "8 care-services agents share the same bus"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "HIPAA controls",
+      "items": [
+        "Governance policy gate on every message",
+        "HITL human review for consequential actions",
+        "Append-only, PHI-minimized audit log"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Observability",
+      "items": [
+        "OTel / Laminar spans (otel build tag)",
+        "bodh.case_id is sha256(caseID)[:8] \u2014 never a raw MRN"
+      ]
+    }
+  ]
+}
