@@ -20,6 +20,7 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/agent"
 	"github.com/PratikDhanave/bodh/pkg/audio"
 	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodh/pkg/auth"
 	"github.com/PratikDhanave/bodh/pkg/comm"
 	"github.com/PratikDhanave/bodh/pkg/engagement"
 	"github.com/PratikDhanave/bodh/pkg/eval"
@@ -408,6 +409,19 @@ func main() {
 	}
 	api.mount(mux)
 
+	// JWT auth (demo / self-hosted path). Seed the credential store with the
+	// illustrative users (clinician/clinic123, admin/admin123), mount the
+	// /api/auth/* endpoints, and gate every other /api/* route behind a Bearer
+	// token via authMiddleware in the handler chain below. POST /api/auth/login,
+	// /healthz and /readyz stay public (see publicRoutes).
+	authStore := auth.NewCredentialStore()
+	// The login form input is type=email, so also seed an email-format demo
+	// credential that matches the form's placeholder. (The bare clinician/admin
+	// seeds remain for API and test callers.)
+	_ = authStore.AddUser("clinician@hospital.org", "clinic123", auth.RoleClinician)
+	authSecret := auth.JWTSecret()
+	(&authServer{store: authStore, secret: authSecret}).mountAuth(mux)
+
 	if h, ok := spaHandler(); ok {
 		mux.Handle("/ui/", h)
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -429,7 +443,9 @@ func main() {
 	//      when built with -tags otel AND NewOTLPLLMExporter was called above
 	//      to set the global TracerProvider).
 	handler := observability.TraceHandler(
-		observability.PromMiddleware(mux),
+		observability.PromMiddleware(
+			authMiddleware(authStore, authSecret)(mux),
+		),
 		"bodh-care",
 	)
 
