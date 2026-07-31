@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Deployment Topology (Kubernetes)",
+    "subtitle": "Distroless care pod behind Ingress, guarded by NetworkPolicy, scaled by HPA, with Postgres, secrets and OTLP",
+    "output": "deployment.architecture.html",
+    "quality_profile": "showcase",
+    "visual_preset": "blueprint",
+    "views": [
+      {
+        "id": "request",
+        "label": "Request path",
+        "focus": [
+          "ingress",
+          "pod",
+          "pg"
+        ],
+        "note": "TLS ingress reaches the care pod, which reads tenant-scoped Postgres."
+      },
+      {
+        "id": "controls",
+        "label": "Platform controls",
+        "focus": [
+          "netpol",
+          "hpa",
+          "secrets"
+        ],
+        "note": "NetworkPolicy, HPA/PDB and ExternalSecrets are shipped in the Helm chart."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "secrets",
+      "type": "security",
+      "label": "ExternalSecrets",
+      "sublabel": "vault-backed",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "netpol",
+      "type": "security",
+      "label": "NetworkPolicy",
+      "sublabel": "restrict ingress",
+      "pos": [
+        300,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "hpa",
+      "type": "cloud",
+      "label": "HPA + PDB",
+      "sublabel": "autoscale",
+      "pos": [
+        560,
+        120
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "ingress",
+      "type": "cloud",
+      "label": "Ingress",
+      "sublabel": "TLS :443",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "pod",
+      "type": "backend",
+      "label": "care pod",
+      "sublabel": "distroless image",
+      "pos": [
+        300,
+        330
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "pg",
+      "type": "database",
+      "label": "Postgres",
+      "sublabel": "tenant RLS",
+      "pos": [
+        560,
+        330
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "otel",
+      "type": "external",
+      "label": "OTLP collector",
+      "sublabel": "traces",
+      "pos": [
+        300,
+        540
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "prom",
+      "type": "cloud",
+      "label": "Prometheus",
+      "sublabel": "scrape /metrics",
+      "pos": [
+        560,
+        540
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Kubernetes namespace",
+      "wraps": [
+        "secrets",
+        "netpol",
+        "hpa",
+        "ingress",
+        "pod",
+        "pg",
+        "otel",
+        "prom"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "ing-pod",
+      "from": "ingress",
+      "to": "pod",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pod-pg",
+      "from": "pod",
+      "to": "pg",
+      "label": "SQL (RLS)"
+    },
+    {
+      "id": "netpol-pod",
+      "from": "netpol",
+      "to": "pod",
+      "label": "ingress rules",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        375,
+        250
+      ]
+    },
+    {
+      "id": "hpa-pod",
+      "from": "hpa",
+      "to": "pod",
+      "label": "scale",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "labelAt": [
+        520,
+        250
+      ]
+    },
+    {
+      "id": "sec-pod",
+      "from": "secrets",
+      "to": "pod",
+      "label": "secrets",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "labelAt": [
+        230,
+        250
+      ]
+    },
+    {
+      "id": "pod-otel",
+      "from": "pod",
+      "to": "otel",
+      "label": "OTLP export",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        375,
+        460
+      ]
+    },
+    {
+      "id": "prom-pod",
+      "from": "prom",
+      "to": "pod",
+      "label": "scrape",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom",
+      "labelAt": [
+        520,
+        460
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Request path",
+      "items": [
+        "TLS Ingress → distroless care pod → Postgres",
+        "Postgres enforces tenant row-level security",
+        "Single binary serves API + embedded SPA"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Helm controls",
+      "items": [
+        "NetworkPolicy restricts pod ingress",
+        "HPA autoscales; PDB protects availability",
+        "ExternalSecrets injects vault-backed secrets"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Observability",
+      "items": [
+        "OTLP export to a collector (otel build tag)",
+        "Prometheus scrapes bodh_http_* / bodh_llm_*",
+        "sha256 case_id on spans — never a raw MRN"
+      ]
+    }
+  ]
+}

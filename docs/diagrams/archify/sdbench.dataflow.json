@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "SD-Bench Evaluation",
+    "subtitle": "Case fixtures run through the pipeline; accuracy and cost feed a Pareto view gated on a baseline",
+    "output": "sdbench.dataflow.html",
+    "quality_profile": "showcase",
+    "visual_preset": "editorial",
+    "viewBox": [1280, 620],
+    "views": [
+      { "id": "run", "label": "Run", "focus": ["fixtures", "run", "accuracy", "cost"], "note": "Every fixture is diagnosed; accuracy vs gold and per-case cost are recorded." },
+      { "id": "gate", "label": "Regression gate", "focus": ["pareto", "gate"], "note": "The run is compared to a saved baseline and fails on regression." }
+    ]
+  },
+  "stages": [
+    { "label": "Fixtures" },
+    { "label": "Run" },
+    { "label": "Score" },
+    { "label": "Pareto" },
+    { "label": "Gate" }
+  ],
+  "nodes": [
+    { "id": "fixtures", "type": "database", "label": "case fixtures", "sublabel": "data/cases", "stage": 0, "row": 1 },
+    { "id": "run", "type": "backend", "label": "SD-Bench runner", "sublabel": "cmd/bench", "stage": 1, "row": 1 },
+    { "id": "accuracy", "type": "backend", "label": "accuracy", "sublabel": "vs gold dx", "stage": 2, "row": 0 },
+    { "id": "cost", "type": "backend", "label": "cost", "sublabel": "per-case $", "stage": 2, "row": 2 },
+    { "id": "pareto", "type": "backend", "label": "Pareto", "sublabel": "accuracy vs cost", "stage": 3, "row": 1 },
+    { "id": "gate", "type": "security", "label": "regression gate", "sublabel": "vs baseline", "stage": 4, "row": 1 }
+  ],
+  "flows": [
+    { "id": "f-run", "from": "fixtures", "to": "run", "label": "load", "variant": "emphasis", "route": "straight" },
+    { "id": "f-acc", "from": "run", "to": "accuracy", "label": "grade", "classification": "correct?", "fromSide": "right", "toSide": "left" },
+    { "id": "f-cost", "from": "run", "to": "cost", "label": "meter", "classification": "spend", "fromSide": "right", "toSide": "left" },
+    { "id": "f-acc-p", "from": "accuracy", "to": "pareto", "label": "accuracy", "variant": "emphasis", "fromSide": "right", "toSide": "top" },
+    { "id": "f-cost-p", "from": "cost", "to": "pareto", "label": "cost", "fromSide": "right", "toSide": "bottom" },
+    { "id": "f-gate", "from": "pareto", "to": "gate", "label": "compare", "classification": "baseline", "variant": "security", "route": "straight" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Reproducible runs", "items": ["Manifest runner over every case fixture", "Synthetic cases: ACS, septic UTI, DKA, elderly CAP", "Rule path graded so runs are deterministic"] },
+    { "dot": "emerald", "title": "Two axes", "items": ["Accuracy vs gold diagnosis", "Per-case cost under the SD-Bench budget", "Pareto column shows the accuracy/cost frontier"] },
+    { "dot": "rose", "title": "Gated", "items": ["-fail-on-regression compares to a saved baseline", "-update-baseline promotes a new frontier", "CI runs a 5s smoke bench on every push"] }
+  ]
+}
