@@ -1240,3 +1240,49 @@ type coverageLedger struct {
 
 func (m *coverageLedger) MonthlySpendUSD(_, _ time.Time) float64 { return m.spend }
 func (m *coverageLedger) RecordUsage(_, _ string, _, _, _ int)    {}
+
+func TestOpenAIClient_BuildPayloadWithToolTurns(t *testing.T) {
+	c := &openaiClient{apiKey: "key", model: "test", endpoint: "http://localhost", http: &http.Client{}}
+
+	req := Request{
+		Messages: []Message{
+			{Role: RoleAssistant, ToolCalls: []ToolCall{
+				{ID: "call_1", Name: "get_weather", Arguments: json.RawMessage(`{"city":"paris"}`)},
+			}},
+			{Role: RoleUser, ToolResults: []ToolResult{
+				{ToolUseID: "call_1", Content: "sunny"},
+			}},
+		},
+		MaxTokens: 100,
+	}
+
+	payload, err := c.buildPayload(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	msgs := payload["messages"].([]map[string]any)
+	if len(msgs) != 2 {
+		t.Fatalf("expected 2 messages, got %d", len(msgs))
+	}
+
+	asst := msgs[0]
+	if asst["role"] != "assistant" {
+		t.Errorf("msg0 role = %v, want assistant", asst["role"])
+	}
+	calls, ok := asst["tool_calls"].([]map[string]any)
+	if !ok || len(calls) != 1 {
+		t.Fatalf("expected 1 tool_call, got %v", asst["tool_calls"])
+	}
+	if calls[0]["id"] != "call_1" || calls[0]["type"] != "function" {
+		t.Errorf("tool_call id/type wrong: %v", calls[0])
+	}
+	fn := calls[0]["function"].(map[string]any)
+	if fn["name"] != "get_weather" || fn["arguments"] != `{"city":"paris"}` {
+		t.Errorf("function wrong: %v", fn)
+	}
+
+	tool := msgs[1]
+	if tool["role"] != "tool" || tool["tool_call_id"] != "call_1" || tool["content"] != "sunny" {
+		t.Errorf("tool result wrong: %v", tool)
+	}
+}
