@@ -1,7 +1,7 @@
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 import { useI18n } from '../i18n';
 
@@ -12,8 +12,8 @@ import { useI18n } from '../i18n';
 
 export default function PatientPortal() {
   const { t } = useI18n();
-  const patients = useApi(() => api.patients(), []);
-  const panel = useApi(() => api.panel(), []);
+  const patients = useLiveResource(() => api.patients(), [], ['care_plan_ready','panel_report','adt_event']);
+  const panel = useLiveResource(() => api.panel(), [], ['care_plan_ready','panel_report','adt_event']);
 
   if (patients.loading || panel.loading) {
     return (

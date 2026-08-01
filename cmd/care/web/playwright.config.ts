@@ -36,7 +36,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'make care',
+    command: 'make care DIAGNOSTICIAN=rule',
     url: 'http://localhost:8088/healthz',
     timeout: 120_000,
     reuseExistingServer: !!process.env.BODH_E2E_REUSE_SERVER,

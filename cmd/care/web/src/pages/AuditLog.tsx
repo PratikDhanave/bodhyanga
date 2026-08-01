@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import Page from '../components/Page';
 import { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
+import { getToken } from '../hooks/useAuth';
 
 // ---------------------------------------------------------------------------
 // AuditEvent type — mirrors the HIPAA append-only audit log in pkg/audit
@@ -30,14 +31,20 @@ async function fetchAudit(params: {
   kind?: string;
   agent?: string;
 }): Promise<AuditPage> {
-  const qs = new URLSearchParams({ limit: String(params.limit) });
+  // The /api/audit endpoint is tenant-scoped and rejects requests without a
+  // tenant_id (single-tenant binary today; BODH_TENANT_ID defaults to "default").
+  const qs = new URLSearchParams({ limit: String(params.limit), tenant_id: 'default' });
   if (params.after) qs.set('after', params.after);
   if (params.case_id) qs.set('case_id', params.case_id);
   if (params.kind) qs.set('kind', params.kind);
   if (params.agent) qs.set('agent', params.agent);
 
+  const token = getToken();
   const res = await fetch(`${BASE}/audit?${qs.toString()}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
   if (!res.ok) {
     const body = await res.text();

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 import type { CostAnalytics } from '../types/index';
 
@@ -171,9 +171,10 @@ export default function Cost() {
   from.setDate(from.getDate() - 6);
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
 
-  const { data: raw, loading, error, reload } = useApi(
+  const { data: raw, loading, error, reload } = useLiveResource(
     () => api.costAnalytics('default', fmt(from), fmt(today)),
     [],
+    ['diagnosis', 'diagnosis_proposal'],
   );
 
   // Fall back to stub so the page is always useful

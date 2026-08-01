@@ -13,7 +13,7 @@ async function goToDashboard(page: Page): Promise<void> {
   // tests.  We do this by first hitting /ui/login through the UI so the React
   // app is mounted, then navigating after the token lands.
   await page.goto('/ui/login');
-  await page.locator('#email').fill('clinician');
+  await page.locator('#email').fill('clinician@hospital.org');
   await page.locator('#password').fill('clinic123');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL(/\/ui\/?$/);
@@ -36,7 +36,7 @@ test('dashboard loads and shows stat cards', async ({ page }) => {
 
   // Wait for all four tiles to resolve (replace the en-dash loading sentinel).
   const agentsTile = page.locator('a', { hasText: 'Registered agents' });
-  await expect(agentsTile).toContainText('18');
+  await expect(agentsTile).toContainText('19');
 
   await expect(page.locator('a', { hasText: 'Pending HITL reviews' })).toContainText(/\d+/);
   await expect(page.locator('a', { hasText: 'Open nurse tasks' })).toContainText(/\d+/);
@@ -108,7 +108,7 @@ test('homepage redirects to /ui/ and dashboard renders', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveURL(/\/ui\/?$/);
   await expect(page.getByRole('heading', { name: 'Dashboard', level: 1 })).toBeVisible();
-  await expect(page.locator('a', { hasText: 'Registered agents' })).toContainText('18');
+  await expect(page.locator('a', { hasText: 'Registered agents' })).toContainText('19');
 });
 
 // ---------------------------------------------------------------------------

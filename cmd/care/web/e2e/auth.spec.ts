@@ -42,7 +42,7 @@ test('login with valid credentials succeeds', async ({ page }) => {
   await page.evaluate(() => localStorage.removeItem('bodh_jwt'));
 
   // Fill and submit the form.
-  await page.locator('#email').fill('clinician');
+  await page.locator('#email').fill('clinician@hospital.org');
   await page.locator('#password').fill('clinic123');
   await page.getByRole('button', { name: 'Sign in' }).click();
 
@@ -63,7 +63,7 @@ test('login with invalid credentials shows error', async ({ page }) => {
   await page.goto('/ui/login');
   await page.evaluate(() => localStorage.removeItem('bodh_jwt'));
 
-  await page.locator('#email').fill('clinician');
+  await page.locator('#email').fill('clinician@hospital.org');
   await page.locator('#password').fill('wrongpassword');
   await page.getByRole('button', { name: 'Sign in' }).click();
 
@@ -84,7 +84,7 @@ test('login with invalid credentials shows error', async ({ page }) => {
 test('logout clears session and redirects to /login', async ({ page }) => {
   // First log in.
   await page.goto('/ui/login');
-  await page.locator('#email').fill('clinician');
+  await page.locator('#email').fill('clinician@hospital.org');
   await page.locator('#password').fill('clinic123');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL(/\/ui\/?$/);

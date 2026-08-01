@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
+import { clearToken } from '../hooks/useAuth';
 import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS } from '../i18n';
 import type { Locale } from '../i18n';
 
@@ -142,8 +143,19 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="px-4 py-3 border-t border-bodh-200 dark:border-gray-700 text-xs text-bodh-400 dark:text-gray-500">
-          Research demo. Not for clinical use.
+        <div className="px-4 py-3 border-t border-bodh-200 dark:border-gray-700 space-y-2">
+          <button
+            onClick={() => {
+              clearToken();
+              window.location.href = '/ui/login';
+            }}
+            className="nav-link w-full text-left"
+          >
+            Log out
+          </button>
+          <div className="text-xs text-bodh-400 dark:text-gray-500">
+            Research demo. Not for clinical use.
+          </div>
         </div>
       </aside>
 

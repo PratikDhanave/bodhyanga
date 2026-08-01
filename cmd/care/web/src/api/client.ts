@@ -11,6 +11,7 @@ import type {
   RunSummary,
   BenchResult,
   NurseTask,
+  CostAnalytics,
 } from '../types';
 import { getToken, clearToken } from '../hooks/useAuth';
 
@@ -41,6 +42,18 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// streamTicket exchanges the session JWT (sent as a header) for a short-lived
+// token that is safe to place in an EventSource/WebSocket URL. Returns '' on
+// failure so the caller opens the stream unauthenticated (and the server 401s).
+async function streamTicket(): Promise<string> {
+  try {
+    const r = await http<{ token: string }>('/auth/stream-ticket', { method: 'POST' });
+    return r?.token ?? '';
+  } catch {
+    return '';
+  }
+}
+
 export const api = {
   // Read-only
   agents: () => http<Agent[]>('/agents'),
@@ -54,6 +67,8 @@ export const api = {
   panel: () => http<PanelReport>('/panel/report'),
   bench: () => http<BenchResult[]>('/bench/latest'),
   llmTraces: (limit = 100) => http<LLMTraceLog[]>(`/llm-traces?limit=${limit}`),
+  costAnalytics: (tenant: string, from: string, to: string) =>
+    http<CostAnalytics>(`/analytics/cost?tenant=${encodeURIComponent(tenant)}&from=${from}&to=${to}`),
   fineTuneStatus: () =>
     http<{
       sft_lines: number;
@@ -68,12 +83,25 @@ export const api = {
   startRun: (req: RunRequest) =>
     http<RunSummary>('/runs', { method: 'POST', body: JSON.stringify(req) }),
 
-  // SSE
+  // SSE. EventSource cannot set an Authorization header, so we mint a
+  // short-lived stream ticket (60s) and pass it as ?access_token — a leak of a
+  // URL-borne token then has a one-minute blast radius instead of the full
+  // session. The ticket fetch is async; the returned unsubscribe closes the
+  // stream whether or not it has opened yet.
   traceEvents: (runId: string, onEvent: (e: MessageEvent) => void, onError?: (e: Event) => void) => {
-    const es = new EventSource(`${BASE}/runs/${runId}/events`);
-    es.onmessage = onEvent;
-    if (onError) es.onerror = onError;
-    return () => es.close();
+    let es: EventSource | null = null;
+    let closed = false;
+    void streamTicket().then((ticket) => {
+      if (closed) return;
+      const q = ticket ? `?access_token=${encodeURIComponent(ticket)}` : '';
+      es = new EventSource(`${BASE}/runs/${runId}/events${q}`);
+      es.onmessage = onEvent;
+      if (onError) es.onerror = onError;
+    });
+    return () => {
+      closed = true;
+      es?.close();
+    };
   },
 };
 
