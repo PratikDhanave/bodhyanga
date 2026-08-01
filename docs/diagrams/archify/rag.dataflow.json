@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Retrieval-Augmented Generation",
+    "subtitle": "Hybrid vector + BM25 retrieval, reciprocal-rank fusion and rerank produce cited clinical context",
+    "output": "rag.dataflow.html",
+    "quality_profile": "showcase",
+    "visual_preset": "editorial",
+    "viewBox": [1240, 620],
+    "views": [
+      { "id": "retrieve", "label": "Hybrid retrieval", "focus": ["query", "vector", "bm25", "fuse"], "note": "Dense and lexical retrieval run in parallel and merge via reciprocal-rank fusion." },
+      { "id": "ground", "label": "Ground", "focus": ["fuse", "rerank", "context"], "note": "A reranker orders the fused set into a cited, grounded context." }
+    ]
+  },
+  "stages": [
+    { "label": "Query" },
+    { "label": "Retrieve" },
+    { "label": "Fuse" },
+    { "label": "Rerank" },
+    { "label": "Ground" }
+  ],
+  "nodes": [
+    { "id": "query", "type": "external", "label": "query", "sublabel": "case + question", "stage": 0, "row": 1 },
+    { "id": "vector", "type": "database", "label": "vector kNN", "sublabel": "embeddings", "stage": 1, "row": 0 },
+    { "id": "bm25", "type": "database", "label": "BM25 index", "sublabel": "lexical", "stage": 1, "row": 2 },
+    { "id": "fuse", "type": "backend", "label": "RRF fusion", "sublabel": "reciprocal rank", "stage": 2, "row": 1 },
+    { "id": "rerank", "type": "backend", "label": "reranker", "sublabel": "cross-encoder", "stage": 3, "row": 1 },
+    { "id": "context", "type": "backend", "label": "cited context", "sublabel": "→ diagnostician", "stage": 4, "row": 1 }
+  ],
+  "flows": [
+    { "id": "f-q-vec", "from": "query", "to": "vector", "label": "embed", "classification": "dense", "fromSide": "right", "toSide": "left" },
+    { "id": "f-q-bm", "from": "query", "to": "bm25", "label": "tokens", "classification": "lexical", "fromSide": "right", "toSide": "left" },
+    { "id": "f-vec-fuse", "from": "vector", "to": "fuse", "label": "top-k dense", "variant": "emphasis", "fromSide": "right", "toSide": "top" },
+    { "id": "f-bm-fuse", "from": "bm25", "to": "fuse", "label": "top-k lexical", "fromSide": "right", "toSide": "bottom" },
+    { "id": "f-fuse-rr", "from": "fuse", "to": "rerank", "label": "hybrid set", "classification": "fused", "variant": "emphasis", "route": "straight" },
+    { "id": "f-rr-ctx", "from": "rerank", "to": "context", "label": "ranked", "classification": "reranked", "variant": "emphasis", "route": "straight" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Two retrievers", "items": ["Dense vector kNN over embeddings", "BM25 lexical over the same corpus", "Providers: Voyage / OpenAI / Ollama embeddings"] },
+    { "dot": "emerald", "title": "Fusion", "items": ["Reciprocal-rank fusion merges both lists", "A cross-encoder reranks the fused set", "pkg/knowledge.HybridStore"] },
+    { "dot": "rose", "title": "Grounded + cited", "items": ["Context carries citations back to source docs", "The RAG diagnostician answers only from retrieved context", "CheckHallucination fails closed when grounding is weak"] }
+  ]
+}

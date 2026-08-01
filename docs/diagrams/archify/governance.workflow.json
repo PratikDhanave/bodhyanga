@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Governance Policy Chain",
+    "subtitle": "Every message passes a fail-closed policy chain before it reaches an agent — deny is audited",
+    "output": "governance.workflow.html",
+    "quality_profile": "showcase",
+    "viewBox": [1200, 720],
+    "views": [
+      { "id": "chain", "label": "The chain", "focus": ["msg", "structural", "authz", "decide"], "note": "Structural then authorization checks run in order on the message bus." },
+      { "id": "route", "label": "Allow / deny", "focus": ["decide", "allow", "denied"], "note": "Allow delivers to the target agent; deny blocks and writes an audit event." }
+    ]
+  },
+  "lanes": [
+    { "id": "inbound", "label": "Inbound" },
+    { "id": "policy", "label": "Policy chain" },
+    { "id": "outcome", "label": "Outcome" },
+    { "id": "denied", "label": "Denied", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "ingress", "label": "Ingress", "fromCol": 0, "toCol": 0 },
+    { "id": "evaluate", "label": "Evaluate", "fromCol": 1, "toCol": 3, "variant": "security" },
+    { "id": "route", "label": "Route", "fromCol": 4, "toCol": 5, "variant": "emphasis" }
+  ],
+  "groups": [
+    { "id": "chainzone", "label": "Fail-closed policy chain", "lane": "policy", "fromCol": 1, "toCol": 3, "variant": "security" }
+  ],
+  "mainPath": ["msg", "structural", "authz", "decide", "allow"],
+  "nodes": [
+    { "id": "msg", "lane": "inbound", "col": 0, "type": "backend", "label": "message", "sublabel": "bus hop" },
+    { "id": "structural", "lane": "policy", "col": 1, "type": "security", "label": "Structural", "sublabel": "size · case_id" },
+    { "id": "authz", "lane": "policy", "col": 3, "type": "security", "label": "Authz", "sublabel": "tenant · scope" },
+    { "id": "decide", "lane": "outcome", "col": 4, "type": "security", "label": "Allow?", "sublabel": "fail-closed" },
+    { "id": "allow", "lane": "inbound", "col": 5, "type": "backend", "label": "Deliver", "sublabel": "→ target agent" },
+    { "id": "denied", "lane": "denied", "col": 4, "type": "security", "label": "Deny", "sublabel": "+ audit event" }
+  ],
+  "edges": [
+    { "id": "e-in", "from": "msg", "to": "structural", "label": "evaluate", "variant": "security", "role": "main" },
+    { "id": "e-chain", "from": "structural", "to": "authz", "label": "next", "role": "main" },
+    { "id": "e-decide", "from": "authz", "to": "decide", "label": "verdict", "role": "main" },
+    { "id": "e-allow", "from": "decide", "to": "allow", "label": "allow", "variant": "emphasis", "role": "branch" },
+    { "id": "e-deny", "from": "decide", "to": "denied", "label": "deny", "variant": "security", "role": "error", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "rose", "title": "Structural + authz", "items": ["MaxContentLength · RequireCaseID", "RequireTenant · RequireScope (SMART)", "RateLimit (token bucket per tenant/agent)"] },
+    { "dot": "amber", "title": "Clinical + privacy", "items": ["MaxDiagnosticCost (per-case budget)", "ResearchDisclaimer on every clinical output", "RedactNarrative · Part2Consent · BreakGlass"] },
+    { "dot": "cyan", "title": "Single enforcement point", "items": ["Policy runs in the orchestrator, not in agents", "Deny is fail-closed and always audited", "Agents never see a message that failed policy"] }
+  ]
+}

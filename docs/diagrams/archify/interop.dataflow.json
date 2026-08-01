@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Healthcare Interop Ingest",
+    "subtitle": "HL7 v2 and FHIR R4 sources are parsed, normalized to a PatientPresentation and published to the bus",
+    "output": "interop.dataflow.html",
+    "quality_profile": "showcase",
+    "visual_preset": "signal-flow",
+    "viewBox": [1280, 620],
+    "views": [
+      { "id": "hl7", "label": "HL7 v2", "focus": ["hl7src", "hl7parse", "normalize"], "note": "ADT / ORU / ORM messages are parsed by the hl7v2 parser." },
+      { "id": "fhir", "label": "FHIR", "focus": ["fhirsrc", "fhiradapt", "normalize"], "note": "FHIR R4 resources (REST + Bulk $export) map through the fhir adapter." }
+    ]
+  },
+  "stages": [
+    { "label": "Source" },
+    { "label": "Parse" },
+    { "label": "Normalize" },
+    { "label": "Present" },
+    { "label": "Bus" }
+  ],
+  "nodes": [
+    { "id": "hl7src", "type": "external", "label": "HL7 v2", "sublabel": "ADT · ORU · ORM", "stage": 0, "row": 0 },
+    { "id": "fhirsrc", "type": "external", "label": "FHIR R4", "sublabel": "REST + Bulk", "stage": 0, "row": 2 },
+    { "id": "hl7parse", "type": "backend", "label": "hl7v2 parser", "sublabel": "MSH/PID/OBX", "stage": 1, "row": 0 },
+    { "id": "fhiradapt", "type": "backend", "label": "fhir adapter", "sublabel": "R4 resources", "stage": 1, "row": 2 },
+    { "id": "normalize", "type": "backend", "label": "normalize", "sublabel": "unify fields", "stage": 2, "row": 1 },
+    { "id": "present", "type": "database", "label": "PatientPresentation", "sublabel": "domain model", "stage": 3, "row": 1 },
+    { "id": "bus", "type": "messagebus", "label": "message bus", "sublabel": "→ intake agent", "stage": 4, "row": 1 }
+  ],
+  "flows": [
+    { "id": "f-hl7", "from": "hl7src", "to": "hl7parse", "label": "ingest", "classification": "ADT / lab", "route": "straight" },
+    { "id": "f-fhir", "from": "fhirsrc", "to": "fhiradapt", "label": "fetch", "classification": "resources", "route": "straight" },
+    { "id": "f-hl7-n", "from": "hl7parse", "to": "normalize", "label": "parsed", "variant": "emphasis", "fromSide": "right", "toSide": "top" },
+    { "id": "f-fhir-n", "from": "fhiradapt", "to": "normalize", "label": "mapped", "fromSide": "right", "toSide": "bottom" },
+    { "id": "f-present", "from": "normalize", "to": "present", "label": "build", "classification": "unified", "variant": "emphasis", "route": "straight" },
+    { "id": "f-bus", "from": "present", "to": "bus", "label": "publish", "classification": "typed msg", "variant": "emphasis", "route": "straight" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "HL7 v2", "items": ["ADT A01/A02/A03/A04/A08 (admit/transfer/discharge)", "ORU lab results with critical flags", "ORM outbound orders — encode/parse round-trip"] },
+    { "dot": "emerald", "title": "FHIR R4", "items": ["Patient / Observation / Encounter / Condition", "Bulk Data $export — async job → NDJSON", "SMART-on-FHIR scope enforcement"] },
+    { "dot": "rose", "title": "One entry point", "items": ["Everything normalizes to a PatientPresentation", "The intake agent sees one typed message shape", "Source format is invisible past the parser"] }
+  ]
+}

@@ -6,7 +6,7 @@ Go · MARA · Medical AI · Sequential Diagnosis · FHIR · HL7 v2 · HIPAA-awar
 
 **Module path:** `github.com/PratikDhanave/bodh`
 
-**Architecture diagrams:** [Architecture.png](Architecture.png) (MARA platform) · [architectureflow.png](architectureflow.png) (sequential diagnosis flow) · [6 interactive Archify flows](#flow-diagrams--every-flow-end-to-end) · [docs/diagrams.md](docs/diagrams.md) (25 mermaid views)
+**Architecture diagrams:** [Architecture.png](Architecture.png) (MARA platform) · [architectureflow.png](architectureflow.png) (sequential diagnosis flow) · [14 interactive Archify diagrams](docs/architecture-diagrams.md) · [docs/diagrams.md](docs/diagrams.md) (25 mermaid views)
 
 ---
 
@@ -327,7 +327,9 @@ End-to-end **sequential diagnosis** for one case: presentation → RPM monitor �
 
 ### Flow diagrams — every flow, end to end
 
-The six diagrams below cover **all** of Bodh's flows, generated with [Archify](https://github.com/tt-a1i/archify) and validated against the codebase. The SVG previews render inline on GitHub; each links to a **self-contained interactive HTML** (pan, zoom, light/dark theme, guided views) under [`docs/diagrams/`](docs/diagrams/) — open it locally or serve it. Source specs live in [`docs/diagrams/archify/`](docs/diagrams/archify/).
+**Fourteen** [Archify](https://github.com/tt-a1i/archify) diagrams cover the whole system, generated from and validated against the codebase. The SVG previews render inline on GitHub; each links to a **self-contained interactive HTML** (pan, zoom, light/dark theme, guided views) under [`docs/diagrams/`](docs/diagrams/) — open it locally or serve it. Source specs live in [`docs/diagrams/archify/`](docs/diagrams/archify/).
+
+> 📚 **Full gallery:** [`docs/architecture-diagrams.md`](docs/architecture-diagrams.md) indexes all 14 (platform & core flows, subsystems, interop/eval/ops). The six core flows are inlined below; the other eight are in the gallery.
 
 #### 1 · Platform architecture (MARA)
 
