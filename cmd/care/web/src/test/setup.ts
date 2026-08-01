@@ -31,9 +31,10 @@ class StubEventSource {
   constructor(url: string) {
     this.url = url;
     StubEventSource.instances.push(this);
-    const set = sourcesByURL.get(url) ?? new Set();
+    const key = pathOf(url);
+    const set = sourcesByURL.get(key) ?? new Set();
     set.add(this as unknown as EventSource & { __handlers: Set<Handler> });
-    sourcesByURL.set(url, set);
+    sourcesByURL.set(key, set);
   }
 
   addEventListener(_event: string, fn: Handler) {
@@ -42,16 +43,23 @@ class StubEventSource {
 
   close() {
     this.readyState = 2;
-    const set = sourcesByURL.get(this.url);
+    const set = sourcesByURL.get(pathOf(this.url));
     if (set) set.delete(this as unknown as EventSource & { __handlers: Set<Handler> });
   }
+}
+
+// pathOf strips the query string so SSE streams keyed by path still match even
+// though the client now appends a ?access_token=<ticket> stream credential.
+function pathOf(u: string): string {
+  const i = u.indexOf('?');
+  return i >= 0 ? u.slice(0, i) : u;
 }
 
 (globalThis as unknown as { EventSource: typeof StubEventSource }).EventSource = StubEventSource;
 
 export function eventSourceFire(url: string, data: unknown) {
   const event = new MessageEvent('message', { data: JSON.stringify(data) });
-  const sources = sourcesByURL.get(url);
+  const sources = sourcesByURL.get(pathOf(url));
   if (!sources) return;
   for (const s of sources) {
     if (s.onmessage) s.onmessage(event);
@@ -72,8 +80,19 @@ export function resetEventSources() {
 // per-URL responses.
 export function mockFetch(handler: (input: RequestInfo | URL, init?: RequestInit) => unknown) {
   const fn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url =
+      typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
     const result = await handler(input, init);
     if (result instanceof Response) return result;
+    // Every event-driven page/stream first mints a short-lived stream ticket.
+    // Default-handle it so individual tests don't have to, and so an
+    // unhandled ticket call doesn't surface as "undefined is not valid JSON".
+    if (result === undefined && url.includes('/api/auth/stream-ticket')) {
+      return new Response(JSON.stringify({ token: 'test-ticket', expires_in: 60 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

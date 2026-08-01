@@ -59,7 +59,10 @@ describe('ReviewDetail', () => {
     // Find the POST call.
     const postCall = fetchFn.mock.calls.find((c) => {
       const init = c[1] as RequestInit | undefined;
-      return (init?.method || 'GET').toUpperCase() === 'POST';
+      return (
+        (init?.method || 'GET').toUpperCase() === 'POST' &&
+        routeFor(c[0] as RequestInfo | URL) === '/api/reviews/r1/decide'
+      );
     });
     expect(postCall).toBeDefined();
     const [postUrl, postInit] = postCall!;

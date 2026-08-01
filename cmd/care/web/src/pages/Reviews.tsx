@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 
 export default function Reviews() {
   const [scope, setScope] = useState<'pending' | 'all'>('pending');
-  const { data, loading, error, reload } = useApi(() => api.reviews(scope), [scope]);
+  const { data, loading, error, reload } = useLiveResource(() => api.reviews(scope), [scope], ['review_request','review_submitted','review_decided']);
 
   if (loading) return <Page title="HITL reviews"><Loader what="reviews" /></Page>;
   if (error) return <Page title="HITL reviews"><ErrorBox error={error} retry={reload} /></Page>;
