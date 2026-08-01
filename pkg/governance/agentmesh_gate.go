@@ -101,6 +101,12 @@ var ringPermissions = map[agentmesh.Ring][]string{
 	agentmesh.RingRestricted: {
 		"inbox_message", "rpm_observation",
 		"routing_decision", "triage_result",
+		// case_state is a routing action for Ring 2: the RPM monitor inspects
+		// the case state for RPM observations and forwards it to the diagnostic
+		// supervisor (intake → rpm_monitor → diagnostic_supervisor). Without
+		// this permit the ring policy denies the forward and the diagnostic
+		// chain never starts — the care UI case runner stalls after intake.
+		"case_state",
 	},
 	agentmesh.RingSandboxed: {
 		"audio_transcription_request", "audio_transcription_result",

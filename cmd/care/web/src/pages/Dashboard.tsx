@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 
 export default function Dashboard() {
-  const agents = useApi(() => api.agents(), []);
-  const tasks = useApi(() => api.tasks(), []);
-  const reviews = useApi(() => api.reviews('pending'), []);
-  const patients = useApi(() => api.patients(), []);
+  const agents = useLiveResource(() => api.agents(), [], ['review_request','review_submitted','review_decided','tcm_tasks_created','diagnosis']);
+  const tasks = useLiveResource(() => api.tasks(), [], ['review_request','review_submitted','review_decided','tcm_tasks_created','diagnosis']);
+  const reviews = useLiveResource(() => api.reviews('pending'), [], ['review_request','review_submitted','review_decided','tcm_tasks_created','diagnosis']);
+  const patients = useLiveResource(() => api.patients(), [], ['review_request','review_submitted','review_decided','tcm_tasks_created','diagnosis']);
 
   return (
     <Page title="Dashboard" subtitle="System overview">

@@ -50,7 +50,10 @@ describe('CaseRunner', () => {
 
     const postCall = fetchFn.mock.calls.find((c) => {
       const init = c[1] as RequestInit | undefined;
-      return (init?.method || 'GET').toUpperCase() === 'POST';
+      return (
+        (init?.method || 'GET').toUpperCase() === 'POST' &&
+        routeFor(c[0] as RequestInfo | URL) === '/api/runs'
+      );
     });
     expect(postCall).toBeDefined();
     expect(routeFor(postCall![0] as RequestInfo | URL)).toBe('/api/runs');
@@ -96,7 +99,10 @@ describe('CaseRunner', () => {
 
     const postCall = fetchFn.mock.calls.find((c) => {
       const init = c[1] as RequestInit | undefined;
-      return (init?.method || 'GET').toUpperCase() === 'POST';
+      return (
+        (init?.method || 'GET').toUpperCase() === 'POST' &&
+        routeFor(c[0] as RequestInfo | URL) === '/api/runs'
+      );
     });
     expect(postCall).toBeDefined();
     const body = JSON.parse((postCall![1] as RequestInit).body as string);

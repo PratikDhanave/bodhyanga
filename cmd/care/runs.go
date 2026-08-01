@@ -201,6 +201,12 @@ func startRunHandler(bus *comm.InMemoryBus, rm *runManager, fixturesDir, configu
 		var pres medical.PatientPresentation
 		var caseID, gold string
 		var maxCost float64
+		// One run id up front so the fixture case id can be made unique per run.
+		// The run manager correlates bus messages to a run by case_id, so two
+		// runs of the same fixture (case_id "demo-case-001") would otherwise
+		// route each other's events to the wrong run state.
+		runID := uuid.New().String()
+
 		if req.Fixture != "" {
 			f, ok, err := loadFixtureByID(fixturesDir, req.Fixture)
 			if err != nil {
@@ -219,7 +225,7 @@ func startRunHandler(bus *comm.InMemoryBus, rm *runManager, fixturesDir, configu
 				Condition:       f.Condition,
 				RPMObservations: f.RPMObservations,
 			}
-			caseID = f.CaseID
+			caseID = f.CaseID + "-" + runID[:8]
 			gold = f.GoldDiagnosis
 			maxCost = f.MaxCostUSD
 		} else {
@@ -241,7 +247,7 @@ func startRunHandler(bus *comm.InMemoryBus, rm *runManager, fixturesDir, configu
 			// Provider is fixed at server startup; record the request value
 			// but actually route through the configured agent.
 		}
-		runID := uuid.New().String()
+
 		rs := newRunState(runID, caseID, provider)
 		rm.register(rs)
 

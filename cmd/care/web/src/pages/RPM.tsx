@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import Page from '../components/Page';
 
 // Stub HR history for demo purposes — each patient has 7 readings (last 7 days).
-// When the real /rpm/feed endpoint lands, replace this with useApi().
+// When the real /rpm/feed endpoint lands, replace this with useLiveResource(, ['rpm_observation','adt_event','readmission_risk']).
 const STUB_PATIENTS: Array<{
   patient_id: string;
   name: string;

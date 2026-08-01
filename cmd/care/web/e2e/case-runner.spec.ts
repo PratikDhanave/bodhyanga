@@ -15,7 +15,7 @@ import { test, expect } from '@playwright/test';
 // Shared auth helper.
 async function login(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('/ui/login');
-  await page.locator('#email').fill('clinician');
+  await page.locator('#email').fill('clinician@hospital.org');
   await page.locator('#password').fill('clinic123');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL(/\/ui\/?$/);

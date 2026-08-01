@@ -1,4 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
+import { getToken } from './useAuth';
+
+// streamTicket exchanges the session JWT (sent as a header) for a short-lived
+// token safe to place in a WebSocket URL. Returns '' on failure.
+async function streamTicket(): Promise<string> {
+  try {
+    const token = getToken();
+    const res = await fetch('/api/auth/stream-ticket', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) return '';
+    return (await res.json()).token ?? '';
+  } catch {
+    return '';
+  }
+}
 
 export interface UseWebSocketResult {
   lastMessage: unknown;
@@ -16,12 +33,17 @@ export function useWebSocket(path: string): UseWebSocketResult {
   useEffect(() => {
     unmountedRef.current = false;
 
-    function connect() {
+    async function connect() {
+      if (unmountedRef.current) return;
+
+      const ticket = await streamTicket();
       if (unmountedRef.current) return;
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host || 'localhost:8088';
-      const url = `${protocol}//${host}${path}`;
+      const sep = path.includes('?') ? '&' : '?';
+      const auth = ticket ? `${sep}access_token=${encodeURIComponent(ticket)}` : '';
+      const url = `${protocol}//${host}${path}${auth}`;
 
       const ws = new WebSocket(url);
       wsRef.current = ws;
