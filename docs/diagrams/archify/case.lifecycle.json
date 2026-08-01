@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Clinical Case Lifecycle",
+    "subtitle": "A case's status from intake to finalized, pausing at the HITL gate; over-budget or timeout is terminal",
+    "output": "case.lifecycle.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1080,
+      720
+    ],
+    "views": [
+      {
+        "id": "happy",
+        "label": "Happy path",
+        "focus": [
+          "intake",
+          "history",
+          "testing",
+          "diagnosing",
+          "finalized"
+        ],
+        "note": "The ordered phases from presentation to a finalized diagnosis and care plan."
+      },
+      {
+        "id": "gate",
+        "label": "Gate & exits",
+        "focus": [
+          "diagnosing",
+          "awaiting",
+          "failed"
+        ],
+        "note": "Diagnosis pauses for human review; budget or timeout ends the case."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Case phases"
+    },
+    {
+      "id": "review",
+      "label": "Human review"
+    },
+    {
+      "id": "terminal",
+      "label": "Terminal exits"
+    }
+  ],
+  "states": [
+    {
+      "id": "intake",
+      "type": "start",
+      "label": "Intake",
+      "sublabel": "presentation",
+      "lane": "main",
+      "col": 0,
+      "step": "01"
+    },
+    {
+      "id": "history",
+      "type": "active",
+      "label": "History",
+      "sublabel": "questioner",
+      "lane": "main",
+      "col": 1,
+      "step": "02"
+    },
+    {
+      "id": "testing",
+      "type": "active",
+      "label": "Testing",
+      "sublabel": "cost-guarded",
+      "lane": "main",
+      "col": 2,
+      "step": "03"
+    },
+    {
+      "id": "diagnosing",
+      "type": "active",
+      "label": "Diagnosing",
+      "sublabel": "LLM / rule",
+      "lane": "main",
+      "col": 3,
+      "step": "04"
+    },
+    {
+      "id": "finalized",
+      "type": "success",
+      "label": "Finalized",
+      "sublabel": "diagnosis + plan",
+      "lane": "main",
+      "col": 4,
+      "step": "05"
+    },
+    {
+      "id": "awaiting",
+      "type": "waiting",
+      "label": "Awaiting review",
+      "sublabel": "HITL gate",
+      "lane": "review",
+      "col": 1
+    },
+    {
+      "id": "failed",
+      "type": "failure",
+      "label": "Failed",
+      "sublabel": "budget / timeout",
+      "lane": "terminal",
+      "col": 0
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-review",
+      "from": "diagnosing",
+      "to": "awaiting",
+      "label": "review_request",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight",
+      "labelDy": 52
+    },
+    {
+      "id": "t-approve",
+      "from": "awaiting",
+      "to": "finalized",
+      "label": "approved",
+      "variant": "emphasis"
+    },
+    {
+      "id": "t-budget",
+      "from": "testing",
+      "to": "failed",
+      "label": "over budget",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight",
+      "labelDy": 52
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Ordered phases",
+      "items": [
+        "Intake → History → Testing → Diagnosing → Finalized",
+        "One horizontal rail carries the primary lifecycle",
+        "Finalized is a phase, not a detached box"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Human gate",
+      "items": [
+        "Diagnosis pauses at Awaiting review",
+        "Approval resumes the case to Finalized",
+        "The pause is non-terminal"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Terminal exits",
+      "items": [
+        "Over-budget test planning ends the case",
+        "LLM timeout falls back to rules (see fallback diagram)",
+        "Terminal states never re-enter active phases"
+      ]
+    }
+  ]
+}

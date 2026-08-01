@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "LLM Provider Abstraction",
+    "subtitle": "One llm.Client interface, a budget-aware cost router, and swappable cloud / local / in-process providers",
+    "output": "llm-providers.architecture.html",
+    "quality_profile": "showcase",
+    "visual_preset": "blueprint",
+    "views": [
+      {
+        "id": "core",
+        "label": "Core",
+        "focus": [
+          "agent",
+          "client",
+          "router"
+        ],
+        "note": "Agents depend only on llm.Client; provider selection happens behind it."
+      },
+      {
+        "id": "providers",
+        "label": "Providers",
+        "focus": [
+          "router",
+          "anthropic",
+          "openai",
+          "ollama",
+          "kronk"
+        ],
+        "note": "The cost router cascades across cloud, local and in-process backends under a hard budget."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Agent",
+      "sublabel": "needs a completion",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "client",
+      "type": "backend",
+      "label": "llm.Client",
+      "sublabel": "single interface",
+      "pos": [
+        270,
+        340
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "router",
+      "type": "backend",
+      "label": "Cost Router",
+      "sublabel": "3-tier cascade",
+      "pos": [
+        500,
+        340
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "Prompt Cache",
+      "sublabel": "Anthropic / OpenAI",
+      "pos": [
+        270,
+        150
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "anthropic",
+      "type": "external",
+      "label": "Anthropic",
+      "sublabel": "Claude",
+      "pos": [
+        780,
+        130
+      ],
+      "size": [
+        150,
+        58
+      ]
+    },
+    {
+      "id": "openai",
+      "type": "external",
+      "label": "OpenAI",
+      "sublabel": "GPT",
+      "pos": [
+        780,
+        250
+      ],
+      "size": [
+        150,
+        58
+      ]
+    },
+    {
+      "id": "ollama",
+      "type": "external",
+      "label": "Ollama",
+      "sublabel": "local",
+      "pos": [
+        780,
+        370
+      ],
+      "size": [
+        150,
+        58
+      ]
+    },
+    {
+      "id": "kronk",
+      "type": "external",
+      "label": "kronk",
+      "sublabel": "in-process llama.cpp",
+      "pos": [
+        780,
+        490
+      ],
+      "size": [
+        150,
+        58
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "In-process (pkg/llm)",
+      "wraps": [
+        "agent",
+        "client",
+        "router",
+        "cache"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a-c",
+      "from": "agent",
+      "to": "client",
+      "label": "Complete()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c-cache",
+      "from": "client",
+      "to": "cache",
+      "label": "cache lookup",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        345,
+        265
+      ]
+    },
+    {
+      "id": "c-r",
+      "from": "client",
+      "to": "router",
+      "label": "select"
+    },
+    {
+      "id": "r-an",
+      "from": "router",
+      "to": "anthropic",
+      "label": "cloud",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "r-oa",
+      "from": "router",
+      "to": "openai",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "r-ol",
+      "from": "router",
+      "to": "ollama",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "r-kr",
+      "from": "router",
+      "to": "kronk",
+      "label": "in-process",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "One interface",
+      "items": [
+        "Agents call llm.Client — never a provider directly",
+        "Provider chosen at startup or per-call by the router",
+        "Swap providers without touching agent code"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Cost routing",
+      "items": [
+        "Budget-aware 3-tier cascade with hard caps",
+        "Multi-model LRU+TTL pool for local residency",
+        "Prompt caching on Anthropic + OpenAI"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Backends",
+      "items": [
+        "Cloud: Anthropic, OpenAI",
+        "Local: Ollama",
+        "In-process: kronk (llama.cpp, kronk build tag)"
+      ]
+    }
+  ]
+}
