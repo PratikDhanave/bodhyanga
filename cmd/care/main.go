@@ -428,10 +428,15 @@ func main() {
 	// token via authMiddleware in the handler chain below. POST /api/auth/login,
 	// /healthz and /readyz stay public (see publicRoutes).
 	authStore := auth.NewCredentialStore()
-	// The login form input is type=email, so also seed an email-format demo
-	// credential that matches the form's placeholder. (The bare clinician/admin
-	// seeds remain for API and test callers.)
-	_ = authStore.AddUser("clinician@hospital.org", "clinic123", auth.RoleClinician)
+	// Seed an email-format demo credential that matches the login form's
+	// placeholder (the form input is type=email). Guarded by BODH_DEMO_USERS so
+	// a non-demo deployment seeds no well-known passwords — see demoUsersEnabled.
+	if demoUsersEnabled() {
+		_ = authStore.AddUser("clinician@hospital.org", "clinic123", auth.RoleClinician)
+		log.Printf("[care] ⚠️  SECURITY: seeded demo login clinician@hospital.org with a well-known password. This is a research/demo build — set BODH_DEMO_USERS=0 for any non-demo deployment (and wire your own credential store).")
+	} else {
+		log.Printf("[care] BODH_DEMO_USERS disabled — no demo credentials seeded; the console has no login until you add users.")
+	}
 	authSecret := auth.JWTSecret()
 	(&authServer{store: authStore, secret: authSecret}).mountAuth(mux)
 
@@ -477,6 +482,20 @@ func envDefault(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// demoUsersEnabled reports whether to seed the illustrative demo login. Bodh is
+// a research/reference build, so this defaults to true (the console is usable
+// out of the box). Set BODH_DEMO_USERS=0 (or false/no) to seed nothing — the
+// correct posture for any non-demo deployment, which must wire its own
+// credential store.
+func demoUsersEnabled() bool {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("BODH_DEMO_USERS"))) {
+	case "0", "false", "no":
+		return false
+	default:
+		return true
+	}
 }
 
 // forward returns an http.HandlerFunc that decodes the request body to a
