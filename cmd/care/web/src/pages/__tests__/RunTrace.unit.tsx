@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import RunTrace from '../RunTrace';
-import { eventSourceFire, resetEventSources, mockFetch } from '../../test/setup';
+import { eventSourceFire, resetEventSources, mockFetch, lastEventSource } from '../../test/setup';
 
 function renderAt(runId: string) {
   return render(
@@ -25,6 +25,8 @@ describe('RunTrace', () => {
   it('renders streamed trace events', async () => {
     renderAt('r-1');
 
+    await waitFor(() => expect(lastEventSource()).toBeDefined());
+
     act(() => {
       eventSourceFire('/api/runs/r-1/events', {
         ts: '2026-01-01T00:00:00Z',
@@ -45,6 +47,8 @@ describe('RunTrace', () => {
 
     // Initially live.
     expect(await screen.findByText('live')).toBeInTheDocument();
+
+    await waitFor(() => expect(lastEventSource()).toBeDefined());
 
     act(() => {
       eventSourceFire('/api/runs/r-2/events', {

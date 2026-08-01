@@ -1,11 +1,11 @@
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 
 export default function Patients() {
-  const { data, loading, error, reload } = useApi(() => api.patients(), []);
+  const { data, loading, error, reload } = useLiveResource(() => api.patients(), [], []);
   if (loading) return <Page title="Patients"><Loader what="patients" /></Page>;
   if (error) return <Page title="Patients"><ErrorBox error={error} retry={reload} /></Page>;
   if (!data || data.length === 0) {

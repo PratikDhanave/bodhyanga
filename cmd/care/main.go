@@ -91,6 +91,10 @@ func main() {
 	// are broadcast. The hub is mounted (behind streamAuth) further below.
 	wsHitl := hitl.NewHub(reviews)
 	reviews.Hub = wsHitl
+	// Mirror every clinical bus message to the hub as a thin event envelope so
+	// the SPA reacts to state changes (care plans, tasks, panels, diagnoses,
+	// reviews) in real time instead of polling. See cmd/care/liveevents.go.
+	mirrorBusToHub(bus, wsHitl, defaultTenant())
 	reviewAgent := &agents.HumanReviewAgent{Queue: reviews}
 
 	// Audio transcription. The default build links the MockTranscriber
