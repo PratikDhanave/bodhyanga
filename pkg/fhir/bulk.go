@@ -113,15 +113,21 @@ func (e *BulkExporter) GetStatus(jobID string) (*BulkExportJob, bool) {
 
 // GetFile returns the raw bytes of a previously exported NDJSON file.
 func (e *BulkExporter) GetFile(jobID, filename string) ([]byte, error) {
-	// Validate that the job exists and is complete.
+	// Validate that the job exists and is complete. Read Status while still
+	// holding the lock — runExport/setStatus mutate it from a background
+	// goroutine, so reading job.Status after releasing the lock is a race.
 	e.mu.RLock()
 	job, ok := e.jobs[jobID]
+	var status string
+	if ok {
+		status = job.Status
+	}
 	e.mu.RUnlock()
 	if !ok {
 		return nil, fmt.Errorf("job %s not found", jobID)
 	}
-	if job.Status != "completed" {
-		return nil, fmt.Errorf("job %s is not complete (status=%s)", jobID, job.Status)
+	if status != "completed" {
+		return nil, fmt.Errorf("job %s is not complete (status=%s)", jobID, status)
 	}
 
 	path := filepath.Join(e.outputDir, jobID, filepath.Base(filename))

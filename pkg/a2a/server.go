@@ -53,6 +53,24 @@ func Handler(cfg Config) http.Handler {
 type a2aHandler struct {
 	cfg   Config
 	tasks sync.Map // map[string]*Task
+
+	// mu guards the mutable fields of every *Task stored in tasks. sync.Map
+	// only synchronizes map operations, not the structs its pointers reach —
+	// processTask mutates a task from a background goroutine while handlers
+	// read it, so all field access is serialized through mu.
+	mu sync.Mutex
+}
+
+// snapshot returns a value copy of a task taken under mu, so callers can
+// read or marshal it without racing processTask's background mutations.
+func (s *a2aHandler) snapshot(id string) (Task, bool) {
+	v, ok := s.tasks.Load(id)
+	if !ok {
+		return Task{}, false
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return *v.(*Task), true
 }
 
 // newTaskID generates a unique task ID.
@@ -93,7 +111,10 @@ func (s *a2aHandler) submitTask(w http.ResponseWriter, r *http.Request) {
 	// Process asynchronously.
 	go s.processTask(t.ID)
 
-	writeJSON(w, http.StatusAccepted, t)
+	// Marshal a snapshot, not the live pointer: processTask may already be
+	// mutating t on another goroutine.
+	snap, _ := s.snapshot(t.ID)
+	writeJSON(w, http.StatusAccepted, snap)
 }
 
 // routeTask dispatches GET /tasks/{id} and GET /tasks/{id}/stream.
@@ -116,12 +137,12 @@ func (s *a2aHandler) routeTask(w http.ResponseWriter, r *http.Request) {
 
 // getTask handles GET /tasks/{id}.
 func (s *a2aHandler) getTask(w http.ResponseWriter, r *http.Request, id string) {
-	v, ok := s.tasks.Load(id)
+	snap, ok := s.snapshot(id)
 	if !ok {
 		writeError(w, http.StatusNotFound, "task not found: "+id)
 		return
 	}
-	writeJSON(w, http.StatusOK, v.(*Task))
+	writeJSON(w, http.StatusOK, snap)
 }
 
 // streamTask handles GET /tasks/{id}/stream — SSE stream of state changes.
@@ -149,14 +170,13 @@ func (s *a2aHandler) streamTask(w http.ResponseWriter, r *http.Request, id strin
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			v, ok := s.tasks.Load(id)
+			task, ok := s.snapshot(id)
 			if !ok {
 				// Send not-found event and close.
 				writeSSEEvent(w, "error", map[string]string{"error": "task not found: " + id})
 				flusher.Flush()
 				return
 			}
-			task := v.(*Task)
 
 			// Send an event whenever the state changes.
 			if task.State != lastState {
@@ -181,14 +201,18 @@ func (s *a2aHandler) processTask(id string) {
 	}
 	task := v.(*Task)
 
-	// Transition to working.
+	// Transition to working. All field mutations happen under s.mu so
+	// handlers reading via snapshot() never observe a torn write. Input is
+	// set once at creation and never mutated, so reading it lock-free is safe.
+	s.mu.Lock()
 	task.State = TaskStateWorking
 	task.Updated = now()
-	s.tasks.Store(id, task)
+	s.mu.Unlock()
 
 	output, err := s.cfg.Handler(context.Background(), task.Input)
 
 	// Transition to terminal state.
+	s.mu.Lock()
 	task.Updated = now()
 	if err != nil {
 		task.State = TaskStateFailed
@@ -197,7 +221,7 @@ func (s *a2aHandler) processTask(id string) {
 		task.State = TaskStateCompleted
 		task.Output = &TaskOutput{Text: output}
 	}
-	s.tasks.Store(id, task)
+	s.mu.Unlock()
 }
 
 // writeJSON encodes v as JSON and writes it to w with the given status code.
