@@ -16,11 +16,13 @@ test.describe('Panel Report', () => {
     const token = await page.evaluate(() => localStorage.getItem('bodh_jwt'));
     await page.request.post('/patients', {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
+      // The panel report emits an a1c_overdue gap for a "dm" patient with no
+      // A1c on file (last_a1c == 0). A gap is required for the report to leave
+      // its empty state and render the "By condition" breakdown.
       data: {
         patient_id: 'e2e-panel-1',
         name: 'E2E Panel Patient',
-        conditions: ['diabetes', 'hypertension'],
-        last_a1c: 9.1,
+        conditions: ['dm', 'htn'],
       },
     });
     await page.goto('/ui/panel');
