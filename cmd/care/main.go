@@ -85,6 +85,12 @@ func main() {
 	queue := tasks.NewQueue()
 	notifier := engagement.NewInMemory()
 	reviews := hitl.NewQueue()
+	// Wire the review queue to the WebSocket hub so every Submit/Decide pushes
+	// a real-time event to connected clinicians instead of relying on the SPA
+	// polling. Set before orch.Start so agent-submitted reviews during a run
+	// are broadcast. The hub is mounted (behind streamAuth) further below.
+	wsHitl := hitl.NewHub(reviews)
+	reviews.Hub = wsHitl
 	reviewAgent := &agents.HumanReviewAgent{Queue: reviews}
 
 	// Audio transcription. The default build links the MockTranscriber
@@ -145,12 +151,8 @@ func main() {
 	// to the API gateway / monitoring namespace in Kubernetes.
 	mux.Handle("GET /metrics", observability.PrometheusHandler())
 
-	// Real-time HITL review stream (WebSocket). The SPA connects to
-	// /ws/hitl?tenant_id=<id>&access_token=<short-lived ticket> for live review
-	// push. streamAuth validates the ticket and same-origin before the upgrade
-	// (the WS handshake carries no Authorization header). Wired after authStore
-	// is constructed below via wsHitlHandler.
-	wsHitl := hitl.NewHub(reviews)
+	// The HITL WebSocket hub (wsHitl) was constructed above and wired to the
+	// review queue; it is mounted behind streamAuth once authStore exists.
 
 	mux.HandleFunc("/patients", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
