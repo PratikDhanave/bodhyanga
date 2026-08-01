@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -308,9 +309,9 @@ func TestPool_MaxResident_ClosedWhileWaiting(t *testing.T) {
 // --- Concurrent Get for same spec ---
 
 func TestPool_Get_ConcurrentSameSpec(t *testing.T) {
-	factoryCalls := 0
+	var factoryCalls atomic.Int64
 	p := NewPool(func(_ context.Context, _ ModelSpec) (llm.Client, io.Closer, error) {
-		factoryCalls++
+		factoryCalls.Add(1) // two concurrent Gets both miss and build; count safely
 		time.Sleep(20 * time.Millisecond) // simulate slow factory
 		return stubClient{}, &stubCloser{}, nil
 	}, Options{})

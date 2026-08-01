@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/PratikDhanave/bodh/pkg/llm"
@@ -12,6 +13,7 @@ import (
 // --- stub LLM client for debate tests ---
 
 type debateStubClient struct {
+	mu        sync.Mutex // debaters call Complete concurrently
 	responses []string
 	idx       int
 	err       error // if set, all calls fail
@@ -23,10 +25,12 @@ func (s *debateStubClient) Complete(_ context.Context, _ llm.Request) (*llm.Resp
 	if s.err != nil {
 		return nil, s.err
 	}
+	s.mu.Lock()
 	resp := s.responses[s.idx]
 	if s.idx < len(s.responses)-1 {
 		s.idx++
 	}
+	s.mu.Unlock()
 	return &llm.Response{Content: resp, Provider: "stub", Model: "stub-model"}, nil
 }
 
