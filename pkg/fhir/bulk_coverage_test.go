@@ -10,16 +10,34 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/medical"
 )
 
+// waitForTerminal blocks until the export job reaches a terminal state
+// (completed or error). runExport sets the terminal status as its final
+// action — after every file write and Close — so once terminal, the
+// background goroutine no longer touches the export directory. Waiting on it
+// (rather than a fixed time.Sleep) keeps the goroutine's writes from racing
+// t.TempDir()'s RemoveAll cleanup, which flakes on loaded CI runners.
+func waitForTerminal(t *testing.T, exp *BulkExporter, id string) {
+	t.Helper()
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		if job, ok := exp.GetStatus(id); ok && (job.Status == "completed" || job.Status == "error") {
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatalf("export %s did not reach a terminal state in time", id)
+}
+
 func TestBulkExporter_FailJob(t *testing.T) {
 	reg := medical.NewPatientRegistry()
 	dir := t.TempDir()
 	exp := NewBulkExporter(reg, dir)
 
-	// Start a job, then manually fail it.
+	// Start a job and let the background export finish first, so it can't
+	// overwrite the error status we set below (and so its writes don't race
+	// TempDir cleanup).
 	id := exp.StartExport(nil)
-
-	// Wait for export to complete.
-	time.Sleep(100 * time.Millisecond)
+	waitForTerminal(t, exp, id)
 
 	// Call failJob directly.
 	exp.failJob(id, fmt.Errorf("test failure"))
@@ -44,7 +62,7 @@ func TestBulkExporter_UnknownResourceType(t *testing.T) {
 	// Request only unsupported types.
 	id := exp.StartExport([]string{"FakeResource"})
 
-	time.Sleep(200 * time.Millisecond)
+	waitForTerminal(t, exp, id)
 
 	job, ok := exp.GetStatus(id)
 	if !ok {
@@ -66,7 +84,7 @@ func TestBulkExporter_EmptyRegistry(t *testing.T) {
 
 	id := exp.StartExport([]string{"Patient"})
 
-	time.Sleep(200 * time.Millisecond)
+	waitForTerminal(t, exp, id)
 
 	job, ok := exp.GetStatus(id)
 	if !ok {
@@ -111,12 +129,13 @@ func TestBulkExporter_GetFile_NotComplete(t *testing.T) {
 	exp := NewBulkExporter(reg, dir)
 
 	id := exp.StartExport(nil)
-	// Immediately try to get file before completion.
-	_, err := exp.GetFile(id, "Patient.ndjson")
-	if err == nil {
-		// It may have completed already due to empty registry; check status.
-		time.Sleep(100 * time.Millisecond)
-	}
+	// Try to get the file right after starting. Depending on scheduling the
+	// export may or may not have completed, so either a "not complete" error
+	// or a successful read is acceptable — the point is exercising GetFile
+	// before completion is observed.
+	_, _ = exp.GetFile(id, "Patient.ndjson")
+	// Wait for the export to finish so its writes don't race TempDir cleanup.
+	waitForTerminal(t, exp, id)
 }
 
 func TestBulkExporter_RunExport_MkdirFails(t *testing.T) {
@@ -129,7 +148,7 @@ func TestBulkExporter_RunExport_MkdirFails(t *testing.T) {
 	exp := NewBulkExporter(reg, filepath.Join(tmpFile, "subdir"))
 
 	id := exp.StartExport([]string{"Patient"})
-	time.Sleep(200 * time.Millisecond)
+	waitForTerminal(t, exp, id)
 
 	job, ok := exp.GetStatus(id)
 	if !ok {
@@ -162,7 +181,7 @@ func TestBulkExporter_AllResourceTypes(t *testing.T) {
 	exp := NewBulkExporter(reg, dir)
 
 	id := exp.StartExport(nil) // all types
-	time.Sleep(300 * time.Millisecond)
+	waitForTerminal(t, exp, id)
 
 	job, ok := exp.GetStatus(id)
 	if !ok {
