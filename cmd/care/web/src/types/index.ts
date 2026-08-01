@@ -165,3 +165,14 @@ export interface LLMTraceLog {
   error?: string;
   kind: string;
 }
+
+export interface CostAnalytics {
+  today_usd: number;
+  month_usd: number;
+  cost_per_case_usd: number;
+  savings_vs_cloud_usd: number;
+  providers: { provider: string; spend_usd: number; calls: number; tokens: number }[];
+  daily: { date: string; spend_usd: number }[];
+  top_agents: { agent: string; calls: number; tokens: number; cost_usd: number }[];
+  daily_budget_usd: number;
+}

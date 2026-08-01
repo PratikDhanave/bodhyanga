@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/PratikDhanave/bodh/pkg/llm"
@@ -24,6 +25,7 @@ func synthesisJSON(synthesis string, confidence float64, reasoning string) strin
 // sequentialMock is an llm.Client that returns a series of responses in order.
 // The first N calls return positionJSON; the (N+1)th returns synthesisJSON.
 type sequentialMock struct {
+	mu        sync.Mutex // debaters call Complete concurrently
 	responses []string
 	idx       int
 	calls     []llm.Request
@@ -32,6 +34,8 @@ type sequentialMock struct {
 func (s *sequentialMock) Provider() string { return "mock" }
 func (s *sequentialMock) Model() string    { return "mock-model" }
 func (s *sequentialMock) Complete(_ context.Context, req llm.Request) (*llm.Response, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.calls = append(s.calls, req)
 	content := ""
 	if s.idx < len(s.responses) {

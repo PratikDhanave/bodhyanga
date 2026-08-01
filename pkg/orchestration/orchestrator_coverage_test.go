@@ -3,6 +3,7 @@ package orchestration
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -158,7 +159,7 @@ func TestStart_PolicyDeny(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	if len(recorder.events) == 0 {
+	if len(recorder.List()) == 0 {
 		t.Error("expected at least one audit event for deny")
 	}
 }
@@ -203,7 +204,7 @@ func TestStart_AgentError(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	hasErr := false
-	for _, e := range recorder.events {
+	for _, e := range recorder.List() {
 		if e.Kind == audit.KindAgentError {
 			hasErr = true
 		}
@@ -314,14 +315,21 @@ func (r *mockRegistry) List(_ context.Context) []agent.Agent { return r.agents }
 func (r *mockRegistry) FindByCapability(_ context.Context, _ string) []agent.Agent { return nil }
 
 type memAuditRecorder struct {
+	mu     sync.Mutex // Start fans out one goroutine per message; Record is called concurrently
 	events []audit.Event
 }
 
 func (m *memAuditRecorder) Record(e audit.Event) error {
+	m.mu.Lock()
 	m.events = append(m.events, e)
+	m.mu.Unlock()
 	return nil
 }
-func (m *memAuditRecorder) List() []audit.Event { return m.events }
+func (m *memAuditRecorder) List() []audit.Event {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]audit.Event(nil), m.events...)
+}
 
 type errAuditRecorder struct{}
 

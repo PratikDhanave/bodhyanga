@@ -1,11 +1,11 @@
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 
 export default function Agents() {
-  const { data, loading, error, reload } = useApi(() => api.agents(), []);
+  const { data, loading, error, reload } = useLiveResource(() => api.agents(), [], []);
 
   if (loading) return <Page title="Agents"><Loader what="agents" /></Page>;
   if (error) return <Page title="Agents"><ErrorBox error={error} retry={reload} /></Page>;

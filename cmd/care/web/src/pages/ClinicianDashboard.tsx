@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 import type { ReviewDecision, Review, BenchResult } from '../types';
 
@@ -12,10 +12,10 @@ import type { ReviewDecision, Review, BenchResult } from '../types';
 // ---------------------------------------------------------------------------
 
 export default function ClinicianDashboard() {
-  const reviews = useApi(() => api.reviews('pending'), []);
-  const patients = useApi(() => api.patients(), []);
-  const panel = useApi(() => api.panel(), []);
-  const bench = useApi(() => api.bench(), []);
+  const reviews = useLiveResource(() => api.reviews('pending'), [], ['review_request','review_submitted','review_decided','tcm_tasks_created','diagnosis']);
+  const patients = useLiveResource(() => api.patients(), [], ['review_request','review_submitted','review_decided','tcm_tasks_created','diagnosis']);
+  const panel = useLiveResource(() => api.panel(), [], ['review_request','review_submitted','review_decided','tcm_tasks_created','diagnosis']);
+  const bench = useLiveResource(() => api.bench(), [], ['review_request','review_submitted','review_decided','tcm_tasks_created','diagnosis']);
 
   const loading = reviews.loading || patients.loading || panel.loading || bench.loading;
 

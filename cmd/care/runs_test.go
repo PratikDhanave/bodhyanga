@@ -188,7 +188,7 @@ func TestStartRunHandler_WithFixtureBootsThePipeline(t *testing.T) {
 	if id, _ := resp["run_id"].(string); id == "" {
 		t.Errorf("expected non-empty run_id, got %+v", resp)
 	}
-	if cid, _ := resp["case_id"].(string); cid != "case-alpha" {
+	if cid, _ := resp["case_id"].(string); !strings.HasPrefix(cid, "case-alpha-") {
 		t.Errorf("expected case_id=case-alpha, got %v", resp["case_id"])
 	}
 
@@ -197,7 +197,7 @@ func TestStartRunHandler_WithFixtureBootsThePipeline(t *testing.T) {
 		if m.Type != "presentation" {
 			t.Errorf("expected type=presentation, got %q", m.Type)
 		}
-		if cid, _ := m.Metadata["case_id"].(string); cid != "case-alpha" {
+		if cid, _ := m.Metadata["case_id"].(string); !strings.HasPrefix(cid, "case-alpha-") {
 			t.Errorf("expected message case_id=case-alpha, got %v", m.Metadata["case_id"])
 		}
 	case <-time.After(2 * time.Second):

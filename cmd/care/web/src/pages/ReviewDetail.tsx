@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 import type { ReviewDecision } from '../types';
 
 export default function ReviewDetail() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
-  const { data, loading, error, reload } = useApi(() => api.review(id), [id]);
+  const { data, loading, error, reload } = useLiveResource(() => api.review(id), [id], ['review_submitted','review_decided']);
 
   const [reviewerId, setReviewerId] = useState('clinician-demo');
   const [reason, setReason] = useState('');

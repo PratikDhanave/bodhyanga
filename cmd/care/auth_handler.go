@@ -67,13 +67,20 @@ func authMiddleware(store *auth.CredentialStore, secret string) func(http.Handle
 				}
 			}
 
-			// Require Authorization: Bearer <token>.
-			authHeader := r.Header.Get("Authorization")
-			if !strings.HasPrefix(authHeader, "Bearer ") {
+			// Accept the token from Authorization: Bearer <token>, or — for
+			// EventSource/WebSocket clients that cannot set request headers —
+			// from an ?access_token=<token> query parameter (e.g. the case-run
+			// SSE stream at /api/runs/{id}/events).
+			var rawToken string
+			if authHeader := r.Header.Get("Authorization"); strings.HasPrefix(authHeader, "Bearer ") {
+				rawToken = strings.TrimPrefix(authHeader, "Bearer ")
+			} else {
+				rawToken = r.URL.Query().Get("access_token")
+			}
+			if rawToken == "" {
 				http.Error(w, "authorization required", http.StatusUnauthorized)
 				return
 			}
-			rawToken := strings.TrimPrefix(authHeader, "Bearer ")
 			u, err := store.ValidateToken(rawToken, secret)
 			if err != nil {
 				http.Error(w, "invalid or expired token", http.StatusUnauthorized)
@@ -100,11 +107,64 @@ type authServer struct {
 	secret string
 }
 
+// streamTokenTTL bounds how long a stream ticket is valid. EventSource and
+// WebSocket clients cannot set an Authorization header, so they pass a token in
+// the URL query — a place that leaks into logs, history and Referer. Minting a
+// short-lived token for that purpose caps the blast radius of such a leak to a
+// minute instead of the full 8h session.
+const streamTokenTTL = 60 * time.Second
+
 // mountAuth registers the auth endpoints on mux.
 func (a *authServer) mountAuth(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/auth/login", a.login)
 	mux.HandleFunc("POST /api/auth/refresh", a.refresh)
 	mux.HandleFunc("GET /api/auth/me", a.me)
+	mux.HandleFunc("POST /api/auth/stream-ticket", a.streamTicket)
+}
+
+// streamTicket issues a short-lived (60s) token for EventSource/WebSocket
+// streams. Requires a valid Bearer session token (enforced by authMiddleware).
+func (a *authServer) streamTicket(w http.ResponseWriter, r *http.Request) {
+	u := userFromContext(r.Context())
+	if u == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	tok, err := a.store.IssueToken(u, a.secret, streamTokenTTL)
+	if err != nil {
+		http.Error(w, "token issuance failed", http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, map[string]any{"token": tok, "expires_in": int(streamTokenTTL.Seconds())})
+}
+
+// streamAuth wraps a handler that is reached by EventSource/WebSocket clients
+// (which cannot send an Authorization header) and validates the short-lived
+// token from the ?access_token query param before delegating. It also enforces
+// a same-origin check so a third-party page cannot open an authenticated
+// stream with a stolen ticket. Used to gate the /ws/hitl upgrade, which would
+// otherwise be reachable unauthenticated.
+func streamAuth(store *auth.CredentialStore, secret string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if origin := r.Header.Get("Origin"); origin != "" && !sameOrigin(origin, r.Host) {
+			http.Error(w, "forbidden origin", http.StatusForbidden)
+			return
+		}
+		if _, err := store.ValidateToken(r.URL.Query().Get("access_token"), secret); err != nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// sameOrigin reports whether the request Origin header host matches the request
+// Host (scheme is ignored — the SPA and API share one origin).
+func sameOrigin(origin, host string) bool {
+	if i := strings.Index(origin, "://"); i >= 0 {
+		origin = origin[i+3:]
+	}
+	return origin == host
 }
 
 // login handles POST /api/auth/login.

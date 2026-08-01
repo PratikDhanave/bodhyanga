@@ -1,10 +1,10 @@
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 
 export default function FineTune() {
-  const { data, loading, error, reload } = useApi(() => api.fineTuneStatus(), []);
+  const { data, loading, error, reload } = useLiveResource(() => api.fineTuneStatus(), [], ['review_decided']);
   if (loading) return <Page title="Fine-tune export"><Loader what="fine-tune status" /></Page>;
   if (error) return <Page title="Fine-tune export"><ErrorBox error={error} retry={reload} /></Page>;
   if (!data) return <Page title="Fine-tune export"><p>No data.</p></Page>;

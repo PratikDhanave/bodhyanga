@@ -1,11 +1,11 @@
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 
 export default function LLMTraces() {
-  const { data, loading, error, reload } = useApi(() => api.llmTraces(100), []);
+  const { data, loading, error, reload } = useLiveResource(() => api.llmTraces(100), [], ['diagnosis','diagnosis_proposal']);
   if (loading) return <Page title="LLM traces"><Loader what="llm traces" /></Page>;
   if (error) return <Page title="LLM traces"><ErrorBox error={error} retry={reload} /></Page>;
   if (!data || data.length === 0) {

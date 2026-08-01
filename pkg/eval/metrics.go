@@ -36,7 +36,9 @@ func ScoreCase(state medical.CaseState, messageSteps int) CaseMetrics {
 		CostUtilization: util,
 		MessageSteps:   messageSteps,
 		RPMAlertCount:  len(state.RPMAlerts),
-		UnderBudget:    state.TotalCostUSD <= state.MaxCostUSD,
+		// MaxCostUSD == 0 means "no budget configured" (same convention as the
+		// CostUtilization guard above), so a zero budget is always under budget.
+		UnderBudget:    state.MaxCostUSD <= 0 || state.TotalCostUSD <= state.MaxCostUSD,
 	}
 }
 
