@@ -185,6 +185,10 @@ Log in with the illustrative demo credentials **`clinician@hospital.org` / `clin
 (bcrypt-hashed; demo only, not for production). Open **Case runner**, pick the `demo-case-001`
 fixture, and watch the diagnostic pipeline stream to the console live.
 
+> **Demo credentials are seeded only for this research build.** `cmd/care` logs a security
+> warning on startup and honours **`BODH_DEMO_USERS=0`** to seed no credentials at all — the
+> correct setting for any non-demo deployment, which must wire its own credential store.
+
 > **Prerequisites.** Go 1.26 is the only hard requirement. **Ollama is optional** — a bare
 > `make care` defaults to a local Ollama model (`qwen2.5:7b`) for the LLM-backed diagnostician
 > and *degrades to the rule engine* if Ollama is absent, so `DIAGNOSTICIAN=rule` is the
