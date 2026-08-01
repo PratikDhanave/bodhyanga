@@ -2,11 +2,11 @@ import { useState } from 'react';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 
 export default function Tasks() {
-  const { data, loading, error, reload } = useApi(() => api.tasks(), []);
+  const { data, loading, error, reload } = useLiveResource(() => api.tasks(), [], ['tcm_tasks_created','inbox_routed','refill_response']);
   const [filter, setFilter] = useState<'all' | 'open' | 'urgent'>('all');
 
   if (loading) return <Page title="Nurse tasks"><Loader what="tasks" /></Page>;

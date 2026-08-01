@@ -230,6 +230,16 @@ func TestBulkGetFileIncompleteJob(t *testing.T) {
 			t.Error("expected error when job not yet complete, got nil")
 		}
 	}
+
+	// Wait for the export to reach a terminal state before returning, so its
+	// background file writes don't race t.TempDir()'s RemoveAll cleanup.
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		if s, _ := exp.GetStatus(jobID); s != nil && (s.Status == "completed" || s.Status == "error") {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 func TestBulkExportFilteredTypes(t *testing.T) {

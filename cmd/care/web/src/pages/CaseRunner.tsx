@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 
 export default function CaseRunner() {
   const navigate = useNavigate();
-  const fixtures = useApi(() => api.fixtures(), []);
+  const fixtures = useLiveResource(() => api.fixtures(), [], []);
   const [provider, setProvider] = useState('rule');
   const [selectedFixture, setSelectedFixture] = useState('');
   const [submitting, setSubmitting] = useState(false);

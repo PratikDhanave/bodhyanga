@@ -171,6 +171,27 @@ That is exactly what MARA's building blocks describe: an **orchestrator**, **spe
 
 ## Quick start
 
+### Clinician console in 30 seconds — zero external dependencies
+
+No Docker, no Ollama, no API keys. Just Go 1.26:
+
+```bash
+git clone https://github.com/PratikDhanave/bodh.git && cd bodh
+make care DIAGNOSTICIAN=rule          # deterministic rule engine — nothing external needed
+open http://localhost:8088/ui/        # clinician console
+```
+
+Log in with the illustrative demo credentials **`clinician@hospital.org` / `clinic123`**
+(bcrypt-hashed; demo only, not for production). Open **Case runner**, pick the `demo-case-001`
+fixture, and watch the diagnostic pipeline stream to the console live.
+
+> **Prerequisites.** Go 1.26 is the only hard requirement. **Ollama is optional** — a bare
+> `make care` defaults to a local Ollama model (`qwen2.5:7b`) for the LLM-backed diagnostician
+> and *degrades to the rule engine* if Ollama is absent, so `DIAGNOSTICIAN=rule` is the
+> friction-free first run. **Docker** is needed only for the full test suite (`make test` spins up
+> Postgres via testcontainers; DB tests skip without it). **Node** is needed only to rebuild the
+> SPA — `cmd/care/web/dist/` is committed, so *running* the console needs no Node step.
+
 ### Fastest path — `docker compose up`
 
 The full local-dev stack (Postgres + care + Ollama + Prometheus + Grafana + Tempo + Loki) boots with one command:

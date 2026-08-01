@@ -20,6 +20,7 @@ import (
 	"github.com/PratikDhanave/bodh/pkg/agent"
 	"github.com/PratikDhanave/bodh/pkg/audio"
 	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodh/pkg/auth"
 	"github.com/PratikDhanave/bodh/pkg/comm"
 	"github.com/PratikDhanave/bodh/pkg/engagement"
 	"github.com/PratikDhanave/bodh/pkg/eval"
@@ -84,6 +85,16 @@ func main() {
 	queue := tasks.NewQueue()
 	notifier := engagement.NewInMemory()
 	reviews := hitl.NewQueue()
+	// Wire the review queue to the WebSocket hub so every Submit/Decide pushes
+	// a real-time event to connected clinicians instead of relying on the SPA
+	// polling. Set before orch.Start so agent-submitted reviews during a run
+	// are broadcast. The hub is mounted (behind streamAuth) further below.
+	wsHitl := hitl.NewHub(reviews)
+	reviews.Hub = wsHitl
+	// Mirror every clinical bus message to the hub as a thin event envelope so
+	// the SPA reacts to state changes (care plans, tasks, panels, diagnoses,
+	// reviews) in real time instead of polling. See cmd/care/liveevents.go.
+	mirrorBusToHub(bus, wsHitl, defaultTenant())
 	reviewAgent := &agents.HumanReviewAgent{Queue: reviews}
 
 	// Audio transcription. The default build links the MockTranscriber
@@ -143,6 +154,9 @@ func main() {
 	// and bodh_llm_* families. No auth — the NetworkPolicy restricts ingress
 	// to the API gateway / monitoring namespace in Kubernetes.
 	mux.Handle("GET /metrics", observability.PrometheusHandler())
+
+	// The HITL WebSocket hub (wsHitl) was constructed above and wired to the
+	// review queue; it is mounted behind streamAuth once authStore exists.
 
 	mux.HandleFunc("/patients", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -408,6 +422,23 @@ func main() {
 	}
 	api.mount(mux)
 
+	// JWT auth (demo / self-hosted path). Seed the credential store with the
+	// illustrative users (clinician/clinic123, admin/admin123), mount the
+	// /api/auth/* endpoints, and gate every other /api/* route behind a Bearer
+	// token via authMiddleware in the handler chain below. POST /api/auth/login,
+	// /healthz and /readyz stay public (see publicRoutes).
+	authStore := auth.NewCredentialStore()
+	// The login form input is type=email, so also seed an email-format demo
+	// credential that matches the form's placeholder. (The bare clinician/admin
+	// seeds remain for API and test callers.)
+	_ = authStore.AddUser("clinician@hospital.org", "clinic123", auth.RoleClinician)
+	authSecret := auth.JWTSecret()
+	(&authServer{store: authStore, secret: authSecret}).mountAuth(mux)
+
+	// Gate the HITL WebSocket behind a short-lived stream ticket + same-origin
+	// check (see streamAuth). wsHitl was constructed above with the review queue.
+	mux.Handle("/ws/hitl", streamAuth(authStore, authSecret, wsHitl))
+
 	if h, ok := spaHandler(); ok {
 		mux.Handle("/ui/", h)
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -429,7 +460,9 @@ func main() {
 	//      when built with -tags otel AND NewOTLPLLMExporter was called above
 	//      to set the global TracerProvider).
 	handler := observability.TraceHandler(
-		observability.PromMiddleware(mux),
+		observability.PromMiddleware(
+			authMiddleware(authStore, authSecret)(mux),
+		),
 		"bodh-care",
 	)
 

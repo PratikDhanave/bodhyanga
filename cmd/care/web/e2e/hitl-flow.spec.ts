@@ -8,8 +8,18 @@ import { test, expect } from '@playwright/test';
 //      'playwright-test'.
 //   4. Back on /ui/reviews the same review must no longer be pending.
 
+
+async function login(page: import('@playwright/test').Page): Promise<void> {
+  await page.goto('/ui/login');
+  await page.locator('#email').fill('clinician@hospital.org');
+  await page.locator('#password').fill('clinic123');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.waitForURL(/\/ui\/?$/);
+}
+
 test('running a case produces a pending review that can be approved in the UI', async ({ page }) => {
-  // ---- step 1: run the case ----
+    await login(page);
+// ---- step 1: run the case ----
   await page.goto('/ui/runs');
   const fixtureSelect = page.locator('label', { hasText: 'Fixture' }).locator('select');
   await expect(fixtureSelect).toBeVisible();

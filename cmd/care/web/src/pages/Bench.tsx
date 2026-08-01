@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 import type { BenchResult } from '../types/index';
 
@@ -159,7 +159,7 @@ function ParetoChart({ data }: { data: BenchResult[] }) {
 }
 
 export default function Bench() {
-  const { data, loading, error, reload } = useApi(() => api.bench(), []);
+  const { data, loading, error, reload } = useLiveResource(() => api.bench(), [], []);
   if (loading) return <Page title="Bench results"><Loader what="bench" /></Page>;
   if (error) return <Page title="Bench results"><ErrorBox error={error} retry={reload} /></Page>;
   if (!data || data.length === 0) {

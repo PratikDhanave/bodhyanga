@@ -1,11 +1,11 @@
 import Page from '../components/Page';
 import Loader, { ErrorBox } from '../components/Loader';
 import Empty from '../components/Empty';
-import { useApi } from '../hooks/useApi';
+import { useLiveResource } from '../hooks/useLiveResource';
 import { api } from '../api/client';
 
 export default function PanelReport() {
-  const { data, loading, error, reload } = useApi(() => api.panel(), []);
+  const { data, loading, error, reload } = useLiveResource(() => api.panel(), [], ['panel_report','care_plan_ready']);
   if (loading) return <Page title="Panel report"><Loader what="panel" /></Page>;
   if (error) return <Page title="Panel report"><ErrorBox error={error} retry={reload} /></Page>;
   if (!data || data.gaps.length === 0) {

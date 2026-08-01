@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 async function login(page: Page): Promise<void> {
   await page.goto('/ui/login');
-  await page.locator('#email').fill('clinician');
+  await page.locator('#email').fill('clinician@hospital.org');
   await page.locator('#password').fill('clinic123');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL(/\/ui\/?$/);
@@ -11,6 +11,22 @@ async function login(page: Page): Promise<void> {
 test.describe('Patient Portal', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
+    // Seed a patient so the portal renders the care-plan, reminders and vitals
+    // sections instead of the "no patient" empty state.
+    const token = await page.evaluate(() => localStorage.getItem('bodh_jwt'));
+    await page.request.post('/patients', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      data: {
+        patient_id: 'e2e-portal-1',
+        name: 'E2E Patient',
+        conditions: ['diabetes', 'hypertension'],
+        medications: ['metformin', 'lisinopril'],
+        last_a1c: 7.2,
+        last_bp_systolic: 140,
+        last_bp_diastolic: 90,
+        last_weight_lbs: 180,
+      },
+    });
     await page.goto('/ui/portal');
   });
 
