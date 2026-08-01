@@ -185,6 +185,15 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	// Subscribe BEFORE sending the 101 response. The handshake acknowledgment
+	// must not be observable until the client is in the subscriber set —
+	// otherwise a client that connects and immediately expects live events can
+	// miss any event broadcast in the registration window (the event-driven SPA
+	// does exactly this). The 64-deep channel buffers anything that arrives
+	// before the read loop below starts draining it.
+	ch, unsub := h.Subscribe(tenantID)
+	defer unsub()
+
 	// Write the 101 Switching Protocols response directly over the raw connection.
 	resp := "HTTP/1.1 101 Switching Protocols\r\n" +
 		"Upgrade: websocket\r\n" +
@@ -197,10 +206,6 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := bufrw.Flush(); err != nil {
 		return
 	}
-
-	// Subscribe to tenant events.
-	ch, unsub := h.Subscribe(tenantID)
-	defer unsub()
 
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
