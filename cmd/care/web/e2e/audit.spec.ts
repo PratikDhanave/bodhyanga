@@ -78,3 +78,37 @@ test('audit log filters by case_id', async ({ page }) => {
   await page.getByRole('button', { name: 'Clear' }).click();
   await expect(caseIdInput).toHaveValue('');
 });
+
+// ---------------------------------------------------------------------------
+// Test: recorded events render a valid timestamp and agent (regression)
+//
+// Guards the field-name mismatch bug where AuditLog read `ts`/`agent` while the
+// API emits `at`/`agent_id`, so every populated row showed "Invalid Date" and a
+// blank agent. The empty-state tests above could not catch it (no rows to
+// render), so this test first runs a case to record events, then asserts the
+// first row's timestamp and agent columns are populated.
+// ---------------------------------------------------------------------------
+test('audit rows render a valid timestamp and agent', async ({ page }) => {
+  await login(page);
+
+  // Populate audit events by running a case through the case runner.
+  await page.goto('/ui/runs');
+  await page.getByRole('button', { name: /Run case/i }).click();
+  await page.waitForURL(/\/ui\/runs\/.+/, { timeout: 15_000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+
+  await page.goto('/ui/audit');
+  await expect(page.getByRole('heading', { name: 'Audit Log', level: 1 })).toBeVisible();
+
+  const firstRow = page.locator('table tbody tr').first();
+  await expect(firstRow).toBeVisible({ timeout: 10_000 });
+
+  // Never render "Invalid Date" (the symptom of the ts/at mismatch).
+  await expect(page.getByText('Invalid Date')).toHaveCount(0);
+
+  // Timestamp column contains a real date (has digits), agent column is non-empty.
+  const ts = (await firstRow.locator('td').first().innerText()).trim();
+  expect(ts).toMatch(/\d/);
+  const agent = (await firstRow.locator('td').nth(1).innerText()).trim();
+  expect(agent).toMatch(/\w/);
+});
