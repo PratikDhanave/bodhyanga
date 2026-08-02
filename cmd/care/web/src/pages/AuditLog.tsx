@@ -9,8 +9,8 @@ import { getToken } from '../hooks/useAuth';
 // ---------------------------------------------------------------------------
 interface AuditEvent {
   id: string;
-  ts: string;
-  agent: string;
+  at: string; // RFC3339 timestamp — matches pkg/audit Event.At (JSON "at")
+  agent_id: string; // matches pkg/audit Event.AgentID (JSON "agent_id")
   kind: string;
   case_id?: string;
   decision?: string;
@@ -193,9 +193,9 @@ export default function AuditLog() {
               {events.map((e) => (
                 <tr key={e.id} className="border-t border-bodh-100 hover:bg-bodh-50">
                   <td className="px-4 py-2 text-xs text-bodh-400 whitespace-nowrap">
-                    {new Date(e.ts).toLocaleString()}
+                    {e.at ? new Date(e.at).toLocaleString() : '–'}
                   </td>
-                  <td className="px-4 py-2 font-mono text-xs">{e.agent}</td>
+                  <td className="px-4 py-2 font-mono text-xs">{e.agent_id ?? '–'}</td>
                   <td className="px-4 py-2">
                     <span className="badge badge-normal">{e.kind}</span>
                   </td>
