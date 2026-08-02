@@ -40,6 +40,10 @@ That said, the codebase implements production-grade security patterns as a refer
 - **`pkg/auth`** — JWT (HS256) credential store + SMART on FHIR (RS256) validator
 - **`pkg/governance`** — Policy-based access control (OPA Rego, SMART scopes, Part 2 consent, break-glass)
 - **Row-level security** — PostgreSQL RLS with `SET LOCAL app.tenant_id` per query
+- **Demo credentials** — `cmd/care` seeds the illustrative login
+  `clinician@hospital.org` / `clinic123` **only in this research build**. It logs
+  a startup security warning and honours **`BODH_DEMO_USERS=0`** to seed nothing;
+  any non-demo deployment must set it and wire its own credential store.
 
 ### Network Security
 
