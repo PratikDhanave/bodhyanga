@@ -16,12 +16,20 @@ Mermaid diagrams, delivery plan) → `../bodh/session.md` (decision record).
 go build ./... && go test ./...   # everything; no network except testcontainers
 go run ./cmd/slice -verbose       # demo case through the pipeline
 go test ./pkg/ckptpg -run TestKillResume -v   # durable-HITL integration test
+
+cd web && npm install && npm run dev          # Next.js clinician console → :3000 (proxies to cmd/care)
 ```
+
+**Toolchain:** needs **Go 1.26.5+** — the `../bodh` dependency's `go` directive requires it, so
+`GOTOOLCHAIN=local` on an older Go silently fails `go build`/`go run` ("requires go >= 1.26.5"). Use
+`GOTOOLCHAIN=auto` or upgrade. Docker is required for the Postgres/testcontainers suites (`pkg/ckptpg`,
+`pkg/careapi`); they skip themselves if it is absent. This is a nested module inside the bodh monorepo; it builds against the parent via
+`replace … => ..` (no separate checkout needed).
 
 ## Ground rules
 
 - **MAF-go stays pinned** (`v0.0.0-20260710122455-75d0a647f739`); upgrades are
-  dedicated PRs. bodh is imported via `replace ../bodh` — compliance packages
+  dedicated PRs. bodh is imported via `replace … => ..` (the parent module) — compliance packages
   (`pkg/governance`, `pkg/audit`, `pkg/eval`, `pkg/phi`, `pkg/protocol`) are the
   authority; never reimplement them here.
 - **Safety invariants** (architecture.md §3): fail-closed governance (policy error =
@@ -48,7 +56,9 @@ pkg/admit/        THE admission boundary (decorator + agent middleware)
 pkg/auditbridge/  workflow events → bodh audit trail
 pkg/ckptpg/       Postgres checkpoint.Store
 pkg/evalhook/     terminal-hop eval records
+web/              Next.js clinician console over the care API (own AGENTS.md — Next 16)
 specs/            Spec Kit artifacts (spec → plan → tasks)
+docs/diagrams/    architecture + flow diagrams (PNG, authored with archify)
 ```
 
 Ingestion: `go run ./cmd/slice -format hl7 -case msg.hl7` (or `-format fhir bundle.json`)
@@ -59,6 +69,13 @@ paused reviews survive restart. Loopback + auth-gap banner — auth is a non-goa
 Eval: `go run ./cmd/bench` runs the SD-Bench suite — accuracy AND mean cost (the Pareto axis;
 specs/006 added per-case cost through the pipeline); `-fail-on-regression` gates CI on accuracy,
 `-update-baseline` refreshes it. The gate also runs as a unit test (`go test ./pkg/bench`).
+Web console: `cd web && npm run dev` serves a Next.js SPA over the care API through a same-origin
+proxy (`web/app/api/care/[...path]`), targeting `http://127.0.0.1:8088` — the IPv4 literal, NOT
+`localhost` (Node's fetch prefers IPv6 `::1`, but `cmd/care` binds IPv4). Auth-free like the API
+(ADR-0006). `web/` is Next 16 with its own `AGENTS.md` — read `node_modules/next/dist/docs/` before
+changing it. For automated visual checks use a production build (`next build && next start`): `next
+dev`'s HMR websocket fails under headless Chrome and blocks hydration (the SSR shell renders but
+effects never fire).
 
 <!-- SPECKIT START -->
 For technologies, structure, commands, and design decisions, read the relevant plan.
