@@ -18,6 +18,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Patient portal i18n — English, Spanish, French, Mandarin Chinese (`cmd/care/web/src/i18n/`)
 - OSS standard files — LICENSE (Apache 2.0), SECURITY.md, CODE_OF_CONDUCT.md, CHANGELOG.md, issue/PR templates
 
+### Security
+- `cmd/care` demo credential seeding is now gated behind **`BODH_DEMO_USERS`** (default on for this research build; `BODH_DEMO_USERS=0` seeds nothing) and logs a startup security warning, so a non-demo deployment does not ship well-known passwords.
+
+### Fixed
+- Eliminated **27 data races** caught by `go test -race` across `pkg/a2a`, `pkg/fhir`, `pkg/agent/debate`, `pkg/orchestration`, and `pkg/llm/pool` — including a real HITL WebSocket first-event-loss bug (server sent `101` before subscribing) and a `pkg/a2a` return-then-mutate race on the shared task pointer.
+- Patched `govulncheck` advisories (`x/text` → v0.39.0, `x/crypto` → v0.54.0, Go 1.26.5) and realigned the `maf/` nested module; the `build·vet·test` (`-race`), `govulncheck`, `frontend`, `maf`, and `docker` CI jobs are now genuinely green.
+
 ---
 
 ## [0.9.0] - 2026-06-01
