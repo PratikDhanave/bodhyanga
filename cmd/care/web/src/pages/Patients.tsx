@@ -15,7 +15,7 @@ export default function Patients() {
     <Page title="Patients" subtitle={`${data.length} in registry`}>
       <div className="card overflow-hidden">
         <table className="min-w-full text-sm">
-          <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+          <thead className="bg-bodhyanga-50 text-bodhyanga-400 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Patient ID</th>
               <th className="px-4 py-2 text-left">Name</th>
@@ -28,7 +28,7 @@ export default function Patients() {
           </thead>
           <tbody>
             {data.map((p) => (
-              <tr key={p.patient_id} className="border-t border-bodh-100">
+              <tr key={p.patient_id} className="border-t border-bodhyanga-100">
                 <td className="px-4 py-2 font-mono text-xs">{p.patient_id}</td>
                 <td className="px-4 py-2">{p.name ?? '–'}</td>
                 <td className="px-4 py-2">
@@ -36,10 +36,10 @@ export default function Patients() {
                     {(p.conditions ?? []).map((c) => <span key={c} className="badge badge-normal">{c}</span>)}
                   </div>
                 </td>
-                <td className="px-4 py-2 text-xs text-bodh-400">{(p.medications ?? []).join(', ') || '–'}</td>
+                <td className="px-4 py-2 text-xs text-bodhyanga-400">{(p.medications ?? []).join(', ') || '–'}</td>
                 <td className="px-4 py-2">{p.last_a1c ?? '–'}</td>
                 <td className="px-4 py-2">{p.last_bp_systolic ? `${p.last_bp_systolic}/${p.last_bp_diastolic}` : '–'}</td>
-                <td className="px-4 py-2 text-xs text-bodh-400">{p.discharged_at ? new Date(p.discharged_at).toLocaleString() : '–'}</td>
+                <td className="px-4 py-2 text-xs text-bodhyanga-400">{p.discharged_at ? new Date(p.discharged_at).toLocaleString() : '–'}</td>
               </tr>
             ))}
           </tbody>

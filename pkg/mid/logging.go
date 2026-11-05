@@ -1,10 +1,10 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/app/sdk/mid/logging.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 //
-// Bodh modifications vs upstream:
+// Bodhyanga modifications vs upstream:
 //   - The logger is wrapped by pkg/phi.LoggerWrapper, so headers / path /
 //     remoteaddr go through the same redactor that protects every other
-//     log seam in Bodh. AGENTS.md invariant: PHI never reaches an
+//     log seam in Bodhyanga. AGENTS.md invariant: PHI never reaches an
 //     unredacted log path.
 //   - Only a curated allow-list of headers is recorded (no Authorization,
 //     no Cookie, no X-Forwarded-For unless explicitly safe). Catch-all
@@ -24,10 +24,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/errs"
-	"github.com/PratikDhanave/bodh/pkg/observability"
-	"github.com/PratikDhanave/bodh/pkg/phi"
-	"github.com/PratikDhanave/bodh/pkg/web"
+	"github.com/PratikDhanave/bodhyanga/pkg/errs"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/phi"
+	"github.com/PratikDhanave/bodhyanga/pkg/web"
 )
 
 // Logger returns a middleware that emits two structured-ish log lines per

@@ -12,11 +12,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/guardrails"
+	"github.com/PratikDhanave/bodhyanga/pkg/guardrails"
 )
 
 func main() {
-	fmt.Println("=== Bodh Guardrails Pipeline Demo ===")
+	fmt.Println("=== Bodhyanga Guardrails Pipeline Demo ===")
 	fmt.Println()
 
 	// Build the default pipeline with all built-in guardrails.

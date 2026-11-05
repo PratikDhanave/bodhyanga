@@ -32,7 +32,7 @@
 
 - [ ] No real patient data in test fixtures or examples
 - [ ] Audit events use redacted reasons (no diagnosis/HPI/lab values)
-- [ ] OTel spans use `sha256(caseID)[:8]` for `bodh.case_id`
+- [ ] OTel spans use `sha256(caseID)[:8]` for `bodhyanga.case_id`
 - [ ] New tools/agents do not log PHI to stdout
 
 ## Test plan

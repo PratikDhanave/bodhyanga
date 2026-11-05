@@ -16,14 +16,14 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "bodh.fullname" . }}
+  name: {{ include "bodhyanga.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "bodh.labels" . | nindent 4 }}
+    {{- include "bodhyanga.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:
-      {{- include "bodh.selectorLabels" . | nindent 6 }}
+      {{- include "bodhyanga.selectorLabels" . | nindent 6 }}
   policyTypes:
     - Ingress
     - Egress

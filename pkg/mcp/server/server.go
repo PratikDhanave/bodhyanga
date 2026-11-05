@@ -26,8 +26,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/PratikDhanave/bodh/pkg/mcp"
-	"github.com/PratikDhanave/bodh/pkg/tools"
+	"github.com/PratikDhanave/bodhyanga/pkg/mcp"
+	"github.com/PratikDhanave/bodhyanga/pkg/tools"
 )
 
 // DefaultAddr is the listen address used when Config.Addr is empty.
@@ -36,7 +36,7 @@ const DefaultAddr = ":8097"
 // DefaultName / DefaultVersion are the serverInfo values advertised during the
 // initialize handshake when the caller does not supply them in Config.
 const (
-	DefaultName    = "bodh-mcp-server"
+	DefaultName    = "bodhyanga-mcp-server"
 	DefaultVersion = "0.1.0"
 )
 

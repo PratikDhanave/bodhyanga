@@ -8,7 +8,7 @@ package comm
 // the orchestrator publishes, after running governance and audit on the
 // outgoing message. That separation (see Design rule 1 in
 // docs/architecture.md § Design rules from MARA) is why every interaction
-// in Bodh ends up in the HIPAA audit log without the agents knowing about
+// in Bodhyanga ends up in the HIPAA audit log without the agents knowing about
 // the log.
 //
 // The shipped InMemoryBus is single-process / demo-grade. Production swaps
@@ -23,7 +23,7 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // Handler receives messages published on the bus.

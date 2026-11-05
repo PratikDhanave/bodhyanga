@@ -1,13 +1,13 @@
 # Model Card — `LLMReasoningVerifier`
 
-> **Card version:** 1.0.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodh maintainers
+> **Card version:** 1.0.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodhyanga maintainers
 
 ## Model details
 
 - **Variant name:** `LLMReasoningVerifier`
 - **Source:** [`agents/reasoning_verifier_llm.go`](../../agents/reasoning_verifier_llm.go)
 - **Type:** Single-LLM-call verifier with rule-based fallback + HITL routing
-- **License:** Apache-2.0 (Bodh) / provider terms
+- **License:** Apache-2.0 (Bodhyanga) / provider terms
 
 ## Intended use
 

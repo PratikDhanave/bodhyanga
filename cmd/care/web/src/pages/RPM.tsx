@@ -105,7 +105,7 @@ export default function RPM() {
     <Page title="RPM observations" subtitle="Remote patient monitoring — last 7 HR readings per patient">
       <div className="card overflow-hidden">
         <table className="min-w-full text-sm">
-          <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+          <thead className="bg-bodhyanga-50 text-bodhyanga-400 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Patient</th>
               <th className="px-4 py-2 text-left">HR (bpm)</th>
@@ -117,10 +117,10 @@ export default function RPM() {
           </thead>
           <tbody>
             {STUB_PATIENTS.map((p) => (
-              <tr key={p.patient_id} className={`border-t border-bodh-100 ${p.alert ? 'bg-amber-50' : ''}`}>
+              <tr key={p.patient_id} className={`border-t border-bodhyanga-100 ${p.alert ? 'bg-amber-50' : ''}`}>
                 <td className="px-4 py-2">
                   <div className="font-medium">{p.name}</div>
-                  <div className="text-xs text-bodh-400">{p.patient_id}</div>
+                  <div className="text-xs text-bodhyanga-400">{p.patient_id}</div>
                 </td>
                 <td className="px-4 py-2 font-mono">{p.last_hr}</td>
                 <td className="px-4 py-2">
@@ -135,7 +135,7 @@ export default function RPM() {
                       {p.alert}
                     </span>
                   ) : (
-                    <span className="text-xs text-bodh-300">—</span>
+                    <span className="text-xs text-bodhyanga-300">—</span>
                   )}
                 </td>
               </tr>
@@ -143,7 +143,7 @@ export default function RPM() {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-bodh-400">
+      <p className="text-xs text-bodhyanga-400">
         Live feed via POST /rpm/observation is planned. This view shows stub data until
         the persistent observation store is wired.
       </p>

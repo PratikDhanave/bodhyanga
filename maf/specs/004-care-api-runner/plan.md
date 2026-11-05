@@ -7,7 +7,7 @@
 ## Summary
 
 Put a thin `net/http` layer in front of the **existing** `pkg/pipeline.Runner` so a case can be
-submitted, polled, reviewed, and audited over HTTP — the bodh-maf analog of bodh's `cmd/care`, API
+submitted, polled, reviewed, and audited over HTTP — the bodhyanga-maf analog of bodhyanga's `cmd/care`, API
 only. The handlers wrap `Runner.Run` (submit), a new PHI-free **case registry** (status/result),
 `Runner.Resume` + `Runner.Responder` (answer a pending review, durable across restart), and a
 case-filtered projection of `audit.Recorder.List()` (audit read). No new pipeline engine, no new
@@ -18,17 +18,17 @@ status accessor (see Complexity Tracking + the flagged prerequisite tasks).
 
 ## Technical Context
 
-**Language/Version**: Go 1.26 (module `github.com/PratikDhanave/bodh-maf`)
+**Language/Version**: Go 1.26 (module `github.com/PratikDhanave/bodhyanga-maf`)
 
 **Primary Dependencies**: stdlib `net/http` + `net/http/httptest` (no web framework);
-`github.com/PratikDhanave/bodh-maf/pkg/pipeline` (Runner — the engine, unchanged);
-`bodh/pkg/audit` (`Recorder`, `Event`) and `bodh/pkg/eval` via the existing `replace ../bodh`;
+`github.com/PratikDhanave/bodhyanga-maf/pkg/pipeline` (Runner — the engine, unchanged);
+`bodhyanga/pkg/audit` (`Recorder`, `Event`) and `bodhyanga/pkg/eval` via the existing `replace ../bodhyanga`;
 `pkg/ckptpg` (Postgres checkpoint store, reused for the restart-durability test);
 `jackc/pgx/v5` (already a dep); `testcontainers-go` (test-only, US3 durability test only)
 
 **Storage**: a **process-local, PHI-free case registry** (in-memory `map[caseToken]entry` behind a
 mutex for the slice; interface-shaped so a durable backing is a later swap). Durable *resume* state
-stays in `pkg/ckptpg`'s `checkpoints` table — unchanged. Audit uses bodh's `Recorder` (in-memory in
+stays in `pkg/ckptpg`'s `checkpoints` table — unchanged. Audit uses bodhyanga's `Recorder` (in-memory in
 the slice). **No new SQL migration** is required for the slice registry.
 
 **Testing**: stdlib `go test` + `net/http/httptest` for every handler; the rule engine + in-memory
@@ -57,7 +57,7 @@ type, ~4 prerequisite Runner-observability accessors, ~14 handler/registry tests
 
 ## Constitution Check
 
-*GATE: evaluated against `.specify/memory/constitution.md` (bodh constitution, inherited).*
+*GATE: evaluated against `.specify/memory/constitution.md` (bodhyanga constitution, inherited).*
 
 | Principle | Status | Notes |
 |---|---|---|
@@ -67,14 +67,14 @@ type, ~4 prerequisite Runner-observability accessors, ~14 handler/registry tests
 | IV. Test-first, coverage gates | PASS | httptest handler tests per user story (tests-first); testcontainers only for the restart test; ≥90% coverage target on `pkg/careapi` |
 | V. Package-first | PASS | Logic in `pkg/careapi` (registry + handlers as a `http.Handler`); `cmd/care` is wiring only |
 | VI. Observability by default | DEFERRED | Structured request logging only; OTel wiring stays out of scope as in specs/001 — recorded gap, not a violation |
-| (Auth) | DOCUMENTED NON-GOAL | No auth middleware, loopback bind, banner + README state the gap — matches bodh `cmd/care` / ADR-0006 research-grade default |
+| (Auth) | DOCUMENTED NON-GOAL | No auth middleware, loopback bind, banner + README state the gap — matches bodhyanga `cmd/care` / ADR-0006 research-grade default |
 
 **Post-design re-check (Phase 1)**: no new violations; the registry is the one added component and
 is justified below.
 
 ## Technical Approach
 
-### Endpoint surface (naming borrowed from bodh's `cmd/care` / `pkg/web` where sensible)
+### Endpoint surface (naming borrowed from bodhyanga's `cmd/care` / `pkg/web` where sensible)
 
 | Method + path | Maps to | Runner call |
 |---|---|---|
@@ -83,7 +83,7 @@ is justified below.
 | `GET /v1/reviews` | list pending physician reviews (US3) | registry read of `awaiting_review` rows |
 | `POST /v1/reviews/{session_id}` | answer a review, resume the run (US3) | set `Runner.Responder`, `Runner.Resume(sessionID)` → registry update |
 | `GET /v1/cases/{case_token}/audit` | PHI-free trail for the case (US4) | filter `Recorder.List()` by `CaseID == token` |
-| `GET /healthz`, `GET /readyz` | liveness/readiness | mirrors `cmd/care` contract referenced in bodh `pkg/runtime/doc.go` |
+| `GET /healthz`, `GET /readyz` | liveness/readiness | mirrors `cmd/care` contract referenced in bodhyanga `pkg/runtime/doc.go` |
 
 ### How review-answer maps to Runner resume (the load-bearing mechanism)
 
@@ -109,7 +109,7 @@ the same guarantee `pkg/ckptpg.TestKillResume` proves at the CLI (README exit cr
   `Outcome.Denied == true` (runner.go:167/174); the submit handler maps that to a `denied` *status*
   body (200/202-class with an explicit status field), **never** an HTTP 500 (FR-011).
 - **Audit (fail-open, PHI-free)**: the handler reads `Recorder.List()` and filters by hashed token.
-  Every `audit.Event` field is already PHI-free by construction (`bodh/pkg/audit/recorder.go` — only
+  Every `audit.Event` field is already PHI-free by construction (`bodhyanga/pkg/audit/recorder.go` — only
   correlation handles, `CaseID` is the hashed token the bridge writes). The handler adds no fields
   and copies no case content. A per-story PHI scan (reuse `pkg/auditbridge` invariant helpers if
   exported) asserts SC-004 across the whole response surface.
@@ -119,7 +119,7 @@ the same guarantee `pkg/ckptpg.TestKillResume` proves at the CLI (README exit cr
 
 ### Auth posture
 
-Explicitly out of scope, matching bodh's `cmd/care` default (ADR-0006 "research-grade substrate":
+Explicitly out of scope, matching bodhyanga's `cmd/care` default (ADR-0006 "research-grade substrate":
 no auth middleware wired). `cmd/care` binds `127.0.0.1` by default, prints a startup banner naming
 the gap, and the README states it. A `-addr` flag allows non-loopback for demos with the banner
 still warning. This is a documented roadmap item, not a silent omission (FR-013).
@@ -150,7 +150,7 @@ still warning. This is a documented roadmap item, not a silent omission (FR-013)
 - `agents.ReviewDecision{Approved, ReviewerID, Note}` — pkg/agents/review.go:16 (POST body target)
 - `agents.ReviewRequest{CaseToken, Diagnosis, Confidence, Forced, Rounds}` — pkg/agents/review.go:6
   (the pending-review projection surfaced by `GET /v1/reviews`)
-- `audit.Recorder.List() []audit.Event` — bodh/pkg/audit/recorder.go:185 (audit read source)
+- `audit.Recorder.List() []audit.Event` — bodhyanga/pkg/audit/recorder.go:185 (audit read source)
 
 ### Runner capability GAPS — flagged as prerequisite tasks, NOT assumed
 
@@ -237,12 +237,12 @@ to a user story for independent landing.
 ## Non-goals (1-week scope boundary)
 
 - Authentication/authorization, TLS, rate limiting, multi-tenancy (documented roadmap, FR-013).
-- A React/SPA or any UI — API only (matches bodh-maf README non-goals).
+- A React/SPA or any UI — API only (matches bodhyanga-maf README non-goals).
 - Async/background submit (202 + poll-only) — submit is synchronous for the slice; only *review*
   answering is inherently async (via pause/resume).
 - Multiple API replicas sharing one registry / a durable registry backing — the registry is
   process-local and rebuildable from checkpoints; distribution is out of scope.
-- FHIR/HL7 ingestion, RAG, the full eval harness, the remaining agents — unchanged bodh-maf non-goals.
+- FHIR/HL7 ingestion, RAG, the full eval harness, the remaining agents — unchanged bodhyanga-maf non-goals.
 - Streaming/SSE status — polling only.
 
 ## Complexity Tracking

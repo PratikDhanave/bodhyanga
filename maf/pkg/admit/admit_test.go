@@ -7,9 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/governance"
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // capturingRecorder records events; optionally fails every write.

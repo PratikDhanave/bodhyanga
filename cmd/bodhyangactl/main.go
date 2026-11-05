@@ -1,17 +1,17 @@
-// Command bodhctl is the operator CLI for the cmd/care HTTP API. Stdlib-only;
+// Command bodhyangactl is the operator CLI for the cmd/care HTTP API. Stdlib-only;
 // the binary stays small and the dependency surface stays clean.
 //
-// Set BODH_API_URL (default http://localhost:8088) to point at a running care
+// Set BODHYANGA_API_URL (default http://localhost:8088) to point at a running care
 // server.
 //
-//	bodhctl reviews list                  # all reviews
-//	bodhctl reviews pending               # only pending
-//	bodhctl reviews approve <id> [reason] # decide
-//	bodhctl reviews reject  <id> <reason>
-//	bodhctl tasks list                    # nurse task queue
-//	bodhctl notifications list            # outreach inbox
-//	bodhctl panel <condition|all>         # trigger a panel run
-//	bodhctl case run <path-to-fixture>    # submit a fixture as cdm_request
+//	bodhyangactl reviews list                  # all reviews
+//	bodhyangactl reviews pending               # only pending
+//	bodhyangactl reviews approve <id> [reason] # decide
+//	bodhyangactl reviews reject  <id> <reason>
+//	bodhyangactl tasks list                    # nurse task queue
+//	bodhyangactl notifications list            # outreach inbox
+//	bodhyangactl panel <condition|all>         # trigger a panel run
+//	bodhyangactl case run <path-to-fixture>    # submit a fixture as cdm_request
 package main
 
 import (
@@ -33,7 +33,7 @@ func main() {
 		usage(os.Stderr)
 		os.Exit(2)
 	}
-	api := os.Getenv("BODH_API_URL")
+	api := os.Getenv("BODHYANGA_API_URL")
 	if api == "" {
 		api = defaultAPI
 	}
@@ -61,10 +61,10 @@ func main() {
 }
 
 func usage(w io.Writer) {
-	fmt.Fprintf(w, `bodhctl — operator CLI for cmd/care
+	fmt.Fprintf(w, `bodhyangactl — operator CLI for cmd/care
 
 Environment:
-  BODH_API_URL   target API base URL (default %s)
+  BODHYANGA_API_URL   target API base URL (default %s)
 
 Subcommands:
   reviews list                     list all reviews
@@ -145,7 +145,7 @@ func caseCmd(api string, args []string) {
 	patient := fs.String("patient", "pt-001", "patient id (when fixture does not specify)")
 	condition := fs.String("condition", "", "condition override (htn/dm/chf/ckd/copd); empty = take from fixture")
 	if len(args) < 2 || args[0] != "run" {
-		fmt.Fprintln(os.Stderr, "case: usage: bodhctl case run <fixture-path>")
+		fmt.Fprintln(os.Stderr, "case: usage: bodhyangactl case run <fixture-path>")
 		os.Exit(2)
 	}
 	_ = fs.Parse(args[2:])
@@ -235,5 +235,5 @@ func userOrCLI() string {
 	if u := os.Getenv("USER"); u != "" {
 		return "cli:" + u
 	}
-	return "cli:bodhctl"
+	return "cli:bodhyangactl"
 }

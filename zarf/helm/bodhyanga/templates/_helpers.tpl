@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "bodh.name" -}}
+{{- define "bodhyanga.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "bodh.fullname" -}}
+{{- define "bodhyanga.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,21 +26,21 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "bodh.chart" -}}
+{{- define "bodhyanga.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels applied to all resources.
 */}}
-{{- define "bodh.labels" -}}
-helm.sh/chart: {{ include "bodh.chart" . }}
-{{ include "bodh.selectorLabels" . }}
+{{- define "bodhyanga.labels" -}}
+helm.sh/chart: {{ include "bodhyanga.chart" . }}
+{{ include "bodhyanga.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/part-of: bodh
+app.kubernetes.io/part-of: bodhyanga
 app.kubernetes.io/component: care-api
 {{- end }}
 
@@ -48,17 +48,17 @@ app.kubernetes.io/component: care-api
 Selector labels — used for pod selectors and service selectors.
 These must be stable and never include mutable values like chart version.
 */}}
-{{- define "bodh.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "bodh.name" . }}
+{{- define "bodhyanga.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "bodhyanga.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the ServiceAccount to use.
 */}}
-{{- define "bodh.serviceAccountName" -}}
+{{- define "bodhyanga.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "bodh.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "bodhyanga.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
@@ -68,25 +68,25 @@ Create the name of the ServiceAccount to use.
 Return the name of the secret that contains sensitive env vars.
 If existingSecret is set, use that; otherwise use the chart-managed secret.
 */}}
-{{- define "bodh.secretName" -}}
+{{- define "bodhyanga.secretName" -}}
 {{- if .Values.existingSecret }}
 {{- .Values.existingSecret }}
 {{- else }}
-{{- printf "%s-secret" (include "bodh.fullname" .) }}
+{{- printf "%s-secret" (include "bodhyanga.fullname" .) }}
 {{- end }}
 {{- end }}
 
 {{/*
 Return the ConfigMap name for non-secret runtime config.
 */}}
-{{- define "bodh.configMapName" -}}
-{{- printf "%s-config" (include "bodh.fullname" .) }}
+{{- define "bodhyanga.configMapName" -}}
+{{- printf "%s-config" (include "bodhyanga.fullname" .) }}
 {{- end }}
 
 {{/*
 Return true if any secret env var has a non-empty value (for dev mode secret rendering).
 */}}
-{{- define "bodh.hasSecretValues" -}}
+{{- define "bodhyanga.hasSecretValues" -}}
 {{- $hasValues := false }}
 {{- range $k, $v := .Values.env }}
   {{- if $v }}

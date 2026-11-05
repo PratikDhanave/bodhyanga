@@ -1,6 +1,6 @@
 # Model Card — `CascadeDiagnostician`
 
-> **Card version:** 1.0.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodh maintainers
+> **Card version:** 1.0.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodhyanga maintainers
 
 ## Model details
 
@@ -11,7 +11,7 @@
 - **Default LLM provider:** parent
 - **Default cascade:** cheap/fast model → strong/slow model on low confidence
 - **Provider-configurable:** yes
-- **License:** Apache-2.0 (Bodh) / provider terms
+- **License:** Apache-2.0 (Bodhyanga) / provider terms
 
 ## Intended use
 
@@ -29,7 +29,7 @@
 
 ## Metrics
 
-The Pareto winner on Bodh's bench, typically:
+The Pareto winner on Bodhyanga's bench, typically:
 
 | Metric | Cascade vs single-large |
 |---|---|

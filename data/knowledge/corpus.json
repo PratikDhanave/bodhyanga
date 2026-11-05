@@ -1,5 +1,5 @@
 {
-  "_notice": "demo-synth — these documents are synthetic teaching prose written for the Bodh demo. They are NOT real clinical guidelines and must not be used for patient care. Each document's metadata.source is 'demo-synth'.",
+  "_notice": "demo-synth — these documents are synthetic teaching prose written for the Bodhyanga demo. They are NOT real clinical guidelines and must not be used for patient care. Each document's metadata.source is 'demo-synth'.",
   "documents": [
     {
       "id": "cap-001",
@@ -161,7 +161,7 @@
       "id": "cost-001",
       "source": "demo-synth",
       "title": "Procedure Cost Note — Common Outpatient Labs",
-      "content": "Indicative cash-pay rates at the demo network laboratory. Complete Blood Count (CBC with differential, CPT 85025) — $45. Comprehensive Metabolic Panel (CMP, CPT 80053) — $55. Hemoglobin A1c (CPT 83036) — $40. Lipid panel (CPT 80061) — $50. Basic Metabolic Panel (CPT 80048) — $45. Urinalysis with microscopy (CPT 81001) — $25. BNP (CPT 83880) — $90. D-dimer (CPT 85379) — $60. Troponin I (CPT 84484) — $65. These are demo prices for ROI modelling; real prices vary by payer contract and region. Use them only inside the Bodh simulator.",
+      "content": "Indicative cash-pay rates at the demo network laboratory. Complete Blood Count (CBC with differential, CPT 85025) — $45. Comprehensive Metabolic Panel (CMP, CPT 80053) — $55. Hemoglobin A1c (CPT 83036) — $40. Lipid panel (CPT 80061) — $50. Basic Metabolic Panel (CPT 80048) — $45. Urinalysis with microscopy (CPT 81001) — $25. BNP (CPT 83880) — $90. D-dimer (CPT 85379) — $60. Troponin I (CPT 84484) — $65. These are demo prices for ROI modelling; real prices vary by payer contract and region. Use them only inside the Bodhyanga simulator.",
       "metadata": {
         "source": "demo-synth",
         "category": "cost",
@@ -173,7 +173,7 @@
       "id": "cost-002",
       "source": "demo-synth",
       "title": "Procedure Cost Note — Imaging",
-      "content": "Indicative cash-pay rates at the demo imaging centre. Chest X-ray, two views (CPT 71046) — $120. CT chest without contrast (CPT 71250) — $320. CT pulmonary angiography (CPT 71275) — $520. Transthoracic echocardiogram, complete (CPT 93306) — $410. Bedside lung ultrasound, limited (CPT 76604-26) — $95. Lower-extremity venous duplex (CPT 93971) — $260. Demo numbers for the Bodh ROI agent — substitute the real payer contract when wiring into production.",
+      "content": "Indicative cash-pay rates at the demo imaging centre. Chest X-ray, two views (CPT 71046) — $120. CT chest without contrast (CPT 71250) — $320. CT pulmonary angiography (CPT 71275) — $520. Transthoracic echocardiogram, complete (CPT 93306) — $410. Bedside lung ultrasound, limited (CPT 76604-26) — $95. Lower-extremity venous duplex (CPT 93971) — $260. Demo numbers for the Bodhyanga ROI agent — substitute the real payer contract when wiring into production.",
       "metadata": {
         "source": "demo-synth",
         "category": "cost",

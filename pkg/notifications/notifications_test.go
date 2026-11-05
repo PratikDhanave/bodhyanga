@@ -476,7 +476,7 @@ func TestSendPagerDutyPayload(t *testing.T) {
 		"payload": map[string]any{
 			"summary":  n.Title,
 			"severity": mapPagerDutySeverity(n.Priority),
-			"source":   "bodh",
+			"source":   "bodhyanga",
 		},
 	}
 	err := d.postJSON(context.Background(), srv.URL, payload, map[string]string{
@@ -505,8 +505,8 @@ func TestSendPagerDutyPayload(t *testing.T) {
 	if pl["severity"] != "critical" {
 		t.Errorf("expected severity='critical', got %q", pl["severity"])
 	}
-	if pl["source"] != "bodh" {
-		t.Errorf("expected source='bodh', got %q", pl["source"])
+	if pl["source"] != "bodhyanga" {
+		t.Errorf("expected source='bodhyanga', got %q", pl["source"])
 	}
 }
 

@@ -1,7 +1,7 @@
 // kronk.go — Ardan Labs kronk (llama.cpp via Go) adapter for pkg/llm.Client.
 //
 // Build tag: this file is compiled ONLY when the `kronk` build tag is set
-// (e.g. `go build -tags kronk ./cmd/care`). The default Bodh build does not
+// (e.g. `go build -tags kronk ./cmd/care`). The default Bodhyanga build does not
 // link kronk / llama.cpp / yzma / bucky — see kronk_stub.go for the no-op
 // shim used otherwise. Gating keeps go.sum minimal (and CGO out of the
 // hot path) for users who do not want a native llama.cpp dep.
@@ -35,8 +35,8 @@ import (
 
 	"github.com/ardanlabs/kronk"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
 )
 
 // ProviderName is the short identifier returned by Client.Provider().
@@ -245,7 +245,7 @@ func (c *Client) Complete(ctx context.Context, req llm.Request) (*llm.Response, 
 	}, nil
 }
 
-// buildRequest translates a Bodh llm.Request into kronk's ChatRequest. The
+// buildRequest translates a Bodhyanga llm.Request into kronk's ChatRequest. The
 // system prompt becomes a leading system message; the rest of Messages are
 // passed through in order. Images are NOT yet supported by this adapter —
 // vision-capable kronk models will land in a follow-up.
@@ -288,6 +288,6 @@ func stripJSONFences(s string) string {
 }
 
 // Compile-time assertion that *Client implements llm.Client. If kronk's
-// shape ever drifts away from the Bodh interface, this line is the first
+// shape ever drifts away from the Bodhyanga interface, this line is the first
 // thing that fails to build under -tags=kronk.
 var _ llm.Client = (*Client)(nil)

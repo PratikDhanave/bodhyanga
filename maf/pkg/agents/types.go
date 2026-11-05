@@ -46,7 +46,7 @@ type DiagnosticQuery struct {
 
 // TestResult is one completed test. CostUSD is the virtual price of running it
 // (specs/006) — illustrative, not a real fee schedule (see NOTICE). Cost-aware
-// diagnosis is bodh's MAI-DxO thesis; the Lab assigns the price when it produces
+// diagnosis is bodhyanga's MAI-DxO thesis; the Lab assigns the price when it produces
 // the result.
 type TestResult struct {
 	Name    string
@@ -102,7 +102,7 @@ type CarePlan struct {
 	CostUSD float64 `json:"cost_usd,omitempty"`
 }
 
-// HashCaseID follows bodh's PHI rule: identifiers on events, spans, and audit
+// HashCaseID follows bodhyanga's PHI rule: identifiers on events, spans, and audit
 // records are always sha256(caseID)[:8] hex, never the raw value.
 func HashCaseID(caseID string) string {
 	sum := sha256.Sum256([]byte(caseID))

@@ -1,4 +1,4 @@
-// cmd/bench-suite runs the Bodh performance benchmark suite and prints a
+// cmd/bench-suite runs the Bodhyanga performance benchmark suite and prints a
 // formatted results table.
 //
 // Usage:

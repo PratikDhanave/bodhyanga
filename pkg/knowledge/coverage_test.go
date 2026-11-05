@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/embeddings"
-	"github.com/PratikDhanave/bodh/pkg/knowledge/rerank"
+	"github.com/PratikDhanave/bodhyanga/pkg/embeddings"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge/rerank"
 )
 
 // ---------------------------------------------------------------------------

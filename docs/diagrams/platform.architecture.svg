@@ -4364,7 +4364,7 @@
   
 ]]></style>
 
-        <title id="archify-diagram-title">Bodh Platform Architecture (MARA)</title>
+        <title id="archify-diagram-title">Bodhyanga Platform Architecture (MARA)</title>
         <desc id="archify-diagram-description">One Go binary: clients → orchestrator → in-process bus → agents, gated by governance, HITL and append-only audit</desc>
         <!-- Definitions -->
         <defs>

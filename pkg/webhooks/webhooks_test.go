@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/webhooks"
+	"github.com/PratikDhanave/bodhyanga/pkg/webhooks"
 )
 
 // computeSig mirrors the sign() logic in webhooks.go so tests can verify
@@ -76,7 +76,7 @@ func TestRegisterPreservesProvidedID(t *testing.T) {
 // TestDispatchDeliveryAndSignature registers an httptest server, fires a
 // Dispatch, and asserts that:
 //   - exactly one POST was received
-//   - the X-Bodh-Signature header is correct
+//   - the X-Bodhyanga-Signature header is correct
 //   - the payload decodes to the expected event type
 func TestDispatchDeliveryAndSignature(t *testing.T) {
 	secret := "webhook-secret"
@@ -106,7 +106,7 @@ func TestDispatchDeliveryAndSignature(t *testing.T) {
 		received = append(received, struct {
 			sig  string
 			body []byte
-		}{r.Header.Get("X-Bodh-Signature"), buf})
+		}{r.Header.Get("X-Bodhyanga-Signature"), buf})
 		mu.Unlock()
 		w.WriteHeader(http.StatusOK)
 	}))

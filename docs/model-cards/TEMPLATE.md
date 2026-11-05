@@ -2,7 +2,7 @@
 
 > **Card version:** 0.1.0 · **Last reviewed:** YYYY-MM-DD · **Author:** [Name]
 >
-> Template per Mitchell et al. (2018). Bodh's agent-variant model cards.
+> Template per Mitchell et al. (2018). Bodhyanga's agent-variant model cards.
 
 ## Model details
 
@@ -12,8 +12,8 @@
 - **Default LLM provider:** [Anthropic | OpenAI | Ollama | none]
 - **Default LLM model:** [e.g. `claude-sonnet-4-6`]
 - **Provider-configurable:** [yes / no]
-- **License:** Apache-2.0 (Bodh) / per-provider terms (LLM)
-- **Maintainer:** Bodh project ([GitHub issues](https://github.com/PratikDhanave/bodh/issues))
+- **License:** Apache-2.0 (Bodhyanga) / per-provider terms (LLM)
+- **Maintainer:** Bodhyanga project ([GitHub issues](https://github.com/PratikDhanave/bodhyanga/issues))
 
 ## Intended use
 
@@ -23,12 +23,12 @@
 
 ## Factors
 
-Factors that may affect this variant's performance. Bodh's bench reports per-condition accuracy; demographic factors are tracked separately when equity audit is run.
+Factors that may affect this variant's performance. Bodhyanga's bench reports per-condition accuracy; demographic factors are tracked separately when equity audit is run.
 
 - **Relevant conditions / phenotypes:** [e.g. CAP, CHF, ACS, sepsis, DKA — or "all" for non-specialised variants]
 - **Patient demographics:** Synthetic only in CI; equity audit (stratified accuracy by age / sex / race / SES) planned per [ROADMAP Phase 7](../../ROADMAP.md)
 - **Instrumentation:** RPM observations, lab feeds (when MCP client lands), imaging (vision variant only)
-- **Environment:** Bodh's MARA bus + governance composer + HITL gate. **Not** tested standalone outside this substrate.
+- **Environment:** Bodhyanga's MARA bus + governance composer + HITL gate. **Not** tested standalone outside this substrate.
 
 ## Metrics
 
@@ -51,7 +51,7 @@ Bench-reported metrics. Run `go run ./cmd/bench -manifest=data/cases/manifest.js
 
 ## Training data
 
-[For vendor LLMs] Bodh does not train custom models. This variant composes with a vendor LLM whose training data is governed by the provider's terms. Refer to:
+[For vendor LLMs] Bodhyanga does not train custom models. This variant composes with a vendor LLM whose training data is governed by the provider's terms. Refer to:
 
 - [Anthropic Trust & Transparency](https://www.anthropic.com/trust)
 - [OpenAI Usage Policies](https://openai.com/policies/usage-policies/)
@@ -79,7 +79,7 @@ Bench-reported metrics. Run `go run ./cmd/bench -manifest=data/cases/manifest.js
 
 - **Not a medical device.** Not approved for clinical use. Every deployment requires independent validation.
 - **Thresholds are illustrative.** Every magic number in the source carries an "illustrative — educational demo, not a clinical guideline" comment.
-- **Fallback contract.** This variant must NOT be deployed without its deterministic fallback. The fallback IS the contract — see [bodh-linkedin/04-fallback-is-the-contract.md](../../bodh-linkedin/04-fallback-is-the-contract.md) (in the sibling LinkedIn folder).
+- **Fallback contract.** This variant must NOT be deployed without its deterministic fallback. The fallback IS the contract — see [bodhyanga-linkedin/04-fallback-is-the-contract.md](../../bodhyanga-linkedin/04-fallback-is-the-contract.md) (in the sibling LinkedIn folder).
 - **HITL is non-optional for clinical deployments.** The 21st Century Cures Act §3060 CDS carve-out criterion 4 ("independent review") requires it.
 - **Audit gap = no deployment.** This variant must be deployed with `pkg/audit` wired into the orchestrator (PR #12). Otherwise §164.312(b) audit controls are not satisfied.
 - **Production checklist:** see [docs/deployment.md](../deployment.md) and [docs/compliance.md](../compliance.md).
@@ -87,6 +87,6 @@ Bench-reported metrics. Run `go run ./cmd/bench -manifest=data/cases/manifest.js
 ## References
 
 - Mitchell, Wu, Zaldivar, et al. (2018) [*Model Cards for Model Reporting*](https://arxiv.org/abs/1810.03677)
-- Bodh architecture: [docs/architecture.md](../architecture.md)
-- Bodh agent reference: [docs/agents.md](../agents.md)
-- Bodh evaluation: [docs/evaluation.md](../evaluation.md)
+- Bodhyanga architecture: [docs/architecture.md](../architecture.md)
+- Bodhyanga agent reference: [docs/agents.md](../agents.md)
+- Bodhyanga evaluation: [docs/evaluation.md](../evaluation.md)

@@ -27,7 +27,7 @@ type CaseResult struct {
 	CostUSD  float64 `json:"cost_usd"` // total test cost for this case (specs/006)
 }
 
-// Score classifies a produced diagnosis against a gold label, mirroring bodh's
+// Score classifies a produced diagnosis against a gold label, mirroring bodhyanga's
 // diagnosisMatch: trimmed, case-insensitive equality. An empty gold is
 // unscored; the caller classifies a missing terminal diagnosis as a failure
 // before calling Score.

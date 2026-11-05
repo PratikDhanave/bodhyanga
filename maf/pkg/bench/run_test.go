@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
 func TestRunSuite_BenignCaseReachesPlanAndScores(t *testing.T) {

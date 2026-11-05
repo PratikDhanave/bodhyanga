@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
 )
 
 // Stratum captures the demographic dimensions used for stratified analysis.

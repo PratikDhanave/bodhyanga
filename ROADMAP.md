@@ -1,6 +1,6 @@
-# Bodh — Roadmap
+# Bodhyanga — Roadmap
 
-Where Bodh has been, where it is, and where it's going.
+Where Bodhyanga has been, where it is, and where it's going.
 
 > Pairs with [CONTRIBUTING.md](CONTRIBUTING.md) for how to take work on, and the [main README](README.md) for the current implemented surface.
 
@@ -36,7 +36,7 @@ Value-based care workflows on the same bus.
 - 🟢 `pkg/tasks` nurse queue, `pkg/engagement` notifier, `pkg/analytics` cohort metrics
 - 🟢 `pkg/fhir` R4 adapter (Patient / Observation / Encounter / Condition)
 - 🟢 `pkg/persistence` file store
-- 🟢 `cmd/care` HTTP API, `cmd/caredemo` workflow demos, `cmd/bodhctl` operator CLI
+- 🟢 `cmd/care` HTTP API, `cmd/caredemo` workflow demos, `cmd/bodhyangactl` operator CLI
 - 🟢 Care-plan templates for HTN / DM / CHF / CKD / COPD / **asthma** (PR #6)
 - 🟢 Panel rules including post-discharge follow-up + asthma controller gap (PR #6)
 - 🟢 Readmission risk score (transparent LACE-inspired)
@@ -127,9 +127,9 @@ Reproducible measurement and adversarial robustness.
 - 🟢 Drift monitor — per-condition accuracy with warning/critical alerts (PR #41)
 - 🟢 Shadow mode — async/sync concordance capture (PR #44)
 - ⚪ IRB-eligible pragmatic trial protocol template
-- ⚪ Bodh-Bench: open red-team cases + scoring rubric for the community
+- ⚪ Bodhyanga-Bench: open red-team cases + scoring rubric for the community
 - 🟢 Federated eval — cross-site accuracy with Laplace noise (PR #44)
-- 🟢 **MAF-go substrate slice** — bodh-maf vendored under [`maf/`](maf/): the MARA pipeline reimplemented on `microsoft/agent-framework-go`, importing bodh's compliance packages unchanged, to test whether MAF-go can carry the safety boundary. All five exit criteria proven by tests (nested Go module, built/tested separately)
+- 🟢 **MAF-go substrate slice** — bodhyanga-maf vendored under [`maf/`](maf/): the MARA pipeline reimplemented on `microsoft/agent-framework-go`, importing bodhyanga's compliance packages unchanged, to test whether MAF-go can carry the safety boundary. All five exit criteria proven by tests (nested Go module, built/tested separately)
 
 ---
 
@@ -213,7 +213,7 @@ These aren't a phase — they're a continuous expectation.
 | Sha256-hashed `case_id` in OTel spans | Phase 4 / PR #7 | Spans go to third-party collectors; raw IDs could be MRNs |
 | LLM agents always have a rule-based fallback | Phase 3 | Case always finalizes; degrade gracefully, never break loudly |
 | Optional setters for audit / eval on orchestrator (not new constructor) | PR #12 | Backwards-compat for `cmd/demo` / `cmd/caredemo` |
-| Postgres backend opt-in via `BODH_DB_DSN` | PR #10 | Demos stay zero-infra; production a single env var away |
+| Postgres backend opt-in via `BODHYANGA_DB_DSN` | PR #10 | Demos stay zero-infra; production a single env var away |
 | OTel SDK isolated behind `//go:build otel` | PR #7 | Default `go.sum` stays minimal; SDK loaded only when needed |
 
 ---

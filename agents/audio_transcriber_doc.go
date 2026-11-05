@@ -23,5 +23,5 @@
 //     (bytes_in, duration_ms, model_id, outcome).
 //
 // See doc.go for package-level documentation, agents/doc.go for the
-// Bodh agent contract, and docs/agents.md for the agent reference.
+// Bodhyanga agent contract, and docs/agents.md for the agent reference.
 package agents

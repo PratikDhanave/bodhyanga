@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import (
 
 // TraceHandler wraps next with OTel HTTP span instrumentation. Each request
 // becomes a span named "operation" (usually the service name, e.g.
-// "bodh-care"); otelhttp adds http.method, http.route, http.status_code as
+// "bodhyanga-care"); otelhttp adds http.method, http.route, http.status_code as
 // span attributes automatically.
 //
 // Spans are exported by the global TracerProvider; call InitGlobalTracer (or
@@ -84,7 +84,7 @@ func InitGlobalTracer(ctx context.Context, endpoint string) (func(context.Contex
 	}
 
 	res, err := resource.New(ctx,
-		resource.WithAttributes(semconv.ServiceName("bodh-care")),
+		resource.WithAttributes(semconv.ServiceName("bodhyanga-care")),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("tracer resource: %w", err)

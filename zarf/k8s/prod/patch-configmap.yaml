@@ -1,14 +1,14 @@
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/dev/sales/dev-sales-configmap.yaml
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
 # Production ConfigMap patch — Anthropic as the default LLM provider, OTel
 # export enabled (image must be built with -tags otel), info-level logs.
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: bodh-care-config
+  name: bodhyanga-care-config
 data:
-  BODH_LOG_LEVEL: "info"
-  BODH_DIAGNOSTICIAN: "llm-anthropic"
-  BODH_OTEL_EXPORT: "1"
-  BODH_OTEL_ENDPOINT: "http://otel-collector.observability:4318"
+  BODHYANGA_LOG_LEVEL: "info"
+  BODHYANGA_DIAGNOSTICIAN: "llm-anthropic"
+  BODHYANGA_OTEL_EXPORT: "1"
+  BODHYANGA_OTEL_ENDPOINT: "http://otel-collector.observability:4318"

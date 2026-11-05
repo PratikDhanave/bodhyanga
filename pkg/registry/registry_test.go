@@ -6,7 +6,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
 )
 
 // stubAgent is a minimal agent.Agent implementation used to populate the

@@ -26,7 +26,7 @@ func NewStdLogger() *StdLogger {
 // primarily for tests that want to capture output into a bytes.Buffer.
 func NewLoggerTo(w io.Writer) *StdLogger {
 	return &StdLogger{
-		l: log.New(w, "[bodh] ", log.LstdFlags|log.Lmicroseconds),
+		l: log.New(w, "[bodhyanga] ", log.LstdFlags|log.Lmicroseconds),
 	}
 }
 

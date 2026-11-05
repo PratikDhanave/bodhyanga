@@ -1,7 +1,7 @@
 // laminar.go — Laminar (lmnr.ai) OTLP/HTTP exporter for LLMTrace records.
 //
 // Build tag: this file is compiled ONLY when the `otel` build tag is set
-// (e.g. `go build -tags otel ./cmd/care`). The default Bodh build does not
+// (e.g. `go build -tags otel ./cmd/care`). The default Bodhyanga build does not
 // link the OTel SDK — see laminar_stub.go for the no-op shim used otherwise.
 //
 // Laminar is an LLM observability backend that ingests OTLP spans. It has no
@@ -23,7 +23,7 @@
 //	LMNR_PROJECT_API_KEY  — Laminar project API key (required for cloud)
 //	LMNR_BASE_URL         — override OTLP endpoint (default: https://api.lmnr.ai)
 //	                        set to "http://localhost:8000" for self-hosted
-//	BODH_SERVICE_NAME     — OTel service.name attribute (default: "bodh")
+//	BODHYANGA_SERVICE_NAME     — OTel service.name attribute (default: "bodhyanga")
 //
 // PHI policy: same as OTLPLLMExporter — CaseID is hashed (sha256, first 16
 // hex chars), prompt/response content is never attached.
@@ -74,7 +74,7 @@ type LaminarExporter struct {
 //   - LMNR_PROJECT_API_KEY — API key for Laminar cloud (required unless using
 //     a self-hosted instance that accepts unauthenticated traffic)
 //   - LMNR_BASE_URL        — override the base URL (default: https://api.lmnr.ai)
-//   - BODH_SERVICE_NAME    — OTel service.name (default: "bodh")
+//   - BODHYANGA_SERVICE_NAME    — OTel service.name (default: "bodhyanga")
 //
 // Returns an error if the OTLP exporter cannot connect or the resource cannot
 // be built.
@@ -84,9 +84,9 @@ func NewLaminarExporter(ctx context.Context) (*LaminarExporter, error) {
 	if baseURL == "" {
 		baseURL = "https://" + laminarCloudEndpoint
 	}
-	svcName := os.Getenv("BODH_SERVICE_NAME")
+	svcName := os.Getenv("BODHYANGA_SERVICE_NAME")
 	if svcName == "" {
-		svcName = "bodh"
+		svcName = "bodhyanga"
 	}
 
 	host, urlPath, insecure, err := splitOTLPEndpoint(baseURL)
@@ -137,7 +137,7 @@ func NewLaminarExporter(ctx context.Context) (*LaminarExporter, error) {
 
 	return &LaminarExporter{
 		tp:     tp,
-		tracer: tp.Tracer("github.com/PratikDhanave/bodh/pkg/observability/laminar"),
+		tracer: tp.Tracer("github.com/PratikDhanave/bodhyanga/pkg/observability/laminar"),
 	}, nil
 }
 
@@ -156,10 +156,10 @@ func NewLaminarExporter(ctx context.Context) (*LaminarExporter, error) {
 //	gen_ai.usage.output_tokens = int
 //	gen_ai.usage.cache_read_input_tokens = int (when CachedTokens > 0)
 //	gen_ai.response.finish_reasons = stop reason (when set)
-//	bodh.agent_id              = AgentID (when set)
-//	bodh.case_id               = sha256(CaseID)[:16] (when set; never raw)
-//	bodh.trace_id              = TraceID (when set)
-//	bodh.tool_calls            = int (when > 0)
+//	bodhyanga.agent_id              = AgentID (when set)
+//	bodhyanga.case_id               = sha256(CaseID)[:16] (when set; never raw)
+//	bodhyanga.trace_id              = TraceID (when set)
+//	bodhyanga.tool_calls            = int (when > 0)
 func (e *LaminarExporter) Record(t LLMTrace) {
 	if e == nil || e.tracer == nil {
 		return
@@ -204,21 +204,21 @@ func (e *LaminarExporter) Record(t LLMTrace) {
 		attrs = append(attrs, attribute.String("gen_ai.response.finish_reasons", t.StopReason))
 	}
 
-	// ── Bodh-specific context attributes (never PHI) ────────────────────
+	// ── Bodhyanga-specific context attributes (never PHI) ────────────────────
 	if t.AgentID != "" {
-		attrs = append(attrs, attribute.String("bodh.agent_id", t.AgentID))
+		attrs = append(attrs, attribute.String("bodhyanga.agent_id", t.AgentID))
 	}
 	if t.CaseID != "" {
 		// CaseID can be a real MRN — always hash before attaching to a span.
 		// hashID() returns sha256[:8] (16 hex chars): correlatable but not
 		// reversible.
-		attrs = append(attrs, attribute.String("bodh.case_id", hashID(t.CaseID)))
+		attrs = append(attrs, attribute.String("bodhyanga.case_id", hashID(t.CaseID)))
 	}
 	if t.TraceID != "" {
-		attrs = append(attrs, attribute.String("bodh.trace_id", t.TraceID))
+		attrs = append(attrs, attribute.String("bodhyanga.trace_id", t.TraceID))
 	}
 	if t.ToolCalls > 0 {
-		attrs = append(attrs, attribute.Int("bodh.tool_calls", t.ToolCalls))
+		attrs = append(attrs, attribute.Int("bodhyanga.tool_calls", t.ToolCalls))
 	}
 
 	_, span := e.tracer.Start(context.Background(),

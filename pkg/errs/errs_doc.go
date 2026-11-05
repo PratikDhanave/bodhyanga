@@ -1,11 +1,11 @@
-// Package errs provides typed error codes and the Bodh error envelope used
+// Package errs provides typed error codes and the Bodhyanga error envelope used
 // by every HTTP handler that goes through pkg/web.
 //
 // Adapted from Bill Kennedy / Ardan Labs' Ultimate Service template
 // (https://github.com/ardanlabs/service), licensed Apache 2.0. See the
-// NOTICE and LICENSE-APACHE files at the repository root. Bodh extends the
+// NOTICE and LICENSE-APACHE files at the repository root. Bodhyanga extends the
 // upstream codes with HITLPending, SafetyRefusal, and PolicyDenied (the
-// Bodh-specific categories), and changes the wire envelope to
+// Bodhyanga-specific categories), and changes the wire envelope to
 // {code, message, fields, request_id} so error responses carry the
 // request_id that pkg/mid.Otel propagates.
 //

@@ -1,10 +1,10 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/foundation/web/request.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 //
-// Bodh modifications vs upstream:
+// Bodhyanga modifications vs upstream:
 //   - Decode is generic: it uses encoding/json directly so callers do not
 //     need to implement a Decoder interface. The upstream form requires a
-//     Decode([]byte) method on every request body type; Bodh's API surface
+//     Decode([]byte) method on every request body type; Bodhyanga's API surface
 //     is mostly thin DTOs that the handler decodes once, so the interface
 //     was unnecessary boilerplate.
 //   - Validate hook preserved verbatim — if the decoded value implements

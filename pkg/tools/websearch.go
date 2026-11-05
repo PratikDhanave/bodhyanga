@@ -150,7 +150,7 @@ func (t *WebSearchTool) search(ctx context.Context, query string, maxResults int
 	if err != nil {
 		return nil, fmt.Errorf("build request: %w", err)
 	}
-	req.Header.Set("User-Agent", "bodh-websearch/1.0")
+	req.Header.Set("User-Agent", "bodhyanga-websearch/1.0")
 
 	resp, err := t.client().Do(req)
 	if err != nil {

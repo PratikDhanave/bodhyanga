@@ -3,7 +3,7 @@
 **Feature Branch**: `feat/per-case-cost` · **Created**: 2026-07-18 · **Status**: Implemented
 
 **Input**: "The pipeline tracks no cost anywhere, so SD-Bench (specs/005) is accuracy-only and
-bodh's MAI-DxO cost-aware-diagnosis thesis is unreproduced. Add a per-case virtual cost that
+bodhyanga's MAI-DxO cost-aware-diagnosis thesis is unreproduced. Add a per-case virtual cost that
 flows from the ordered tests through to the terminal outputs and the eval/bench surfaces."
 
 This is the keystone that was flagged as a prerequisite by specs/005. It restores the second

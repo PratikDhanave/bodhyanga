@@ -1,5 +1,5 @@
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/dev/sales/kustomization.yaml
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
 # Dev overlay — single replica, in-cluster Postgres, debug log level, Ollama
 # as the LLM provider. Mirrors what `docker compose up` gives locally, but
@@ -15,8 +15,8 @@ patches:
   - path: patch-deployment.yaml
   - path: patch-configmap.yaml
 
-# Dev image — locally built via `docker build -t localhost/bodh-care:dev ...`.
+# Dev image — locally built via `docker build -t localhost/bodhyanga-care:dev ...`.
 images:
-  - name: bodh-care-image
-    newName: localhost/bodh-care
+  - name: bodhyanga-care-image
+    newName: localhost/bodhyanga-care
     newTag: "dev"

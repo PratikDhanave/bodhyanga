@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/eval/redteam"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval/redteam"
 )
 
 // refusingExecutor always returns a refusal string.

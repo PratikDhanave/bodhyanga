@@ -30,7 +30,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 // LLMRecorder is the minimal sink TracingClient uses to report each LLMTrace.

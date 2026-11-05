@@ -28,9 +28,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/agent/planning"
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/tools"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent/planning"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/tools"
 )
 
 const defaultGoal = "Find all .go files in the current directory, count them, and list the largest 3"
@@ -131,7 +131,7 @@ func buildClient(provider, model, ollamaHost string) llm.Client {
 		}
 		m := model
 		if m == "" {
-			m = envOr("BODH_ANTHROPIC_MODEL", "claude-sonnet-4-6")
+			m = envOr("BODHYANGA_ANTHROPIC_MODEL", "claude-sonnet-4-6")
 		}
 		return llm.NewAnthropic(key, m)
 
@@ -142,14 +142,14 @@ func buildClient(provider, model, ollamaHost string) llm.Client {
 		}
 		m := model
 		if m == "" {
-			m = envOr("BODH_OPENAI_MODEL", "gpt-4o")
+			m = envOr("BODHYANGA_OPENAI_MODEL", "gpt-4o")
 		}
 		return llm.NewOpenAI(key, m)
 
 	default: // ollama
 		m := model
 		if m == "" {
-			m = envOr("BODH_OLLAMA_MODEL", "llama3.2")
+			m = envOr("BODHYANGA_OLLAMA_MODEL", "llama3.2")
 		}
 		return llm.NewOllama(ollamaHost, m)
 	}

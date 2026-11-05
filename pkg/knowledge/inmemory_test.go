@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/embeddings"
+	"github.com/PratikDhanave/bodhyanga/pkg/embeddings"
 )
 
 // pinnedEmbedder returns canned vectors in the order Embed is called: each

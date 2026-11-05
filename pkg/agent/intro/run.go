@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 // DefaultModel is the default Ollama model used when no model is specified.

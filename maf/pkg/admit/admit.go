@@ -11,8 +11,8 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
 )
 
 // ErrDenied is returned by guarded hops when governance blocks the action.

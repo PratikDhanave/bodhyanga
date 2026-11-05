@@ -1,17 +1,17 @@
-# Non-secret runtime configuration for the Bodh care HTTP server.
+# Non-secret runtime configuration for the Bodhyanga care HTTP server.
 # Secrets (DB DSN, LLM provider API keys) live in Secret resources.
 # This ConfigMap captures only inputs that are safe to read at the K8s
 # API layer with default RBAC.
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "bodh.configMapName" . }}
+  name: {{ include "bodhyanga.configMapName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "bodh.labels" . | nindent 4 }}
+    {{- include "bodhyanga.labels" . | nindent 4 }}
 data:
   {{- with .Values.config }}
   {{- toYaml . | nindent 2 }}
   {{- end }}
   # Diagnostician mode: rule | llm-anthropic | llm-openai | llm-ollama
-  BODH_DIAGNOSTICIAN: {{ .Values.diagnostician | quote }}
+  BODHYANGA_DIAGNOSTICIAN: {{ .Values.diagnostician | quote }}

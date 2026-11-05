@@ -24,7 +24,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // Re-export core protocol types for convenience.
@@ -87,7 +87,7 @@ func NewMessage(from string, to string, role MessageRole, msgType, content strin
 
 // Agent describes the minimal interface for an agent in the system.
 //
-// This is the canonical Bodh agent contract — four methods, no more. Every
+// This is the canonical Bodhyanga agent contract — four methods, no more. Every
 // agent in agents/*.go (17+ today) implements this interface. The
 // orchestrator's subscription closure (see
 // pkg/orchestration/orchestrator.go) is built around it: it calls
@@ -110,10 +110,10 @@ func NewMessage(from string, to string, role MessageRole, msgType, content strin
 // the bus. This keeps coupling low, supports swapping implementations
 // (Kafka, NATS, RabbitMQ for the bus; etcd, Consul for the registry), and
 // makes every interaction observable, auditable, governable, and testable.
-// See bodh-linkedin/05-mara-five-interfaces.md for the rationale.
+// See bodhyanga-linkedin/05-mara-five-interfaces.md for the rationale.
 type Agent interface {
 	// ID returns the unique ID of the agent. This is the bus address used
-	// as Message.To for routing. Every agent in Bodh hardcodes its ID as a
+	// as Message.To for routing. Every agent in Bodhyanga hardcodes its ID as a
 	// constant string (e.g. "diagnostic_supervisor", "diagnostician",
 	// "human_review"). Tests assert on these IDs; the supervisor's state
 	// machine and the governance composer also reference them by name.

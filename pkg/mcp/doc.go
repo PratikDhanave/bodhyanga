@@ -1,4 +1,4 @@
-// Package mcp is Bodh's client for the Model Context Protocol (MCP) — the
+// Package mcp is Bodhyanga's client for the Model Context Protocol (MCP) — the
 // emerging JSON-RPC 2.0 standard for exposing tools and resources to LLM
 // agents. It implements the wire-format client described in Proposal 1 of
 // docs/agent-interop.md.
@@ -17,7 +17,7 @@
 //
 // Why MCP
 //
-// Bodh's existing pkg/tools holds internal Go tool helpers. They work for the
+// Bodhyanga's existing pkg/tools holds internal Go tool helpers. They work for the
 // demo, but every external lab / imaging / FHIR integration needs a new Go
 // adapter. MCP is the path of least resistance — any vendor-published MCP
 // server becomes available with zero adapter code. See Proposal 1 in
@@ -32,7 +32,7 @@
 //     of every CallTool. It's a small, focused PR of its own.
 //   - The stdio transport for local-process MCP servers. HTTP+SSE is the
 //     right primary transport; stdio is a follow-up.
-//   - The MCP server façade exposing Bodh's own pkg/tools (Proposal 8).
+//   - The MCP server façade exposing Bodhyanga's own pkg/tools (Proposal 8).
 //   - Real SPIFFE/SPIRE integration (Proposal 6).
 //
 // JSON-RPC 2.0 contract
@@ -49,6 +49,6 @@
 // happened (server URL, tool name, duration, outcome, tenant/case/trace
 // correlation) but never the tool arguments or response content. Those
 // frequently carry PHI; surfacing them in the audit log defeats the
-// "minimum-necessary" principle the rest of Bodh's audit pipeline follows.
+// "minimum-necessary" principle the rest of Bodhyanga's audit pipeline follows.
 // See pkg/audit/recorder.go for the field-selection rationale.
 package mcp

@@ -1,25 +1,25 @@
-# `pkg/mcp` — Bodh's Model Context Protocol client
+# `pkg/mcp` — Bodhyanga's Model Context Protocol client
 
 > JSON-RPC 2.0 over HTTP+SSE client for the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/). Implements **Proposal 1** of [docs/agent-interop.md](../../docs/agent-interop.md).
 
-Bodh's existing `pkg/tools` package holds internal Go tool helpers that the LLM-backed `diagnostician_tools` agent calls directly. That works for the demo, but every external lab / imaging / FHIR / pharmacy integration needs a fresh Go adapter. MCP is the path of least resistance — any vendor-published MCP server becomes available with zero adapter code.
+Bodhyanga's existing `pkg/tools` package holds internal Go tool helpers that the LLM-backed `diagnostician_tools` agent calls directly. That works for the demo, but every external lab / imaging / FHIR / pharmacy integration needs a fresh Go adapter. MCP is the path of least resistance — any vendor-published MCP server becomes available with zero adapter code.
 
 This package ships the client side of that wire format. The companion server façade (Proposal 8) and the refactor of `diagnostician_tools` to use this client are deferred to follow-up PRs.
 
 ## Why MCP
 
-See **[Proposal 1 in docs/agent-interop.md](../../docs/agent-interop.md#proposal-1-mcp-client-in-bodh-high-impact-2-weeks)** for the full impact analysis. Headline:
+See **[Proposal 1 in docs/agent-interop.md](../../docs/agent-interop.md#proposal-1-mcp-client-in-bodhyanga-high-impact-2-weeks)** for the full impact analysis. Headline:
 
 - Hospital integrations are the #1 friction in clinical AI deployment.
 - MCP is rapidly becoming the de-facto agent-to-tool standard (Anthropic, Google, Microsoft, growing community catalogue).
-- Bodh's orchestrator + governance composer is already conceptually an MCP gateway for internal traffic; adding an MCP client lets the same policies apply to external tool egress.
+- Bodhyanga's orchestrator + governance composer is already conceptually an MCP gateway for internal traffic; adding an MCP client lets the same policies apply to external tool egress.
 
 ## Minimal usage
 
 ```go
 import (
     "context"
-    "github.com/PratikDhanave/bodh/pkg/mcp"
+    "github.com/PratikDhanave/bodhyanga/pkg/mcp"
 )
 
 c := mcp.NewHTTPClient("https://lab-mcp.hospital.example/v1")
@@ -56,7 +56,7 @@ type AuthProvider interface {
 Every `CallTool` emits one `CallEvent` to the configured `audit.Recorder`:
 
 ```go
-import "github.com/PratikDhanave/bodh/pkg/audit"
+import "github.com/PratikDhanave/bodhyanga/pkg/audit"
 
 rec := audit.NewInMemory()
 c := mcp.NewHTTPClient(
@@ -97,7 +97,7 @@ defer cancel()
 res, err := c.CallTool(ctx, "tool_x", args)
 ```
 
-Long-running tool calls should be modelled as resources (`ListResources` / `ReadResource`) or as A2A tasks ([Proposal 2](../../docs/agent-interop.md#proposal-2-a2a-server-endpoints-for-bodh-agents-high-impact-2-3-weeks)) — not as multi-minute MCP calls.
+Long-running tool calls should be modelled as resources (`ListResources` / `ReadResource`) or as A2A tasks ([Proposal 2](../../docs/agent-interop.md#proposal-2-a2a-server-endpoints-for-bodhyanga-agents-high-impact-2-3-weeks)) — not as multi-minute MCP calls.
 
 ## Error handling
 
@@ -132,12 +132,12 @@ Servers signal the mode via `Content-Type` on the response. Both modes are suppo
 
 These items are deferred to follow-up PRs:
 
-- **`MCPPolicyEnforcer`** wrapper that runs `governance.Policy` before each `CallTool`. The orchestrator's policy composer becomes Bodh's MCP gateway when this lands.
+- **`MCPPolicyEnforcer`** wrapper that runs `governance.Policy` before each `CallTool`. The orchestrator's policy composer becomes Bodhyanga's MCP gateway when this lands.
 - **Refactor of `agents/diagnostician_tools.go`** to use this client in place of the in-process `pkg/tools.Registry`.
 - **stdio transport** for local-process MCP servers. HTTP+SSE is the right primary transport; stdio is a follow-up.
-- **MCP server façade** exposing Bodh's `pkg/tools` (Proposal 8).
+- **MCP server façade** exposing Bodhyanga's `pkg/tools` (Proposal 8).
 - **Real SPIFFE/SPIRE integration** behind `SPIFFEAuth` (Proposal 6).
-- **Retry / backoff.** One attempt per call. Higher-level retry policy is the calling agent's responsibility — see `docs/operations.md § LLM reliability` for the pattern Bodh uses elsewhere.
+- **Retry / backoff.** One attempt per call. Higher-level retry policy is the calling agent's responsibility — see `docs/operations.md § LLM reliability` for the pattern Bodhyanga uses elsewhere.
 
 ## File map
 
@@ -150,7 +150,7 @@ These items are deferred to follow-up PRs:
 | `auth.go` | `AuthProvider` + `NoAuth`, `BearerAuth`, `SPIFFEAuth` stub |
 | `audit.go` | `CallEvent` + `Recorder` — PHI-free audit hook |
 | `client_test.go` | `httptest.Server`-based coverage of every method, auth path, error case |
-| `*_doc.go` | Per-source-file documentation companions per Bodh convention |
+| `*_doc.go` | Per-source-file documentation companions per Bodhyanga convention |
 
 ## Running the tests
 

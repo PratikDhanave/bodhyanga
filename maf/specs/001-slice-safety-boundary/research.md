@@ -1,19 +1,19 @@
 # Phase 0 Research: Slice Safety Boundary
 
 All unknowns were resolved by first-hand source reading: MAF-go at the pinned commit
-(reviewed 2026-07-11, three deep-read reports in `bodh/session.md`) and bodh's
+(reviewed 2026-07-11, three deep-read reports in `bodhyanga/session.md`) and bodhyanga's
 governance/audit/eval packages (read 2026-07-12). No open NEEDS CLARIFICATION items.
 
 ## R1 — Governance evaluation contract
 
-**Decision**: Admission calls `bodh/pkg/governance.Policy.Evaluate(ctx, protocol.Message)
+**Decision**: Admission calls `bodhyanga/pkg/governance.Policy.Evaluate(ctx, protocol.Message)
 → (PolicyResult, error)`. Any result other than `DecisionAllow`, and any non-nil error,
 is a denial (fail-closed).
 
 **Rationale**: This is byte-for-byte the monolith's contract
-(`bodh/pkg/governance/policy.go`): `PolicyResult.Decision/Reason` flow verbatim into
+(`bodhyanga/pkg/governance/policy.go`): `PolicyResult.Decision/Reason` flow verbatim into
 `audit.Event.Decision/Reason`, so reusing it preserves the on-disk audit schema and lets
-bodh's existing policy stack (`CompositePolicy`, kill switches, OPA) drop in unchanged.
+bodhyanga's existing policy stack (`CompositePolicy`, kill switches, OPA) drop in unchanged.
 
 **Alternatives considered**: A new MAF-native policy interface — rejected: it would
 fork the compliance authority and invalidate audit parity (SC-002).
@@ -25,7 +25,7 @@ fork the compliance authority and invalidate audit parity (SC-002).
 executor ID, `Type` = slice message-type label (e.g. `diagnostic_query`, `workup`,
 `diagnosis_result`), `Metadata["case_id"]` = the case's opaque token, `Content` = "".
 
-**Rationale**: bodh policies route on the envelope triple + metadata, not payload;
+**Rationale**: bodhyanga policies route on the envelope triple + metadata, not payload;
 leaving `Content` empty makes PHI leakage into governance/audit structurally impossible
 rather than procedurally avoided (constitution III).
 
@@ -60,7 +60,7 @@ honoring the spec's "a lagging observer can never miss a denial" (FR-003): synch
 ordering, not transactional coupling.
 
 **Alternatives considered**: Failing the run when a deny-record write fails — rejected:
-inverts bodh's documented posture and adds no safety (the action was already denied).
+inverts bodhyanga's documented posture and adds no safety (the action was already denied).
 
 ## R5 — Durable pause/resume mechanics
 
@@ -74,7 +74,7 @@ and rejected with a `review_decision` audit event carrying reason `stale_respons
 (public `Store[json.RawMessage]` = 3 methods: CreateCheckpoint / RetrieveCheckpoint /
 RetrieveIndex) and the checkpoint-and-rehydrate example. Postgres schema:
 `checkpoints(id uuid pk, session_id text, parent_id uuid null, data jsonb, created_at)`
-— append-only per bodh persistence discipline; `data` is PHI-bearing → never logged,
+— append-only per bodhyanga persistence discipline; `data` is PHI-bearing → never logged,
 same access tier as clinical tables.
 
 **Alternatives considered**: JSON file store (ships with MAF) — kept for unit tests,
@@ -103,11 +103,11 @@ returns an error → `agent_error` audit event; no DiagnosisResult is fabricated
 **Decision**: `pkg/evalhook` observes the run's terminal `OutputEvent` and writes ONE
 `eval.InteractionRecord{Scenario: "mara-slice/" + caseToken, Success: !Forced && approved,
 Metrics: {confidence, rounds, forced(0|1)}, Metadata: {review_decision, diagnosis_kind}}`
-via `bodh/pkg/eval.Store.Save`.
+via `bodhyanga/pkg/eval.Store.Save`.
 
 **Rationale**: Field-for-field consistent with the monolith's `recordCaseEval` intent
-(closing bodh `pkg/runtime/doc.go`'s gap via its option (b): a per-deployment terminal
-subscriber). `InteractionRecord`/`Store` shapes verified in `bodh/pkg/eval/eval.go`.
+(closing bodhyanga `pkg/runtime/doc.go`'s gap via its option (b): a per-deployment terminal
+subscriber). `InteractionRecord`/`Store` shapes verified in `bodhyanga/pkg/eval/eval.go`.
 
 ## R8 — Framework pin & upgrade policy
 

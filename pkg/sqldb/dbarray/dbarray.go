@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 // Portions Copyright Ardan Labs, Bill Kennedy
 // Portions Copyright (c) 2011-2013, 'pq' Contributors
 // Portions Copyright (C) 2011 Blake Mizerany
@@ -30,7 +30,7 @@
 //   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 // Package dbarray exposes the Postgres array driver.Valuer / sql.Scanner
-// helpers Bodh stores use to pass []string / []int64 / etc through pgx
+// helpers Bodhyanga stores use to pass []string / []int64 / etc through pgx
 // without writing a custom encoder per call site.
 //
 // Why not use pgx's native array support
@@ -68,7 +68,7 @@ type String []string
 
 // Value implements driver.Valuer.
 //
-// The output is parseable by every Postgres driver Bodh supports
+// The output is parseable by every Postgres driver Bodhyanga supports
 // (pgx/v5 and lib/pq); we choose the text format rather than binary
 // because pgx accepts text for parameter binding to TEXT[] columns
 // without a typeOID hint.

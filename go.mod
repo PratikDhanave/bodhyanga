@@ -1,4 +1,4 @@
-module github.com/PratikDhanave/bodh
+module github.com/PratikDhanave/bodhyanga
 
 go 1.26.5
 
@@ -11,7 +11,7 @@ require (
 
 // OTel SDK + OTLP/HTTP exporter — used ONLY by files behind the `otel`
 // build tag (pkg/observability/otlp.go and pkg/observability/otlp_test.go).
-// The default Bodh build does not link any of these; run
+// The default Bodhyanga build does not link any of these; run
 //   go build -tags otel ./cmd/care
 // or `go mod tidy -tags otel` to populate go.sum.
 //

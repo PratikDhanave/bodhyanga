@@ -6,7 +6,7 @@ import (
 
 	"github.com/microsoft/agent-framework-go/workflow"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
 // reviewSummary is the PHI-free projection of a parked case (FR-005).

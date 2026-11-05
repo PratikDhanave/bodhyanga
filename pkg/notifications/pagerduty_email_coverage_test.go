@@ -64,7 +64,7 @@ func TestSendEmail_WithSMTPConfig(t *testing.T) {
 	// With all vars set but invalid host, it should try to connect and fail.
 	t.Setenv("SMTP_HOST", "127.0.0.1")
 	t.Setenv("SMTP_PORT", "1") // unlikely to be running
-	t.Setenv("SMTP_FROM", "bodh@example.com")
+	t.Setenv("SMTP_FROM", "bodhyanga@example.com")
 
 	d := NewDispatcher([]ChannelConfig{
 		{Channel: ChannelEmail, Enabled: true, Endpoint: "to@example.com", Token: "smtp-password", MinPriority: PriorityLow},
@@ -84,7 +84,7 @@ func TestSendEmail_WithSMTPConfig(t *testing.T) {
 func TestSendEmail_DefaultPort(t *testing.T) {
 	t.Setenv("SMTP_HOST", "127.0.0.1")
 	t.Setenv("SMTP_PORT", "")
-	t.Setenv("SMTP_FROM", "bodh@example.com")
+	t.Setenv("SMTP_FROM", "bodhyanga@example.com")
 
 	d := NewDispatcher([]ChannelConfig{
 		{Channel: ChannelEmail, Enabled: true, Endpoint: "to@example.com", MinPriority: PriorityLow},

@@ -6,7 +6,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
 )
 
 // newOncologyMsg builds an oncology_consult agent.Message from an OncologyConsult.

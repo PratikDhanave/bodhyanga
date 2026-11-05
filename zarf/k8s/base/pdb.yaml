@@ -1,19 +1,19 @@
 # Adapted from the ardanlabs/service zarf layout
 # (https://github.com/ardanlabs/service/blob/master/zarf/k8s/base/).
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
-# Pod Disruption Budget — keep at least one Bodh care Pod available during
+# Pod Disruption Budget — keep at least one Bodhyanga care Pod available during
 # voluntary disruptions (node drains, autoscaler scaledown, rolling updates).
 # This matters for HITL reviews that may sit in the queue across the drain
 # window. See docs/governance.md § HITL gate and the GKE field map
-# (bodh-linkedin/09-gke-ai-infra-medical-multiagent.md § Pod Disruption Budgets).
+# (bodhyanga-linkedin/09-gke-ai-infra-medical-multiagent.md § Pod Disruption Budgets).
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: bodh-care
+  name: bodhyanga-care
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: bodh-care
+      app.kubernetes.io/name: bodhyanga-care
   unhealthyPodEvictionPolicy: AlwaysAllow

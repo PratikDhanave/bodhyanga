@@ -3,8 +3,8 @@ package agents
 import (
 	"context"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // CostGuardianAgent validates diagnostic spend against budget (MAI-DxO cost-value trade-off).

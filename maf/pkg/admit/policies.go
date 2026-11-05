@@ -5,11 +5,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/governance"
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
-// Demo policies for the slice CLI and tests. Real deployments compose bodh's
+// Demo policies for the slice CLI and tests. Real deployments compose bodhyanga's
 // policy stack (CompositePolicy, kill switches, OPA) — these exist so the
 // boundary can be exercised without clinical policy configuration.
 

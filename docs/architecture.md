@@ -1,6 +1,6 @@
-# Bodh — Architecture Deep Dive
+# Bodhyanga — Architecture Deep Dive
 
-> **Audience.** Engineers building on or extending Bodh. Assumes you've read the [main README](../README.md) for context.
+> **Audience.** Engineers building on or extending Bodhyanga. Assumes you've read the [main README](../README.md) for context.
 
 > **Companion docs.** [agents.md](agents.md) for per-agent behaviour, [api.md](api.md) for HTTP surface, [governance.md](governance.md) for policy details, [data-model.md](data-model.md) for clinical types, [operations.md](operations.md) for audit/observability, [deployment.md](deployment.md) for production layout.
 
@@ -36,13 +36,13 @@
 
 A user (or API call) publishes a clinical message → the orchestrator delivers it to the right agent → the agent returns zero or more new messages → the orchestrator publishes those → **governance gates each hop** → the workflow continues until a terminal agent decides we're done.
 
-Every clinically interesting behaviour in Bodh is a consequence of that loop. The clinical specificity lives in **agents** and **policies**, never in the orchestrator.
+Every clinically interesting behaviour in Bodhyanga is a consequence of that loop. The clinical specificity lives in **agents** and **policies**, never in the orchestrator.
 
 ---
 
 ## MARA building blocks
 
-Bodh implements Microsoft's [Multi-Agent Reference Architecture (MARA)](https://microsoft.github.io/multi-agent-reference-architecture/). Each MARA concept maps to a single Go package:
+Bodhyanga implements Microsoft's [Multi-Agent Reference Architecture (MARA)](https://microsoft.github.io/multi-agent-reference-architecture/). Each MARA concept maps to a single Go package:
 
 | MARA concept | Go package | Key type |
 |---|---|---|
@@ -65,7 +65,7 @@ Five additional packages serve the medical domain layer (`pkg/medical`, `pkg/tas
 
 ## The five core interfaces
 
-Everything in Bodh — 17+ agents, the bus, the registry, the governance composer, the HITL gate — composes from these five contracts.
+Everything in Bodhyanga — 17+ agents, the bus, the registry, the governance composer, the HITL gate — composes from these five contracts.
 
 ### `Agent`
 
@@ -159,7 +159,7 @@ Replace `Logger` with the PHI-redacting `phi.LoggerWrapper` for production. Repl
 
 ## Message protocol
 
-Every coordination event in Bodh is a `protocol.Message`. The wire format is the same for diagnostic flows, care services, HITL reviews, and HL7 ingest.
+Every coordination event in Bodhyanga is a `protocol.Message`. The wire format is the same for diagnostic flows, care services, HITL reviews, and HL7 ingest.
 
 ```go
 type Message struct {
@@ -340,7 +340,7 @@ The `Environment` interface is intentionally minimal so it never breaks agent co
 ### Logger composition
 
 ```go
-// Default: prints "[bodh] ..." to stdout
+// Default: prints "[bodhyanga] ..." to stdout
 inner := observability.NewStdLogger()
 
 // Production: PHI-redact before any third-party sink
@@ -532,7 +532,7 @@ The `cmd/caredemo` auto-approver drains the queue across rounds to demonstrate. 
 
 ## LLM agent fallback contract
 
-Every LLM-backed agent in Bodh has a **deterministic rule-based fallback**.
+Every LLM-backed agent in Bodhyanga has a **deterministic rule-based fallback**.
 
 ```go
 type LLMDiagnostician struct {
@@ -661,7 +661,7 @@ Production target adds a WORM sink (S3 Object Lock, Azure Immutable Blob) + Merk
 
 ### Row-level security model
 
-Every table has a `tenant_id` column. The `bodh_app` role is created with `NOBYPASSRLS`. Every connection sets `app.tenant_id` via `set_config(..., true)` in a per-statement transaction (the `withTenant` helper). The RLS policy is:
+Every table has a `tenant_id` column. The `bodhyanga_app` role is created with `NOBYPASSRLS`. Every connection sets `app.tenant_id` via `set_config(..., true)` in a per-statement transaction (the `withTenant` helper). The RLS policy is:
 
 ```sql
 CREATE POLICY tenant_isolation ON interaction_records
@@ -686,7 +686,7 @@ Documented at the package level. `DeletePatient(ctx, tenantID, patientID)` casca
 | LLM API timeout | Fall back to deterministic rule-based agent. `[llm-trace]` records the failure. Case finalizes. |
 | Audit recorder error | Logged via `env.Logf`. Message processing continues (**fail open** on audit). |
 | Bus publish error | None in `InMemoryBus`. Production buses must surface errors via the `Bus` implementation. |
-| Worktree / DB connection lost | `cmd/care` falls back to in-memory at startup if `BODH_DB_DSN` connection fails. |
+| Worktree / DB connection lost | `cmd/care` falls back to in-memory at startup if `BODHYANGA_DB_DSN` connection fails. |
 
 ---
 
@@ -705,7 +705,7 @@ Documented at the package level. `DeletePatient(ctx, tenantID, patientID)` casca
 | **Per-recipient FIFO bus** — pin each subscriber to a single-consumer goroutine + inbox channel | Total order per recipient; head-of-line blocking if a handler is slow |
 | **Causal metadata + idempotent handlers** — every message carries `trace_id`, `causal_parents[]`, `sequence_number` | Heavier per-message; no HoL blocking; survives bus retries |
 
-Bodh's `Message` shape supports either. Pick based on whether your bus is the bottleneck or your handlers are.
+Bodhyanga's `Message` shape supports either. Pick based on whether your bus is the bottleneck or your handlers are.
 
 ### Policy state
 

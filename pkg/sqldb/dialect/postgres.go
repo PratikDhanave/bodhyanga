@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 // Portions Copyright Ardan Labs, Bill Kennedy
 //
 // Licensed under the Apache License, Version 2.0 (the "License");

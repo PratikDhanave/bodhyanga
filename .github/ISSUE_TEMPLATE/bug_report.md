@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a bug in Bodh
+about: Report a bug in Bodhyanga
 title: '[BUG] '
 labels: bug
 assignees: ''

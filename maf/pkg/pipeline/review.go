@@ -5,8 +5,8 @@ import (
 
 	"github.com/microsoft/agent-framework-go/workflow"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/admit"
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/admit"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
 // The physician-review gate (spec US3, contracts/admission-and-review.md):

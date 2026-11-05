@@ -21,7 +21,7 @@ test('unauthenticated user redirected to /login', async ({ page }) => {
   // Clear any stored token before navigating — important when tests share a
   // browser context across runs.
   await page.goto('/ui/login');
-  await page.evaluate(() => localStorage.removeItem('bodh_jwt'));
+  await page.evaluate(() => localStorage.removeItem('bodhyanga_jwt'));
 
   // Attempt to reach a protected page.
   await page.goto('/ui/');
@@ -39,7 +39,7 @@ test('unauthenticated user redirected to /login', async ({ page }) => {
 test('login with valid credentials succeeds', async ({ page }) => {
   // Navigate to the login page with no token in storage.
   await page.goto('/ui/login');
-  await page.evaluate(() => localStorage.removeItem('bodh_jwt'));
+  await page.evaluate(() => localStorage.removeItem('bodhyanga_jwt'));
 
   // Fill and submit the form.
   await page.locator('#email').fill('clinician@hospital.org');
@@ -51,7 +51,7 @@ test('login with valid credentials succeeds', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Dashboard', level: 1 })).toBeVisible();
 
   // The JWT must have been stored in localStorage.
-  const token = await page.evaluate(() => localStorage.getItem('bodh_jwt'));
+  const token = await page.evaluate(() => localStorage.getItem('bodhyanga_jwt'));
   expect(token).not.toBeNull();
   expect(token!.length).toBeGreaterThan(20);
 });
@@ -61,7 +61,7 @@ test('login with valid credentials succeeds', async ({ page }) => {
 // ---------------------------------------------------------------------------
 test('login with invalid credentials shows error', async ({ page }) => {
   await page.goto('/ui/login');
-  await page.evaluate(() => localStorage.removeItem('bodh_jwt'));
+  await page.evaluate(() => localStorage.removeItem('bodhyanga_jwt'));
 
   await page.locator('#email').fill('clinician@hospital.org');
   await page.locator('#password').fill('wrongpassword');
@@ -74,7 +74,7 @@ test('login with invalid credentials shows error', async ({ page }) => {
   await expect(page.getByText('Invalid credentials')).toBeVisible();
 
   // No token must have been stored.
-  const token = await page.evaluate(() => localStorage.getItem('bodh_jwt'));
+  const token = await page.evaluate(() => localStorage.getItem('bodhyanga_jwt'));
   expect(token).toBeNull();
 });
 
@@ -105,7 +105,7 @@ test('logout clears session and redirects to /login', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
 
   // The JWT must have been removed from localStorage.
-  const token = await page.evaluate(() => localStorage.getItem('bodh_jwt'));
+  const token = await page.evaluate(() => localStorage.getItem('bodhyanga_jwt'));
   expect(token).toBeNull();
 
   // Navigating to a protected route must redirect back to /login.

@@ -19,7 +19,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/eval/federated"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval/federated"
 )
 
 func main() {

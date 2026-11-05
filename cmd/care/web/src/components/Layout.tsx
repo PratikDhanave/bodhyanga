@@ -26,7 +26,7 @@ const nav = [
 function useDarkMode() {
   const [dark, setDark] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('bodh-dark') === 'true';
+      return localStorage.getItem('bodhyanga-dark') === 'true';
     } catch {
       return false;
     }
@@ -40,7 +40,7 @@ function useDarkMode() {
       root.classList.remove('dark');
     }
     try {
-      localStorage.setItem('bodh-dark', String(dark));
+      localStorage.setItem('bodhyanga-dark', String(dark));
     } catch {
       // ignore
     }
@@ -59,13 +59,13 @@ export default function Layout() {
   const { locale, setLocale } = useI18n();
 
   return (
-    <div className="min-h-screen flex bg-white dark:bg-gray-900 text-bodh-800 dark:text-gray-100">
-      <aside className="w-56 bg-white dark:bg-gray-800 border-r border-bodh-200 dark:border-gray-700 flex flex-col">
+    <div className="min-h-screen flex bg-white dark:bg-gray-900 text-bodhyanga-800 dark:text-gray-100">
+      <aside className="w-56 bg-white dark:bg-gray-800 border-r border-bodhyanga-200 dark:border-gray-700 flex flex-col">
         {/* Sidebar header */}
-        <div className="px-4 py-4 border-b border-bodh-200 dark:border-gray-700 flex items-center justify-between">
+        <div className="px-4 py-4 border-b border-bodhyanga-200 dark:border-gray-700 flex items-center justify-between">
           <div>
-            <div className="font-semibold text-bodh-800 dark:text-gray-100">Bodh</div>
-            <div className="text-xs text-bodh-400 dark:text-gray-400">Clinician console</div>
+            <div className="font-semibold text-bodhyanga-800 dark:text-gray-100">Bodhyanga</div>
+            <div className="text-xs text-bodhyanga-400 dark:text-gray-400">Clinician console</div>
           </div>
           <div className="flex items-center gap-1">
             {/* Language selector */}
@@ -75,8 +75,8 @@ export default function Layout() {
                 onChange={(e) => setLocale(e.target.value as Locale)}
                 aria-label="Select language"
                 className="appearance-none bg-transparent text-xs pl-5 pr-1 py-1 rounded-md
-                           hover:bg-bodh-100 dark:hover:bg-gray-700
-                           text-bodh-700 dark:text-gray-300 transition-colors cursor-pointer
+                           hover:bg-bodhyanga-100 dark:hover:bg-gray-700
+                           text-bodhyanga-700 dark:text-gray-300 transition-colors cursor-pointer
                            border-none outline-none"
               >
                 {SUPPORTED_LOCALES.map((l) => (
@@ -87,7 +87,7 @@ export default function Layout() {
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-3.5 w-3.5 absolute left-1 top-1/2 -translate-y-1/2 pointer-events-none
-                           text-bodh-500 dark:text-gray-400"
+                           text-bodhyanga-500 dark:text-gray-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -103,8 +103,8 @@ export default function Layout() {
             <button
               onClick={toggle}
               aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="p-1 rounded-md hover:bg-bodh-100 dark:hover:bg-gray-700
-                         text-bodh-700 dark:text-gray-300 transition-colors"
+              className="p-1 rounded-md hover:bg-bodhyanga-100 dark:hover:bg-gray-700
+                         text-bodhyanga-700 dark:text-gray-300 transition-colors"
             >
               {dark ? (
                 /* Sun icon */
@@ -143,7 +143,7 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="px-4 py-3 border-t border-bodh-200 dark:border-gray-700 space-y-2">
+        <div className="px-4 py-3 border-t border-bodhyanga-200 dark:border-gray-700 space-y-2">
           <button
             onClick={() => {
               clearToken();
@@ -153,7 +153,7 @@ export default function Layout() {
           >
             Log out
           </button>
-          <div className="text-xs text-bodh-400 dark:text-gray-500">
+          <div className="text-xs text-bodhyanga-400 dark:text-gray-500">
             Research demo. Not for clinical use.
           </div>
         </div>
@@ -161,7 +161,7 @@ export default function Layout() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top header bar */}
-        <header className="h-10 flex items-center justify-end px-4 border-b border-bodh-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
+        <header className="h-10 flex items-center justify-end px-4 border-b border-bodhyanga-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
           <NotificationBell />
         </header>
 

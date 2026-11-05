@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/embeddings"
-	"github.com/PratikDhanave/bodh/pkg/knowledge"
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/llm/kronk"
-	"github.com/PratikDhanave/bodh/pkg/observability"
-	"github.com/PratikDhanave/bodh/pkg/tasks"
-	"github.com/PratikDhanave/bodh/pkg/tools"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/embeddings"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm/kronk"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/tasks"
+	"github.com/PratikDhanave/bodhyanga/pkg/tools"
 )
 
 // Provider names accepted by NewDiagnostician and the -diagnostician CLI flag.
@@ -29,8 +29,8 @@ const (
 	ProviderLLMKronk = "llm-kronk"
 )
 
-// Default model identifiers per provider. Override with BODH_ANTHROPIC_MODEL,
-// BODH_OPENAI_MODEL, BODH_OLLAMA_MODEL, or BODH_KRONK_MODEL env vars. The
+// Default model identifiers per provider. Override with BODHYANGA_ANTHROPIC_MODEL,
+// BODHYANGA_OPENAI_MODEL, BODHYANGA_OLLAMA_MODEL, or BODHYANGA_KRONK_MODEL env vars. The
 // Ollama host defaults to llm.OllamaDefaultHost; override with OLLAMA_HOST.
 const (
 	DefaultAnthropicModel = "claude-sonnet-4-6"
@@ -38,14 +38,14 @@ const (
 	DefaultOllamaModel    = "llama3.2"
 	// DefaultKronkModel matches the example at
 	// https://github.com/ardanlabs/kronk/blob/main/examples/chat/main.go .
-	// Override via BODH_KRONK_MODEL; any kronk-compatible model source id
+	// Override via BODHYANGA_KRONK_MODEL; any kronk-compatible model source id
 	// works (Qwen, Llama, Phi, etc.).
 	DefaultKronkModel = "unsloth/Qwen3-0.6B-Q8_0"
 )
 
 // Default embedding model identifiers used by DefaultEmbedderForProvider and
-// LoadDefaultKnowledge. Override with BODH_OPENAI_EMBED_MODEL /
-// BODH_OLLAMA_EMBED_MODEL / BODH_VOYAGE_EMBED_MODEL.
+// LoadDefaultKnowledge. Override with BODHYANGA_OPENAI_EMBED_MODEL /
+// BODHYANGA_OLLAMA_EMBED_MODEL / BODHYANGA_VOYAGE_EMBED_MODEL.
 const (
 	DefaultOpenAIEmbedModel = "text-embedding-3-small"
 	DefaultOllamaEmbedModel = "nomic-embed-text"
@@ -184,7 +184,7 @@ func buildDiagnostician(provider string, store knowledge.Store) (agent.Agent, er
 		if key == "" {
 			return nil, errors.New("ANTHROPIC_API_KEY env var not set")
 		}
-		model := envDefault("BODH_ANTHROPIC_MODEL", DefaultAnthropicModel)
+		model := envDefault("BODHYANGA_ANTHROPIC_MODEL", DefaultAnthropicModel)
 		return &LLMDiagnostician{
 			Client:    llm.NewAnthropic(key, model),
 			Fallback:  &DiagnosticianAgent{},
@@ -196,7 +196,7 @@ func buildDiagnostician(provider string, store knowledge.Store) (agent.Agent, er
 		if key == "" {
 			return nil, errors.New("OPENAI_API_KEY env var not set")
 		}
-		model := envDefault("BODH_OPENAI_MODEL", DefaultOpenAIModel)
+		model := envDefault("BODHYANGA_OPENAI_MODEL", DefaultOpenAIModel)
 		return &LLMDiagnostician{
 			Client:    llm.NewOpenAI(key, model),
 			Fallback:  &DiagnosticianAgent{},
@@ -205,7 +205,7 @@ func buildDiagnostician(provider string, store knowledge.Store) (agent.Agent, er
 
 	case ProviderLLMOllama:
 		host := os.Getenv("OLLAMA_HOST")
-		model := envDefault("BODH_OLLAMA_MODEL", DefaultOllamaModel)
+		model := envDefault("BODHYANGA_OLLAMA_MODEL", DefaultOllamaModel)
 		return &LLMDiagnostician{
 			Client:    llm.NewOllama(host, model),
 			Fallback:  &DiagnosticianAgent{},
@@ -219,7 +219,7 @@ func buildDiagnostician(provider string, store knowledge.Store) (agent.Agent, er
 		// rebuild with the tag or accept the error and fall back to the
 		// rule path themselves. Either way, the case finalizes (AGENTS.md
 		// invariant #3 — the fallback IS the contract).
-		model := envDefault("BODH_KRONK_MODEL", DefaultKronkModel)
+		model := envDefault("BODHYANGA_KRONK_MODEL", DefaultKronkModel)
 		logger := observability.NewStdLogger()
 		client, err := kronk.New(model, logger, logger)
 		if err != nil {
@@ -236,12 +236,12 @@ func buildDiagnostician(provider string, store knowledge.Store) (agent.Agent, er
 	}
 }
 
-// LoadDefaultKnowledge reads BODH_KNOWLEDGE_CORPUS, loads the JSON corpus at
+// LoadDefaultKnowledge reads BODHYANGA_KNOWLEDGE_CORPUS, loads the JSON corpus at
 // that path, indexes it with the supplied embedder into a new in-memory Store,
 // and returns it. When the env var is unset (returns nil, nil) callers proceed
 // without RAG. Embedding / parse errors are surfaced.
 func LoadDefaultKnowledge(ctx context.Context, embedder embeddings.Embedder) (knowledge.Store, error) {
-	path := os.Getenv("BODH_KNOWLEDGE_CORPUS")
+	path := os.Getenv("BODHYANGA_KNOWLEDGE_CORPUS")
 	if path == "" {
 		return nil, nil
 	}
@@ -273,17 +273,17 @@ func DefaultEmbedderForProvider(provider string) (embeddings.Embedder, error) {
 		if key == "" {
 			return nil, nil
 		}
-		return embeddings.NewOpenAI(key, envDefault("BODH_OPENAI_EMBED_MODEL", DefaultOpenAIEmbedModel)), nil
+		return embeddings.NewOpenAI(key, envDefault("BODHYANGA_OPENAI_EMBED_MODEL", DefaultOpenAIEmbedModel)), nil
 	case ProviderLLMOllama:
 		host := os.Getenv("OLLAMA_HOST")
-		return embeddings.NewOllama(host, envDefault("BODH_OLLAMA_EMBED_MODEL", DefaultOllamaEmbedModel)), nil
+		return embeddings.NewOllama(host, envDefault("BODHYANGA_OLLAMA_EMBED_MODEL", DefaultOllamaEmbedModel)), nil
 	case ProviderLLMAnthropic:
 		// Anthropic does not ship an embedding model; use Voyage when configured.
 		key := os.Getenv("VOYAGE_API_KEY")
 		if key == "" {
 			return nil, nil
 		}
-		return embeddings.NewVoyage(key, envDefault("BODH_VOYAGE_EMBED_MODEL", DefaultVoyageEmbedModel)), nil
+		return embeddings.NewVoyage(key, envDefault("BODHYANGA_VOYAGE_EMBED_MODEL", DefaultVoyageEmbedModel)), nil
 	case ProviderLLMKronk:
 		// kronk runs llama.cpp in-process and ships no first-class embedding
 		// adapter today. The diagnostician still works without RAG; the
@@ -323,7 +323,7 @@ func llmClientForProviderModel(provider, model string) (llm.Client, error) {
 			return nil, errors.New("ANTHROPIC_API_KEY env var not set")
 		}
 		if model == "" {
-			model = envDefault("BODH_ANTHROPIC_MODEL", DefaultAnthropicModel)
+			model = envDefault("BODHYANGA_ANTHROPIC_MODEL", DefaultAnthropicModel)
 		}
 		return llm.NewAnthropic(key, model), nil
 	case ProviderLLMOpenAI:
@@ -332,13 +332,13 @@ func llmClientForProviderModel(provider, model string) (llm.Client, error) {
 			return nil, errors.New("OPENAI_API_KEY env var not set")
 		}
 		if model == "" {
-			model = envDefault("BODH_OPENAI_MODEL", DefaultOpenAIModel)
+			model = envDefault("BODHYANGA_OPENAI_MODEL", DefaultOpenAIModel)
 		}
 		return llm.NewOpenAI(key, model), nil
 	case ProviderLLMOllama:
 		host := os.Getenv("OLLAMA_HOST")
 		if model == "" {
-			model = envDefault("BODH_OLLAMA_MODEL", DefaultOllamaModel)
+			model = envDefault("BODHYANGA_OLLAMA_MODEL", DefaultOllamaModel)
 		}
 		return llm.NewOllama(host, model), nil
 	case ProviderLLMKronk:
@@ -347,7 +347,7 @@ func llmClientForProviderModel(provider, model string) (llm.Client, error) {
 		// / verifier callers handle the error like any other provider
 		// startup failure.
 		if model == "" {
-			model = envDefault("BODH_KRONK_MODEL", DefaultKronkModel)
+			model = envDefault("BODHYANGA_KRONK_MODEL", DefaultKronkModel)
 		}
 		logger := observability.NewStdLogger()
 		return kronk.New(model, logger, logger)

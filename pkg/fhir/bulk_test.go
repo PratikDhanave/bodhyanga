@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/fhir"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/fhir"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // seedRegistry returns a PatientRegistry pre-populated with two patients.

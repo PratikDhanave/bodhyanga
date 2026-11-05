@@ -9,7 +9,7 @@ package agents
 // TrialScreenRequest; output is a JSON-encoded TrialScreenResult forwarded
 // to "diagnostic_supervisor".
 //
-// The five fictional trials (BODH-001 … BODH-005) are illustrative only —
+// The five fictional trials (BODHYANGA-001 … BODHYANGA-005) are illustrative only —
 // they exist solely to demonstrate the screening pipeline. No real trials,
 // sponsors, or eligibility criteria are represented.
 //
@@ -24,7 +24,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
 )
 
 // -------- input / output types --------
@@ -83,10 +83,10 @@ type trialCriterion struct {
 // matching logic is auditable without clinical domain knowledge.
 var mockTrials = []trialSpec{
 	{
-		trialID: "BODH-001",
+		trialID: "BODHYANGA-001",
 		title:   "Phase III NSCLC immunotherapy",
 		phase:   "Phase III",
-		sponsor: "Bodh Oncology Research",
+		sponsor: "Bodhyanga Oncology Research",
 		criteria: []trialCriterion{
 			{
 				label: "age >= 18",
@@ -125,10 +125,10 @@ var mockTrials = []trialSpec{
 		},
 	},
 	{
-		trialID: "BODH-002",
+		trialID: "BODHYANGA-002",
 		title:   "Phase II breast cancer HER2+",
 		phase:   "Phase II",
-		sponsor: "Bodh Oncology Research",
+		sponsor: "Bodhyanga Oncology Research",
 		criteria: []trialCriterion{
 			{
 				label: "age >= 18",
@@ -156,10 +156,10 @@ var mockTrials = []trialSpec{
 		},
 	},
 	{
-		trialID: "BODH-003",
+		trialID: "BODHYANGA-003",
 		title:   "Phase II DM2 cardiovascular outcomes",
 		phase:   "Phase II",
-		sponsor: "Bodh Cardiometabolic Institute",
+		sponsor: "Bodhyanga Cardiometabolic Institute",
 		criteria: []trialCriterion{
 			{
 				label: "age >= 40",
@@ -193,10 +193,10 @@ var mockTrials = []trialSpec{
 		},
 	},
 	{
-		trialID: "BODH-004",
+		trialID: "BODHYANGA-004",
 		title:   "Phase I solid tumor dose escalation",
 		phase:   "Phase I",
-		sponsor: "Bodh Translational Medicine",
+		sponsor: "Bodhyanga Translational Medicine",
 		criteria: []trialCriterion{
 			{
 				label: "solid tumor diagnosis",
@@ -227,10 +227,10 @@ var mockTrials = []trialSpec{
 		},
 	},
 	{
-		trialID: "BODH-005",
+		trialID: "BODHYANGA-005",
 		title:   "Registry: HIPAA-compliant real-world evidence",
 		phase:   "Registry",
-		sponsor: "Bodh Real-World Evidence Consortium",
+		sponsor: "Bodhyanga Real-World Evidence Consortium",
 		criteria: []trialCriterion{
 			{
 				label: "any diagnosis",

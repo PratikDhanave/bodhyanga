@@ -1,10 +1,10 @@
 # pkg/persistence/postgres
 
-Production-grade PostgreSQL backend for Bodh's `eval.Store`,
+Production-grade PostgreSQL backend for Bodhyanga's `eval.Store`,
 `medical.PatientRegistry`, and `audit.Recorder` contracts. The file-based
 `pkg/persistence.FileStore` and in-memory implementations next to each
 interface remain the supported demo path; `cmd/care` selects the Postgres
-backend only when `BODH_DB_DSN` is set.
+backend only when `BODHYANGA_DB_DSN` is set.
 
 ## Schema
 
@@ -45,7 +45,7 @@ Two roles:
 - **Owner / migrator** — runs `db/migrations/*.sql`. Has DDL and BYPASSRLS
   is OK because migrations need to act on every tenant's rows. Do NOT use
   this role for the application.
-- **`bodh_app`** — application role created by `0002_rls.sql` with
+- **`bodhyanga_app`** — application role created by `0002_rls.sql` with
   `NOBYPASSRLS` and minimum CRUD grants. `audit_events` is granted only
   `SELECT, INSERT` — UPDATE and DELETE are withheld so the audit log is
   append-only at the database layer (HIPAA §164.312(b), 21 CFR Part 11).
@@ -57,29 +57,29 @@ isolation.
 ## Pointing `cmd/care` at it
 
 ```bash
-export BODH_DB_DSN='postgres://bodh_app:bodh_app@localhost:5432/bodh?sslmode=disable'
-export BODH_TENANT_ID='clinic-42'   # optional; defaults to "default"
+export BODHYANGA_DB_DSN='postgres://bodhyanga_app:bodhyanga_app@localhost:5432/bodhyanga?sslmode=disable'
+export BODHYANGA_TENANT_ID='clinic-42'   # optional; defaults to "default"
 go run ./cmd/care
 ```
 
 Startup logs the active backend:
 - `[care] persistence backend: postgres (tenant=clinic-42)` — connected.
-- `[care] persistence backend: in-memory + file (BODH_DB_DSN not set)` — demo.
+- `[care] persistence backend: in-memory + file (BODHYANGA_DB_DSN not set)` — demo.
 - `[care] persistence backend: in-memory fallback (postgres open failed: ...)`
   — DSN provided but the pool failed to ping; the in-memory path still works.
 
 Migrations run automatically on startup via the owner DSN; on subsequent
-boots as `bodh_app` the runner is a no-op (already applied).
+boots as `bodhyanga_app` the runner is a no-op (already applied).
 
 ## Backups
 
-Use `pg_dump` against the owner role; do NOT dump as `bodh_app` because the
+Use `pg_dump` against the owner role; do NOT dump as `bodhyanga_app` because the
 RLS policies would clip the export to the empty tenant. Typical command:
 
 ```bash
 pg_dump --format=custom --no-owner --no-privileges \
     --table=interaction_records --table=patient_records --table=audit_events \
-    "postgres://owner:***@host:5432/bodh" > bodh-$(date +%F).dump
+    "postgres://owner:***@host:5432/bodhyanga" > bodhyanga-$(date +%F).dump
 ```
 
 For point-in-time recovery, configure Postgres WAL archiving — none of the
@@ -97,7 +97,7 @@ retention).
 If the operator's threat model requires audit purge too:
 
 ```sql
--- run as the OWNER role, not bodh_app (which lacks DELETE on audit_events)
+-- run as the OWNER role, not bodhyanga_app (which lacks DELETE on audit_events)
 SET app.tenant_id = 'tenant-uuid';
 DELETE FROM audit_events WHERE patient_id = 'pt-uuid';
 ```

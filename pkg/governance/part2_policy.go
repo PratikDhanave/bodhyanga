@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // Part2PolicyName is the canonical identifier for the 42 CFR Part 2 consent policy.

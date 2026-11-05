@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/auth"
+	"github.com/PratikDhanave/bodhyanga/pkg/auth"
 )
 
 // contextKey is an unexported type for context keys in this package.

@@ -1,7 +1,7 @@
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/base/sales/base-sales.yaml
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
-# Bodh care HTTP API Deployment. 2 replicas at base — overlays change.
+# Bodhyanga care HTTP API Deployment. 2 replicas at base — overlays change.
 # securityContext is the PodSecurity "restricted" profile expressed at the
 # Pod and container level; ServiceAccount is Workload-Identity-bound.
 # Resource requests==limits gives the "Guaranteed" QoS class.
@@ -16,7 +16,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bodh-care
+  name: bodhyanga-care
 spec:
   # Two replicas + PDB minAvailable=1 -> tolerate one voluntary disruption
   # at a time without losing serving capacity. Important for HITL reviews
@@ -30,11 +30,11 @@ spec:
       maxSurge: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: bodh-care
+      app.kubernetes.io/name: bodhyanga-care
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: bodh-care
+        app.kubernetes.io/name: bodhyanga-care
       annotations:
         # Prometheus scrape annotations — picked up by managed Prometheus
         # and most operator-style scrape configs. Port :8088 path /metrics
@@ -43,7 +43,7 @@ spec:
         prometheus.io/port: "8088"
         prometheus.io/path: "/metrics"
     spec:
-      serviceAccountName: bodh-care
+      serviceAccountName: bodhyanga-care
       automountServiceAccountToken: false
       # Grace period covers the longest reasonable in-flight HITL submit +
       # DB transaction. Aligned with the ardanlabs/service default (60s).
@@ -58,7 +58,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: care
-          image: bodh-care-image # kustomize images: pins this.
+          image: bodhyanga-care-image # kustomize images: pins this.
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -97,8 +97,8 @@ spec:
                   fieldPath: spec.nodeName
           envFrom:
             - configMapRef:
-                name: bodh-care-config
-            # Overlays add a secretRef for BODH_DB_DSN + provider API keys.
+                name: bodhyanga-care-config
+            # Overlays add a secretRef for BODHYANGA_DB_DSN + provider API keys.
           # Liveness: a hard hang (no GC, deadlocked goroutines) trips this
           # and the kubelet restarts the container. Tolerate a brief blip
           # (failureThreshold=3) so a single slow GC pass doesn't bounce
@@ -147,7 +147,7 @@ spec:
             # Audit log target — emptyDir at base. Production overlay
             # mounts a PVC or forwards via stdout to a log shipper.
             - name: audit
-              mountPath: /var/lib/bodh
+              mountPath: /var/lib/bodhyanga
       volumes:
         - name: tmp
           emptyDir:

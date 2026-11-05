@@ -1,13 +1,13 @@
-# Bodh — Session Memory
+# Bodhyanga — Session Memory
 _Last updated: 2026-06-02_
 
 ---
 
 ## Project identity
 
-- **Repo:** `github.com/PratikDhanave/bodh`
-- **Local path:** `/Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodh`
-- **Module:** `github.com/PratikDhanave/bodh` · Go 1.26
+- **Repo:** `github.com/PratikDhanave/bodhyanga`
+- **Local path:** `/Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodhyanga`
+- **Module:** `github.com/PratikDhanave/bodhyanga` · Go 1.26
 - **Current branch:** `feat/final-extensions` (ready to commit + PR)
 - **Stats:** 61 test packages · 37 agent files · 35 cmd binaries · 42 pkg packages · 71 commits on main
 
@@ -76,9 +76,9 @@ Budget routing: 3-tier cascade (Ollama→small-cloud→large-cloud)
 8088=care API, 8096=CDS Hooks, 8097=MCP server, 8099=A2A server, 5667=Laminar UI, 8000=Laminar API
 
 ### PHI security invariants
-- `bodh.case_id` on spans = `sha256(caseID)[:8]` hex
+- `bodhyanga.case_id` on spans = `sha256(caseID)[:8]` hex
 - Audit events: reason field redacted, never diagnosis/HPI/labs
-- `BODH_ENCRYPTION_KEY` (base64, 32 bytes) → AES-256-GCM on PHI columns
+- `BODHYANGA_ENCRYPTION_KEY` (base64, 32 bytes) → AES-256-GCM on PHI columns
 - SMART on FHIR: RS256 JWT + JWKS caching for EHR integration
 
 ### Frontend (React/TypeScript SPA)

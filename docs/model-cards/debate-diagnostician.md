@@ -1,6 +1,6 @@
 # Model Card — `DebateDiagnostician`
 
-> **Card version:** 1.0.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodh maintainers
+> **Card version:** 1.0.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodhyanga maintainers
 
 ## Model details
 
@@ -10,7 +10,7 @@
 - **CLI:** `-diagnostician=llm-anthropic-debate` (or `-openai`, `-ollama`)
 - **Default LLM provider:** same as parent `LLMDiagnostician`
 - **Provider-configurable:** yes
-- **License:** Apache-2.0 (Bodh) / provider terms (LLM)
+- **License:** Apache-2.0 (Bodhyanga) / provider terms (LLM)
 
 ## Intended use
 

@@ -1,13 +1,13 @@
 # Model Card — `LLMInboxTriage`
 
-> **Card version:** 1.0.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodh maintainers
+> **Card version:** 1.0.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodhyanga maintainers
 
 ## Model details
 
 - **Variant name:** `LLMInboxTriage`
 - **Source:** [`agents/inbox_triage_llm.go`](../../agents/inbox_triage_llm.go)
 - **Type:** Single-LLM-call classifier with rule-based fallback
-- **License:** Apache-2.0 (Bodh) / provider terms
+- **License:** Apache-2.0 (Bodhyanga) / provider terms
 
 ## Intended use
 

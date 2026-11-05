@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 )
 
 // TestOrchestrator_RecordsMessageEventOnAgentInvocation asserts that a

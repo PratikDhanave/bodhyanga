@@ -1,8 +1,8 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/app/sdk/errs/errs.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 //
-// Bodh modifications vs upstream:
-//   - The Encode() method writes the Bodh error envelope shape
+// Bodhyanga modifications vs upstream:
+//   - The Encode() method writes the Bodhyanga error envelope shape
 //     {code, message, fields, request_id} (see docs/api.md) rather than
 //     the bare upstream {code, message}. Field-level errors live in a
 //     separate "fields" array so clients can render form-validation hints.
@@ -69,7 +69,7 @@ func (ec ErrCode) Equal(other ErrCode) bool {
 	return ec.value == other.value
 }
 
-// Error is the Bodh error envelope. It serialises as the {code, message,
+// Error is the Bodhyanga error envelope. It serialises as the {code, message,
 // fields, request_id} shape documented in docs/api.md. The FuncName and
 // FileName fields are internal — they help operators correlate a 500 to a
 // call site without exposing the call site to API clients (which would

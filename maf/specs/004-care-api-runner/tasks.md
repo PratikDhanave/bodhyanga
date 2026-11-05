@@ -19,11 +19,11 @@ the current Runner does not provide them (plan.md § Runner capability GAPS).
 ## Phase 1: Setup
 
 - [ ] T001 Scaffold `pkg/careapi/` and `cmd/care/` package skeletons + a `doc.go` in
-  `/Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodh-maf/pkg/careapi/doc.go`
+  `/Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodhyanga-maf/pkg/careapi/doc.go`
   stating the wrap-the-Runner contract, the PHI-free-response invariant, and the auth non-goal; `go build ./...` green
 - [ ] T002 [P] Confirm no new deps needed (`net/http`, `net/http/httptest` stdlib; `pkg/pipeline`,
-  `bodh/pkg/audit`, `pkg/ckptpg` already present); `go mod tidy` no-op in
-  `/Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodh-maf/go.mod`
+  `bodhyanga/pkg/audit`, `pkg/ckptpg` already present); `go mod tidy` no-op in
+  `/Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodhyanga-maf/go.mod`
 
 ## Phase 2: Foundational (blocking prerequisites)
 
@@ -77,7 +77,7 @@ malformed body ⇒ 400; confident case ⇒ `awaiting_review` (SC-001).
   internal helper or copy — no edit to cmd/slice), flags `-addr -policy -diagnostician -db`
 - [ ] T008 [US1] Startup banner + loopback default in `cmd/care/main.go`: bind `127.0.0.1:8088` by
   default, print an auth-gap warning banner (FR-013, ADR-0006), `/healthz` + `/readyz` in
-  `pkg/careapi/probes.go` matching the `cmd/care` probe contract (bodh `pkg/runtime/doc.go`)
+  `pkg/careapi/probes.go` matching the `cmd/care` probe contract (bodhyanga `pkg/runtime/doc.go`)
 
 **Checkpoint**: US1 functional — a case can be submitted over HTTP and returns a handle; MVP demoable.
 
@@ -145,7 +145,7 @@ nothing; unknown token ⇒ 404; denied case's denial present (SC-004).
   finalization); every returned field PHI-scanned (raw case id / clinical strings) ⇒ zero hits
   (SC-004); unknown token ⇒ 404 (distinct from empty 200, FR-010); deny-all case ⇒ denial record present
 - [ ] T017 [US4] Audit handler in `pkg/careapi/audit.go`: `recorder.List()`
-  (bodh/pkg/audit/recorder.go:185) filtered to `Event.CaseID == caseToken`; 404 if the token is
+  (bodhyanga/pkg/audit/recorder.go:185) filtered to `Event.CaseID == caseToken`; 404 if the token is
   unknown to the registry AND has no events; reuse `pkg/auditbridge` invariant/PHI-scan helpers if
   exported, else a local field scan (FR-010, FR-011)
 

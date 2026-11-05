@@ -113,7 +113,7 @@ func buildPrompt(wu Workup, evidence []Citation) (string, error) {
 }
 
 // evidenceBlock renders retrieved citations as an "Evidence:" block, mirroring
-// bodh's agents/diagnostician_llm.go format. Empty citations => empty string
+// bodhyanga's agents/diagnostician_llm.go format. Empty citations => empty string
 // (no block, no behavior change when RAG is off).
 func evidenceBlock(cites []Citation) string {
 	if len(cites) == 0 {
@@ -129,7 +129,7 @@ func evidenceBlock(cites []Citation) string {
 
 // reconcileCitations decides which provenance rides the DiagnosisResult: the
 // model's own citations when it returned any, otherwise the retrieved set.
-// This mirrors bodh's "keep model subset else retrieved" rule — no hard
+// This mirrors bodhyanga's "keep model subset else retrieved" rule — no hard
 // membership check (plan non-goal).
 func reconcileCitations(model, retrieved []Citation) []Citation {
 	if len(model) > 0 {

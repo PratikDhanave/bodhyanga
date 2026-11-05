@@ -13,7 +13,7 @@ test.describe('Panel Report', () => {
     await login(page);
     // Seed a patient with conditions so the panel report's "By condition"
     // breakdown and care-gap rules have data to aggregate.
-    const token = await page.evaluate(() => localStorage.getItem('bodh_jwt'));
+    const token = await page.evaluate(() => localStorage.getItem('bodhyanga_jwt'));
     await page.request.post('/patients', {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       // The panel report emits an a1c_overdue gap for a "dm" patient with no

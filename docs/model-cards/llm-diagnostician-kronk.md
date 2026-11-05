@@ -1,8 +1,8 @@
 # Model Card — `LLMDiagnostician (kronk / in-process llama.cpp)`
 
-> **Card version:** 0.1.0 · **Last reviewed:** 2026-05-26 · **Author:** Bodh maintainers
+> **Card version:** 0.1.0 · **Last reviewed:** 2026-05-26 · **Author:** Bodhyanga maintainers
 >
-> Template per Mitchell et al. (2018). Bodh's agent-variant model cards.
+> Template per Mitchell et al. (2018). Bodhyanga's agent-variant model cards.
 
 ## Model details
 
@@ -10,11 +10,11 @@
 - **Source:** [`pkg/llm/kronk/kronk.go`](../../pkg/llm/kronk/kronk.go) + [`agents/diagnostician_llm.go`](../../agents/diagnostician_llm.go)
 - **Type:** Single-LLM-call agent (in-process llama.cpp inference) with deterministic rule-based fallback
 - **Default LLM provider:** Ardan Labs [kronk](https://github.com/ardanlabs/kronk) (wraps llama.cpp via yzma + bucky)
-- **Default LLM model:** `unsloth/Qwen3-0.6B-Q8_0` (override via `BODH_KRONK_MODEL`)
+- **Default LLM model:** `unsloth/Qwen3-0.6B-Q8_0` (override via `BODHYANGA_KRONK_MODEL`)
 - **Provider-configurable:** yes (any kronk-compatible model source identifier; see variant matrix below)
-- **Build tag:** `kronk` — the default Bodh binary does NOT link llama.cpp / CGO. Rebuild with `go build -tags kronk ./cmd/care` (or `./cmd/demo`, `./cmd/bench`) to enable.
-- **License:** Apache-2.0 (Bodh) / kronk license / model-specific weights license (Qwen, Llama, Phi all carry their own — verify before deploying)
-- **Maintainer:** Bodh project ([GitHub issues](https://github.com/PratikDhanave/bodh/issues))
+- **Build tag:** `kronk` — the default Bodhyanga binary does NOT link llama.cpp / CGO. Rebuild with `go build -tags kronk ./cmd/care` (or `./cmd/demo`, `./cmd/bench`) to enable.
+- **License:** Apache-2.0 (Bodhyanga) / kronk license / model-specific weights license (Qwen, Llama, Phi all carry their own — verify before deploying)
+- **Maintainer:** Bodhyanga project ([GitHub issues](https://github.com/PratikDhanave/bodhyanga/issues))
 
 ## Intended use
 
@@ -31,7 +31,7 @@
 
 ## Factors
 
-- **Relevant conditions:** Any condition the chosen small-model checkpoint covers. The default Qwen3-0.6B Q8_0 is a tiny model — accuracy on Bodh's bench is expected to lag the cloud variants. Larger local models (Qwen3-32B, Llama-3-70B) close the gap at the cost of RAM / VRAM and host startup latency.
+- **Relevant conditions:** Any condition the chosen small-model checkpoint covers. The default Qwen3-0.6B Q8_0 is a tiny model — accuracy on Bodhyanga's bench is expected to lag the cloud variants. Larger local models (Qwen3-32B, Llama-3-70B) close the gap at the cost of RAM / VRAM and host startup latency.
 - **Patient demographics:** Inherits the biases of the underlying open-weight checkpoint. Equity audit pipeline is shared with the other LLM variants ([ROADMAP Phase 7](../../ROADMAP.md)).
 - **Instrumentation:** Same `CaseState` inputs as every other diagnostician variant. RAG is not yet wired for kronk (no first-class embedding adapter); the variant runs without retrieved citations until that follow-up lands.
 - **Environment:** Always invoked downstream of `cost_guardian`, upstream of `reasoning_verifier`. No prompt caching today (the kronk SDK does not surface a cache hit metric). The host must have enough RAM for the chosen quant; OOM at startup is the most common failure and is surfaced as a New() error, which the factory translates into "fall back to the rule path."
@@ -44,7 +44,7 @@ Kronk results are **deployment-dependent** — model weights, quantisation level
 
 | Metric | Expected range (Qwen3-0.6B-Q8_0 on a laptop) |
 |---|---|
-| Accuracy (exact-match) | 35-55% on Bodh's 7-fixture bench — substantially below Sonnet/GPT-4o |
+| Accuracy (exact-match) | 35-55% on Bodhyanga's 7-fixture bench — substantially below Sonnet/GPT-4o |
 | Mean cost USD | $0 marginal (no per-call billing) + amortised hardware cost |
 | Mean message steps | 11.0 (shared with the other variants — `test_planner` runs the same workups) |
 | Latency p50 | 3-10s per LLM call (tiny model on CPU); 0.5-2s on M-series GPU |
@@ -52,7 +52,7 @@ Kronk results are **deployment-dependent** — model weights, quantisation level
 | Fallback rate | High — expect 20-50% on the tiny default model; alert at >70% |
 | Prompt cache hit rate | N/A (kronk does not surface a cache metric) |
 
-Variant accuracy improves rapidly with model size: a Qwen3-7B or Llama-3-8B Q5 quant typically lands close to the cloud variants on Bodh's bench, at the cost of larger RAM / VRAM / startup latency.
+Variant accuracy improves rapidly with model size: a Qwen3-7B or Llama-3-8B Q5 quant typically lands close to the cloud variants on Bodhyanga's bench, at the cost of larger RAM / VRAM / startup latency.
 
 ## Evaluation data
 
@@ -63,7 +63,7 @@ Variant accuracy improves rapidly with model size: a Qwen3-7B or Llama-3-8B Q5 q
 
 ## Training data
 
-Bodh does not train custom models. This variant composes with a third-party open-weight checkpoint that the operator loads via the `BODH_KRONK_MODEL` env var. Before deploying:
+Bodhyanga does not train custom models. This variant composes with a third-party open-weight checkpoint that the operator loads via the `BODHYANGA_KRONK_MODEL` env var. Before deploying:
 
 - Review the chosen checkpoint's model card on Hugging Face (license, training data, known limitations).
 - Verify the quantisation level was produced by a trusted source (e.g. unsloth, TheBloke, official model org).
@@ -108,7 +108,7 @@ Compare per-provider accuracy, fallback rate, and Pareto score. The interesting 
 
 - **The fallback is the contract.** This variant must never be deployed without its deterministic fallback. Small local models trip the fallback more often than cloud models — that is *expected* and the design is robust to it.
 - **`MinConfidence` threshold (default 0.6) routes low-confidence local LLM responses to the fallback.** Tune per deployment; small models tend to be over-confident on out-of-distribution cases.
-- **Pin the model weights.** A kronk-backed Bodh deployment is reproducible only if the operator records the exact model source identifier, quantisation level, and checkpoint sha256. Treat this like a container image digest.
+- **Pin the model weights.** A kronk-backed Bodhyanga deployment is reproducible only if the operator records the exact model source identifier, quantisation level, and checkpoint sha256. Treat this like a container image digest.
 - **Monitor host memory.** llama.cpp can be aggressive about page-cache use. Set kernel cgroup limits; alert on host swap.
 - **No PHI leaves the box** — but disk encryption, access controls, and audit logs still apply. HIPAA Technical Safeguards are not waived by local inference.
 - **No first-class RAG today.** The diagnostician runs without retrieved citations on this provider until a kronk-compatible embedding adapter lands.
@@ -116,7 +116,7 @@ Compare per-provider accuracy, fallback rate, and Pareto score. The interesting 
 
 ## Deployment property: local-only
 
-This variant is the *only* Bodh LLM diagnostician variant for which the following property holds:
+This variant is the *only* Bodhyanga LLM diagnostician variant for which the following property holds:
 
 > The PHI content of any `CaseState` passed to this client never traverses a network socket and never leaves the OS process that hosts the orchestrator.
 

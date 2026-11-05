@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/eval/perturbation"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval/perturbation"
 )
 
 // sampleMedicalTrace returns a four-turn medical conversation for testing.

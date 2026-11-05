@@ -17,12 +17,12 @@ testable and green before the next starts.
 
 ## Phase 1: Setup
 
-- [ ] T001 Add feature dependencies to go.mod: `require github.com/PratikDhanave/bodh` (resolved via existing replace), `jackc/pgx/v5`, `testcontainers-go` (test-only); `go mod tidy` green in /Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodh-maf/go.mod
+- [ ] T001 Add feature dependencies to go.mod: `require github.com/PratikDhanave/bodhyanga` (resolved via existing replace), `jackc/pgx/v5`, `testcontainers-go` (test-only); `go mod tidy` green in /Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodhyanga-maf/go.mod
 
 ## Phase 2: Foundational (blocking prerequisites)
 
 - [ ] T002 [P] Extract the workflow-run test harness from pkg/pipeline/pipeline_test.go into pkg/pipeline/testutil_test.go + internal/slicetest/run.go (collects events, output, errors) so US1–US5 tests share one runner
-- [ ] T003 [P] Demo policy factory in pkg/admit/policies.go: `AllowAll()`, `DenyAll()`, `DenyAgent(id)`, `Erroring()` as `governance.Policy` implementations (PolicyResult per bodh contract), with unit tests in pkg/admit/policies_test.go
+- [ ] T003 [P] Demo policy factory in pkg/admit/policies.go: `AllowAll()`, `DenyAll()`, `DenyAgent(id)`, `Erroring()` as `governance.Policy` implementations (PolicyResult per bodhyanga contract), with unit tests in pkg/admit/policies_test.go
 
 **Checkpoint**: harness + policies exist — user story phases can begin.
 
@@ -84,7 +84,7 @@ outputs and trail shapes; malformed LLM output ⇒ agent_error, no fabricated re
 
 - [ ] T023 [P] [US4] Fake provider in pkg/agents/fakeprovider_test.go: `agent.ProviderConfig{Run: scripted RunFunc}` emitting valid and malformed structured outputs — no real API calls ever (constitution II / FR-012)
 - [ ] T024 [US4] LLM diagnostician in pkg/agents/llm_diagnostician.go: agentworkflow binding consuming Workup, WithStructuredOutput(&DiagnosisResult{}), post-validation (Confidence∈[0,1], non-empty Diagnosis, CaseID overwritten from input), loop-back/forced logic identical to rule path, admission middleware attached from Config.Boundary
-- [ ] T025 [US4] Provider constructors in cmd/slice/providers.go: `-diagnostician rule|llm-anthropic|llm-ollama`; anthropicprovider.NewAgent(ANTHROPIC_API_KEY, BODH_ANTHROPIC_MODEL) and openaiprovider.NewChatCompletionsAgent(option.WithBaseURL($OLLAMA_HOST/v1), BODH_OLLAMA_MODEL); graph unchanged — only pipeline.Config.Diagnostician binding differs
+- [ ] T025 [US4] Provider constructors in cmd/slice/providers.go: `-diagnostician rule|llm-anthropic|llm-ollama`; anthropicprovider.NewAgent(ANTHROPIC_API_KEY, BODHYANGA_ANTHROPIC_MODEL) and openaiprovider.NewChatCompletionsAgent(option.WithBaseURL($OLLAMA_HOST/v1), BODHYANGA_OLLAMA_MODEL); graph unchanged — only pipeline.Config.Diagnostician binding differs
 - [ ] T026 [US4] Engine-swap tests in pkg/pipeline/engine_swap_test.go: same case via rule vs fake-LLM ⇒ same output struct shape, same trail shape (invariant checker), review gate applies to both; malformed-output case ⇒ agent_error recorded, run fails without DiagnosisResult — SC-004, FR-011
 
 **Checkpoint**: provider-pluggability preserved under the new boundary.
@@ -107,7 +107,7 @@ record (SC-005).
 - [ ] T030 [P] Run quickstart.md end-to-end manually (allow/deny, kill/resume via compose Postgres, engine swap vs Ollama if available); fix drift between docs and behavior
 - [ ] T031 [P] Coverage ≥90% on pkg/admit, pkg/auditbridge, pkg/ckptpg, pkg/evalhook (`go test -cover`); `go vet ./...` + staticcheck clean
 - [ ] T032 Update README.md exit-criteria table (proven ✅ per test), architecture.md delivery table (steps 2–5 done), and CLAUDE.md if commands changed
-- [ ] T033 Write the go/no-go verdict back to ../bodh/session.md (delivery-plan step 5): what MAF carried cleanly, what needed shims, recommendation for the wider platform and specs/002
+- [ ] T033 Write the go/no-go verdict back to ../bodhyanga/session.md (delivery-plan step 5): what MAF carried cleanly, what needed shims, recommendation for the wider platform and specs/002
 
 ## Dependencies
 

@@ -87,7 +87,7 @@ func TestTraceHandler_Stub(t *testing.T) {
 // ---- InitGlobalTracer stub (0%) ----
 
 func TestInitGlobalTracer_Stub(t *testing.T) {
-	shutdown, err := InitGlobalTracer(context.Background(), "bodh")
+	shutdown, err := InitGlobalTracer(context.Background(), "bodhyanga")
 	if err == nil {
 		t.Error("expected error from stub InitGlobalTracer")
 	}
@@ -164,7 +164,7 @@ func TestRecordLLMCall_WithOTelHook(t *testing.T) {
 	})
 	defer SetLLMOTelHook(nil)
 
-	t.Setenv("BODH_OTEL_ENABLED", "1")
+	t.Setenv("BODHYANGA_OTEL_ENABLED", "1")
 
 	logger.RecordLLMCall(LLMTrace{
 		Provider:    "anthropic",
@@ -190,7 +190,7 @@ func TestRecordLLMCall_WithoutOTelEnabled(t *testing.T) {
 	})
 	defer SetLLMOTelHook(nil)
 
-	t.Setenv("BODH_OTEL_ENABLED", "0")
+	t.Setenv("BODHYANGA_OTEL_ENABLED", "0")
 
 	logger.RecordLLMCall(LLMTrace{
 		Provider: "test",
@@ -198,7 +198,7 @@ func TestRecordLLMCall_WithoutOTelEnabled(t *testing.T) {
 	})
 
 	if hookCalled {
-		t.Error("OTel hook should NOT be called when BODH_OTEL_ENABLED != 1")
+		t.Error("OTel hook should NOT be called when BODHYANGA_OTEL_ENABLED != 1")
 	}
 }
 

@@ -8,16 +8,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
 	"github.com/microsoft/agent-framework-go/workflow"
 	"github.com/microsoft/agent-framework-go/workflow/checkpoint"
 	"github.com/microsoft/agent-framework-go/workflow/inproc"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/admit"
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
-	"github.com/PratikDhanave/bodh-maf/pkg/auditbridge"
-	"github.com/PratikDhanave/bodh-maf/pkg/evalhook"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/admit"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/auditbridge"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/evalhook"
 )
 
 // Runner owns one case's execution: it runs the workflow, feeds the audit
@@ -206,7 +206,7 @@ func (r *Runner) drain(ctx context.Context, run *inproc.StreamingRun, caseToken 
 }
 
 // recordEval writes the one-per-terminal-case eval record (US5, closing
-// bodh's eval-mirror gap). Eval storage is quality telemetry: failures are
+// bodhyanga's eval-mirror gap). Eval storage is quality telemetry: failures are
 // logged by the store's owner, never fatal to care flow.
 func (r *Runner) recordEval(out *Outcome, started time.Time) {
 	if r.cfg.EvalStore == nil || (out.Plan == nil && out.Rejected == nil) {

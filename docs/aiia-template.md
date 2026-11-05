@@ -1,6 +1,6 @@
 # AI Impact Assessment (AIIA) — Template
 
-> Fillable template for every clinically consequential change to Bodh — new condition, new agent variant, new model swap, new policy. Cross-references AIGP Domain IV.B ("Perform key activities to assess the AI system") and GDPR Article 35 (DPIA for AI-based clinical decision support).
+> Fillable template for every clinically consequential change to Bodhyanga — new condition, new agent variant, new model swap, new policy. Cross-references AIGP Domain IV.B ("Perform key activities to assess the AI system") and GDPR Article 35 (DPIA for AI-based clinical decision support).
 >
 > Open as a draft PR description, fill in, copy the completed form into the PR body. The PR template (planned) will lift this structure as required sections.
 
@@ -60,7 +60,7 @@ Cover at least these categories:
 
 ### 6. Mitigations
 
-Map each potential harm to a specific Bodh primitive that mitigates it:
+Map each potential harm to a specific Bodhyanga primitive that mitigates it:
 
 | Harm | Mitigation |
 |---|---|
@@ -120,7 +120,7 @@ When should this change be retired or replaced?
 
 ### 13. Disclaimer
 
-This change ships under Bodh's research disclaimer. Not a medical device. Not approved for clinical use. The AIIA above describes the change for internal review; it is not a regulatory submission.
+This change ships under Bodhyanga's research disclaimer. Not a medical device. Not approved for clinical use. The AIIA above describes the change for internal review; it is not a regulatory submission.
 ```
 
 ---

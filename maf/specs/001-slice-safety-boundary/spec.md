@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Complete the bodh-maf MARA vertical slice: admission-controlled, auditable, resumable clinical pipeline proving MAF-go can carry bodh's safety boundary — fail-closed governance / fail-open audit admission on every hop, audit bridge with synchronous deny writes, physician-review HITL gate with durable checkpointing surviving restart, swappable rule/LLM diagnostician behind a flag, and terminal-hop evaluation records closing the eval-mirror gap. Success = the five exit criteria in README.md, each proven by a test."
+**Input**: User description: "Complete the bodhyanga-maf MARA vertical slice: admission-controlled, auditable, resumable clinical pipeline proving MAF-go can carry bodhyanga's safety boundary — fail-closed governance / fail-open audit admission on every hop, audit bridge with synchronous deny writes, physician-review HITL gate with durable checkpointing surviving restart, swappable rule/LLM diagnostician behind a flag, and terminal-hop evaluation records closing the eval-mirror gap. Success = the five exit criteria in README.md, each proven by a test."
 
 ## User Scenarios & Testing *(mandatory)*
 

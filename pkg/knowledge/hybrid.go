@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/PratikDhanave/bodh/pkg/embeddings"
+	"github.com/PratikDhanave/bodhyanga/pkg/embeddings"
 )
 
 // BM25 constants. The defaults are the standard Okapi BM25 parameters.

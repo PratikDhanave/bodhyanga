@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/audio"
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/audio"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 )
 
 // buildRequest builds an audio_transcription_request message with the

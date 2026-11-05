@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Bodh are documented in this file.
+All notable changes to Bodhyanga are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
-- **`maf/` — bodh-maf** vendored as a nested Go module (`github.com/PratikDhanave/bodh-maf`): a vertical-slice reimplementation of the MARA clinical pipeline on `microsoft/agent-framework-go` (MAF-go). Imports bodh's `pkg/governance` / `pkg/audit` / `pkg/phi` / `pkg/eval` unchanged; swaps only the orchestration substrate. Built/tested separately (`cd maf && go build ./... && go test ./...`); ships `cmd/care` HTTP API and a `web/` Next.js clinician console. Research/education only.
+- **`maf/` — bodhyanga-maf** vendored as a nested Go module (`github.com/PratikDhanave/bodhyanga-maf`): a vertical-slice reimplementation of the MARA clinical pipeline on `microsoft/agent-framework-go` (MAF-go). Imports bodhyanga's `pkg/governance` / `pkg/audit` / `pkg/phi` / `pkg/eval` unchanged; swaps only the orchestration substrate. Built/tested separately (`cd maf && go build ./... && go test ./...`); ships `cmd/care` HTTP API and a `web/` Next.js clinician console. Research/education only.
 - Ambient clinical scribe — NLP pipeline converting voice transcripts to structured PatientPresentation (`pkg/medical/scribe.go`)
 - Shadow mode deployment — parallel AI evaluation with concordance capture (`pkg/shadow/`)
 - Cost-based model routing — budget-aware 3-tier cascade with hard caps (`pkg/llm/budget.go`)
@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - OSS standard files — LICENSE (Apache 2.0), SECURITY.md, CODE_OF_CONDUCT.md, CHANGELOG.md, issue/PR templates
 
 ### Security
-- `cmd/care` demo credential seeding is now gated behind **`BODH_DEMO_USERS`** (default on for this research build; `BODH_DEMO_USERS=0` seeds nothing) and logs a startup security warning, so a non-demo deployment does not ship well-known passwords.
+- `cmd/care` demo credential seeding is now gated behind **`BODHYANGA_DEMO_USERS`** (default on for this research build; `BODHYANGA_DEMO_USERS=0` seeds nothing) and logs a startup security warning, so a non-demo deployment does not ship well-known passwords.
 
 ### Fixed
 - Eliminated **27 data races** caught by `go test -race` across `pkg/a2a`, `pkg/fhir`, `pkg/agent/debate`, `pkg/orchestration`, and `pkg/llm/pool` — including a real HITL WebSocket first-event-loss bug (server sent `101` before subscribing) and a `pkg/a2a` return-then-mutate race on the shared task pointer.
@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **FHIR Bulk Data `$export`** — async job → poll → NDJSON download (`pkg/fhir/bulk.go`)
 - **HL7 v2 ORM^O01** outbound lab orders — encode/parse round-trip (`pkg/hl7v2/orm.go`)
 - **4 specialist agents**: Neurologist (NIHSS, stroke, seizure), Nephrologist (CKD-EPI, KDIGO, AKI), Pulmonologist (PFT, COPD GOLD, asthma), Ophthalmologist (retinopathy ETDRS, glaucoma, DME)
-- **Helm chart** — distroless image, NetworkPolicy, HPA, PDB, ExternalSecrets (`zarf/helm/bodh/`)
+- **Helm chart** — distroless image, NetworkPolicy, HPA, PDB, ExternalSecrets (`zarf/helm/bodhyanga/`)
 - **Performance benchmarks** — bus throughput, orchestrator latency (`pkg/bench/`)
 - **Chaos tests** — agent panic recovery, PHI-leak assertion, race detector (`pkg/chaos/`)
 - **E2E Playwright tests** — dashboard, auth, reviews, case runner, audit log

@@ -1,5 +1,5 @@
 // Tests for pkg/auth — adapted in spirit from upstream auth_test.go but
-// rewritten for the Bodh-specific Claims + role catalogue + Rego policies.
+// rewritten for the Bodhyanga-specific Claims + role catalogue + Rego policies.
 //
 // Coverage:
 //   - Token roundtrip (Generate + Parse against the same keystore).
@@ -32,7 +32,7 @@ func newTestAuthenticator(t *testing.T) (*Authenticator, string, *KeyStore) {
 	if err := ks.LoadRSAPEM(kid, priv); err != nil {
 		t.Fatalf("load pem: %v", err)
 	}
-	a := New(Config{KeyLookup: ks, Issuer: "bodh-test"})
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga-test"})
 	return a, kid, ks
 }
 
@@ -42,7 +42,7 @@ func TestAuthenticator_TokenRoundtrip(t *testing.T) {
 	want := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "user-123",
-			Issuer:    "bodh-test",
+			Issuer:    "bodhyanga-test",
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
@@ -67,7 +67,7 @@ func TestAuthenticator_ExpiredToken(t *testing.T) {
 	expired := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "user-123",
-			Issuer:    "bodh-test",
+			Issuer:    "bodhyanga-test",
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Hour)), // an hour ago
 			IssuedAt:  jwt.NewNumericDate(time.Now().Add(-2 * time.Hour)),
 		},

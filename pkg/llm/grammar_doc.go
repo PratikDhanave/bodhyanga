@@ -10,7 +10,7 @@ package llm
 //     surfaces as ErrInvalidJSON and the agent's fallback path runs.
 //
 //  2. Request.Grammar (GrammarSpec) — a SAMPLER-LEVEL constraint. When the
-//     provider supports it (llama.cpp-family backends — kronk in Bodh today),
+//     provider supports it (llama.cpp-family backends — kronk in Bodhyanga today),
 //     the sampler refuses any token that would break the grammar, so the
 //     response is GUARANTEED well-formed without a retry. Providers that do
 //     not support grammars emit a one-time warning and ignore the field;

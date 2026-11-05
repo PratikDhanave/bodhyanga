@@ -21,7 +21,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/shadow"
+	"github.com/PratikDhanave/bodhyanga/pkg/shadow"
 )
 
 // fixture mirrors the case file format used by data/cases/*.json. We only

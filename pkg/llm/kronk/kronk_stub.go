@@ -1,6 +1,6 @@
 // kronk_stub.go — no-op shim used when the `kronk` build tag is NOT set.
 //
-// Bodh's default build does not link kronk (which pulls llama.cpp + yzma +
+// Bodhyanga's default build does not link kronk (which pulls llama.cpp + yzma +
 // bucky and requires CGO). This stub keeps the Client type, the New
 // constructor, and the Tracer / Option / WithGrammar surfaces compiling so
 // callers can reference them unconditionally (cmd/care, cmd/demo, cmd/bench
@@ -19,8 +19,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
 )
 
 // ProviderName matches the real implementation so bench / log output is

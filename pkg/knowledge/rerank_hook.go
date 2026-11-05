@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/knowledge/rerank"
-	"github.com/PratikDhanave/bodh/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge/rerank"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
 )
 
 // applyReranker runs the optional cross-encoder reranker over `cits` and

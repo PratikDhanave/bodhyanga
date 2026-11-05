@@ -1,5 +1,5 @@
 // Package llm provides a provider-agnostic client interface for large language
-// models, used by Bodh agents that need generative reasoning (diagnostician,
+// models, used by Bodhyanga agents that need generative reasoning (diagnostician,
 // reasoning verifier, questioner).
 //
 // Why a thin abstraction
@@ -38,6 +38,6 @@
 // What this package does NOT do
 //
 //   - Retries / rate-limit backoff (the http.Client does basic timeouts).
-//   - Streaming. The Bodh message bus is request/response per agent step.
+//   - Streaming. The Bodhyanga message bus is request/response per agent step.
 //   - Embeddings. Add a separate Embedder interface when RAG lands.
 package llm

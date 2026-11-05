@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/finetune"
+	"github.com/PratikDhanave/bodhyanga/pkg/finetune"
 )
 
 // writeTempJSONL writes lines to a temp JSONL file and returns its path.

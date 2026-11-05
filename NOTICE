@@ -1,8 +1,8 @@
-Bodh
-Copyright 2025 The Bodh Authors
+Bodhyanga
+Copyright 2025 The Bodhyanga Authors
 
-This product includes software developed at The Bodh Authors
-(https://github.com/PratikDhanave/bodh).
+This product includes software developed at The Bodhyanga Authors
+(https://github.com/PratikDhanave/bodhyanga).
 
 ------------------------------------------------------------------------
 Third-party attributions
@@ -14,7 +14,7 @@ ardanlabs/service
   Licensed under the Apache License, Version 2.0
     http://www.apache.org/licenses/LICENSE-2.0
 
-  The following Bodh packages are adapted from ardanlabs/service:
+  The following Bodhyanga packages are adapted from ardanlabs/service:
 
     pkg/sqldb/        adapts business/sdk/sqldb (sqldb.go, tran.go) to a
                       pgx/v5 pgxpool-backed wrapper that preserves the
@@ -31,28 +31,28 @@ ardanlabs/service
                       schema_migrations bookkeeping and a per-migration
                       audit_events row (HIPAA §164.312(b)).
     pkg/errs/         adapts app/sdk/errs (ErrCode, Error, FieldErrors)
-                      with Bodh-specific codes: HITLPending (202),
+                      with Bodhyanga-specific codes: HITLPending (202),
                       SafetyRefusal (422), PolicyDenied (403).
     pkg/web/          adapts foundation/web (App, HandlerFunc, Middleware)
-                      for the Bodh HTTP surface.
+                      for the Bodhyanga HTTP surface.
     pkg/mid/          adapts foundation/web/middleware (Errors, Logger,
                       Metrics, Panics, Otel) plus authen.go / authorize.go
                       for JWT + OPA auth middleware.
     pkg/auth/         adapts app/sdk/auth (Authenticator, KeyStore, Claims,
                       OPA Rego policies) for RS256 JWT + OPA authorization.
     zarf/k8s/         adapts zarf/k8s/base/sales/ + dev/sales/ + prod
-                      overlay pattern; Bodh deltas: PodSecurity restricted,
+                      overlay pattern; Bodhyanga deltas: PodSecurity restricted,
                       Workload Identity SA seam, default-deny NetworkPolicy,
                       PDB minAvailable=1, Cloud SQL Auth Proxy in prod.
     zarf/compose/     adapts zarf/compose/docker_compose.yaml +
-                      pg_hba.conf for the Bodh local-dev stack (care +
+                      pg_hba.conf for the Bodhyanga local-dev stack (care +
                       Ollama + Prometheus + Grafana + Tempo + Loki).
     zarf/docker/      adapts zarf/docker/dockerfile.sales for
-                      Dockerfile.care, Dockerfile.bodhctl,
-                      Dockerfile.bodhadmin (distroless final stage).
+                      Dockerfile.care, Dockerfile.bodhyangactl,
+                      Dockerfile.bodhyangaadmin (distroless final stage).
     zarf/keys/        adapts the zarf/keys/ layout + naming convention
                       (UUID-keyed PEM files for JWT key rotation).
-    cmd/bodhadmin/    adapts app/tooling/auth/ (keys + token subcommands)
+    cmd/bodhyangaadmin/    adapts app/tooling/auth/ (keys + token subcommands)
                       for RSA keypair generation + dev/test JWT minting.
 
   The Apache 2.0 license text is reproduced where the source files

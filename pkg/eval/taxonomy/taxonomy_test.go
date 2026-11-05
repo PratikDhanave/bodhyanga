@@ -158,7 +158,7 @@ func TestDefaultMedicalTaxonomy(t *testing.T) {
 		t.Error("governance domain has no HIPAA references")
 	}
 
-	// Verify all domains expected by Bodh are covered.
+	// Verify all domains expected by Bodhyanga are covered.
 	expectedDomains := []string{"diagnostic", "care", "governance", "interop", "agent", "eval"}
 	for _, d := range expectedDomains {
 		if len(tax.FindByDomain(d)) == 0 {

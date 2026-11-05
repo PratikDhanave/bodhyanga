@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // msgForTenantAgent builds a minimal protocol.Message with the given

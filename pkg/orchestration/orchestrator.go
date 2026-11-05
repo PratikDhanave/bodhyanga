@@ -6,14 +6,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/comm"
-	"github.com/PratikDhanave/bodh/pkg/eval"
-	"github.com/PratikDhanave/bodh/pkg/governance"
-	"github.com/PratikDhanave/bodh/pkg/medical"
-	"github.com/PratikDhanave/bodh/pkg/observability"
-	"github.com/PratikDhanave/bodh/pkg/registry"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/comm"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/registry"
 )
 
 // clinicalMessageTypes mirrors the gated types in
@@ -44,7 +44,7 @@ var clinicalMessageTypes = map[string]bool{
 // platform where governance runs — see docs/architecture.md
 // § "Orchestrator: the only place where governance runs" — and the only
 // place that touches policy, bus, agent.HandleMessage, and the audit/eval
-// sinks together. Every clinically interesting behaviour in Bodh is a
+// sinks together. Every clinically interesting behaviour in Bodhyanga is a
 // consequence of the closure built inside Start.
 //
 // Key relationships:
@@ -103,7 +103,7 @@ type Orchestrator struct {
 	// terminal "diagnosis" hop is mirrored to. Like recorder, fail-open
 	// and orthogonal to the agent pipeline. Mirroring lives here (not in
 	// the supervisor itself) so the supervisor can stay a zero-value
-	// struct and so a single Bodh deployment can swap eval backends
+	// struct and so a single Bodhyanga deployment can swap eval backends
 	// without touching the clinical agent code.
 	evalStore eval.Store
 
@@ -154,7 +154,7 @@ func NewOrchestrator(reg registry.Registry, bus comm.Bus, policy governance.Poli
 //
 // Pass nil to disable audit (the default). cmd/demo and cmd/caredemo run
 // without a recorder; cmd/care wires the in-memory or Postgres recorder
-// depending on BODH_DB_DSN — see docs/deployment.md.
+// depending on BODHYANGA_DB_DSN — see docs/deployment.md.
 //
 // All recorder calls are fail-open: errors are logged via env.Logf and never
 // block message processing. See docs/governance.md § Fail-open semantics
@@ -248,7 +248,7 @@ func (o *Orchestrator) Start(ctx context.Context) {
 				// the single point in the platform where every clinical message
 				// is authorised — see docs/architecture.md § "Orchestrator: the
 				// only place where governance runs". A denied message MUST NOT
-				// reach the agent (fail-closed per Bodh design rule 4 and
+				// reach the agent (fail-closed per Bodhyanga design rule 4 and
 				// aligned with HIPAA §164.312(b) audit-control posture). Policy
 				// errors are treated as denies: the alternative — silent
 				// admission on policy malfunction — is the worst safety outcome.
@@ -500,7 +500,7 @@ type SimpleEnvironment struct {
 // that fixed instant. Without a Clock, the method falls back to
 // time.Now().UTC() so callers never need to nil-check before invoking.
 //
-// UTC is the convention everywhere in Bodh — no audit/event/log query
+// UTC is the convention everywhere in Bodhyanga — no audit/event/log query
 // should ever need to do timezone math.
 func (e *SimpleEnvironment) Now() time.Time {
 	if e.Clock == nil {

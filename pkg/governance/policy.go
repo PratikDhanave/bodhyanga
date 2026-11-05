@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // Decision describes the outcome of a policy check.
@@ -31,7 +31,7 @@ const (
 
 	// DecisionDeny blocks the message. The orchestrator records the deny,
 	// logs via env.Logf, and short-circuits before the agent ever sees the
-	// payload — the fail-closed posture mandated by Bodh design rule 4
+	// payload — the fail-closed posture mandated by Bodhyanga design rule 4
 	// (governance runs before HandleMessage) and aligned with HIPAA
 	// §164.312(b) audit-control expectations.
 	DecisionDeny  Decision = "deny"
@@ -107,7 +107,7 @@ type Policy interface {
 // cmd/demo / cmd/caredemo) build one of these at startup, hand it to
 // NewOrchestrator, and never reassign it. Adding a new policy is a
 // single-line edit at that callsite — no orchestrator change required
-// (Bodh design rule 3, registry/bus/governance separation).
+// (Bodhyanga design rule 3, registry/bus/governance separation).
 type CompositePolicy struct {
 	// policies is the ordered list evaluated by Evaluate. Order matters
 	// because the first deny short-circuits the rest (see Evaluate).

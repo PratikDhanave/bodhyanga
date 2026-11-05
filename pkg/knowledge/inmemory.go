@@ -9,9 +9,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/PratikDhanave/bodh/pkg/embeddings"
-	"github.com/PratikDhanave/bodh/pkg/knowledge/rerank"
-	"github.com/PratikDhanave/bodh/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/embeddings"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge/rerank"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
 )
 
 // inMemoryStore is a thread-safe vector store keyed by document ID. It holds

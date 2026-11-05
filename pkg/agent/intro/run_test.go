@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/agent/intro"
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent/intro"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 // stubClient is a deterministic llm.Client for testing. It records the

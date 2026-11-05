@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
 )
 
 // helpers
@@ -83,9 +83,9 @@ func TestTrialScreener_OutputAddressedToSupervisor(t *testing.T) {
 	}
 }
 
-// ---- BODH-001: NSCLC ----
+// ---- BODHYANGA-001: NSCLC ----
 
-func TestTrialScreener_NSCLCPatientEligibleForBODH001(t *testing.T) {
+func TestTrialScreener_NSCLCPatientEligibleForBODHYANGA001(t *testing.T) {
 	a := &ClinicalTrialScreenerAgent{}
 	req := TrialScreenRequest{
 		PatientID: "pt-nsclc",
@@ -105,19 +105,19 @@ func TestTrialScreener_NSCLCPatientEligibleForBODH001(t *testing.T) {
 
 	found := false
 	for _, trial := range result.EligibleTrials {
-		if trial.TrialID == "BODH-001" {
+		if trial.TrialID == "BODHYANGA-001" {
 			found = true
 			if trial.MatchScore < 0.5 {
-				t.Errorf("BODH-001 match_score=%.2f, want >= 0.5", trial.MatchScore)
+				t.Errorf("BODHYANGA-001 match_score=%.2f, want >= 0.5", trial.MatchScore)
 			}
 			// All four criteria should pass for this patient.
 			if trial.MatchScore != 1.0 {
-				t.Errorf("BODH-001 match_score=%.2f, want 1.0 for qualifying NSCLC patient", trial.MatchScore)
+				t.Errorf("BODHYANGA-001 match_score=%.2f, want 1.0 for qualifying NSCLC patient", trial.MatchScore)
 			}
 		}
 	}
 	if !found {
-		t.Error("BODH-001 not in eligible_trials for NSCLC patient")
+		t.Error("BODHYANGA-001 not in eligible_trials for NSCLC patient")
 	}
 }
 
@@ -137,15 +137,15 @@ func TestTrialScreener_NSCLCWithCheckpointInhibitorExcluded(t *testing.T) {
 	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
-		if trial.TrialID == "BODH-001" && trial.MatchScore == 1.0 {
-			t.Error("BODH-001 should not have perfect score for patient with prior checkpoint inhibitor")
+		if trial.TrialID == "BODHYANGA-001" && trial.MatchScore == 1.0 {
+			t.Error("BODHYANGA-001 should not have perfect score for patient with prior checkpoint inhibitor")
 		}
 	}
 }
 
-// ---- BODH-002: HER2+ breast cancer ----
+// ---- BODHYANGA-002: HER2+ breast cancer ----
 
-func TestTrialScreener_HER2BreastCancerEligibleForBODH002(t *testing.T) {
+func TestTrialScreener_HER2BreastCancerEligibleForBODHYANGA002(t *testing.T) {
 	a := &ClinicalTrialScreenerAgent{}
 	req := TrialScreenRequest{
 		PatientID: "pt-breast-her2",
@@ -160,18 +160,18 @@ func TestTrialScreener_HER2BreastCancerEligibleForBODH002(t *testing.T) {
 	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
-		if trial.TrialID == "BODH-002" {
+		if trial.TrialID == "BODHYANGA-002" {
 			if trial.MatchScore != 1.0 {
-				t.Errorf("BODH-002 match_score=%.2f, want 1.0", trial.MatchScore)
+				t.Errorf("BODHYANGA-002 match_score=%.2f, want 1.0", trial.MatchScore)
 			}
 			return
 		}
 	}
-	t.Error("BODH-002 not found in eligible trials for HER2+ breast cancer patient")
+	t.Error("BODHYANGA-002 not found in eligible trials for HER2+ breast cancer patient")
 }
 
 func TestTrialScreener_HER2BreastCancerPoorECOGExcluded(t *testing.T) {
-	// ECOG 2 fails BODH-002 (requires 0-1) — score drops to 0.75, still >= 0.5
+	// ECOG 2 fails BODHYANGA-002 (requires 0-1) — score drops to 0.75, still >= 0.5
 	// but criteria_failed should contain the ECOG criterion.
 	a := &ClinicalTrialScreenerAgent{}
 	req := TrialScreenRequest{
@@ -187,22 +187,22 @@ func TestTrialScreener_HER2BreastCancerPoorECOGExcluded(t *testing.T) {
 	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
-		if trial.TrialID == "BODH-002" {
+		if trial.TrialID == "BODHYANGA-002" {
 			if trial.MatchScore == 1.0 {
-				t.Error("BODH-002 should not score 1.0 for ECOG 2 patient (requires 0-1)")
+				t.Error("BODHYANGA-002 should not score 1.0 for ECOG 2 patient (requires 0-1)")
 			}
 			if len(trial.CriteriaFailed) == 0 {
-				t.Error("BODH-002 criteria_failed should be non-empty for ECOG 2 patient")
+				t.Error("BODHYANGA-002 criteria_failed should be non-empty for ECOG 2 patient")
 			}
 			return
 		}
 	}
-	// BODH-002 may or may not appear depending on computed score; no failure if absent.
+	// BODHYANGA-002 may or may not appear depending on computed score; no failure if absent.
 }
 
-// ---- BODH-003: DM2 cardiovascular ----
+// ---- BODHYANGA-003: DM2 cardiovascular ----
 
-func TestTrialScreener_DiabetesPatientEligibleForBODH003(t *testing.T) {
+func TestTrialScreener_DiabetesPatientEligibleForBODHYANGA003(t *testing.T) {
 	a := &ClinicalTrialScreenerAgent{}
 	req := TrialScreenRequest{
 		PatientID: "pt-dm2",
@@ -217,17 +217,17 @@ func TestTrialScreener_DiabetesPatientEligibleForBODH003(t *testing.T) {
 	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
-		if trial.TrialID == "BODH-003" {
+		if trial.TrialID == "BODHYANGA-003" {
 			if trial.MatchScore != 1.0 {
-				t.Errorf("BODH-003 match_score=%.2f, want 1.0", trial.MatchScore)
+				t.Errorf("BODHYANGA-003 match_score=%.2f, want 1.0", trial.MatchScore)
 			}
 			return
 		}
 	}
-	t.Error("BODH-003 not found in eligible trials for DM2 patient aged 55 with no MACE")
+	t.Error("BODHYANGA-003 not found in eligible trials for DM2 patient aged 55 with no MACE")
 }
 
-func TestTrialScreener_DiabetesPatientWithMIExcludedFromBODH003(t *testing.T) {
+func TestTrialScreener_DiabetesPatientWithMIExcludedFromBODHYANGA003(t *testing.T) {
 	a := &ClinicalTrialScreenerAgent{}
 	req := TrialScreenRequest{
 		PatientID:  "pt-dm2-mace",
@@ -243,15 +243,15 @@ func TestTrialScreener_DiabetesPatientWithMIExcludedFromBODH003(t *testing.T) {
 	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
-		if trial.TrialID == "BODH-003" && trial.MatchScore == 1.0 {
-			t.Error("BODH-003 should not score 1.0 for patient with prior MI in exclusions")
+		if trial.TrialID == "BODHYANGA-003" && trial.MatchScore == 1.0 {
+			t.Error("BODHYANGA-003 should not score 1.0 for patient with prior MI in exclusions")
 		}
 	}
 }
 
-// ---- BODH-004: solid tumor ----
+// ---- BODHYANGA-004: solid tumor ----
 
-func TestTrialScreener_SolidTumorEligibleForBODH004(t *testing.T) {
+func TestTrialScreener_SolidTumorEligibleForBODHYANGA004(t *testing.T) {
 	a := &ClinicalTrialScreenerAgent{}
 	req := TrialScreenRequest{
 		PatientID:       "pt-solid",
@@ -267,19 +267,19 @@ func TestTrialScreener_SolidTumorEligibleForBODH004(t *testing.T) {
 	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
-		if trial.TrialID == "BODH-004" {
+		if trial.TrialID == "BODHYANGA-004" {
 			if trial.MatchScore != 1.0 {
-				t.Errorf("BODH-004 match_score=%.2f, want 1.0", trial.MatchScore)
+				t.Errorf("BODHYANGA-004 match_score=%.2f, want 1.0", trial.MatchScore)
 			}
 			return
 		}
 	}
-	t.Error("BODH-004 not found for solid tumor patient")
+	t.Error("BODHYANGA-004 not found for solid tumor patient")
 }
 
-// ---- BODH-005: registry (broadest) ----
+// ---- BODHYANGA-005: registry (broadest) ----
 
-func TestTrialScreener_AnyAdultEligibleForBODH005(t *testing.T) {
+func TestTrialScreener_AnyAdultEligibleForBODHYANGA005(t *testing.T) {
 	a := &ClinicalTrialScreenerAgent{}
 	req := TrialScreenRequest{
 		PatientID: "pt-any",
@@ -294,17 +294,17 @@ func TestTrialScreener_AnyAdultEligibleForBODH005(t *testing.T) {
 	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
-		if trial.TrialID == "BODH-005" {
+		if trial.TrialID == "BODHYANGA-005" {
 			if trial.MatchScore != 1.0 {
-				t.Errorf("BODH-005 match_score=%.2f, want 1.0", trial.MatchScore)
+				t.Errorf("BODHYANGA-005 match_score=%.2f, want 1.0", trial.MatchScore)
 			}
 			return
 		}
 	}
-	t.Error("BODH-005 registry not in eligible trials for adult patient with a diagnosis")
+	t.Error("BODHYANGA-005 registry not in eligible trials for adult patient with a diagnosis")
 }
 
-func TestTrialScreener_MinorExcludedFromBODH005(t *testing.T) {
+func TestTrialScreener_MinorExcludedFromBODHYANGA005(t *testing.T) {
 	a := &ClinicalTrialScreenerAgent{}
 	req := TrialScreenRequest{
 		PatientID: "pt-minor",
@@ -319,8 +319,8 @@ func TestTrialScreener_MinorExcludedFromBODH005(t *testing.T) {
 	result := decodeTrialResult(t, msgs)
 
 	for _, trial := range result.EligibleTrials {
-		if trial.TrialID == "BODH-005" && trial.MatchScore == 1.0 {
-			t.Error("BODH-005 should not score 1.0 for a minor (age 16)")
+		if trial.TrialID == "BODHYANGA-005" && trial.MatchScore == 1.0 {
+			t.Error("BODHYANGA-005 should not score 1.0 for a minor (age 16)")
 		}
 	}
 }
@@ -328,8 +328,8 @@ func TestTrialScreener_MinorExcludedFromBODH005(t *testing.T) {
 // ---- match score threshold ----
 
 func TestTrialScreener_LowScoreTrialsExcluded(t *testing.T) {
-	// A patient with no matching diagnosis should score 0.0 on BODH-001/002/003/004;
-	// only BODH-005 (broadest) may appear.
+	// A patient with no matching diagnosis should score 0.0 on BODHYANGA-001/002/003/004;
+	// only BODHYANGA-005 (broadest) may appear.
 	a := &ClinicalTrialScreenerAgent{}
 	req := TrialScreenRequest{
 		PatientID: "pt-unrelated",

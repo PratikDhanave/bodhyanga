@@ -263,7 +263,7 @@
       "title": "Observability",
       "items": [
         "OTLP export to a collector (otel build tag)",
-        "Prometheus scrapes bodh_http_* / bodh_llm_*",
+        "Prometheus scrapes bodhyanga_http_* / bodhyanga_llm_*",
         "sha256 case_id on spans — never a raw MRN"
       ]
     }

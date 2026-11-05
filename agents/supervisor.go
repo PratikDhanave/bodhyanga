@@ -35,9 +35,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/eval"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // DiagnosticSupervisor emulates MAI-DxO: coordinates the virtual physician
@@ -129,7 +129,7 @@ func (a *DiagnosticSupervisor) HandleMessage(ctx context.Context, msg agent.Mess
 //
 // This is illustrative — production cost optimisation would pick the
 // test with the lowest expected information gain per dollar, not just
-// the highest cost. See bodh-linkedin/01-bench-42-to-85.md for the
+// the highest cost. See bodhyanga-linkedin/01-bench-42-to-85.md for the
 // per-condition workup map that informs which tests carry the most
 // diagnostic signal per condition.
 func (a *DiagnosticSupervisor) reviseTests(_ context.Context, msg agent.Message, env agent.Environment) ([]agent.Message, error) {

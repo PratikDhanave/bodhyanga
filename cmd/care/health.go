@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import (
 	"net/http"
 	"time"
 
-	pgstore "github.com/PratikDhanave/bodh/pkg/persistence/postgres"
+	pgstore "github.com/PratikDhanave/bodhyanga/pkg/persistence/postgres"
 )
 
 // pinger is the subset of pgstore.Store used by readyzHandler. Using a

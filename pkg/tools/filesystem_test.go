@@ -14,7 +14,7 @@ import (
 // tmpDir creates a temp directory and registers t.Cleanup to remove it.
 func tmpDir(t *testing.T) string {
 	t.Helper()
-	dir, err := os.MkdirTemp("", "bodh-fs-test-*")
+	dir, err := os.MkdirTemp("", "bodhyanga-fs-test-*")
 	if err != nil {
 		t.Fatalf("tmpDir: %v", err)
 	}

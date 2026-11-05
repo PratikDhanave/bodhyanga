@@ -18,7 +18,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
 )
 
 // OncologyConsult is the input payload for an oncology consult message.

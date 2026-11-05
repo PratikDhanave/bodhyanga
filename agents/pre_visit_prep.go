@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // PreVisitPrepAgent assembles a chart summary before a clinician sees the patient.

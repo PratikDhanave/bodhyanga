@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/pipeline"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/pipeline"
 )
 
 // API wraps a pipeline.Runner as an HTTP service. The Runner and its audit

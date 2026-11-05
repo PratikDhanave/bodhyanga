@@ -1,4 +1,4 @@
-// Package federated implements federated evaluation for Bodh. It runs
+// Package federated implements federated evaluation for Bodhyanga. It runs
 // accuracy benchmarks across deployment sites without sharing patient data —
 // only aggregated metrics are exchanged between participants and the
 // coordinating server.

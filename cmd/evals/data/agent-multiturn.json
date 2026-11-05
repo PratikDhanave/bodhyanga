@@ -92,7 +92,7 @@
       "mockTools": {
         "readFile": {
           "description": "Read file contents. Args: path (string).",
-          "result": "{\"db_host\": \"db.internal\", \"db_port\": 5432, \"db_name\": \"bodh\"}"
+          "result": "{\"db_host\": \"db.internal\", \"db_port\": 5432, \"db_name\": \"bodhyanga\"}"
         },
         "writeFile": {
           "description": "Write content to a file. Args: path (string), content (string).",
@@ -104,7 +104,7 @@
       "expectedToolOrder": ["readFile", "writeFile"],
       "originalTask": "Read database config and write a summary to summary.txt",
       "mockToolResults": {
-        "readFile": "{\"db_host\": \"db.internal\", \"db_port\": 5432, \"db_name\": \"bodh\"}",
+        "readFile": "{\"db_host\": \"db.internal\", \"db_port\": 5432, \"db_name\": \"bodhyanga\"}",
         "writeFile": "Written 67 bytes to summary.txt"
       }
     }

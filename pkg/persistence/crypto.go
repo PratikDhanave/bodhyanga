@@ -1,4 +1,4 @@
-// Package persistence provides storage backends for Bodh's eval, patient, and
+// Package persistence provides storage backends for Bodhyanga's eval, patient, and
 // audit contracts. This file implements package-level encryption for PHI
 // columns using AES-256-GCM authenticated encryption.
 //
@@ -11,7 +11,7 @@
 // with a KMS-backed loader (AWS KMS GenerateDataKey, GCP KMS, HashiCorp
 // Vault Transit) without changing the Encrypt/Decrypt surface.
 //
-// Master key source: BODH_ENCRYPTION_KEY env var (base64-encoded 32-byte key).
+// Master key source: BODHYANGA_ENCRYPTION_KEY env var (base64-encoded 32-byte key).
 // For production: swap master key loading to use AWS KMS, GCP KMS, or Vault.
 package persistence
 
@@ -51,13 +51,13 @@ func NewEncryptor(masterKey []byte) (*Encryptor, error) {
 	return &Encryptor{key: k}, nil
 }
 
-// NewEncryptorFromEnv reads BODH_ENCRYPTION_KEY (a base64-encoded 32-byte
+// NewEncryptorFromEnv reads BODHYANGA_ENCRYPTION_KEY (a base64-encoded 32-byte
 // key) and returns a ready Encryptor. If the variable is absent, it returns
 // (nil, nil) — the nil Encryptor is a safe no-op passthrough suitable for
 // local development. Any other error (malformed base64, wrong key length) is
 // returned as a fatal startup error.
 func NewEncryptorFromEnv() (*Encryptor, error) {
-	raw := os.Getenv("BODH_ENCRYPTION_KEY")
+	raw := os.Getenv("BODHYANGA_ENCRYPTION_KEY")
 	if raw == "" {
 		// No-op dev mode: PHI is stored as plaintext bytes. Operators MUST
 		// set this variable in all non-development deployments.
@@ -65,7 +65,7 @@ func NewEncryptorFromEnv() (*Encryptor, error) {
 	}
 	key, err := base64.StdEncoding.DecodeString(raw)
 	if err != nil {
-		return nil, fmt.Errorf("persistence/crypto: decode BODH_ENCRYPTION_KEY: %w", err)
+		return nil, fmt.Errorf("persistence/crypto: decode BODHYANGA_ENCRYPTION_KEY: %w", err)
 	}
 	return NewEncryptor(key)
 }

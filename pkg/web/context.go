@@ -1,8 +1,8 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/foundation/web/context.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 //
-// Bodh modifications vs upstream:
-//   - The OTel tracer key is gone. Bodh's tracer lives in
+// Bodhyanga modifications vs upstream:
+//   - The OTel tracer key is gone. Bodhyanga's tracer lives in
 //     pkg/observability/otel behind a build tag; the request-scoped
 //     identifier propagated through context here is the RequestID
 //     (string), set by pkg/mid.Otel.

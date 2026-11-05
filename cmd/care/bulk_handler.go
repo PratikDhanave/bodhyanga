@@ -13,7 +13,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/fhir"
+	"github.com/PratikDhanave/bodhyanga/pkg/fhir"
 )
 
 // mountBulkExport registers the FHIR Bulk Data routes on mux and returns the

@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 // Portions Copyright Ardan Labs, Bill Kennedy
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -8,13 +8,13 @@
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Adapted from github.com/ardanlabs/service business/sdk/sqldb/sqldb.go.
-// The original wraps github.com/jmoiron/sqlx; Bodh prefers pgx/v5 directly
+// The original wraps github.com/jmoiron/sqlx; Bodhyanga prefers pgx/v5 directly
 // because the rest of the persistence layer already depends on
 // pgxpool.Pool and because pgx exposes the pgconn.PgError code path we
 // use to recognise unique-violation / undefined-table failure modes
 // without going through sqlx's reflection layer.
 
-// Package sqldb provides the Bodh-wide Postgres primitives: connection
+// Package sqldb provides the Bodhyanga-wide Postgres primitives: connection
 // pool open + ping, status check, the transactor interface that lets a
 // caller compose multiple writes (row mutation + audit row append) under
 // one COMMIT/ROLLBACK barrier, and the typed error sentinels every
@@ -22,7 +22,7 @@
 //
 // Why this package exists
 //
-// pkg/persistence/postgres holds Bodh's first store (eval / patient /
+// pkg/persistence/postgres holds Bodhyanga's first store (eval / patient /
 // audit) and inlines its own pool open + tenant-scoped transaction
 // helper. As we add more domain stores (cases, reviews, ...), every one
 // of them needs the same primitives: open a pool, run a status check on
@@ -43,7 +43,7 @@
 //     package only opens the connection the migrator runs on.
 //   - It does NOT log queries or attach OTel spans. The upstream
 //     ardanlabs/service file does both via foundation/logger + a custom
-//     otel.AddSpan; Bodh runs through pkg/observability instead and
+//     otel.AddSpan; Bodhyanga runs through pkg/observability instead and
 //     attaches spans at the domain-store boundary, not here, to keep
 //     this package small and dep-free.
 package sqldb
@@ -83,7 +83,7 @@ var (
 
 	// ErrUndefinedTable is returned when a query references a table
 	// that does not exist. This is almost always a pre-migration boot
-	// race — Bodh runs migrations on startup, so callers see this
+	// race — Bodhyanga runs migrations on startup, so callers see this
 	// only inside tests that intentionally exercise a fresh DB.
 	ErrUndefinedTable = errors.New("sqldb: undefined table")
 )
@@ -103,7 +103,7 @@ type Config struct {
 
 	// DSN is the raw pgx connection URL. When set it short-circuits
 	// the User/Password/Host/Name/Schema fields. cmd/care prefers
-	// DSN-from-env (BODH_DB_DSN) because operators paste full URLs.
+	// DSN-from-env (BODHYANGA_DB_DSN) because operators paste full URLs.
 	DSN string
 
 	// MaxConns caps the pool size. Defaults to 8 (matches the
@@ -121,8 +121,8 @@ type Config struct {
 // caller can decide whether to fail boot or retry.
 //
 // Open is the only function in this package that constructs a pool;
-// the rest of Bodh receives the *pgxpool.Pool and uses it directly.
-// We do NOT wrap the pool in a Bodh type because pgxpool.Pool already
+// the rest of Bodhyanga receives the *pgxpool.Pool and uses it directly.
+// We do NOT wrap the pool in a Bodhyanga type because pgxpool.Pool already
 // exposes the right surface (Begin, Acquire, Query, Exec) and wrapping
 // it would force every domain store to either reach through the
 // wrapper or break the pgx.Tx contract.

@@ -9,7 +9,7 @@ import (
 // carry. MCP fixes this at "2.0".
 const JSONRPCVersion = "2.0"
 
-// ProtocolVersion is the MCP protocol revision Bodh's client targets.
+// ProtocolVersion is the MCP protocol revision Bodhyanga's client targets.
 // MCP is versioned by date stamps; the value Initialize sends is configurable
 // via Option but defaults to this constant.
 const ProtocolVersion = "2024-11-05"

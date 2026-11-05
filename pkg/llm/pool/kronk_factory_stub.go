@@ -17,7 +17,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 // NewKronkFactory returns a Factory that always errors with ErrKronkNotBuilt

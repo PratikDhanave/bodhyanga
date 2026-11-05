@@ -83,7 +83,7 @@ func TestRecordLLMCall_NormalisesKind(t *testing.T) {
 func TestSetLLMOTelHook_FiresOnlyWhenEnvSet(t *testing.T) {
 	t.Cleanup(func() {
 		SetLLMOTelHook(nil)
-		_ = os.Unsetenv("BODH_OTEL_ENABLED")
+		_ = os.Unsetenv("BODHYANGA_OTEL_ENABLED")
 	})
 
 	var calls []LLMTrace
@@ -93,14 +93,14 @@ func TestSetLLMOTelHook_FiresOnlyWhenEnvSet(t *testing.T) {
 	l := NewLoggerTo(buf)
 
 	// First call: env NOT set -> hook should NOT fire.
-	_ = os.Unsetenv("BODH_OTEL_ENABLED")
+	_ = os.Unsetenv("BODHYANGA_OTEL_ENABLED")
 	l.RecordLLMCall(LLMTrace{Provider: "p", Model: "m", AgentID: "no-otel"})
 	if len(calls) != 0 {
 		t.Fatalf("hook fired without env set: %d calls", len(calls))
 	}
 
 	// Second call: env set -> hook should fire exactly once.
-	if err := os.Setenv("BODH_OTEL_ENABLED", "1"); err != nil {
+	if err := os.Setenv("BODHYANGA_OTEL_ENABLED", "1"); err != nil {
 		t.Fatalf("setenv failed: %v", err)
 	}
 	l.RecordLLMCall(LLMTrace{Provider: "p", Model: "m", AgentID: "with-otel"})

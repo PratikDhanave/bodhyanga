@@ -19,7 +19,7 @@ export default function PanelReport() {
           <div className="card overflow-hidden">
             <div className="card-header">Care gaps</div>
             <table className="min-w-full text-sm">
-              <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+              <thead className="bg-bodhyanga-50 text-bodhyanga-400 text-xs uppercase tracking-wide">
                 <tr>
                   <th className="px-4 py-2 text-left">Patient</th>
                   <th className="px-4 py-2 text-left">Measure</th>
@@ -29,11 +29,11 @@ export default function PanelReport() {
               </thead>
               <tbody>
                 {data.gaps.map((g, i) => (
-                  <tr key={`${g.patient_id}-${g.measure}-${i}`} className="border-t border-bodh-100">
+                  <tr key={`${g.patient_id}-${g.measure}-${i}`} className="border-t border-bodhyanga-100">
                     <td className="px-4 py-2 font-mono text-xs">{g.patient_id}</td>
                     <td className="px-4 py-2">{g.measure}</td>
                     <td className="px-4 py-2"><span className={`badge badge-${g.severity === 'high' || g.severity === 'urgent' ? 'urgent' : 'normal'}`}>{g.severity}</span></td>
-                    <td className="px-4 py-2 text-xs text-bodh-400">{g.reason}</td>
+                    <td className="px-4 py-2 text-xs text-bodhyanga-400">{g.reason}</td>
                   </tr>
                 ))}
               </tbody>
@@ -44,9 +44,9 @@ export default function PanelReport() {
           <div className="card-header">By condition</div>
           <div className="card-body space-y-2 text-sm">
             {Object.entries(data.by_condition).map(([k, v]) => (
-              <div key={k} className="flex justify-between border-b border-bodh-100 pb-1 last:border-0">
+              <div key={k} className="flex justify-between border-b border-bodhyanga-100 pb-1 last:border-0">
                 <span className="font-medium">{k}</span>
-                <span className="font-mono text-bodh-600">{v}</span>
+                <span className="font-mono text-bodhyanga-600">{v}</span>
               </div>
             ))}
           </div>

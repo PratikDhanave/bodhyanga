@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 // DefaultModel is the default Ollama model for this lesson.

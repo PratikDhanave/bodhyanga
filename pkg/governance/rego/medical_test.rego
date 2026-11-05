@@ -2,9 +2,9 @@
 # Run with:   make opa-test
 #             opa test --v1-compatible pkg/governance/rego
 
-package bodh.governance.medical_test
+package bodhyanga.governance.medical_test
 
-import data.bodh.governance.medical
+import data.bodhyanga.governance.medical
 import rego.v1
 
 # =============================================================================

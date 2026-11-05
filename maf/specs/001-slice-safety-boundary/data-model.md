@@ -19,7 +19,7 @@ Synthesized per hop for governance + audit; never carries payload.
 **Validation**: admit rejects (denies) a hop whose payload type has no label — an
 unlabeled message type is a design error, and fail-closed is the safe default.
 
-## Audit record usage (bodh audit.Event — schema unchanged)
+## Audit record usage (bodhyanga audit.Event — schema unchanged)
 
 | Moment | Kind | Decision | Notes |
 |---|---|---|---|
@@ -41,7 +41,7 @@ content; deny records precede run-halt observably (write returns before ErrDenie
 | Entity | Fields | Rules |
 |---|---|---|
 | ReviewRequest | `ID` (uuid), `CaseToken`, `Diagnosis`, `Confidence`, `Forced`, `Rounds` | at most one active per case; carried as the RequestPort request type |
-| ReviewDecision | `RequestID`, `Approved` (bool), `ReviewerID`, `Note` | `RequestID` must match the pending request, else stale → rejected+audited; `ReviewerID` required (21 USC §360j(o) anchor per bodh audit doc) |
+| ReviewDecision | `RequestID`, `Approved` (bool), `ReviewerID`, `Note` | `RequestID` must match the pending request, else stale → rejected+audited; `ReviewerID` required (21 USC §360j(o) anchor per bodhyanga audit doc) |
 
 **State transitions**: `diagnosed → awaiting_review → approved|rejected`;
 `awaiting_review` survives process death (checkpoint); a resumed run re-emits the SAME
@@ -58,7 +58,7 @@ CREATE TABLE checkpoints (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX checkpoints_session_idx ON checkpoints (session_id, created_at);
--- append-only: application role gets INSERT+SELECT only (bodh discipline)
+-- append-only: application role gets INSERT+SELECT only (bodhyanga discipline)
 ```
 
 Maps 1:1 onto MAF `checkpoint.Store[json.RawMessage]`:
@@ -66,7 +66,7 @@ Maps 1:1 onto MAF `checkpoint.Store[json.RawMessage]`:
 `RetrieveIndex` → SELECT ordered by created_at, optionally filtered by parent.
 `data` is never logged or exposed; lineage (`parent_id`) supports time-travel/restore.
 
-## Evaluation record (bodh eval.InteractionRecord — schema unchanged)
+## Evaluation record (bodhyanga eval.InteractionRecord — schema unchanged)
 
 | Field | Value |
 |---|---|

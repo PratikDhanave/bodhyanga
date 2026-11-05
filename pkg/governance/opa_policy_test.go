@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/governance"
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // makeMsg is a test helper that builds a protocol.Message with sensible
@@ -33,17 +33,17 @@ func makeMsg() protocol.Message {
 // ============================================================================
 
 func TestNewOPAPolicy_BadModule(t *testing.T) {
-	_, err := governance.NewOPAPolicy("this is not rego", "data.bodh.x.result")
+	_, err := governance.NewOPAPolicy("this is not rego", "data.bodhyanga.x.result")
 	if err == nil {
 		t.Fatal("expected compile error for invalid Rego source")
 	}
 }
 
 func TestNewOPAPolicy_ValidModule(t *testing.T) {
-	module := `package bodh.test
+	module := `package bodhyanga.test
 import rego.v1
 default result := {"allowed": true, "reason": "ok"}`
-	p, err := governance.NewOPAPolicy(module, "data.bodh.test.result")
+	p, err := governance.NewOPAPolicy(module, "data.bodhyanga.test.result")
 	if err != nil {
 		t.Fatalf("unexpected compile error: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestMustOPAPolicy_Panics(t *testing.T) {
 			t.Fatal("expected panic for bad Rego module")
 		}
 	}()
-	governance.MustOPAPolicy("not rego at all", "data.bodh.nope")
+	governance.MustOPAPolicy("not rego at all", "data.bodhyanga.nope")
 }
 
 // ============================================================================

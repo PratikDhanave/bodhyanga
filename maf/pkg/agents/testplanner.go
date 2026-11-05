@@ -8,7 +8,7 @@ import (
 )
 
 // testCatalog maps a symptom to the tests that work it up. Illustrative only
-// (see NOTICE in bodh): real catalogs are a clinical-governance artifact.
+// (see NOTICE in bodhyanga): real catalogs are a clinical-governance artifact.
 var testCatalog = map[string][]string{
 	"chest pain":          {"troponin", "ecg"},
 	"fever":               {"cbc", "blood culture"},

@@ -1,4 +1,4 @@
-# Bodh — Release 1.0 Readiness & Plan
+# Bodhyanga — Release 1.0 Readiness & Plan
 
 > Evidence-based evaluation of everything currently in the repo and a concrete
 > plan to a **credible 1.0**. Generated from live gate runs on `fix/care-ui-auth`

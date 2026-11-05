@@ -12,9 +12,9 @@ import (
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/eval"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // requirePostgres spins up a throwaway Postgres via testcontainers. If Docker
@@ -30,9 +30,9 @@ func requirePostgres(t *testing.T) *Store {
 	t.Cleanup(cancel)
 
 	container, err := tcpostgres.Run(ctx, "postgres:16-alpine",
-		tcpostgres.WithDatabase("bodh"),
-		tcpostgres.WithUsername("bodh"),
-		tcpostgres.WithPassword("bodh"),
+		tcpostgres.WithDatabase("bodhyanga"),
+		tcpostgres.WithUsername("bodhyanga"),
+		tcpostgres.WithPassword("bodhyanga"),
 		tcpostgres.BasicWaitStrategies(),
 		tcpostgres.WithSQLDriver("pgx"),
 	)
@@ -57,16 +57,16 @@ func requirePostgres(t *testing.T) *Store {
 	}
 
 	// First open: as the owner role, to run migrations (which include
-	// CREATE ROLE bodh_app and the RLS policy DDL).
+	// CREATE ROLE bodhyanga_app and the RLS policy DDL).
 	migrator, err := New(ctx, ownerDSN)
 	if err != nil {
 		t.Fatalf("migrator New: %v", err)
 	}
 	migrator.Close()
 
-	// Real open: as bodh_app so RLS policies actually apply (the owner role
+	// Real open: as bodhyanga_app so RLS policies actually apply (the owner role
 	// in the testcontainers image has BYPASSRLS).
-	appDSN := rewriteUser(t, ownerDSN, "bodh_app", "bodh_app")
+	appDSN := rewriteUser(t, ownerDSN, "bodhyanga_app", "bodhyanga_app")
 	store, err := New(ctx, appDSN)
 	if err != nil {
 		t.Fatalf("app New: %v", err)

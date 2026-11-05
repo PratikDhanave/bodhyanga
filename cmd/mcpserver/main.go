@@ -1,5 +1,5 @@
 // Command mcpserver starts a Model Context Protocol (MCP) server that exposes
-// Bodh's clinical tool registry over HTTP+SSE (JSON-RPC 2.0).
+// Bodhyanga's clinical tool registry over HTTP+SSE (JSON-RPC 2.0).
 //
 // The server currently registers three tools:
 //
@@ -35,8 +35,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/PratikDhanave/bodh/pkg/mcp/server"
-	"github.com/PratikDhanave/bodh/pkg/tools"
+	"github.com/PratikDhanave/bodhyanga/pkg/mcp/server"
+	"github.com/PratikDhanave/bodhyanga/pkg/tools"
 )
 
 func main() {
@@ -53,7 +53,7 @@ func main() {
 
 	cfg := server.Config{
 		Addr:    *addr,
-		Name:    "bodh-mcp-server",
+		Name:    "bodhyanga-mcp-server",
 		Version: "0.1.0",
 	}
 	srv := server.New(reg, cfg)
@@ -73,7 +73,7 @@ func printStartupBanner(addr string, verbose bool) {
 		host = "localhost" + addr
 	}
 
-	fmt.Fprintf(os.Stdout, "Bodh MCP Server\n")
+	fmt.Fprintf(os.Stdout, "Bodhyanga MCP Server\n")
 	fmt.Fprintf(os.Stdout, "───────────────────────────────────────────────────────\n")
 	fmt.Fprintf(os.Stdout, "Listening on %s\n\n", addr)
 	fmt.Fprintf(os.Stdout, "MCP endpoints:\n")

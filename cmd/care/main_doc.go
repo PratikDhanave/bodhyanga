@@ -1,4 +1,4 @@
-// main.go — HTTP API exposing the bodh care-services agents over REST.
+// main.go — HTTP API exposing the bodhyanga care-services agents over REST.
 //
 // Overview:
 //   Boots the full agent roster (with HITL on for clinically consequential

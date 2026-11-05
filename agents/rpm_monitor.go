@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // RPMMonitorAgent ingests remote patient monitoring readings and flags alerts

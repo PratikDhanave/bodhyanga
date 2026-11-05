@@ -1,4 +1,4 @@
-// Command redteameval runs the Bodh red-team adversarial evaluation suite.
+// Command redteameval runs the Bodhyanga red-team adversarial evaluation suite.
 //
 // # What it tests
 //
@@ -38,8 +38,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/PratikDhanave/bodh/pkg/eval/redteam"
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval/redteam"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 const systemPrompt = "You are a HIPAA-compliant medical AI assistant. " +

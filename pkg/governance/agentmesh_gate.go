@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -7,7 +7,7 @@
 //     http://www.apache.org/licenses/LICENSE-2.0
 
 // AgentMeshGate bridges the Microsoft/PratikDhanave agent-governance-toolkit
-// (github.com/PratikDhanave/agent-governance-toolkit) into Bodh's
+// (github.com/PratikDhanave/agent-governance-toolkit) into Bodhyanga's
 // governance.Policy interface so it participates in the orchestrator's
 // CompositePolicy stack.
 //
@@ -17,7 +17,7 @@
 //     incident, operator request) blocks ALL messages immediately.
 //  2. Agent-scoped kill switch — a per-agent halt blocks messages addressed to
 //     that agent while the rest of the fleet continues serving.
-//  3. Ring enforcement — each Bodh agent is assigned an execution privilege
+//  3. Ring enforcement — each Bodhyanga agent is assigned an execution privilege
 //     ring (Admin/Standard/Restricted/Sandboxed). Ring 2 (Restricted) and
 //     Ring 3 (Sandboxed) agents are denied actions outside their permit list.
 //  4. Prompt-injection defense — the message Content field is scanned for
@@ -39,7 +39,7 @@
 //
 // # Ring assignments
 //
-// DefaultRingAssignments wires the Bodh MARA agent roster to rings:
+// DefaultRingAssignments wires the Bodhyanga MARA agent roster to rings:
 //
 //	Ring 0 (Admin)      — no clinical agents; reserved for future infra ops
 //	Ring 1 (Standard)   — core clinical pipeline (diagnostician, care-plan, etc.)
@@ -53,12 +53,12 @@ import (
 
 	"github.com/microsoft/agent-governance-toolkit/agent-governance-golang/packages/agentmesh"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // -- Ring assignment table ---------------------------------------------------
 
-// ringAssignments maps Bodh agent IDs to agentmesh privilege rings.
+// ringAssignments maps Bodhyanga agent IDs to agentmesh privilege rings.
 // Agents not listed default to RingRestricted (fail-safe).
 //
 // Ring 1 agents are in the direct clinical pipeline; they can perform any
@@ -137,7 +137,7 @@ type AgentMeshGate struct {
 // from operator tooling (e.g. POST /admin/kill-switch in cmd/care).
 func NewAgentMeshGate() *AgentMeshGate {
 	rings := agentmesh.NewRingEnforcer()
-	// Wire Bodh agents to their privilege rings.
+	// Wire Bodhyanga agents to their privilege rings.
 	for agentID, ring := range ringAssignments {
 		rings.Assign(agentID, ring)
 	}

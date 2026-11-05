@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-const TOKEN_KEY = 'bodh_jwt';
+const TOKEN_KEY = 'bodhyanga_jwt';
 
 export interface JWTUser {
   email: string;

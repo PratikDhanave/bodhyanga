@@ -69,9 +69,9 @@ jobs:
   maf:
     name: maf · build · vet · test
     runs-on: ubuntu-latest
-    # Nested module (github.com/PratikDhanave/bodh-maf) — the parent module's
+    # Nested module (github.com/PratikDhanave/bodhyanga-maf) — the parent module's
     # `go build ./...` does not descend into maf/, so it is built and tested here
-    # as its own unit. It uses `replace github.com/PratikDhanave/bodh => ..`, so
+    # as its own unit. It uses `replace github.com/PratikDhanave/bodhyanga => ..`, so
     # the checkout of this repo supplies the parent source. Requires Go 1.26.
     defaults:
       run:
@@ -141,4 +141,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: docker build
-        run: docker build -t bodh/care:ci -f Dockerfile .
+        run: docker build -t bodhyanga/care:ci -f Dockerfile .

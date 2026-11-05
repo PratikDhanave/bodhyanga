@@ -1,5 +1,5 @@
 // kronk_audio_stub.go — no-op shim used when the `kronk` build tag is NOT
-// set. Bodh's default build does not link the kronk SDK; this stub keeps
+// set. Bodhyanga's default build does not link the kronk SDK; this stub keeps
 // the Transcriber type and constructor compiling so callers (cmd/care,
 // any consumer) can reference them unconditionally.
 //
@@ -15,7 +15,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/audio"
+	"github.com/PratikDhanave/bodhyanga/pkg/audio"
 )
 
 // DefaultModelSource matches the real implementation's default so callers

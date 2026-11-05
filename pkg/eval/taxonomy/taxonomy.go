@@ -10,7 +10,7 @@
 //     clear, well-understood instructions.
 //
 // The package ships a DefaultMedicalTaxonomy pre-populated with failure modes
-// specific to Bodh's clinical AI pipeline: diagnostics, care plans,
+// specific to Bodhyanga's clinical AI pipeline: diagnostics, care plans,
 // governance, interoperability, agent orchestration, and evaluation.
 //
 // Typical usage:
@@ -156,7 +156,7 @@ func (t *FailureTaxonomy) String() string {
 }
 
 // DefaultMedicalTaxonomy returns a FailureTaxonomy pre-populated with
-// Bodh-specific failure modes spanning diagnostics, care plans, governance,
+// Bodhyanga-specific failure modes spanning diagnostics, care plans, governance,
 // interoperability, agent orchestration, and evaluation.
 func DefaultMedicalTaxonomy() *FailureTaxonomy {
 	t := NewTaxonomy()
@@ -295,7 +295,7 @@ func DefaultMedicalTaxonomy() *FailureTaxonomy {
 		Severity:    SeverityCritical,
 		Category:    "compliance",
 		Description: "Protected health information (names, MRNs) appears in an audit log or OTel span.",
-		Example:     "Full patient name written to bodh.case_id span attribute instead of SHA-256 hash.",
+		Example:     "Full patient name written to bodhyanga.case_id span attribute instead of SHA-256 hash.",
 		HIPAARef:    "HIPAA §164.312",
 		Evaluator:   "phi_scanner",
 	})

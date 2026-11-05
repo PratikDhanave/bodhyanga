@@ -1,4 +1,4 @@
-# Default values for bodh.
+# Default values for bodhyanga.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -9,7 +9,7 @@ replicaCount: 2
 
 image:
   # -- Container image repository.
-  repository: "localhost/bodh-care"
+  repository: "localhost/bodhyanga-care"
   # -- Container image tag.
   tag: "dev"
   # -- Image pull policy.
@@ -28,7 +28,7 @@ serviceAccount:
   create: true
   # -- Annotations to add to the ServiceAccount (e.g., Workload Identity binding).
   # Example for GKE Workload Identity:
-  #   iam.gke.io/gcp-service-account: "bodh-care@PROJECT.iam.gserviceaccount.com"
+  #   iam.gke.io/gcp-service-account: "bodhyanga-care@PROJECT.iam.gserviceaccount.com"
   annotations: {}
   # -- The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template.
@@ -74,15 +74,15 @@ ingress:
     # kubernetes.io/ingress.class: nginx
     # cert-manager.io/cluster-issuer: letsencrypt-prod
   hosts:
-    - host: bodh.local
+    - host: bodhyanga.local
       paths:
         - path: /
           pathType: Prefix
   # -- TLS configuration for ingress.
   tls: []
-  #  - secretName: bodh-tls
+  #  - secretName: bodhyanga-tls
   #    hosts:
-  #      - bodh.local
+  #      - bodhyanga.local
 
 resources:
   requests:
@@ -150,17 +150,17 @@ revisionHistoryLimit: 5
 # -- Application configuration (non-secret values rendered into a ConfigMap).
 config:
   # HTTP listen address inside the Pod.
-  BODH_LISTEN_ADDR: ":8088"
+  BODHYANGA_LISTEN_ADDR: ":8088"
   # Log level.
-  BODH_LOG_LEVEL: "info"
+  BODHYANGA_LOG_LEVEL: "info"
   # RAG corpus path inside the container.
-  BODH_KNOWLEDGE_CORPUS: "/data/knowledge/corpus.json"
+  BODHYANGA_KNOWLEDGE_CORPUS: "/data/knowledge/corpus.json"
   # Audit log sink path.
-  BODH_AUDIT_SINK: "/var/lib/bodh/audit.log"
+  BODHYANGA_AUDIT_SINK: "/var/lib/bodhyanga/audit.log"
   # OTel export toggle (requires image built with -tags otel).
-  BODH_OTEL_EXPORT: "0"
+  BODHYANGA_OTEL_EXPORT: "0"
   # OTel collector endpoint.
-  BODH_OTEL_ENDPOINT: "http://otel-collector.observability:4318"
+  BODHYANGA_OTEL_ENDPOINT: "http://otel-collector.observability:4318"
 
 # -- Diagnostician mode: rule | llm-anthropic | llm-openai | llm-ollama
 diagnostician: "rule"
@@ -169,7 +169,7 @@ diagnostician: "rule"
 # In production, use existingSecret instead.
 # NEVER commit real keys here. These values are base64-encoded in the Secret.
 env:
-  BODH_DB_DSN: ""
+  BODHYANGA_DB_DSN: ""
   ANTHROPIC_API_KEY: ""
   LMNR_PROJECT_API_KEY: ""
   OPENAI_API_KEY: ""
@@ -182,7 +182,7 @@ existingSecret: ""
 
 # -- Extra environment variables to inject (plain key/value, not secret).
 extraEnv: []
-# - name: BODH_OLLAMA_MODEL
+# - name: BODHYANGA_OLLAMA_MODEL
 #   value: "llama3.2"
 
 # -- Volume mounts for additional volumes.

@@ -32,7 +32,7 @@
     { "from": "authapi", "to": "store", "y": 260, "label": "Verify (bcrypt)" },
     { "from": "store", "to": "authapi", "y": 300, "label": "user + role", "variant": "return" },
     { "from": "authapi", "to": "login", "y": 340, "label": "JWT (HS256, 8h)", "variant": "emphasis" },
-    { "from": "login", "to": "spa", "y": 380, "label": "store bodh_jwt → /ui/", "variant": "return" },
+    { "from": "login", "to": "spa", "y": 380, "label": "store bodhyanga_jwt → /ui/", "variant": "return" },
     { "from": "spa", "to": "api", "y": 440, "label": "GET /api/* + Bearer", "variant": "emphasis" },
     { "from": "api", "to": "store", "y": 480, "label": "ValidateToken" },
     { "from": "store", "to": "api", "y": 520, "label": "authenticated user", "variant": "return" },
@@ -46,7 +46,7 @@
     { "participant": "api", "from": 440, "to": 560, "type": "backend" }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Token", "items": ["HS256 JWT signed with BODH_JWT_SECRET", "Claims: sub, email, role, 8h expiry", "Stored client-side as bodh_jwt"] },
+    { "dot": "cyan", "title": "Token", "items": ["HS256 JWT signed with BODHYANGA_JWT_SECRET", "Claims: sub, email, role, 8h expiry", "Stored client-side as bodhyanga_jwt"] },
     { "dot": "rose", "title": "Gate", "items": ["authMiddleware guards every /api/* route", "POST /api/auth/login, /healthz, /readyz are public", "Bcrypt-hashed credentials; demo users are illustrative"] },
     { "dot": "amber", "title": "Expiry", "items": ["A 401 clears the token and redirects to login", "Refresh exchanges a valid token for a fresh one", "No silent re-use of an expired session"] }
   ]

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/eval/drift"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval/drift"
 )
 
 // makeDP is a test helper that builds a DataPoint with a zero timestamp.

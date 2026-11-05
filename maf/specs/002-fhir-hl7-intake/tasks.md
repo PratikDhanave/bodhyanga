@@ -10,7 +10,7 @@ rejection category; tests are written first (red) per story, consistent with spe
 **Organization**: grouped by user story (P1→P3); each story lands independently testable and
 green before the next starts. US1 is the MVP (HL7 ADT → care plan). All paths below are
 relative to the repo root
-`/Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodh-maf`.
+`/Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodhyanga-maf`.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -19,7 +19,7 @@ relative to the repo root
 
 ## Phase 1: Setup
 
-- [ ] T001 Confirm no go.mod change is needed: `go list -deps github.com/PratikDhanave/bodh/pkg/hl7v2 github.com/PratikDhanave/bodh/pkg/fhir` resolves via the existing `replace ../bodh` (go.mod:5) with no new require; record the result in a comment in `pkg/intake/doc.go`. If a require *is* needed, add it and `go mod tidy` green.
+- [ ] T001 Confirm no go.mod change is needed: `go list -deps github.com/PratikDhanave/bodhyanga/pkg/hl7v2 github.com/PratikDhanave/bodhyanga/pkg/fhir` resolves via the existing `replace ../bodhyanga` (go.mod:5) with no new require; record the result in a comment in `pkg/intake/doc.go`. If a require *is* needed, add it and `go mod tidy` green.
 
 ## Phase 2: Foundational (blocking prerequisites)
 
@@ -36,7 +36,7 @@ through the unchanged pipeline, with the translation hop admitted and audited.
 **Independent test**: a well-formed ADT^A01 fixture → one PatientCase (CaseID from PID-3) →
 care plan, with a translation admission record preceding intake on the trail (SC-001).
 
-- [ ] T004 [P] [US1] Contract tests (write first, red) in `pkg/intake/hl7_test.go`: well-formed A01 (from `../bodh/pkg/hl7v2/testdata/adt_a01_admit.hl7`) → PatientCase with CaseID derived from PID-3 and History from DG1; A04/A08 accepted; non-ADT (ORU) → `ReasonUnsupportedType`; custom-delimiter message still parses. Assert NO raw MRN/name in any `RejectError`.
+- [ ] T004 [P] [US1] Contract tests (write first, red) in `pkg/intake/hl7_test.go`: well-formed A01 (from `../bodhyanga/pkg/hl7v2/testdata/adt_a01_admit.hl7`) → PatientCase with CaseID derived from PID-3 and History from DG1; A04/A08 accepted; non-ADT (ORU) → `ReasonUnsupportedType`; custom-delimiter message still parses. Assert NO raw MRN/name in any `RejectError`.
 - [ ] T005 [US1] HL7 mapper in `pkg/intake/hl7.go`: `translateHL7([]byte) (agents.PatientCase, error)` wrapping `hl7v2.ParseMessage` + `hl7v2.MessageToADTEvent` (imported unchanged); map `medical.ADTEvent` → `agents.PatientCase{CaseID: ev.PatientID, History: [ev.PrimaryDx] if present, Symptoms: nil}`; translate the parser's non-ADT / unsupported-trigger / missing-PID errors into the matching `RejectReason` (do NOT wrap the raw error text — categorize) — spec FR-001/FR-003/FR-008/FR-009.
 - [ ] T006 [US1] `Translate(Inbound)` dispatch in `pkg/intake/translate.go`: route `FormatHL7`→`translateHL7`, `FormatJSON`→`json.Unmarshal` into PatientCase (parity with today's `cmd/slice`), unknown format → `ReasonUnsupportedType`; unit test in `pkg/intake/translate_test.go`.
 - [ ] T007 [US1] Translation executor in `pkg/agents/translator.go`: `NewTranslator(id string, guard Guard) *workflow.Executor` consuming `intake.Inbound`, wrapping the body in `guarded(guard, ctx, id, "inbound_message", token, ...)` where `token = HashCaseID(caseID)` on success (empty on pre-parse failure); on success `ctx.SendMessage("", pc)`, on `RejectError` record + return the error (no PatientCase emitted); `.Extend` with `ConfigureProtocol` declaring it *sends* `PatientCase`. Follows `pkg/agents/intake.go:14-27`. Test in `pkg/agents/translator_test.go` with a fake guard.
@@ -57,7 +57,7 @@ ADT (SC-002).
 
 - [ ] T011 [P] [US2] FHIR bundle fixtures in `pkg/intake/testdata/`: `bundle_one_condition.json`, `bundle_multi_condition.json`, `bundle_no_condition.json` (undifferentiated), `bundle_no_patient.json`, `bundle_two_patients.json`, `bundle_malformed.json` — PHI-shaped MRNs/names present so SC-004's scan is meaningful.
 - [ ] T012 [P] [US2] Bundle-decoder tests (write first, red) in `pkg/intake/fhir_test.go`: one-Condition bundle → PatientCase with History; multi-Condition → each Condition contributes one entry (none dropped silently); no-Condition → undifferentiated (empty clinical, no error, FR-008); no-Patient → `ReasonMissingResource`; two-Patient → `ReasonAmbiguousSubject`; non-JSON → `ReasonMalformed`. Assert no raw MRN/name in any `RejectError`.
-- [ ] T013 [US2] FHIR bundle decoder + mapper in `pkg/intake/fhir.go`: NEW minimal `Bundle{ResourceType string; Entry []struct{Resource json.RawMessage}}` (bodh has none — plan.md); dispatch each entry by `resourceType` into `bodh/pkg/fhir` types (`Patient`, `Condition`, `Observation`); reject ≠1 Patient; map `Patient.id`→CaseID, each `fhir.ConditionCode(c)`→History entry, each recognized `fhir.ObservationToRPM`→Symptoms/History entry — spec FR-002/FR-003/FR-008/FR-009.
+- [ ] T013 [US2] FHIR bundle decoder + mapper in `pkg/intake/fhir.go`: NEW minimal `Bundle{ResourceType string; Entry []struct{Resource json.RawMessage}}` (bodhyanga has none — plan.md); dispatch each entry by `resourceType` into `bodhyanga/pkg/fhir` types (`Patient`, `Condition`, `Observation`); reject ≠1 Patient; map `Patient.id`→CaseID, each `fhir.ConditionCode(c)`→History entry, each recognized `fhir.ObservationToRPM`→Symptoms/History entry — spec FR-002/FR-003/FR-008/FR-009.
 - [ ] T014 [US2] Route `FormatFHIR`→`translateFHIR` in `pkg/intake/translate.go`; extend `translate_test.go`.
 - [ ] T015 [US2] Integration + parity test in `pkg/pipeline/intake_fhir_test.go`: bundle fixture → CarePlan; and a parity assertion that the SAME clinical facts fed as HL7 (US1) and as FHIR yield structurally identical trails from the intake hop onward (specs/001 invariant checker) — SC-002, SC-005, FR-007.
 - [ ] T016 [US2] CLI: `-format fhir` path already covered by T010's generic raw-bytes read; add a smoke assertion / example to `cmd/slice/main.go` usage doc comment.
@@ -73,7 +73,7 @@ no PatientCase and no pipeline run, and lands a rejection record on the trail.
 runs, one rejection record; automated PHI scan of every front-door record finds nothing
 (SC-003, SC-004).
 
-- [ ] T017 [P] [US3] Rejection-taxonomy unit tests in `pkg/intake/reject_test.go`: malformed HL7 (`../bodh/pkg/hl7v2/testdata/adt_malformed.hl7`)→`ReasonMalformed`; valid-ADT-unsupported-trigger (synthesize an A40 message)→`ReasonUnsupportedTrigger`; ADT missing PID→`ReasonMissingSegment`; each maps to a distinct reason and produces no PatientCase — spec FR-005.
+- [ ] T017 [P] [US3] Rejection-taxonomy unit tests in `pkg/intake/reject_test.go`: malformed HL7 (`../bodhyanga/pkg/hl7v2/testdata/adt_malformed.hl7`)→`ReasonMalformed`; valid-ADT-unsupported-trigger (synthesize an A40 message)→`ReasonUnsupportedTrigger`; ADT missing PID→`ReasonMissingSegment`; each maps to a distinct reason and produces no PatientCase — spec FR-005.
 - [ ] T018 [US3] Translator rejection path in `pkg/agents/translator.go` (extend T007): on `RejectError`, record an `agent_error`-shaped audit event carrying ONLY the reason category + fingerprint (fingerprint empty when unrecoverable pre-parse) and terminate the run without emitting PatientCase — spec FR-004/FR-006. Extend `translator_test.go`.
 - [ ] T019 [US3] Rejection integration test in `pkg/pipeline/intake_reject_test.go`: each canonical bad input through a Runner ⇒ no CarePlan, no CaseRejected, exactly one rejection record on the trail, run does not start intake — SC-003.
 - [ ] T020 [US3] PHI-freedom test in `pkg/pipeline/intake_phi_test.go`: run all success + all rejection fixtures; scan every emitted audit record's fields for each fixture's literal MRN/patient-name/narrative substring; assert zero hits; assert identifiers appear only as `HashCaseID` fingerprints — SC-004 (reuse the specs/001 PHI-scan invariant from `pkg/auditbridge` where available).

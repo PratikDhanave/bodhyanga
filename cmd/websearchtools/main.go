@@ -1,4 +1,4 @@
-// Command websearchtools demonstrates giving a Bodh agent web search capability
+// Command websearchtools demonstrates giving a Bodhyanga agent web search capability
 // using the DuckDuckGo Instant Answers API (no API key required).
 //
 // # What it does
@@ -38,8 +38,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/tools"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/tools"
 )
 
 const (

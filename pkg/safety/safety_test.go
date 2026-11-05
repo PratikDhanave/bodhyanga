@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/knowledge"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge"
 )
 
 func TestIsRefusal_DetectsCommonPhrases(t *testing.T) {

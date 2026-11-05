@@ -1,8 +1,8 @@
-# Deployment for the Bodh care HTTP API + Vue SPA.
+# Deployment for the Bodhyanga care HTTP API + Vue SPA.
 #
 # Security posture (PodSecurity "restricted" profile):
 #   - runAsNonRoot, runAsUser 65532 (nonroot from distroless image)
-#   - readOnlyRootFilesystem: true  -> /tmp and /var/lib/bodh are emptyDir mounts
+#   - readOnlyRootFilesystem: true  -> /tmp and /var/lib/bodhyanga are emptyDir mounts
 #   - allowPrivilegeEscalation: false
 #   - capabilities: drop ALL
 #   - seccompProfile: RuntimeDefault
@@ -17,10 +17,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "bodh.fullname" . }}
+  name: {{ include "bodhyanga.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "bodh.labels" . | nindent 4 }}
+    {{- include "bodhyanga.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -28,13 +28,13 @@ spec:
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
-      {{- include "bodh.selectorLabels" . | nindent 6 }}
+      {{- include "bodhyanga.selectorLabels" . | nindent 6 }}
   strategy:
     {{- toYaml .Values.strategy | nindent 4 }}
   template:
     metadata:
       labels:
-        {{- include "bodh.selectorLabels" . | nindent 8 }}
+        {{- include "bodhyanga.selectorLabels" . | nindent 8 }}
       annotations:
         # Force pod restart when ConfigMap content changes.
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
@@ -50,7 +50,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "bodh.serviceAccountName" . }}
+      serviceAccountName: {{ include "bodhyanga.serviceAccountName" . }}
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       securityContext:
@@ -97,9 +97,9 @@ spec:
             {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ include "bodh.configMapName" . }}
+                name: {{ include "bodhyanga.configMapName" . }}
             - secretRef:
-                name: {{ include "bodh.secretName" . }}
+                name: {{ include "bodhyanga.secretName" . }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:
@@ -115,7 +115,7 @@ spec:
             # HIPAA append-only audit log target.
             # Production: mount a PVC or forward via stdout to a log shipper.
             - name: audit
-              mountPath: /var/lib/bodh
+              mountPath: /var/lib/bodhyanga
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

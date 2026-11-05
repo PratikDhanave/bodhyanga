@@ -19,15 +19,15 @@ import (
 
 func TestAuthenticator_Issuer(t *testing.T) {
 	ks := NewKeyStore()
-	a := New(Config{KeyLookup: ks, Issuer: "bodh-test"})
-	if a.Issuer() != "bodh-test" {
-		t.Fatalf("expected bodh-test, got %q", a.Issuer())
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga-test"})
+	if a.Issuer() != "bodhyanga-test" {
+		t.Fatalf("expected bodhyanga-test, got %q", a.Issuer())
 	}
 }
 
 func TestAuthenticator_ParseMissingBearer(t *testing.T) {
 	ks := NewKeyStore()
-	a := New(Config{KeyLookup: ks, Issuer: "bodh"})
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga"})
 
 	_, err := a.Parse(context.Background(), "not-a-bearer-token")
 	if err != ErrMissingBearer {
@@ -37,7 +37,7 @@ func TestAuthenticator_ParseMissingBearer(t *testing.T) {
 
 func TestAuthenticator_ParseMalformedToken(t *testing.T) {
 	ks := NewKeyStore()
-	a := New(Config{KeyLookup: ks, Issuer: "bodh"})
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga"})
 
 	_, err := a.Parse(context.Background(), "Bearer not.a.jwt")
 	if err == nil {
@@ -47,13 +47,13 @@ func TestAuthenticator_ParseMalformedToken(t *testing.T) {
 
 func TestAuthenticator_ParseNoKID(t *testing.T) {
 	ks := NewKeyStore()
-	a := New(Config{KeyLookup: ks, Issuer: "bodh"})
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga"})
 
 	// Create a token without a kid header.
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
 	tok := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"sub": "user-1",
-		"iss": "bodh",
+		"iss": "bodhyanga",
 		"exp": time.Now().Add(time.Hour).Unix(),
 	})
 	// Don't set kid header.
@@ -67,12 +67,12 @@ func TestAuthenticator_ParseNoKID(t *testing.T) {
 
 func TestAuthenticator_ParseMalformedKID(t *testing.T) {
 	ks := NewKeyStore()
-	a := New(Config{KeyLookup: ks, Issuer: "bodh"})
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga"})
 
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
 	tok := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"sub": "user-1",
-		"iss": "bodh",
+		"iss": "bodhyanga",
 		"exp": time.Now().Add(time.Hour).Unix(),
 	})
 	tok.Header["kid"] = 12345 // not a string
@@ -86,12 +86,12 @@ func TestAuthenticator_ParseMalformedKID(t *testing.T) {
 
 func TestAuthenticator_ParseUnknownKID(t *testing.T) {
 	ks := NewKeyStore()
-	a := New(Config{KeyLookup: ks, Issuer: "bodh"})
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga"})
 
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
 	tok := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"sub": "user-1",
-		"iss": "bodh",
+		"iss": "bodhyanga",
 		"exp": time.Now().Add(time.Hour).Unix(),
 	})
 	tok.Header["kid"] = "unknown-kid"
@@ -113,12 +113,12 @@ func TestAuthenticator_GenerateAndParseRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	a := New(Config{KeyLookup: ks, Issuer: "bodh"})
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga"})
 
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "user-1",
-			Issuer:    "bodh",
+			Issuer:    "bodhyanga",
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
@@ -148,12 +148,12 @@ func TestAuthenticator_ParseExpiredToken(t *testing.T) {
 	privPEM, _ := GenerateRSAKey(2048)
 	ks.LoadRSAPEM("kid-1", privPEM)
 
-	a := New(Config{KeyLookup: ks, Issuer: "bodh"})
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga"})
 
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "user-1",
-			Issuer:    "bodh",
+			Issuer:    "bodhyanga",
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().Add(-2 * time.Hour)),
 		},
@@ -168,7 +168,7 @@ func TestAuthenticator_ParseExpiredToken(t *testing.T) {
 
 func TestAuthenticator_GenerateTokenBadKID(t *testing.T) {
 	ks := NewKeyStore()
-	a := New(Config{KeyLookup: ks, Issuer: "bodh"})
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga"})
 
 	_, err := a.GenerateToken("nonexistent", Claims{})
 	if err == nil {
@@ -178,7 +178,7 @@ func TestAuthenticator_GenerateTokenBadKID(t *testing.T) {
 
 func TestAuthenticator_EvaluateDenied(t *testing.T) {
 	ks := NewKeyStore()
-	a := New(Config{KeyLookup: ks, Issuer: "bodh"})
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga"})
 
 	// Use the explain module; a request without clinician role should be denied.
 	err := a.Evaluate(context.Background(), ModuleExplain, QueryExplainAllow, map[string]any{
@@ -191,7 +191,7 @@ func TestAuthenticator_EvaluateDenied(t *testing.T) {
 
 func TestAuthenticator_EvaluateAllowed(t *testing.T) {
 	ks := NewKeyStore()
-	a := New(Config{KeyLookup: ks, Issuer: "bodh"})
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga"})
 
 	// The explain policy requires TenantID == ResourceTenantID for clinician.
 	err := a.Evaluate(context.Background(), ModuleExplain, QueryExplainAllow, map[string]any{
@@ -206,7 +206,7 @@ func TestAuthenticator_EvaluateAllowed(t *testing.T) {
 
 func TestAuthenticator_EvaluateAuditorCrossTenant(t *testing.T) {
 	ks := NewKeyStore()
-	a := New(Config{KeyLookup: ks, Issuer: "bodh"})
+	a := New(Config{KeyLookup: ks, Issuer: "bodhyanga"})
 
 	err := a.Evaluate(context.Background(), ModuleExplain, QueryExplainAllow, map[string]any{
 		"Roles":            []string{RoleAuditor},
@@ -441,14 +441,14 @@ func TestCredentialStore_ValidateTokenMalformed(t *testing.T) {
 }
 
 func TestJWTSecret_Default(t *testing.T) {
-	t.Setenv("BODH_JWT_SECRET", "")
+	t.Setenv("BODHYANGA_JWT_SECRET", "")
 	if JWTSecret() != DefaultJWTSecret {
 		t.Fatalf("expected default secret, got %q", JWTSecret())
 	}
 }
 
 func TestJWTSecret_Custom(t *testing.T) {
-	t.Setenv("BODH_JWT_SECRET", "my-custom-secret")
+	t.Setenv("BODHYANGA_JWT_SECRET", "my-custom-secret")
 	if JWTSecret() != "my-custom-secret" {
 		t.Fatalf("expected my-custom-secret, got %q", JWTSecret())
 	}

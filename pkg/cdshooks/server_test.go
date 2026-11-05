@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/cdshooks"
+	"github.com/PratikDhanave/bodhyanga/pkg/cdshooks"
 )
 
 // newTestServer creates a Server with all built-in hooks registered.
@@ -89,7 +89,7 @@ func TestPatientView_DefaultGaps(t *testing.T) {
 		HookInstance: "test-instance-1",
 		Context:      map[string]any{"patientId": "patient-123"},
 	}
-	resp := postHook(t, ts.URL, "bodh-patient-view", req)
+	resp := postHook(t, ts.URL, "bodhyanga-patient-view", req)
 
 	if len(resp.Cards) == 0 {
 		t.Fatal("expected at least one card for default gaps")
@@ -120,7 +120,7 @@ func TestPatientView_ExplicitGaps(t *testing.T) {
 			"gaps":      []any{"Mammogram (overdue)", "Colonoscopy (overdue)"},
 		},
 	}
-	resp := postHook(t, ts.URL, "bodh-patient-view", req)
+	resp := postHook(t, ts.URL, "bodhyanga-patient-view", req)
 
 	if len(resp.Cards) != 2 {
 		t.Errorf("expected 2 cards for 2 explicit gaps, got %d", len(resp.Cards))
@@ -138,7 +138,7 @@ func TestPatientView_EmptyGaps_NoCards(t *testing.T) {
 		HookInstance: "test-instance-3",
 		Context:      map[string]any{"patientId": "patient-789"},
 	}
-	resp := postHook(t, ts.URL, "bodh-patient-view", req)
+	resp := postHook(t, ts.URL, "bodhyanga-patient-view", req)
 
 	if len(resp.Cards) == 0 {
 		t.Error("expected default gap cards when no explicit gaps provided")
@@ -159,7 +159,7 @@ func TestMedPrescribe_HighDDI_ReturnsCritical(t *testing.T) {
 			"medications": []any{"warfarin", "aspirin"},
 		},
 	}
-	resp := postHook(t, ts.URL, "bodh-medication-prescribe", req)
+	resp := postHook(t, ts.URL, "bodhyanga-medication-prescribe", req)
 
 	if len(resp.Cards) == 0 {
 		t.Fatal("expected a critical DDI card for warfarin + aspirin")
@@ -181,7 +181,7 @@ func TestMedPrescribe_NoInteraction_NoCards(t *testing.T) {
 			"medications": []any{"lisinopril", "atorvastatin"},
 		},
 	}
-	resp := postHook(t, ts.URL, "bodh-medication-prescribe", req)
+	resp := postHook(t, ts.URL, "bodhyanga-medication-prescribe", req)
 
 	if len(resp.Cards) != 0 {
 		t.Errorf("expected 0 cards for safe medication pair, got %d", len(resp.Cards))
@@ -197,7 +197,7 @@ func TestMedPrescribe_EmptyMeds_NoCards(t *testing.T) {
 		HookInstance: "test-ddi-3",
 		Context:      map[string]any{"patientId": "patient-003"},
 	}
-	resp := postHook(t, ts.URL, "bodh-medication-prescribe", req)
+	resp := postHook(t, ts.URL, "bodhyanga-medication-prescribe", req)
 
 	if len(resp.Cards) != 0 {
 		t.Errorf("expected 0 cards for no medications, got %d", len(resp.Cards))
@@ -219,7 +219,7 @@ func TestOrderSign_OverBudget_ReturnsInfo(t *testing.T) {
 			"budgetThresholdUSD": 500.0,
 		},
 	}
-	resp := postHook(t, ts.URL, "bodh-order-sign", req)
+	resp := postHook(t, ts.URL, "bodhyanga-order-sign", req)
 
 	if len(resp.Cards) != 1 {
 		t.Fatalf("expected 1 info card, got %d", len(resp.Cards))
@@ -241,7 +241,7 @@ func TestOrderSign_UnderBudget_NoCards(t *testing.T) {
 			"estimatedCostUSD": 200.0,
 		},
 	}
-	resp := postHook(t, ts.URL, "bodh-order-sign", req)
+	resp := postHook(t, ts.URL, "bodhyanga-order-sign", req)
 
 	if len(resp.Cards) != 0 {
 		t.Errorf("expected 0 cards under budget, got %d", len(resp.Cards))
@@ -259,7 +259,7 @@ func TestEncounterDischarge_ReturnsTCMCard(t *testing.T) {
 		HookInstance: "test-discharge-1",
 		Context:      map[string]any{"patientId": "patient-020"},
 	}
-	resp := postHook(t, ts.URL, "bodh-encounter-discharge", req)
+	resp := postHook(t, ts.URL, "bodhyanga-encounter-discharge", req)
 
 	if len(resp.Cards) != 1 {
 		t.Fatalf("expected 1 TCM card, got %d", len(resp.Cards))
@@ -279,7 +279,7 @@ func TestInvalidBody_ReturnsBadRequest(t *testing.T) {
 	ts := newTestServer(t)
 	defer ts.Close()
 
-	resp, err := http.Post(ts.URL+"/cds-services/bodh-patient-view", "application/json", bytes.NewBufferString("{bad json}"))
+	resp, err := http.Post(ts.URL+"/cds-services/bodhyanga-patient-view", "application/json", bytes.NewBufferString("{bad json}"))
 	if err != nil {
 		t.Fatalf("POST: %v", err)
 	}

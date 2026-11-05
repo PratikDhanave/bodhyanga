@@ -1,13 +1,13 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/app/sdk/errs/codes.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 //
-// Bodh modifications vs upstream:
-//   - HITLPending is a Bodh-specific category. When a handler stages a
+// Bodhyanga modifications vs upstream:
+//   - HITLPending is a Bodhyanga-specific category. When a handler stages a
 //     clinically consequential action behind agents/human_review.go the
 //     response is "202 + envelope with code=hitl_pending" rather than a
 //     synchronous result — clients must poll /reviews/{id} for the
 //     clinician verdict. See docs/governance.md.
-//   - SafetyRefusal is a Bodh-specific category. Returned when an LLM
+//   - SafetyRefusal is a Bodhyanga-specific category. Returned when an LLM
 //     refusal is detected (pkg/safety.IsRefusal) or when the rule-based
 //     fallback explicitly declines to answer; surfaces as HTTP 422 so
 //     clients can show a graceful degradation message rather than a 500.
@@ -90,17 +90,17 @@ var (
 	// generic Internal envelope before responding.
 	InternalOnlyLog = ErrCode{value: 19}
 
-	// HITLPending — Bodh-specific. The handler has queued a clinically
+	// HITLPending — Bodhyanga-specific. The handler has queued a clinically
 	// consequential action onto pkg/hitl.Queue; the caller must poll
 	// /reviews/{id} for the clinician verdict. HTTP 202 Accepted.
 	HITLPending = ErrCode{value: 20}
 
-	// SafetyRefusal — Bodh-specific. The LLM (or its rule-based fallback)
+	// SafetyRefusal — Bodhyanga-specific. The LLM (or its rule-based fallback)
 	// refused to answer. HTTP 422 so clients can render a graceful
 	// degradation message without a generic 500 alert. See pkg/safety.
 	SafetyRefusal = ErrCode{value: 21}
 
-	// PolicyDenied — Bodh-specific. A pkg/governance Policy.Evaluate
+	// PolicyDenied — Bodhyanga-specific. A pkg/governance Policy.Evaluate
 	// Deny verdict surfaced at the API boundary. HTTP 403.
 	PolicyDenied = ErrCode{value: 22}
 )

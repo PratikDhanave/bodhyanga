@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/knowledge"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge"
 )
 
 // Verdict is the outcome of a safety check. Reason explains why the check

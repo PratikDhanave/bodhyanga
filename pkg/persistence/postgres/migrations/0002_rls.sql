@@ -72,33 +72,33 @@ CREATE POLICY audit_events_tenant_insert
 -- policies above actually apply — superusers and roles with BYPASSRLS
 -- silently skip every policy.
 --
--- This block creates bodh_app if it does not exist, grants the minimum
+-- This block creates bodhyanga_app if it does not exist, grants the minimum
 -- privileges required, and explicitly STRIPS BYPASSRLS in case the role
 -- pre-existed with that attribute (testcontainers postgres images often do).
 --
 -- Application connection string should be:
---   postgres://bodh_app:<pass>@host:5432/bodh
+--   postgres://bodhyanga_app:<pass>@host:5432/bodhyanga
 -- Migrations connection string remains the owner role.
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bodh_app') THEN
-        CREATE ROLE bodh_app LOGIN PASSWORD 'bodh_app' NOBYPASSRLS;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bodhyanga_app') THEN
+        CREATE ROLE bodhyanga_app LOGIN PASSWORD 'bodhyanga_app' NOBYPASSRLS;
     ELSE
-        ALTER ROLE bodh_app NOBYPASSRLS;
+        ALTER ROLE bodhyanga_app NOBYPASSRLS;
     END IF;
 END
 $$;
 
-GRANT USAGE ON SCHEMA public TO bodh_app;
+GRANT USAGE ON SCHEMA public TO bodhyanga_app;
 
 -- interaction_records, patient_records: full CRUD (RLS scopes by tenant).
-GRANT SELECT, INSERT, UPDATE, DELETE ON interaction_records TO bodh_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON patient_records      TO bodh_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON interaction_records TO bodhyanga_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON patient_records      TO bodhyanga_app;
 
 -- audit_events: append-only. UPDATE and DELETE are intentionally withheld.
-GRANT SELECT, INSERT ON audit_events TO bodh_app;
+GRANT SELECT, INSERT ON audit_events TO bodhyanga_app;
 
 -- schema_migrations is read-only for the app; the migrator writes it.
-GRANT SELECT ON schema_migrations TO bodh_app;
+GRANT SELECT ON schema_migrations TO bodhyanga_app;
 
 INSERT INTO schema_migrations (version) VALUES (2) ON CONFLICT DO NOTHING;

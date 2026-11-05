@@ -1,6 +1,6 @@
-# Bodh — Governance & Policy Reference
+# Bodhyanga — Governance & Policy Reference
 
-Every policy in Bodh runs **before** any agent sees a message. This document is the field guide: every policy that ships, every policy that's planned, the composition model, and how the audit pipeline turns governance decisions into a HIPAA-relevant forensic record.
+Every policy in Bodhyanga runs **before** any agent sees a message. This document is the field guide: every policy that ships, every policy that's planned, the composition model, and how the audit pipeline turns governance decisions into a HIPAA-relevant forensic record.
 
 > Pairs with [docs/compliance.md](compliance.md) for the regulatory framing (HIPAA, GDPR, 42 CFR Part 2) and [architecture.md § Orchestrator](architecture.md#orchestrator-the-only-place-where-governance-runs) for where in the message flow policies execute.
 
@@ -158,7 +158,7 @@ func (MaxDiagnosticCostPolicy) Evaluate(_ context.Context, msg protocol.Message)
 }
 ```
 
-Note: today `test_planner` enforces the budget locally via `cost_guardian`. This policy is the **defence in depth** — if someone bypasses `cost_guardian`, the policy still catches budget violations. As Bodh's MCP tool surface grows (lab APIs, imaging AI), this becomes the single chokepoint for "no agent / tool may order something we can't afford."
+Note: today `test_planner` enforces the budget locally via `cost_guardian`. This policy is the **defence in depth** — if someone bypasses `cost_guardian`, the policy still catches budget violations. As Bodhyanga's MCP tool surface grows (lab APIs, imaging AI), this becomes the single chokepoint for "no agent / tool may order something we can't afford."
 
 ### `ResearchDisclaimerPolicy`
 
@@ -290,7 +290,7 @@ type StatefulPolicy interface {
 }
 
 type ContextKey string
-const SessionStoreKey ContextKey = "bodh.session_store"
+const SessionStoreKey ContextKey = "bodhyanga.session_store"
 ```
 
 This keeps the audit log out of live policy evaluation (forensic, not load-bearing) while letting policies do bounded windowed work.
@@ -435,7 +435,7 @@ The shipped patterns are a **first line**. For production, layer in front of a D
 | AWS Macie | S3-focused but extends to streams via Kinesis; classification + alerting |
 | Microsoft Presidio | Open-source self-hostable; NLP-based entity recognition |
 
-The order should be: `Bodh redact patterns` → `DLP service` → `log sink`. The Bodh patterns catch obvious shapes cheaply; the DLP service catches the NLP-y cases (names mid-sentence, addresses in narrative) more expensively.
+The order should be: `Bodhyanga redact patterns` → `DLP service` → `log sink`. The Bodhyanga patterns catch obvious shapes cheaply; the DLP service catches the NLP-y cases (names mid-sentence, addresses in narrative) more expensively.
 
 ---
 

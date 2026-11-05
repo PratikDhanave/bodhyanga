@@ -20,16 +20,16 @@ existing LLM node; it changes no graph edge and no other agent.
 
 ## Phase 1: Setup
 
-- [ ] T001 Confirm the bodh knowledge/embeddings packages resolve under the existing
-  `replace ../bodh`: add nothing to go.mod beyond what the new imports pull; run `go build ./...` and
-  `go mod tidy` and verify `github.com/PratikDhanave/bodh/pkg/knowledge` and `.../pkg/embeddings`
+- [ ] T001 Confirm the bodhyanga knowledge/embeddings packages resolve under the existing
+  `replace ../bodhyanga`: add nothing to go.mod beyond what the new imports pull; run `go build ./...` and
+  `go mod tidy` and verify `github.com/PratikDhanave/bodhyanga/pkg/knowledge` and `.../pkg/embeddings`
   compile in from source (no `NewInMemoryStore` import — hybrid + LoadCorpus only), in
-  /Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodh-maf/go.mod
+  /Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodhyanga-maf/go.mod
 
 ## Phase 2: Foundational (blocking prerequisites)
 
 - [ ] T002 [P] Add the corpus fixture pkg/agents/testdata/corpus.json: a small synthetic, PHI-free
-  set of documents (modeled on ../bodh/data/knowledge/corpus.json, each with id/source/title/content/
+  set of documents (modeled on ../bodhyanga/data/knowledge/corpus.json, each with id/source/title/content/
   metadata) including at least one document that matches the canonical test case's symptoms and one
   that does not — so ranking is observable. Add a `_notice` disclaimer field.
 - [ ] T003 [P] Extend the diagnosis output contract in pkg/agents/types.go: add slice-local
@@ -54,17 +54,17 @@ by the model contains an Evidence block; no corpus ⇒ zero citations, no Eviden
 - [ ] T005 [US1] Retriever seam in pkg/agents/retriever.go: `Retriever` holding a
   `knowledge.Store` + `K int`; `NewRetriever(store, k)` (k<=0 ⇒ default 4); `Retrieve(ctx, Workup)
   ([]Citation, error)` that builds the query from `wu.Query.Case.Symptoms/History`, `wu.Query.Round`,
-  `wu.Results` (port of bodh's `buildRetrievalQuery`), calls `store.Search(ctx, query, k)`, and maps
+  `wu.Results` (port of bodhyanga's `buildRetrievalQuery`), calls `store.Search(ctx, query, k)`, and maps
   `knowledge.Citation` → `agents.Citation`. Empty query ⇒ return (nil,nil) without calling the store.
 - [ ] T006 [US1] Evidence-block prompt wiring in pkg/agents/llm_diagnostician.go: change
   `buildPrompt` to accept the retrieved citations and prepend an `Evidence:\n- [source] title —
-  snippet` block when non-empty (port bodh's format); update the system-prompt guidance so the model
+  snippet` block when non-empty (port bodhyanga's format); update the system-prompt guidance so the model
   is instructed to ground in and cite only from supplied evidence.
 - [ ] T007 [US1] Wire retrieval into the node in pkg/agents/llm_diagnostician.go: `NewLLMDiagnostician`
   takes an optional `*Retriever`; inside the guarded hop, before `assessWithModel`, call
   `Retrieve`; pass citations into the prompt; after the model returns, set
   `DiagnosisResult.Citations` = reconcile(model citations, retrieved) — keep model's subset when
-  present, else the retrieved set (port bodh's reconciliation). Retrieval sits *inside* the admitted
+  present, else the retrieved set (port bodhyanga's reconciliation). Retrieval sits *inside* the admitted
   hop, before the model call (plan §Where retrieval sits).
 - [ ] T008 [US1] Node-level tests in pkg/agents/llm_diagnostician_test.go: with-corpus + fake
   provider ⇒ `DiagnosisResult.Citations` non-empty AND the prompt captured by the fake `Run` contains

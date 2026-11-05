@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // stubBreakGlassRecorder is a thread-safe in-process recorder used in tests.

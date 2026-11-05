@@ -16,27 +16,27 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PratikDhanave/bodh/agents"
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/audio"
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/auth"
-	"github.com/PratikDhanave/bodh/pkg/comm"
-	"github.com/PratikDhanave/bodh/pkg/engagement"
-	"github.com/PratikDhanave/bodh/pkg/eval"
-	"github.com/PratikDhanave/bodh/pkg/fhir"
-	"github.com/PratikDhanave/bodh/pkg/governance"
-	"github.com/PratikDhanave/bodh/pkg/hitl"
-	"github.com/PratikDhanave/bodh/pkg/hl7v2"
-	"github.com/PratikDhanave/bodh/pkg/knowledge"
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/llm/pool"
-	"github.com/PratikDhanave/bodh/pkg/medical"
-	"github.com/PratikDhanave/bodh/pkg/observability"
-	"github.com/PratikDhanave/bodh/pkg/orchestration"
-	pgstore "github.com/PratikDhanave/bodh/pkg/persistence/postgres"
-	"github.com/PratikDhanave/bodh/pkg/registry"
-	"github.com/PratikDhanave/bodh/pkg/tasks"
+	"github.com/PratikDhanave/bodhyanga/agents"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/audio"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/auth"
+	"github.com/PratikDhanave/bodhyanga/pkg/comm"
+	"github.com/PratikDhanave/bodhyanga/pkg/engagement"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/fhir"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/hitl"
+	"github.com/PratikDhanave/bodhyanga/pkg/hl7v2"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm/pool"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/orchestration"
+	pgstore "github.com/PratikDhanave/bodhyanga/pkg/persistence/postgres"
+	"github.com/PratikDhanave/bodhyanga/pkg/registry"
+	"github.com/PratikDhanave/bodhyanga/pkg/tasks"
 )
 
 func main() {
@@ -49,10 +49,10 @@ func main() {
 
 	store := loadRAGStore(ctx, *provider)
 
-	// Multi-model pool. Opt-in via BODH_LLM_POOL=1. The pool sits beside the
+	// Multi-model pool. Opt-in via BODHYANGA_LLM_POOL=1. The pool sits beside the
 	// existing per-agent llm.Client construction — it's the foundation for
 	// the kronk on-prem track (#21), where several models share one GPU and
-	// need refcounted, TTL-evicted residency. With BODH_LLM_POOL unset, the
+	// need refcounted, TTL-evicted residency. With BODHYANGA_LLM_POOL unset, the
 	// existing single-client path is unchanged.
 	llmPool := maybeStartLLMPool()
 	if llmPool != nil {
@@ -129,8 +129,8 @@ func main() {
 		_ = reg.Register(ctx, a)
 	}
 	// HIPAA §164.312(b) audit + eval mirror. Defaults are in-memory so the
-	// demo path stays self-contained; when BODH_DB_DSN is set the Postgres
-	// adapters (RLS-scoped to BODH_TENANT_ID) replace them. The recorders
+	// demo path stays self-contained; when BODHYANGA_DB_DSN is set the Postgres
+	// adapters (RLS-scoped to BODHYANGA_TENANT_ID) replace them. The recorders
 	// must be wired BEFORE Start — subscriptions capture them at subscribe
 	// time and a post-Start swap is silently ignored.
 	auditRec, evalStore := selectBackends(pg, logger)
@@ -150,8 +150,8 @@ func main() {
 	mux.HandleFunc("GET /healthz", livenessHandler())
 	mux.HandleFunc("GET /readyz", readinessHandler(pg))
 
-	// Prometheus scrape endpoint. Exposes Go runtime metrics + bodh_http_*
-	// and bodh_llm_* families. No auth — the NetworkPolicy restricts ingress
+	// Prometheus scrape endpoint. Exposes Go runtime metrics + bodhyanga_http_*
+	// and bodhyanga_llm_* families. No auth — the NetworkPolicy restricts ingress
 	// to the API gateway / monitoring namespace in Kubernetes.
 	mux.Handle("GET /metrics", observability.PrometheusHandler())
 
@@ -366,7 +366,7 @@ func main() {
 	//   ?limit=N                                                   cap (default 100)
 	//
 	// For Postgres-backed deployments tenant scoping is fixed at startup
-	// (BODH_TENANT_ID); a true multi-tenant binary would route per-request.
+	// (BODHYANGA_TENANT_ID); a true multi-tenant binary would route per-request.
 	mux.HandleFunc("GET /audit", auditListHandler(auditRec))
 
 	// Right-to-explanation endpoint. Returns a structured, PHI-free
@@ -378,16 +378,16 @@ func main() {
 	// /api/* routes + SSE + go:embed SPA for the clinician console.
 	traces := newLLMTraceBuffer(500)
 	// Capture every LLMTrace into the buffer so the SPA can show recent calls.
-	// The observability hook only fires when BODH_OTEL_ENABLED=1, so set it
+	// The observability hook only fires when BODHYANGA_OTEL_ENABLED=1, so set it
 	// here unconditionally — cmd/care's hook just goes to the in-process
 	// buffer (no external OTel collector required).
-	_ = os.Setenv("BODH_OTEL_ENABLED", "1")
+	_ = os.Setenv("BODHYANGA_OTEL_ENABLED", "1")
 	hook := traces.record
-	// Opt-in OTLP export: when BODH_OTEL_EXPORT=1 (and the binary was built
+	// Opt-in OTLP export: when BODHYANGA_OTEL_EXPORT=1 (and the binary was built
 	// with -tags otel) ship every LLMTrace to an OTLP/HTTP collector in
 	// addition to the in-process buffer. Endpoint defaults to localhost:4318.
-	if os.Getenv("BODH_OTEL_EXPORT") == "1" {
-		endpoint := envDefault("BODH_OTEL_ENDPOINT", "http://localhost:4318")
+	if os.Getenv("BODHYANGA_OTEL_EXPORT") == "1" {
+		endpoint := envDefault("BODHYANGA_OTEL_ENDPOINT", "http://localhost:4318")
 		exp, err := observability.NewOTLPLLMExporter(ctx, endpoint)
 		if err != nil {
 			logger.Printf("[care] OTLP exporter disabled: %v", err)
@@ -416,7 +416,7 @@ func main() {
 		notifier:    notifier,
 		traces:      traces,
 		runs:        rm,
-		fixturesDir: envDefault("BODH_FIXTURES_DIR", "data/cases"),
+		fixturesDir: envDefault("BODHYANGA_FIXTURES_DIR", "data/cases"),
 		provider:    *provider,
 		auditRec:    auditRec,
 	}
@@ -429,13 +429,13 @@ func main() {
 	// /healthz and /readyz stay public (see publicRoutes).
 	authStore := auth.NewCredentialStore()
 	// Seed an email-format demo credential that matches the login form's
-	// placeholder (the form input is type=email). Guarded by BODH_DEMO_USERS so
+	// placeholder (the form input is type=email). Guarded by BODHYANGA_DEMO_USERS so
 	// a non-demo deployment seeds no well-known passwords — see demoUsersEnabled.
 	if demoUsersEnabled() {
 		_ = authStore.AddUser("clinician@hospital.org", "clinic123", auth.RoleClinician)
-		log.Printf("[care] ⚠️  SECURITY: seeded demo login clinician@hospital.org with a well-known password. This is a research/demo build — set BODH_DEMO_USERS=0 for any non-demo deployment (and wire your own credential store).")
+		log.Printf("[care] ⚠️  SECURITY: seeded demo login clinician@hospital.org with a well-known password. This is a research/demo build — set BODHYANGA_DEMO_USERS=0 for any non-demo deployment (and wire your own credential store).")
 	} else {
-		log.Printf("[care] BODH_DEMO_USERS disabled — no demo credentials seeded; the console has no login until you add users.")
+		log.Printf("[care] BODHYANGA_DEMO_USERS disabled — no demo credentials seeded; the console has no login until you add users.")
 	}
 	authSecret := auth.JWTSecret()
 	(&authServer{store: authStore, secret: authSecret}).mountAuth(mux)
@@ -459,7 +459,7 @@ func main() {
 	}
 
 	// Wrap the mux with:
-	//   1. Prometheus HTTP middleware — records bodh_http_* metrics for every
+	//   1. Prometheus HTTP middleware — records bodhyanga_http_* metrics for every
 	//      request (always active, no build tag required).
 	//   2. OTel HTTP trace handler — adds an OTel span per request (active only
 	//      when built with -tags otel AND NewOTLPLLMExporter was called above
@@ -468,7 +468,7 @@ func main() {
 		observability.PromMiddleware(
 			authMiddleware(authStore, authSecret)(mux),
 		),
-		"bodh-care",
+		"bodhyanga-care",
 	)
 
 	logger.Printf("care HTTP API listening on %s", *addr)
@@ -484,13 +484,13 @@ func envDefault(key, fallback string) string {
 	return fallback
 }
 
-// demoUsersEnabled reports whether to seed the illustrative demo login. Bodh is
+// demoUsersEnabled reports whether to seed the illustrative demo login. Bodhyanga is
 // a research/reference build, so this defaults to true (the console is usable
-// out of the box). Set BODH_DEMO_USERS=0 (or false/no) to seed nothing — the
+// out of the box). Set BODHYANGA_DEMO_USERS=0 (or false/no) to seed nothing — the
 // correct posture for any non-demo deployment, which must wire its own
 // credential store.
 func demoUsersEnabled() bool {
-	switch strings.ToLower(strings.TrimSpace(os.Getenv("BODH_DEMO_USERS"))) {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("BODHYANGA_DEMO_USERS"))) {
 	case "0", "false", "no":
 		return false
 	default:
@@ -572,7 +572,7 @@ type noopCloser struct{}
 
 func (noopCloser) Close() error { return nil }
 
-// maybeStartLLMPool constructs a pool when BODH_LLM_POOL=1 and returns it
+// maybeStartLLMPool constructs a pool when BODHYANGA_LLM_POOL=1 and returns it
 // (or nil). The pool routes by ModelSpec.Provider: "kronk" specs go through
 // the kronk Factory (which errors with ErrKronkNotBuilt unless the binary
 // was built with -tags kronk); cloud specs go through the standard llm
@@ -582,16 +582,16 @@ func (noopCloser) Close() error { return nil }
 // See docs/operations.md ("Multi-model pool") for the env vars and tuning
 // notes; see docs/ai-features.md for the design.
 func maybeStartLLMPool() *pool.Pool {
-	if os.Getenv("BODH_LLM_POOL") != "1" {
+	if os.Getenv("BODHYANGA_LLM_POOL") != "1" {
 		return nil
 	}
-	maxResident := envInt("BODH_LLM_POOL_MAX", 0)
-	ttl := envDuration("BODH_LLM_POOL_TTL", 0)
+	maxResident := envInt("BODHYANGA_LLM_POOL_MAX", 0)
+	ttl := envDuration("BODHYANGA_LLM_POOL_TTL", 0)
 	logger := observability.NewStdLogger()
 	kronkFactory := pool.NewKronkFactory(pool.KronkOptions{
-		ModelsDir:        os.Getenv("BODH_KRONK_MODELS_DIR"),
-		MaxContextTokens: envInt("BODH_KRONK_CTX", 0),
-		GPULayers:        envInt("BODH_KRONK_GPU_LAYERS", -1),
+		ModelsDir:        os.Getenv("BODHYANGA_KRONK_MODELS_DIR"),
+		MaxContextTokens: envInt("BODHYANGA_KRONK_CTX", 0),
+		GPULayers:        envInt("BODHYANGA_KRONK_GPU_LAYERS", -1),
 	})
 	factory := func(ctx context.Context, spec pool.ModelSpec) (llm.Client, io.Closer, error) {
 		switch spec.Provider {
@@ -655,12 +655,12 @@ func envDuration(key string, def time.Duration) time.Duration {
 }
 
 // loadRAGStore builds the knowledge.Store used by the diagnostician when
-// BODH_KNOWLEDGE_CORPUS is set and an embedder credential is available for
+// BODHYANGA_KNOWLEDGE_CORPUS is set and an embedder credential is available for
 // the supplied provider. Prints a one-line startup log either way.
 func loadRAGStore(ctx context.Context, provider string) knowledge.Store {
-	corpus := os.Getenv("BODH_KNOWLEDGE_CORPUS")
+	corpus := os.Getenv("BODHYANGA_KNOWLEDGE_CORPUS")
 	if corpus == "" {
-		log.Println("[care] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)")
+		log.Println("[care] RAG disabled (BODHYANGA_KNOWLEDGE_CORPUS not set)")
 		return nil
 	}
 	embedder, err := agents.DefaultEmbedderForProvider(provider)
@@ -678,7 +678,7 @@ func loadRAGStore(ctx context.Context, provider string) knowledge.Store {
 		return nil
 	}
 	if store == nil {
-		log.Println("[care] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)")
+		log.Println("[care] RAG disabled (BODHYANGA_KNOWLEDGE_CORPUS not set)")
 		return nil
 	}
 	log.Printf("[care] RAG enabled with %d docs", store.Size())
@@ -698,14 +698,14 @@ func appendUnique(list []string, v string) []string {
 // single-tenant binary today; multi-tenant routing belongs in a future PR
 // that reads tenant_id from request metadata (auth header / JWT claim).
 func defaultTenant() string {
-	if v := os.Getenv("BODH_TENANT_ID"); v != "" {
+	if v := os.Getenv("BODHYANGA_TENANT_ID"); v != "" {
 		return v
 	}
 	return "default"
 }
 
 // selectBackends returns the audit.Recorder and eval.Store the orchestrator
-// should use. When pg is non-nil (BODH_DB_DSN set) the Postgres adapters
+// should use. When pg is non-nil (BODHYANGA_DB_DSN set) the Postgres adapters
 // scoped to the default tenant are returned; otherwise the in-memory
 // implementations are used. The chosen backends are logged at startup so
 // operators can see at a glance whether they're on the demo or production
@@ -763,15 +763,15 @@ func parseLimit(v string) (int, error) {
 	return n, nil
 }
 
-// loadPostgresStore opens the Postgres backend when BODH_DB_DSN is set,
+// loadPostgresStore opens the Postgres backend when BODHYANGA_DB_DSN is set,
 // hydrates the in-memory patients registry from it, and returns the *Store
 // for mirror-writes. When the DSN is empty the file/in-memory backends
 // continue to drive the demo unchanged. A failure to connect logs the error
 // and returns nil — the demo path is always available as a fallback.
 func loadPostgresStore(ctx context.Context, logger interface{ Printf(string, ...any) }, patients *medical.PatientRegistry) *pgstore.Store {
-	dsn := os.Getenv("BODH_DB_DSN")
+	dsn := os.Getenv("BODHYANGA_DB_DSN")
 	if dsn == "" {
-		logger.Printf("[care] persistence backend: in-memory + file (BODH_DB_DSN not set)")
+		logger.Printf("[care] persistence backend: in-memory + file (BODHYANGA_DB_DSN not set)")
 		return nil
 	}
 	store, err := pgstore.New(ctx, dsn)

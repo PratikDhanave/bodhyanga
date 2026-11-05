@@ -1,4 +1,4 @@
-// Command streaming demonstrates LLM token streaming in Bodh.
+// Command streaming demonstrates LLM token streaming in Bodhyanga.
 //
 // It sends a prompt to the configured provider and prints tokens to stdout as
 // they arrive — instead of waiting for the complete response. This dramatically
@@ -30,7 +30,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 func main() {
@@ -149,17 +149,17 @@ func resolveModel(provider, model string) string {
 	}
 	switch provider {
 	case "anthropic":
-		if v := os.Getenv("BODH_ANTHROPIC_MODEL"); v != "" {
+		if v := os.Getenv("BODHYANGA_ANTHROPIC_MODEL"); v != "" {
 			return v
 		}
 		return "claude-sonnet-4-6"
 	case "openai":
-		if v := os.Getenv("BODH_OPENAI_MODEL"); v != "" {
+		if v := os.Getenv("BODHYANGA_OPENAI_MODEL"); v != "" {
 			return v
 		}
 		return "gpt-4o"
 	default: // ollama
-		if v := os.Getenv("BODH_OLLAMA_MODEL"); v != "" {
+		if v := os.Getenv("BODHYANGA_OLLAMA_MODEL"); v != "" {
 			return v
 		}
 		return "llama3.2"

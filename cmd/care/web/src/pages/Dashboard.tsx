@@ -27,15 +27,15 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card title="Recent reviews">
           {reviews.data?.slice(0, 5).map((r) => (
-            <Link key={r.id} to={`/reviews/${r.id}`} className="block py-2 border-b border-bodh-100 last:border-0 hover:bg-bodh-50 -mx-4 px-4">
+            <Link key={r.id} to={`/reviews/${r.id}`} className="block py-2 border-b border-bodhyanga-100 last:border-0 hover:bg-bodhyanga-50 -mx-4 px-4">
               <div className="text-sm font-medium">{r.subject}</div>
-              <div className="text-xs text-bodh-400 mt-0.5">
+              <div className="text-xs text-bodhyanga-400 mt-0.5">
                 {r.kind} · <span className={`badge badge-${r.status}`}>{r.status}</span>
               </div>
             </Link>
           ))}
           {reviews.data && reviews.data.length === 0 && (
-            <p className="text-sm text-bodh-400 py-2">No pending reviews.</p>
+            <p className="text-sm text-bodhyanga-400 py-2">No pending reviews.</p>
           )}
         </Card>
         <Card title="Top open tasks">
@@ -43,15 +43,15 @@ export default function Dashboard() {
             ?.filter((t) => t.status === 'open')
             .slice(0, 5)
             .map((t) => (
-              <div key={t.id} className="py-2 border-b border-bodh-100 last:border-0">
+              <div key={t.id} className="py-2 border-b border-bodhyanga-100 last:border-0">
                 <div className="text-sm font-medium">{t.subject}</div>
-                <div className="text-xs text-bodh-400 mt-0.5">
+                <div className="text-xs text-bodhyanga-400 mt-0.5">
                   {t.patient_id} · <span className={`badge badge-${t.priority === 'urgent' ? 'urgent' : 'normal'}`}>{t.priority}</span>
                 </div>
               </div>
             ))}
           {tasks.data && tasks.data.filter((t) => t.status === 'open').length === 0 && (
-            <p className="text-sm text-bodh-400 py-2">No open tasks.</p>
+            <p className="text-sm text-bodhyanga-400 py-2">No open tasks.</p>
           )}
         </Card>
       </div>
@@ -61,9 +61,9 @@ export default function Dashboard() {
 
 function Stat({ label, value, to, emphasis }: { label: string; value: number | undefined; to: string; emphasis?: boolean }) {
   return (
-    <Link to={to} className={`card hover:bg-bodh-50 ${emphasis ? 'border-amber-300 bg-amber-50' : ''}`}>
+    <Link to={to} className={`card hover:bg-bodhyanga-50 ${emphasis ? 'border-amber-300 bg-amber-50' : ''}`}>
       <div className="card-body">
-        <div className="text-xs uppercase tracking-wide text-bodh-400">{label}</div>
+        <div className="text-xs uppercase tracking-wide text-bodhyanga-400">{label}</div>
         <div className="text-3xl font-semibold mt-2">{value ?? '–'}</div>
       </div>
     </Link>

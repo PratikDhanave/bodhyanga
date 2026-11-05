@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // BreakGlassEvent carries the fields the BreakGlassPolicy hands to its

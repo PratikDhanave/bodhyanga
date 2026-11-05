@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // ---------------------------------------------------------------------------
@@ -101,10 +101,10 @@ func TestNewOPAPolicy_MalformedRego(t *testing.T) {
 
 func TestOPAPolicy_EmptyResultSet(t *testing.T) {
 	// A module that never defines the queried rule.
-	module := `package bodh.test
+	module := `package bodhyanga.test
 import rego.v1
 other_rule := true`
-	p, err := NewOPAPolicy(module, "data.bodh.test.nonexistent")
+	p, err := NewOPAPolicy(module, "data.bodhyanga.test.nonexistent")
 	if err != nil {
 		t.Fatalf("compile error: %v", err)
 	}
@@ -120,10 +120,10 @@ other_rule := true`
 
 func TestOPAPolicy_NonObjectResult(t *testing.T) {
 	// A rule that returns a string, not an object.
-	module := `package bodh.test
+	module := `package bodhyanga.test
 import rego.v1
 result := "not an object"`
-	p, err := NewOPAPolicy(module, "data.bodh.test.result")
+	p, err := NewOPAPolicy(module, "data.bodhyanga.test.result")
 	if err != nil {
 		t.Fatalf("compile error: %v", err)
 	}

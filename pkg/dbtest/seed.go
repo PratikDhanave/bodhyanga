@@ -1,4 +1,4 @@
-// Copyright 2024-2026 Pratik Dhanave and Bodh contributors.
+// Copyright 2024-2026 Pratik Dhanave and Bodhyanga contributors.
 // Portions adapted from github.com/ardanlabs/service/business/sdk/dbtest,
 // Copyright (c) 2018-2026 Ardan Labs, licensed under the Apache License 2.0.
 //
@@ -18,9 +18,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/eval"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // seedFS holds the JSON fixtures under testdata/. The synthetic-only
@@ -32,7 +32,7 @@ import (
 var seedFS embed.FS
 
 // SeedPatients is the default synthetic patient roster. Three records covering
-// the population-health rule paths Bodh exercises in panel-management tests:
+// the population-health rule paths Bodhyanga exercises in panel-management tests:
 //
 //   - patient_test_001: diabetic + hypertensive, A1c above target  -> CDM
 //   - patient_test_002: discharged within 30 days                  -> TCM

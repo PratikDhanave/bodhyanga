@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ func TestPromMiddleware_CountsRequests(t *testing.T) {
 	}
 
 	// Pull the counter from the default registry.
-	mf, err := collectMetric("bodh_http_requests_total")
+	mf, err := collectMetric("bodhyanga_http_requests_total")
 	if err != nil {
 		t.Skip("prometheus registry lookup failed:", err)
 	}
@@ -66,12 +66,12 @@ func TestPromMiddleware_CountsRequests(t *testing.T) {
 			labelMatch(m.GetLabel(), "status", "200") {
 			found = true
 			if v := m.GetCounter().GetValue(); v < 2 {
-				t.Errorf("bodh_http_requests_total{path=/healthz,status=200} = %.0f, want >= 2", v)
+				t.Errorf("bodhyanga_http_requests_total{path=/healthz,status=200} = %.0f, want >= 2", v)
 			}
 		}
 	}
 	if !found {
-		t.Error("no bodh_http_requests_total metric found for path=/healthz")
+		t.Error("no bodhyanga_http_requests_total metric found for path=/healthz")
 	}
 }
 

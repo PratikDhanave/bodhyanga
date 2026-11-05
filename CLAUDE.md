@@ -2,12 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Bodh is a **HIPAA-grade medical AI orchestration platform** written in Go. It implements the
+Bodhyanga is a **HIPAA-grade medical AI orchestration platform** written in Go. It implements the
 Multi-Agent Reference Architecture (MARA) for clinical decision support: intake → test-planning
 → diagnostics → care-plan generation, with full audit trails, human-in-the-loop feedback, and
 LLM-agnostic provider abstraction.
 
-> **Not a medical device.** Bodh is a research/engineering reference, not approved for clinical
+> **Not a medical device.** Bodhyanga is a research/engineering reference, not approved for clinical
 > use. Every file preserves that disclaimer chain. Demo agents use simulated/rule-based inference;
 > all clinical thresholds are illustrative, not guidelines.
 
@@ -21,14 +21,14 @@ them in full — read it before proposing changes that touch orchestration, audi
 1. **Never bypass the HITL gate for clinically consequential actions.** Diagnosis conclusions,
    treatment/discharge recommendations, prior-auth and refill approvals, and outreach on protected
    conditions (42 CFR Part 2) must flow through `agents/human_review.go` → `pkg/hitl.Queue` →
-   clinician decision. This gate is what keeps Bodh from being a regulated medical device.
+   clinician decision. This gate is what keeps Bodhyanga from being a regulated medical device.
 
 2. **Never widen the PHI surface of the audit log.** `pkg/audit` records *enough to reconstruct,
    never enough to leak*: IDs (case/patient/tenant/trace), kinds, timestamps, agent IDs, verdicts,
    redacted reasons — **never** chief complaints, HPI narrative, lab values, med names+doses, or
    free text. The right-to-explanation handler (`cmd/care/explain.go`) inherits this;
    `TestExplainHandler_PHIFreeFieldSelection` asserts forbidden JSON keys are absent. On spans,
-   `bodh.case_id` is always `sha256(caseID)[:8]` — raw MRNs never reach collectors or logs.
+   `bodhyanga.case_id` is always `sha256(caseID)[:8]` — raw MRNs never reach collectors or logs.
 
 3. **Every LLM-backed agent has a deterministic rule-based fallback, and the fallback is the
    contract.** On LLM timeout, a refusal pattern (`pkg/safety.IsRefusal`), or failed grounding
@@ -93,7 +93,7 @@ builds cleanly without those tags.
 ## Module
 
 ```
-module  github.com/PratikDhanave/bodh
+module  github.com/PratikDhanave/bodhyanga
 go      1.26
 ```
 
@@ -107,8 +107,8 @@ Key direct dependencies: `jackc/pgx/v5`, `google/uuid`, `testcontainers-go`,
 ```
 cmd/                  CLI binaries (one subdirectory per binary)
   bench/              SD-Bench regression runner
-  bodhadmin/          admin CLI (migrations, config)
-  bodhctl/            control-plane CLI
+  bodhyangaadmin/          admin CLI (migrations, config)
+  bodhyangactl/            control-plane CLI
   care/               HTTP API + embedded Vue 3 SPA
   caredemo/           CDM/TCM/Panel demo
   demo/               sequential diagnosis walkthrough
@@ -162,23 +162,23 @@ Key variables:
 | `ANTHROPIC_API_KEY` | Required for `-diagnostician=llm-anthropic` |
 | `OPENAI_API_KEY` | Required for `-diagnostician=llm-openai` |
 | `OLLAMA_HOST` | Ollama base URL (default `http://localhost:11434`) |
-| `BODH_ANTHROPIC_MODEL` | Override Anthropic model (default `claude-sonnet-4-6`) |
-| `BODH_OPENAI_MODEL` | Override OpenAI model (default `gpt-4o`) |
-| `BODH_OLLAMA_MODEL` | Override Ollama model (default `llama3.2`) |
+| `BODHYANGA_ANTHROPIC_MODEL` | Override Anthropic model (default `claude-sonnet-4-6`) |
+| `BODHYANGA_OPENAI_MODEL` | Override OpenAI model (default `gpt-4o`) |
+| `BODHYANGA_OLLAMA_MODEL` | Override Ollama model (default `llama3.2`) |
 | `LMNR_PROJECT_API_KEY` | Laminar API key (cloud or self-hosted) |
 | `LMNR_BASE_URL` | Laminar server URL (default `https://api.lmnr.ai`; self-hosted: `http://localhost:8000`) |
-| `BODH_SERVICE_NAME` | OTel service.name (default `bodh`) |
+| `BODHYANGA_SERVICE_NAME` | OTel service.name (default `bodhyanga`) |
 | `DATABASE_URL` | PostgreSQL connection string |
 
 **Security rules:**
 - API keys go in `.env` only — never in tracked files or code
-- PHI: `bodh.case_id` is always `sha256(caseID)[:8]` hex on spans — raw MRNs must never appear in collectors or logs
+- PHI: `bodhyanga.case_id` is always `sha256(caseID)[:8]` hex on spans — raw MRNs must never appear in collectors or logs
 
 ---
 
 ## Architecture
 
-Bodh implements the **MARA pipeline**:
+Bodhyanga implements the **MARA pipeline**:
 
 ```
 Intake Agent → Test Planner → Diagnostician → Care Plan Generator
@@ -250,7 +250,7 @@ make lesson-02 TOOLCALLING_PROVIDER=anthropic
 # Run the Laminar eval against local server
 make laminar-eval LMNR_BASE_URL=http://localhost:8000
 
-# Start local stack (Postgres + Laminar + Bodh)
+# Start local stack (Postgres + Laminar + Bodhyanga)
 make compose-up
 
 # Apply DB migrations

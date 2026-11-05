@@ -1,5 +1,5 @@
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/base/sales/base-sales.yaml
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
 # Namespace pre-labelled with PodSecurity admission "restricted" — every Pod
 # scheduled into this namespace must satisfy the restricted profile (no
@@ -8,7 +8,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: bodh-system
+  name: bodhyanga-system
   labels:
     # enforce = reject Pods that violate restricted; audit + warn surface
     # violations in API responses + audit log even when a different profile

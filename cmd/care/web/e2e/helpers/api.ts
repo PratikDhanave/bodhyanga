@@ -37,7 +37,7 @@ export async function seedReview(
   },
 ): Promise<{ id: string; [key: string]: unknown }> {
   // Retrieve the JWT from the browser's localStorage so we can authenticate.
-  const token = await page.evaluate(() => localStorage.getItem('bodh_jwt'));
+  const token = await page.evaluate(() => localStorage.getItem('bodhyanga_jwt'));
 
   const res = await page.request.post(`${baseURL}/api/reviews`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -66,7 +66,7 @@ export async function seedReview(
 // swallows the error so tests that don't rely on a clean slate still pass.
 // ---------------------------------------------------------------------------
 export async function clearTestData(page: Page, baseURL: string): Promise<void> {
-  const token = await page.evaluate(() => localStorage.getItem('bodh_jwt'));
+  const token = await page.evaluate(() => localStorage.getItem('bodhyanga_jwt'));
   try {
     await page.request.delete(`${baseURL}/api/test/reset`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},

@@ -1,6 +1,6 @@
 // nats_stub.go — placeholder used when the `nats` build tag is NOT set.
 //
-// Bodh's default build does not link the NATS client. This stub exports
+// Bodhyanga's default build does not link the NATS client. This stub exports
 // NewNATSBus so callers can reference it unconditionally; the function
 // returns a descriptive error rather than a usable bus. The real
 // implementation lives in nats.go behind `//go:build nats`.
@@ -17,7 +17,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // NATSBus is a placeholder type in the default build. It carries no state

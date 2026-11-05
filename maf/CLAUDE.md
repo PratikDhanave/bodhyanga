@@ -2,13 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-bodh-maf is the **vertical-slice reimplementation of bodh's MARA clinical pipeline on
+bodhyanga-maf is the **vertical-slice reimplementation of bodhyanga's MARA clinical pipeline on
 `microsoft/agent-framework-go`** (MAF-go, public preview, pinned in go.mod). It exists to
-answer one question with test evidence: can MAF-go carry bodh's safety boundary? Like
-bodh, it is research/education code — **not a medical device, not for clinical use**.
+answer one question with test evidence: can MAF-go carry bodhyanga's safety boundary? Like
+bodhyanga, it is research/education code — **not a medical device, not for clinical use**.
 
 Read first: `README.md` (scope + the 5 exit criteria) → `architecture.md` (design,
-Mermaid diagrams, delivery plan) → `../bodh/session.md` (decision record).
+Mermaid diagrams, delivery plan) → `../bodhyanga/session.md` (decision record).
 
 ## Commands
 
@@ -21,7 +21,7 @@ go test ./pkg/ckptpg -run TestKillResume -v   # durable-HITL integration test
 ## Ground rules
 
 - **MAF-go stays pinned** (`v0.0.0-20260710122455-75d0a647f739`); upgrades are
-  dedicated PRs. bodh is imported via `replace ../bodh` — compliance packages
+  dedicated PRs. bodhyanga is imported via `replace ../bodhyanga` — compliance packages
   (`pkg/governance`, `pkg/audit`, `pkg/eval`, `pkg/phi`, `pkg/protocol`) are the
   authority; never reimplement them here.
 - **Safety invariants** (architecture.md §3): fail-closed governance (policy error =
@@ -45,7 +45,7 @@ pkg/careapi/      HTTP handlers over pipeline.Runner: submit/status/reviews/audi
 pkg/bench/        SD-Bench harness: manifest → run → score → accuracy + baseline gate (specs/005)
 pkg/pipeline/     graph assembly (edges, loop-back, review gate, opt-in translation hop)
 pkg/admit/        THE admission boundary (decorator + agent middleware)
-pkg/auditbridge/  workflow events → bodh audit trail
+pkg/auditbridge/  workflow events → bodhyanga audit trail
 pkg/ckptpg/       Postgres checkpoint.Store
 pkg/evalhook/     terminal-hop eval records
 specs/            Spec Kit artifacts (spec → plan → tasks)
@@ -66,6 +66,6 @@ The safety-boundary slice (specs/001-slice-safety-boundary) is complete; the rep
 grows story by story. Shipped: specs/003-knowledge-rag (RAG grounding), specs/002-fhir-hl7-intake
 (HL7/FHIR front door), specs/004-care-api-runner (HTTP care API), specs/005-sdbench-harness
 (accuracy eval + baseline gate), specs/006-per-case-cost (Pareto cost axis through the
-pipeline — bodh's MAI-DxO cost-aware thesis, reproduced). Each specs/NNN-*/ holds
+pipeline — bodhyanga's MAI-DxO cost-aware thesis, reproduced). Each specs/NNN-*/ holds
 spec.md → plan.md → tasks.md. The originally-planned slice stories are all shipped.
 <!-- SPECKIT END -->

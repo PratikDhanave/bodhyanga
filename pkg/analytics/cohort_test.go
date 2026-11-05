@@ -3,8 +3,8 @@ package analytics
 import (
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/eval"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 func TestSummarizeCases(t *testing.T) {

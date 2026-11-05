@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // newPart2Msg is a test helper that builds a minimal protocol.Message with the

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
 // A missing gold loads fine but is unscored and excluded from the denominator.

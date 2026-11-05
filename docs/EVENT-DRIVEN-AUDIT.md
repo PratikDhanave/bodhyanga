@@ -1,6 +1,6 @@
-# Bodh — Whole-Platform Event-Driven Audit
+# Bodhyanga — Whole-Platform Event-Driven Audit
 
-> Goal: make Bodh *pure event-driven* end-to-end. This audit inventories every
+> Goal: make Bodhyanga *pure event-driven* end-to-end. This audit inventories every
 > surface that is still request/response or fetch-on-mount, defines the target
 > event contracts, and gives a phased migration plan. Generated 2026-08-01 from
 > the live tree.

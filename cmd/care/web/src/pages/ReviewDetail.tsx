@@ -52,14 +52,14 @@ export default function ReviewDetail() {
             <div className="card-body space-y-3 text-sm">
               {data.detail && <p>{data.detail}</p>}
               {data.next_to && (
-                <p className="text-bodh-400 text-xs">
+                <p className="text-bodhyanga-400 text-xs">
                   Resumes to <span className="font-mono">{data.next_to}</span> as <span className="font-mono">{data.next_type}</span>
                 </p>
               )}
               {data.payload && (
                 <div>
-                  <div className="text-xs uppercase tracking-wide text-bodh-400 mb-1">Payload</div>
-                  <pre className="bg-bodh-50 rounded p-3 overflow-x-auto text-xs">{tryPrettyJSON(data.payload)}</pre>
+                  <div className="text-xs uppercase tracking-wide text-bodhyanga-400 mb-1">Payload</div>
+                  <pre className="bg-bodhyanga-50 rounded p-3 overflow-x-auto text-xs">{tryPrettyJSON(data.payload)}</pre>
                 </div>
               )}
             </div>
@@ -70,7 +70,7 @@ export default function ReviewDetail() {
             <div className="card-header">Decision</div>
             <div className="card-body space-y-3 text-sm">
               {!pending && (
-                <p className="text-bodh-400">
+                <p className="text-bodhyanga-400">
                   Decided <span className={`badge badge-${data.status}`}>{data.status}</span>
                   {data.reviewer_id && <> by <span className="font-mono">{data.reviewer_id}</span></>}
                   {data.decided_at && <> at {new Date(data.decided_at).toLocaleString()}</>}
@@ -79,16 +79,16 @@ export default function ReviewDetail() {
               {pending && (
                 <>
                   <label className="block">
-                    <span className="text-xs uppercase tracking-wide text-bodh-400">Reviewer ID</span>
-                    <input value={reviewerId} onChange={(e) => setReviewerId(e.target.value)} className="mt-1 w-full border border-bodh-200 rounded px-2 py-1" />
+                    <span className="text-xs uppercase tracking-wide text-bodhyanga-400">Reviewer ID</span>
+                    <input value={reviewerId} onChange={(e) => setReviewerId(e.target.value)} className="mt-1 w-full border border-bodhyanga-200 rounded px-2 py-1" />
                   </label>
                   <label className="block">
-                    <span className="text-xs uppercase tracking-wide text-bodh-400">Reason (optional)</span>
-                    <textarea value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 w-full border border-bodh-200 rounded px-2 py-1" rows={2} />
+                    <span className="text-xs uppercase tracking-wide text-bodhyanga-400">Reason (optional)</span>
+                    <textarea value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 w-full border border-bodhyanga-200 rounded px-2 py-1" rows={2} />
                   </label>
                   <label className="block">
-                    <span className="text-xs uppercase tracking-wide text-bodh-400">Modified payload (if approving with mods)</span>
-                    <textarea value={modification} onChange={(e) => setModification(e.target.value)} className="mt-1 w-full border border-bodh-200 rounded px-2 py-1 font-mono text-xs" rows={4} />
+                    <span className="text-xs uppercase tracking-wide text-bodhyanga-400">Modified payload (if approving with mods)</span>
+                    <textarea value={modification} onChange={(e) => setModification(e.target.value)} className="mt-1 w-full border border-bodhyanga-200 rounded px-2 py-1 font-mono text-xs" rows={4} />
                   </label>
                   <div className="flex flex-col gap-2">
                     <button disabled={submitting} onClick={() => decide('approved')} className="btn">Approve</button>

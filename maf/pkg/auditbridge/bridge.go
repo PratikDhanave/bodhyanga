@@ -1,4 +1,4 @@
-// Package auditbridge maps MAF workflow events onto bodh's append-only audit
+// Package auditbridge maps MAF workflow events onto bodhyanga's append-only audit
 // trail (architecture.md §4). The bridge writes telemetry rows — hop
 // executions, failures, checkpoints, finalization. Admission rows (allow /
 // deny) are written synchronously by pkg/admit inside the hop itself;
@@ -9,10 +9,10 @@ package auditbridge
 import (
 	"errors"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 	"github.com/microsoft/agent-framework-go/workflow"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/admit"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/admit"
 )
 
 // Bridge consumes one run's event stream for one case.

@@ -51,8 +51,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/PratikDhanave/bodh/pkg/agent/computeruse"
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent/computeruse"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 const defaultMessage = "Find the current Go version by visiting https://go.dev/dl/ and tell me the latest stable release"

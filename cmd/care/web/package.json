@@ -1,9 +1,9 @@
 {
-  "name": "bodh-web",
+  "name": "bodhyanga-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Bodh clinician console (Vite + React + TypeScript + Tailwind).",
+  "description": "Bodhyanga clinician console (Vite + React + TypeScript + Tailwind).",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

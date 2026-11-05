@@ -31,8 +31,8 @@ func TestORMRoundTrip(t *testing.T) {
 	if parsed.MSH.ControlID != orig.MSH.ControlID {
 		t.Errorf("control id %q want %q", parsed.MSH.ControlID, orig.MSH.ControlID)
 	}
-	if parsed.MSH.SendingApp != "BODH" {
-		t.Errorf("sending app %q want BODH", parsed.MSH.SendingApp)
+	if parsed.MSH.SendingApp != "BODHYANGA" {
+		t.Errorf("sending app %q want BODHYANGA", parsed.MSH.SendingApp)
 	}
 	if parsed.MSH.VersionID != "2.5" {
 		t.Errorf("version %q want 2.5", parsed.MSH.VersionID)
@@ -144,8 +144,8 @@ func TestORMParseInline(t *testing.T) {
 	//   [1]=1 [2]=CASE-INLINE [3]="" [4]=58410-2^CBC panel^LN [5..6]="" [7]=ts
 	//   [8..15]="" [16]=DR.SMITH [17..24]="" [25]=O [26]="" [27]=R
 	obrRaw := "OBR|1|CASE-INLINE||58410-2^CBC panel^LN|||" + ts + "|||||||||DR.SMITH|||||||||O||R"
-	raw := "MSH|^~\\&|BODH|BODH|EHR|EHR|" + ts + "||ORM^O01^ORM_O01|ORM-INLINE|P|2.5\r" +
-		"PID|1||MRN-INLINE^^^BODH^MR||DOE^JANE||19850315|F\r" +
+	raw := "MSH|^~\\&|BODHYANGA|BODHYANGA|EHR|EHR|" + ts + "||ORM^O01^ORM_O01|ORM-INLINE|P|2.5\r" +
+		"PID|1||MRN-INLINE^^^BODHYANGA^MR||DOE^JANE||19850315|F\r" +
 		orcRaw + "\r" +
 		obrRaw + "\r"
 
@@ -212,7 +212,7 @@ func TestORMParseInline(t *testing.T) {
 
 // TestORMWrongMessageType ensures ParseORM rejects non-ORM messages cleanly.
 func TestORMWrongMessageType(t *testing.T) {
-	raw := "MSH|^~\\&|LABSYS|MERCY|BODH|MERCY|20250524160000||ORU^R01^ORU_R01|LAB-WRONG|P|2.5\r" +
+	raw := "MSH|^~\\&|LABSYS|MERCY|BODHYANGA|MERCY|20250524160000||ORU^R01^ORU_R01|LAB-WRONG|P|2.5\r" +
 		"PID|1||MRN99999^^^MERCY^MR\r"
 	_, err := ParseORM(raw)
 	if err == nil {
@@ -225,8 +225,8 @@ func TestORMWrongMessageType(t *testing.T) {
 
 // TestORMWrongTrigger ensures ParseORM rejects ORM messages with unexpected trigger events.
 func TestORMWrongTrigger(t *testing.T) {
-	raw := "MSH|^~\\&|BODH|BODH|EHR|EHR|20250524150000||ORM^O02|ORM-BADTRIG|P|2.5\r" +
-		"PID|1||MRN11111^^^BODH^MR\r" +
+	raw := "MSH|^~\\&|BODHYANGA|BODHYANGA|EHR|EHR|20250524150000||ORM^O02|ORM-BADTRIG|P|2.5\r" +
+		"PID|1||MRN11111^^^BODHYANGA^MR\r" +
 		"ORC|NW|CASE-B\r" +
 		"OBR|1|CASE-B||58410-2^CBC\r"
 	_, err := ParseORM(raw)
@@ -240,7 +240,7 @@ func TestORMWrongTrigger(t *testing.T) {
 
 // TestORMMissingPID ensures ParseORM returns an error when PID is absent.
 func TestORMMissingPID(t *testing.T) {
-	raw := "MSH|^~\\&|BODH|BODH|EHR|EHR|20250524150000||ORM^O01^ORM_O01|ORM-NOPID|P|2.5\r" +
+	raw := "MSH|^~\\&|BODHYANGA|BODHYANGA|EHR|EHR|20250524150000||ORM^O01^ORM_O01|ORM-NOPID|P|2.5\r" +
 		"ORC|NW|CASE-X\r" +
 		"OBR|1|CASE-X||58410-2^CBC\r"
 	_, err := ParseORM(raw)
@@ -251,8 +251,8 @@ func TestORMMissingPID(t *testing.T) {
 
 // TestORMMissingORC ensures ParseORM returns an error when ORC is absent.
 func TestORMMissingORC(t *testing.T) {
-	raw := "MSH|^~\\&|BODH|BODH|EHR|EHR|20250524150000||ORM^O01^ORM_O01|ORM-NOORC|P|2.5\r" +
-		"PID|1||MRN-NOORC^^^BODH^MR\r" +
+	raw := "MSH|^~\\&|BODHYANGA|BODHYANGA|EHR|EHR|20250524150000||ORM^O01^ORM_O01|ORM-NOORC|P|2.5\r" +
+		"PID|1||MRN-NOORC^^^BODHYANGA^MR\r" +
 		"OBR|1|CASE-Y||58410-2^CBC\r"
 	_, err := ParseORM(raw)
 	if err == nil {
@@ -265,8 +265,8 @@ func TestORMMissingORC(t *testing.T) {
 
 // TestORMMissingOBR ensures ParseORM returns an error when OBR is absent.
 func TestORMMissingOBR(t *testing.T) {
-	raw := "MSH|^~\\&|BODH|BODH|EHR|EHR|20250524150000||ORM^O01^ORM_O01|ORM-NOOBR|P|2.5\r" +
-		"PID|1||MRN-NOOBR^^^BODH^MR\r" +
+	raw := "MSH|^~\\&|BODHYANGA|BODHYANGA|EHR|EHR|20250524150000||ORM^O01^ORM_O01|ORM-NOOBR|P|2.5\r" +
+		"PID|1||MRN-NOOBR^^^BODHYANGA^MR\r" +
 		"ORC|NW|CASE-Z\r"
 	_, err := ParseORM(raw)
 	if err == nil {

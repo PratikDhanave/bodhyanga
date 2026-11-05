@@ -1,6 +1,6 @@
-# Contributing to Bodh
+# Contributing to Bodhyanga
 
-Thanks for being here. Bodh is a research and engineering reference for medical multi-agent systems — every contribution helps the field even when it doesn't ship into a hospital.
+Thanks for being here. Bodhyanga is a research and engineering reference for medical multi-agent systems — every contribution helps the field even when it doesn't ship into a hospital.
 
 > Before you start: this is **not** clinical software. Nothing you contribute will be deployed for patient care without independent regulatory and clinical validation. If that bar matters to you, contribute confidently — the architecture is designed to support it; getting there is the work.
 
@@ -30,8 +30,8 @@ Thanks for being here. Bodh is a research and engineering reference for medical 
 ## Setup
 
 ```bash
-git clone https://github.com/PratikDhanave/bodh.git
-cd bodh
+git clone https://github.com/PratikDhanave/bodhyanga.git
+cd bodhyanga
 go version            # 1.22+ required, 1.26 recommended
 go test ./...         # confirm green baseline before changing anything
 make ci               # vet + test + govulncheck
@@ -75,13 +75,13 @@ Patterns to discuss in an issue **before** writing:
 ## Project layout
 
 ```
-bodh/
+bodhyanga/
 ├── cmd/                     entry points
 │   ├── demo/                Sequential diagnosis
 │   ├── caredemo/            Care services
 │   ├── care/                HTTP API server
 │   ├── bench/               SD-Bench runner
-│   ├── bodhctl/             Operator CLI
+│   ├── bodhyangactl/             Operator CLI
 │   └── export-hitl-feedback/  HITL feedback export
 ├── agents/                  agent implementations
 ├── pkg/                     reusable packages
@@ -172,8 +172,8 @@ package agents
 import (
     "context"
 
-    "github.com/PratikDhanave/bodh/pkg/agent"
-    "github.com/PratikDhanave/bodh/pkg/medical"
+    "github.com/PratikDhanave/bodhyanga/pkg/agent"
+    "github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 type YourAgent struct {
@@ -228,7 +228,7 @@ func (a *YourAgent) HandleMessage(
 package agents
 ```
 
-Bodh uses split doc files (one per source file) so `go doc` finds them and so each file's purpose is documented in isolation.
+Bodhyanga uses split doc files (one per source file) so `go doc` finds them and so each file's purpose is documented in isolation.
 
 ### 3. Write the test
 
@@ -241,9 +241,9 @@ import (
     "context"
     "testing"
 
-    "github.com/PratikDhanave/bodh/pkg/agent"
-    "github.com/PratikDhanave/bodh/pkg/observability"
-    "github.com/PratikDhanave/bodh/pkg/orchestration"
+    "github.com/PratikDhanave/bodhyanga/pkg/agent"
+    "github.com/PratikDhanave/bodhyanga/pkg/observability"
+    "github.com/PratikDhanave/bodhyanga/pkg/orchestration"
 )
 
 func TestYourAgent_HandleMessage(t *testing.T) {
@@ -476,7 +476,7 @@ The diagrams are the front door for newcomers — stale diagrams confuse more th
 
 Open an issue with:
 
-- Bodh git SHA / version
+- Bodhyanga git SHA / version
 - Go version
 - Reproduction steps (ideally a failing test or a `curl` against `cmd/care`)
 - Expected vs actual behaviour
@@ -498,7 +498,7 @@ We'll acknowledge within 48 hours and coordinate disclosure. For HIPAA-relevant 
 
 ## License and CLA
 
-Bodh is open source. By contributing, you agree your contributions are licensed under the same terms as the project (see [LICENSE](LICENSE)). No separate CLA is required today.
+Bodhyanga is open source. By contributing, you agree your contributions are licensed under the same terms as the project (see [LICENSE](LICENSE)). No separate CLA is required today.
 
 ---
 

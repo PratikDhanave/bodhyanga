@@ -30,8 +30,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 func main() {
@@ -123,11 +123,11 @@ func resolveModel(provider, model string) string {
 	}
 	switch provider {
 	case "anthropic":
-		return envDefault("BODH_ANTHROPIC_MODEL", "claude-sonnet-4-6")
+		return envDefault("BODHYANGA_ANTHROPIC_MODEL", "claude-sonnet-4-6")
 	case "openai":
-		return envDefault("BODH_OPENAI_MODEL", "gpt-4o")
+		return envDefault("BODHYANGA_OPENAI_MODEL", "gpt-4o")
 	case "ollama":
-		return envDefault("BODH_OLLAMA_MODEL", "llama3.2")
+		return envDefault("BODHYANGA_OLLAMA_MODEL", "llama3.2")
 	default:
 		return "unknown"
 	}

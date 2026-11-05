@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/evals/laminar"
+	"github.com/PratikDhanave/bodhyanga/pkg/evals/laminar"
 )
 
 // fakeLaminar is a minimal stand-in for the Laminar REST API.

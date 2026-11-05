@@ -27,7 +27,7 @@ import (
 
 	// observability is imported only for the Logger interface; LoggerWrapper
 	// is a decorator around any observability.Logger implementation.
-	"github.com/PratikDhanave/bodh/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
 )
 
 // Pattern is one named regex with its replacement.
@@ -162,7 +162,7 @@ func (r *Redactor) Add(p Pattern) {
 //
 // Wire this in main.go / cmd/care/main.go:
 //
-//	rawLogger := observability.NewStdLogger("bodh")
+//	rawLogger := observability.NewStdLogger("bodhyanga")
 //	logger    := &phi.LoggerWrapper{Redactor: phi.NewRedactor(), Inner: rawLogger}
 //	orch.SetLogger(logger)
 type LoggerWrapper struct {

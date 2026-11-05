@@ -1,7 +1,7 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/app/sdk/mid/otel.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 //
-// Bodh modifications vs upstream:
+// Bodhyanga modifications vs upstream:
 //   - No OTel trace.Tracer dep at the boundary. The real OTel span
 //     creation lives in pkg/observability/otel behind a build tag
 //     (see AGENTS.md #12). This middleware stamps a request_id (uuid)
@@ -18,7 +18,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/PratikDhanave/bodh/pkg/web"
+	"github.com/PratikDhanave/bodhyanga/pkg/web"
 	"github.com/google/uuid"
 )
 
@@ -28,7 +28,7 @@ import (
 const HeaderRequestID = "X-Request-ID"
 
 // Otel returns the middleware. It is named Otel for parity with the
-// upstream chain even though Bodh does not pull in the OTel SDK by
+// upstream chain even though Bodhyanga does not pull in the OTel SDK by
 // default. When the binary is built with -tags otel the wrapped span
 // is also created (in pkg/observability/otel) and the request_id is
 // attached as a span attribute.

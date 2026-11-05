@@ -17,7 +17,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/eval/drift"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval/drift"
 )
 
 // benchResult mirrors the per-case entry emitted by cmd/bench -json.

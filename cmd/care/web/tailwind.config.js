@@ -5,7 +5,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        bodh: {
+        bodhyanga: {
           50: '#f5f7fa',
           100: '#e5ecf3',
           200: '#c9d6e3',

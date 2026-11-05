@@ -1,7 +1,7 @@
 // Adapted from upstream ardanlabs/service patterns for genkey + gentoken.
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh:
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga:
 //   - Single binary (not separate cmd/genkey + cmd/gentoken).
-//   - Token issue takes a -role flag (repeatable) for Bodh's role catalogue.
+//   - Token issue takes a -role flag (repeatable) for Bodhyanga's role catalogue.
 //   - No userbus; subjects are opaque strings, not registered users.
 
 package main
@@ -21,13 +21,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
-	"github.com/PratikDhanave/bodh/pkg/auth"
+	"github.com/PratikDhanave/bodhyanga/pkg/auth"
 )
 
-// runKeys dispatches `bodhadmin keys ...` subcommands.
+// runKeys dispatches `bodhyangaadmin keys ...` subcommands.
 func runKeys(args []string) {
 	if len(args) == 0 {
-		log.Fatalf("usage: bodhadmin keys generate|list")
+		log.Fatalf("usage: bodhyangaadmin keys generate|list")
 	}
 	switch args[0] {
 	case "generate":
@@ -109,10 +109,10 @@ func runKeysList(args []string) {
 	}
 }
 
-// runToken dispatches `bodhadmin token ...` subcommands.
+// runToken dispatches `bodhyangaadmin token ...` subcommands.
 func runToken(args []string) {
 	if len(args) == 0 {
-		log.Fatalf("usage: bodhadmin token issue ...")
+		log.Fatalf("usage: bodhyangaadmin token issue ...")
 	}
 	switch args[0] {
 	case "issue":
@@ -132,7 +132,7 @@ func (r *roleList) Set(v string) error {
 }
 
 // runTokenIssue mints a signed JWT for the supplied subject + tenant +
-// roles. The token's iss matches BODH_AUTH_ISSUER (or the -issuer flag);
+// roles. The token's iss matches BODHYANGA_AUTH_ISSUER (or the -issuer flag);
 // it must match the cmd/care binary's configured issuer or Parse fails.
 func runTokenIssue(args []string) {
 	fs := flag.NewFlagSet("token issue", flag.ExitOnError)
@@ -141,7 +141,7 @@ func runTokenIssue(args []string) {
 	tenant := fs.String("tenant", "default", "tenant_id claim")
 	subject := fs.String("subject", "", "sub claim; default: random uuid")
 	ttl := fs.Duration("ttl", time.Hour, "token TTL")
-	issuer := fs.String("issuer", "bodh", "iss claim (must match BODH_AUTH_ISSUER)")
+	issuer := fs.String("issuer", "bodhyanga", "iss claim (must match BODHYANGA_AUTH_ISSUER)")
 	var roles roleList
 	fs.Var(&roles, "role", "role to include in claims (repeatable)")
 	_ = fs.Parse(args)

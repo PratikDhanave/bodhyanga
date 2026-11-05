@@ -1,6 +1,6 @@
-# Bodh — HTTP API Reference
+# Bodhyanga — HTTP API Reference
 
-Bodh's HTTP surface lives in `cmd/care`. Start it with `go run ./cmd/care -addr=:8088`.
+Bodhyanga's HTTP surface lives in `cmd/care`. Start it with `go run ./cmd/care -addr=:8088`.
 
 > **No authentication is enforced today; do not put PHI through this binary.** The auth target architecture (SMART on FHIR + OIDC + mTLS) is described in [docs/compliance.md](compliance.md#authentication).
 
@@ -30,8 +30,8 @@ Bodh's HTTP surface lives in `cmd/care`. Start it with `go run ./cmd/care -addr=
 - **Body format:** JSON unless otherwise noted (HL7 v2 uses `application/hl7-v2` or `text/plain`).
 - **Timestamps:** RFC3339 / ISO 8601 with timezone, UTC preferred.
 - **IDs:** Opaque strings. `case_id` and `patient_id` are routing tokens, **never MRNs**.
-- **Tenant:** Single-tenant today (set by `BODH_TENANT_ID` env var at boot). Multi-tenant per-request routing is planned.
-- **Backends:** When `BODH_DB_DSN` is set, persistence is Postgres-backed (audit, eval, patient registry). Otherwise in-memory.
+- **Tenant:** Single-tenant today (set by `BODHYANGA_TENANT_ID` env var at boot). Multi-tenant per-request routing is planned.
+- **Backends:** When `BODHYANGA_DB_DSN` is set, persistence is Postgres-backed (audit, eval, patient registry). Otherwise in-memory.
 
 ---
 
@@ -247,7 +247,7 @@ Native HL7 v2.x ADT message ingest (PR #8).
 
 **Example body:**
 ```
-MSH|^~\&|ADTSYS|MERCY|BODH|MERCY|20260524143000||ADT^A01|MSG00001|P|2.5
+MSH|^~\&|ADTSYS|MERCY|BODHYANGA|MERCY|20260524143000||ADT^A01|MSG00001|P|2.5
 EVN|A01|20260524143000
 PID|||MR12345^^^MERCY^MR||REDACTED^REDACTED||19540101|F|||...
 PV1||I|MERCY^EDOBS^01|||||||MED||||||...
@@ -257,14 +257,14 @@ DG1|1|I10|I50.23^Acute on chronic systolic heart failure^I10|||W
 **Response (success):** 200 OK with the AA ACK in the body:
 
 ```
-MSH|^~\&|BODH|MERCY|ADTSYS|MERCY|20260524143005||ACK^A01^ACK|ACK-MSG00001|P|2.5
+MSH|^~\&|BODHYANGA|MERCY|ADTSYS|MERCY|20260524143005||ACK^A01^ACK|ACK-MSG00001|P|2.5
 MSA|AA|MSG00001|
 ```
 
 **Response (parse / mapping failure):** 400 Bad Request with the AE ACK:
 
 ```
-MSH|^~\&|BODH|MERCY|ADTSYS|MERCY|<now>||ACK^?^ACK|ACK-MSG-ERR|P|2.5
+MSH|^~\&|BODHYANGA|MERCY|ADTSYS|MERCY|<now>||ACK^?^ACK|ACK-MSG-ERR|P|2.5
 MSA|AE|<original_control_id>|<diagnostic_text>
 ```
 

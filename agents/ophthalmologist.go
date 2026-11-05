@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
 )
 
 // OphthalmologistAgent performs rule-based diabetic retinopathy staging,

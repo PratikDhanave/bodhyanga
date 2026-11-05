@@ -3,15 +3,15 @@ package intake
 import (
 	"encoding/json"
 
-	"github.com/PratikDhanave/bodh/pkg/fhir"
+	"github.com/PratikDhanave/bodhyanga/pkg/fhir"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
-// bundle is the minimal FHIR R4 Bundle envelope. bodh/pkg/fhir has no Bundle
+// bundle is the minimal FHIR R4 Bundle envelope. bodhyanga/pkg/fhir has no Bundle
 // type (it deals in individual resources), so this thin decoder is the only new
 // parser in the feature: it splits a bundle into resources and hands each to
-// bodh's resource types (imported unchanged).
+// bodhyanga's resource types (imported unchanged).
 type bundle struct {
 	ResourceType string `json:"resourceType"`
 	Entry        []struct {

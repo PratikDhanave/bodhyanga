@@ -1,4 +1,4 @@
-// Copyright 2024-2026 Pratik Dhanave and Bodh contributors.
+// Copyright 2024-2026 Pratik Dhanave and Bodhyanga contributors.
 // Portions adapted from github.com/ardanlabs/service/business/sdk/dbtest,
 // Copyright (c) 2018-2026 Ardan Labs, licensed under the Apache License 2.0.
 //
@@ -30,7 +30,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 
-	"github.com/PratikDhanave/bodh/pkg/persistence/postgres"
+	"github.com/PratikDhanave/bodhyanga/pkg/persistence/postgres"
 )
 
 // containerHandle is the per-process Postgres testcontainer and the migrated
@@ -41,7 +41,7 @@ import (
 // Tenant isolation between concurrent tests is provided by RLS + a unique
 // tenant_id per NewDB call, not by separate databases. This is the key
 // adaptation from ardanlabs/service's design (which creates a new database
-// per test): Bodh's BYPASSRLS sanity check requires a non-superuser app role
+// per test): Bodhyanga's BYPASSRLS sanity check requires a non-superuser app role
 // with RLS, and tearing that down per test would dominate the runtime.
 type containerHandle struct {
 	store *postgres.Store
@@ -100,9 +100,9 @@ func startContainerOnce() (*containerHandle, error) {
 	defer cancel()
 
 	c, err := tcpostgres.Run(ctx, "postgres:16-alpine",
-		tcpostgres.WithDatabase("bodh"),
-		tcpostgres.WithUsername("bodh"),
-		tcpostgres.WithPassword("bodh"),
+		tcpostgres.WithDatabase("bodhyanga"),
+		tcpostgres.WithUsername("bodhyanga"),
+		tcpostgres.WithPassword("bodhyanga"),
 		tcpostgres.BasicWaitStrategies(),
 		tcpostgres.WithSQLDriver("pgx"),
 	)
@@ -124,7 +124,7 @@ func startContainerOnce() (*containerHandle, error) {
 	}
 
 	// First open: as the owner role, to run migrations (which include
-	// CREATE ROLE bodh_app and the RLS policy DDL).
+	// CREATE ROLE bodhyanga_app and the RLS policy DDL).
 	migrator, err := postgres.New(ctx, ownerDSN)
 	if err != nil {
 		_ = c.Terminate(context.Background())
@@ -132,9 +132,9 @@ func startContainerOnce() (*containerHandle, error) {
 	}
 	migrator.Close()
 
-	// Real open: as bodh_app so RLS policies actually apply (the owner role
+	// Real open: as bodhyanga_app so RLS policies actually apply (the owner role
 	// in the testcontainers image has BYPASSRLS).
-	appDSN := rewriteUser(ownerDSN, "bodh_app", "bodh_app")
+	appDSN := rewriteUser(ownerDSN, "bodhyanga_app", "bodhyanga_app")
 	store, err := postgres.New(ctx, appDSN)
 	if err != nil {
 		_ = c.Terminate(context.Background())
@@ -196,7 +196,7 @@ func NewDB(t *testing.T) *DB {
 }
 
 // AssertNoBypassRLS fails the test if the application role would skip RLS
-// policies. The harness mints bodh_app NOBYPASSRLS in the migrations, but
+// policies. The harness mints bodhyanga_app NOBYPASSRLS in the migrations, but
 // some Postgres images / Docker hosts pre-create the role with BYPASSRLS;
 // the migrations strip it explicitly. If this assertion ever fails, the
 // tenant-isolation tests are false positives until it's fixed.
@@ -236,11 +236,11 @@ func Cleanup(t *testing.T, db *DB) {
 // table. Used by Cleanup and by the per-test t.Cleanup hook.
 //
 // Wipe DELETEs rather than TRUNCATEs because TRUNCATE on a row-level-secured
-// table requires either BYPASSRLS or table-owner privileges; the bodh_app
+// table requires either BYPASSRLS or table-owner privileges; the bodhyanga_app
 // role has neither. DELETE under RLS naturally constrains the rows to this
 // tenant — the policy USING clause does the filtering for us.
 //
-// audit_events is append-only at the GRANT level (bodh_app has SELECT,
+// audit_events is append-only at the GRANT level (bodhyanga_app has SELECT,
 // INSERT only). To wipe audit rows we momentarily borrow the migrations role
 // — but we deliberately do NOT do that here, because the application path
 // must never delete audit rows. Audit events written by a synthetic-tenant

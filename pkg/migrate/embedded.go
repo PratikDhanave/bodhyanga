@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@ import (
 	"io/fs"
 )
 
-// rawFS embeds Bodh's canonical migration set. Files live in
+// rawFS embeds Bodhyanga's canonical migration set. Files live in
 // pkg/migrate/sql/ at NNNN_description.sql.
 //
 //go:embed sql/*.sql
@@ -21,7 +21,7 @@ var rawFS embed.FS
 
 // FS returns the embedded migration set rooted at the SQL directory,
 // so callers see a flat fs.FS with NNNN_description.sql at the root.
-// Use this for cmd/care + cmd/bodhadmin; tests that want failure
+// Use this for cmd/care + cmd/bodhyangaadmin; tests that want failure
 // scenarios pass their own fs.FS into Up directly.
 func FS() fs.FS {
 	sub, err := fs.Sub(rawFS, "sql")

@@ -1,7 +1,7 @@
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/dev/sales/dev-sales-configmap.yaml
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
-# Non-secret runtime configuration for the Bodh care HTTP server. Secrets
+# Non-secret runtime configuration for the Bodhyanga care HTTP server. Secrets
 # (DB DSN, LLM provider API keys) live in Secret resources or external secret
 # stores (GKE Secret Manager CSI driver, AWS Secrets Manager, Vault Agent).
 # This ConfigMap captures only inputs that are safe to read at the K8s API
@@ -9,22 +9,22 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: bodh-care-config
+  name: bodhyanga-care-config
 data:
   # HTTP listen address inside the Pod. Service maps :80 -> :8088.
-  BODH_LISTEN_ADDR: ":8088"
+  BODHYANGA_LISTEN_ADDR: ":8088"
   # Default diagnostician — overlays override per environment (dev: ollama,
   # prod: llm-anthropic). The rule-based fallback ships in the binary.
-  BODH_DIAGNOSTICIAN: "rule"
+  BODHYANGA_DIAGNOSTICIAN: "rule"
   # RAG corpus path inside the container (mounted from a ConfigMap or PVC
   # in production; baked into the image for the demo).
-  BODH_KNOWLEDGE_CORPUS: "/data/knowledge/corpus.json"
+  BODHYANGA_KNOWLEDGE_CORPUS: "/data/knowledge/corpus.json"
   # Audit log sink. Production replaces with an external WORM sink path
   # mounted via PVC; default ships the FileStore fallback.
-  BODH_AUDIT_SINK: "/var/lib/bodh/audit.log"
+  BODHYANGA_AUDIT_SINK: "/var/lib/bodhyanga/audit.log"
   # OTel export is build-tag gated (//go:build otel). Set to "1" only in
   # images built with -tags otel — see zarf/docker/Dockerfile.care.
-  BODH_OTEL_EXPORT: "0"
-  BODH_OTEL_ENDPOINT: "http://tempo:4318"
+  BODHYANGA_OTEL_EXPORT: "0"
+  BODHYANGA_OTEL_ENDPOINT: "http://tempo:4318"
   # Log level — debug only in dev overlays.
-  BODH_LOG_LEVEL: "info"
+  BODHYANGA_LOG_LEVEL: "info"

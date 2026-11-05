@@ -1,4 +1,4 @@
-// Package audit is the immutable, append-only audit log Bodh writes for every
+// Package audit is the immutable, append-only audit log Bodhyanga writes for every
 // message, governance decision, and HITL review decision.
 //
 // HIPAA §164.312(b) requires "hardware, software, and procedural mechanisms
@@ -21,10 +21,10 @@ import (
 	// governance is imported only for its PolicyResult shape — this package
 	// must not call governance evaluators directly; that would invert the
 	// dependency. The orchestrator builds the Event, audit just records it.
-	"github.com/PratikDhanave/bodh/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
 	// protocol.Message is the only PHI-bearing payload we ever see; the
 	// FromMessage helper is the chokepoint that strips it down to safe fields.
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 	// google/uuid is used solely for Event.ID generation. UUIDv4 is sufficient
 	// here: audit IDs are not security tokens, they are correlation handles
 	// looked up by investigators alongside MessageID/CaseID.
@@ -72,7 +72,7 @@ const (
 // Event is one row in the audit log. Field selection is deliberate: enough to
 // reconstruct who did what when, never enough to leak PHI on its own. See
 // docs/governance.md § Audit events for the "enough to reconstruct, never
-// enough to leak" framing, and bodh-linkedin/06-audit-log-design.md for the
+// enough to leak" framing, and bodhyanga-linkedin/06-audit-log-design.md for the
 // design rationale write-up.
 //
 // What is DELIBERATELY ABSENT from this struct (and must stay absent):
@@ -128,7 +128,7 @@ type Event struct {
 	// db/migrations/0002_rls.sql, wired by PR #10).
 	TenantID string `json:"tenant_id,omitempty"`
 
-	// PatientID is intentionally OPAQUE — a Bodh-internal opaque token
+	// PatientID is intentionally OPAQUE — a Bodhyanga-internal opaque token
 	// (e.g. "pt-001"), never the MRN. The MRN lives in the persistence
 	// layer's PHI columns behind separate access control.
 	PatientID string `json:"patient_id,omitempty"`

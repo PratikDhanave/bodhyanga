@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 #
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/docker/dockerfile.sales
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
 # Multistage build for cmd/care. The repo-root Dockerfile mirrors this shape
 # so the CI Docker build does not break — this one lives under zarf/docker/
@@ -42,7 +42,7 @@ ARG BUILD_TAG=dev
 
 COPY --from=build_care --chown=65532:65532 /out/care /care
 # Bundle the shipped RAG corpus + bench manifest. Real deployments mount
-# their own corpus via ConfigMap or PVC and override BODH_KNOWLEDGE_CORPUS.
+# their own corpus via ConfigMap or PVC and override BODHYANGA_KNOWLEDGE_CORPUS.
 COPY --from=build_care --chown=65532:65532 /service/data /data
 
 EXPOSE 8088
@@ -51,9 +51,9 @@ ENTRYPOINT ["/care"]
 CMD ["-addr=:8088"]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
-      org.opencontainers.image.title="bodh-care" \
-      org.opencontainers.image.description="Bodh care HTTP API + clinician SPA" \
+      org.opencontainers.image.title="bodhyanga-care" \
+      org.opencontainers.image.description="Bodhyanga care HTTP API + clinician SPA" \
       org.opencontainers.image.authors="Pratik Dhanave" \
-      org.opencontainers.image.source="https://github.com/PratikDhanave/bodh" \
+      org.opencontainers.image.source="https://github.com/PratikDhanave/bodhyanga" \
       org.opencontainers.image.revision="${BUILD_TAG}" \
       org.opencontainers.image.licenses="Apache-2.0"

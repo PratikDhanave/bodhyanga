@@ -52,8 +52,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/agent/selfcorrect"
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent/selfcorrect"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 const defaultTask = "Write a Go function that reverses a string"

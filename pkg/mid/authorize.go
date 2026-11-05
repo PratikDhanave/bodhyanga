@@ -1,7 +1,7 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/app/sdk/mid/authorize.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh:
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga:
 //   - stdlib net/http (not the upstream web.MidFunc).
-//   - No homebus / productbus / userbus dependencies; Bodh's resources
+//   - No homebus / productbus / userbus dependencies; Bodhyanga's resources
 //     (explain / reviews / audit) gate on tenant + method + role only.
 //   - Per-route Rego module selection: each Authorize* function pins the
 //     module + query so the route table reads cleanly in cmd/care/main.go.
@@ -12,15 +12,15 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/PratikDhanave/bodh/pkg/auth"
+	"github.com/PratikDhanave/bodhyanga/pkg/auth"
 )
 
-// AuthorizeExplain wraps a handler with the bodh.explain.allow Rego rule.
+// AuthorizeExplain wraps a handler with the bodhyanga.explain.allow Rego rule.
 // On the request path the middleware reads Claims from context (must come
 // AFTER Authenticate), builds the Rego input with the configured
 // resource tenant, and either passes through or returns 403.
 //
-// resourceTenantID is the binary's BODH_TENANT_ID — single-tenant
+// resourceTenantID is the binary's BODHYANGA_TENANT_ID — single-tenant
 // binaries pin it at boot; multi-tenant binaries would resolve per
 // request from path / header.
 func AuthorizeExplain(a *auth.Authenticator, resourceTenantID string) func(http.Handler) http.Handler {
@@ -33,7 +33,7 @@ func AuthorizeExplain(a *auth.Authenticator, resourceTenantID string) func(http.
 	})
 }
 
-// AuthorizeReviews wraps a handler with the bodh.reviews.allow Rego rule.
+// AuthorizeReviews wraps a handler with the bodhyanga.reviews.allow Rego rule.
 // The policy switches on input.Method so the same middleware can wrap
 // GET /api/reviews and POST /api/reviews/{id}/decide.
 func AuthorizeReviews(a *auth.Authenticator, resourceTenantID string) func(http.Handler) http.Handler {
@@ -48,7 +48,7 @@ func AuthorizeReviews(a *auth.Authenticator, resourceTenantID string) func(http.
 	})
 }
 
-// AuthorizeAudit wraps a handler with the bodh.audit.allow Rego rule
+// AuthorizeAudit wraps a handler with the bodhyanga.audit.allow Rego rule
 // (auditor role only; cross-tenant read by deployment policy).
 func AuthorizeAudit(a *auth.Authenticator) func(http.Handler) http.Handler {
 	return authorize(a, auth.ModuleAudit, auth.QueryAuditAllow, func(r *http.Request, c auth.Claims) map[string]any {
@@ -57,7 +57,7 @@ func AuthorizeAudit(a *auth.Authenticator) func(http.Handler) http.Handler {
 }
 
 // authorize is the shared core. It is no-op-safe (a == nil bypass) so
-// BODH_AUTH=disabled doesn't have to remove the wrappers from the route
+// BODHYANGA_AUTH=disabled doesn't have to remove the wrappers from the route
 // table — main.go just passes a nil Authenticator.
 func authorize(a *auth.Authenticator, module, query string, buildInput func(*http.Request, auth.Claims) map[string]any) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 // Portions Copyright Ardan Labs, Bill Kennedy
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@
 
 // Package dialect provides cross-cutting helpers that vary between
 // SQL engines but are otherwise reusable by every domain store. Today
-// Bodh only ships the Postgres dialect; the seam exists so a future
+// Bodhyanga only ships the Postgres dialect; the seam exists so a future
 // SQLite-for-tests dialect can be added without touching every store.
 //
 // Scope intentionally tiny: only add to the Dialect interface when a
@@ -34,7 +34,7 @@ type Dialect interface {
 	// consume the named bind variables ":offset" and ":rows_per_page"
 	// already supplied by the caller in the parameter map.
 	//
-	// Bodh stores use OFFSET / FETCH NEXT (SQL:2008 standard) for
+	// Bodhyanga stores use OFFSET / FETCH NEXT (SQL:2008 standard) for
 	// pagination. The SQLite-for-tests dialect — if and when it
 	// arrives — would emit LIMIT/OFFSET instead.
 	Paginate(buf *bytes.Buffer)

@@ -9,7 +9,7 @@ package registry
 //   - Bus:      "How do messages move between agents?" (pkg/comm)
 //
 // Keeping them separate is what lets you swap one without touching the
-// other. In Bodh production deployments the registry might be replaced
+// other. In Bodhyanga production deployments the registry might be replaced
 // with a Consul/etcd/Kubernetes EndpointSlice-backed implementation when
 // agents live in separate pods (see docs/architecture.md § Registry
 // semantics); the bus might be swapped to Kafka, NATS, or RabbitMQ
@@ -20,7 +20,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
 )
 
 // ErrNotFound is returned when an agent cannot be found.
@@ -51,7 +51,7 @@ type Registry interface {
 	//
 	// Most systems register at startup, but dynamic registration is
 	// also common: ephemeral agents, autoscaling workers, or
-	// user-scoped agents. Bodh's cmd/care wires every agent at boot;
+	// user-scoped agents. Bodhyanga's cmd/care wires every agent at boot;
 	// future hot-reload via Orchestrator.Watch refreshes the bus
 	// subscriptions when a new agent appears here.
 	//
@@ -125,7 +125,7 @@ func NewInMemory() *InMemoryRegistry {
 //     implementation; we picked the simplest one.
 //
 // Production registries usually have additional controls: agent
-// versioning, idempotency tokens, conflict resolution policies. For Bodh
+// versioning, idempotency tokens, conflict resolution policies. For Bodhyanga
 // they're not needed because deployment is single-process today.
 //
 // Note: there is no Unregister. Removing an agent from a running
@@ -167,7 +167,7 @@ func (r *InMemoryRegistry) Get(_ context.Context, id string) (agent.Agent, error
 // **Note:** the returned slice is a snapshot; it is safe for the caller
 // to iterate without holding locks. The agent values themselves are NOT
 // copied (interfaces wrap pointers), so callers must not mutate the
-// agent's internal state from a List loop. Today no agent in Bodh
+// agent's internal state from a List loop. Today no agent in Bodhyanga
 // exposes mutable state through its interface, so this is a theoretical
 // concern.
 //

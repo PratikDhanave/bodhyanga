@@ -1,8 +1,8 @@
-# Bodh — AI features deep-dive
+# Bodhyanga — AI features deep-dive
 
-This document is the architectural walkthrough of every AI feature Bodh ships today. It is the deep companion to the [`AI features`](../README.md#ai-features) section of the README, which is the elevator-pitch view. Here we cover internals, sample inputs and outputs, env vars, and gotchas for every feature in one place.
+This document is the architectural walkthrough of every AI feature Bodhyanga ships today. It is the deep companion to the [`AI features`](../README.md#ai-features) section of the README, which is the elevator-pitch view. Here we cover internals, sample inputs and outputs, env vars, and gotchas for every feature in one place.
 
-> Bodh is a research and engineering reference. It is not approved for clinical use. See the research disclaimer in the [main README](../README.md#%EF%B8%8F-research-disclaimer-read-first).
+> Bodhyanga is a research and engineering reference. It is not approved for clinical use. See the research disclaimer in the [main README](../README.md#%EF%B8%8F-research-disclaimer-read-first).
 
 ## Contents
 
@@ -41,7 +41,7 @@ Capability detail:
 - **OpenAI tool use** — `tools` array with `type: function`. Adapter normalises both `tool_use` and `tools_calls` shapes.
 - **Ollama JSON schema** — passed via `format` field (Ollama 0.5+). The adapter does a second `json.Unmarshal` on `Content` to verify validity before returning.
 - **Ollama vision** — model must be vision-capable (`llama3.2-vision`, `bakllava`, `llava:13b`); images are base64-encoded into the `images` array on the message.
-- **kronk (in-process llama.cpp)** — Ardan Labs' [kronk](https://github.com/ardanlabs/kronk) library wraps llama.cpp (via yzma + bucky) so models run *inside* the Go binary with no Ollama daemon, no API call, no network egress. The provider is gated behind the `kronk` build tag because llama.cpp pulls a large native CGO dependency; the default Bodh binary ships a stub that returns "rebuild with -tags=kronk" if a caller selects `llm-kronk`. The factory wires `kronk.New` with `*observability.StdLogger` for both the lifecycle logger and the LLM tracer so traces flow through `pkg/phi.LoggerWrapper` like every other adapter. JSON-schema responses are validated client-side (the GBNF grammar track will add native grammar-constrained decoding later — the adapter already accepts a `WithGrammar` functional option). The model card lives at [docs/model-cards/llm-diagnostician-kronk.md](model-cards/llm-diagnostician-kronk.md); the headline property is "PHI never leaves the box" — useful in air-gapped or 42 CFR Part 2 deployments where the BAA chain for a cloud LLM is not in place.
+- **kronk (in-process llama.cpp)** — Ardan Labs' [kronk](https://github.com/ardanlabs/kronk) library wraps llama.cpp (via yzma + bucky) so models run *inside* the Go binary with no Ollama daemon, no API call, no network egress. The provider is gated behind the `kronk` build tag because llama.cpp pulls a large native CGO dependency; the default Bodhyanga binary ships a stub that returns "rebuild with -tags=kronk" if a caller selects `llm-kronk`. The factory wires `kronk.New` with `*observability.StdLogger` for both the lifecycle logger and the LLM tracer so traces flow through `pkg/phi.LoggerWrapper` like every other adapter. JSON-schema responses are validated client-side (the GBNF grammar track will add native grammar-constrained decoding later — the adapter already accepts a `WithGrammar` functional option). The model card lives at [docs/model-cards/llm-diagnostician-kronk.md](model-cards/llm-diagnostician-kronk.md); the headline property is "PHI never leaves the box" — useful in air-gapped or 42 CFR Part 2 deployments where the BAA chain for a cloud LLM is not in place.
 
 ---
 
@@ -151,7 +151,7 @@ go run ./cmd/demo -diagnostician=llm-ollama
 
 # kronk (in-process llama.cpp — no daemon, no network, no API key)
 go run -tags kronk ./cmd/demo -diagnostician=llm-kronk
-# (override model id via BODH_KRONK_MODEL=unsloth/Qwen3-7B-Q5_K_M)
+# (override model id via BODHYANGA_KRONK_MODEL=unsloth/Qwen3-7B-Q5_K_M)
 ```
 
 In Go:
@@ -226,9 +226,9 @@ The agent's ID is `"diagnostician"` — same as the rule-based one — so the su
 ### Sample log lines
 
 ```
-[bodh] [diagnostician/llm] provider=anthropic model=claude-sonnet-4-6 diagnosis="Community-acquired pneumonia" confidence=87%
-[bodh] [diagnostician/llm] rationale: Productive cough with fever, SpO2 94% on RA, ...
-[bodh] [diagnostician/llm] tokens in=812 out=146 cached=624 stop=tool_use
+[bodhyanga] [diagnostician/llm] provider=anthropic model=claude-sonnet-4-6 diagnosis="Community-acquired pneumonia" confidence=87%
+[bodhyanga] [diagnostician/llm] rationale: Productive cough with fever, SpO2 94% on RA, ...
+[bodhyanga] [diagnostician/llm] tokens in=812 out=146 cached=624 stop=tool_use
 [llm-trace] {"started_at":"2026-05-23T09:14:21Z","duration_ms":2438,"provider":"anthropic","model":"claude-sonnet-4-6","agent_id":"diagnostician","case_id":"demo-case-001","trace_id":"trace-demo-001","input_tokens":812,"output_tokens":146,"cached_tokens":624,"stop_reason":"tool_use","kind":"completion"}
 ```
 
@@ -251,14 +251,14 @@ Ground the diagnostician's rationale in retrieved clinical references so every c
 # Anthropic + Voyage (recommended pairing)
 export ANTHROPIC_API_KEY=sk-ant-...
 export VOYAGE_API_KEY=pa-...
-export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
+export BODHYANGA_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
 go run ./cmd/demo -diagnostician=llm-anthropic
 ```
 
 ```bash
 # OpenAI all-in-one (chat + embeddings under one key)
 export OPENAI_API_KEY=sk-...
-export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
+export BODHYANGA_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
 go run ./cmd/demo -diagnostician=llm-openai
 ```
 
@@ -266,7 +266,7 @@ go run ./cmd/demo -diagnostician=llm-openai
 # Ollama all-local
 ollama pull llama3.2
 ollama pull nomic-embed-text
-export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
+export BODHYANGA_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
 go run ./cmd/demo -diagnostician=llm-ollama
 ```
 
@@ -304,7 +304,7 @@ cits, _ := a.Knowledge.Search(ctx, query, k)  // k defaults to 4
 
 When the model surfaces its own `citations` array, those win (the model picked exactly which references it used). When the model returns `citations` empty, the retrieved citations are propagated automatically so provenance is preserved regardless of model behaviour.
 
-### `BODH_KNOWLEDGE_CORPUS`
+### `BODHYANGA_KNOWLEDGE_CORPUS`
 
 The env var points at a JSON file. The shipped corpus ([`data/knowledge/corpus.json`](../data/knowledge/corpus.json)) contains 15 synthetic teaching documents (CAP × 2, ADHF × 2, PE × 2, sepsis × 2, T2DM, COPD, HTN, ACS, CKD, AKI, asthma) labelled `demo-synth`. Swap to your own corpus by setting the env var to a different path — no rebuild required.
 
@@ -444,8 +444,8 @@ The vision agent's ID is still `"diagnostician"` so routing is unchanged. The sy
 ### Sample log lines
 
 ```
-[bodh] [diagnostician/vision] provider=anthropic model=claude-sonnet-4-6 diagnosis="Community-acquired pneumonia" confidence=90% image=image/png
-[bodh] [diagnostician/vision] rationale: Right lower lobe airspace opacity on the attached PA chest radiograph, combined with leukocytosis and fever, supports CAP.
+[bodhyanga] [diagnostician/vision] provider=anthropic model=claude-sonnet-4-6 diagnosis="Community-acquired pneumonia" confidence=90% image=image/png
+[bodhyanga] [diagnostician/vision] rationale: Right lower lobe airspace opacity on the attached PA chest radiograph, combined with leukocytosis and fever, supports CAP.
 ```
 
 ### Provider notes
@@ -458,7 +458,7 @@ The vision agent's ID is still `"diagnostician"` so routing is unchanged. The sy
 
 ### Caveats
 
-- Bodh restricts MIME sniff to **PNG and JPEG** for portability. Other formats fall through to text-only.
+- Bodhyanga restricts MIME sniff to **PNG and JPEG** for portability. Other formats fall through to text-only.
 - Failed reads (file missing, unsupported format) **log a warning and fall through to text-only** — they do not error out the case.
 - DICOM is **not** decoded. Convert DICOM to JPEG before passing it (planned `pkg/imaging` would handle this for clinical use).
 
@@ -472,8 +472,8 @@ Grade a diagnostician's output against a gold-standard reference, returning a st
 ### How to enable
 
 ```go
-import "github.com/PratikDhanave/bodh/pkg/eval"
-import "github.com/PratikDhanave/bodh/pkg/llm"
+import "github.com/PratikDhanave/bodhyanga/pkg/eval"
+import "github.com/PratikDhanave/bodhyanga/pkg/llm"
 
 client := llm.NewAnthropic(os.Getenv("ANTHROPIC_API_KEY"), "claude-sonnet-4-6")
 judge := eval.NewLLMJudge(client)
@@ -595,7 +595,7 @@ flowchart TB
     Agent[LLM-backed agent] --> Call[llm.Complete]
     Call --> Build[Build LLMTrace<br/>provider, model, duration_ms, tokens,<br/>cached, stop_reason, agent_id, case_id, trace_id]
     Build --> Log["StdLogger.RecordLLMCall<br/>emits as '[llm-trace] {json}' line"]
-    Log --> Otel{BODH_OTEL_ENABLED=1<br/>AND otelHook installed?}
+    Log --> Otel{BODHYANGA_OTEL_ENABLED=1<br/>AND otelHook installed?}
     Otel -->|yes| Hook[otelHook(LLMTrace)]
     Hook --> OTLP[(OTLP exporter<br/>→ OTel collector)]
     Otel -->|no| Done[no-op]
@@ -636,10 +636,10 @@ defer otel.Shutdown(ctx)
 ```
 
 ```bash
-BODH_OTEL_ENABLED=1 go run ./cmd/care
+BODHYANGA_OTEL_ENABLED=1 go run ./cmd/care
 ```
 
-Without `BODH_OTEL_ENABLED=1` the hook is skipped even if `SetLLMOTelHook` was called — opt-in at runtime.
+Without `BODHYANGA_OTEL_ENABLED=1` the hook is skipped even if `SetLLMOTelHook` was called — opt-in at runtime.
 
 ### Caveats
 
@@ -655,7 +655,7 @@ Three more agents have drop-in LLM variants. Each ships with a rule-based fallba
 
 | Agent | LLM type | Factory | Capabilities (LLM build) | Env vars used |
 |---|---|---|---|---|
-| Questioner | `LLMQuestioner` | `agents.NewQuestioner(provider)` | `ask_question`, `history_taking`, `llm_backed` | `*_API_KEY`, `BODH_*_MODEL`, `OLLAMA_HOST` |
+| Questioner | `LLMQuestioner` | `agents.NewQuestioner(provider)` | `ask_question`, `history_taking`, `llm_backed` | `*_API_KEY`, `BODHYANGA_*_MODEL`, `OLLAMA_HOST` |
 | Inbox Triage | `LLMInboxTriage` | `agents.NewInboxTriage(provider, taskQueue)` | `inbox_triage`, `message_routing`, `llm_backed` | same |
 | Reasoning Verifier | `LLMReasoningVerifier` | `agents.NewReasoningVerifier(provider, hitl)` | `verify_reasoning`, `safety_check`, `llm_backed` | same |
 
@@ -720,17 +720,17 @@ The three pattern files (`diagnostician_debate.go`, `diagnostician_reflexion.go`
 | Variable | Used by | Default | Description |
 |---|---|---|---|
 | `ANTHROPIC_API_KEY` | `-diagnostician=llm-anthropic`, Anthropic chat | (none) | Anthropic Messages API key |
-| `BODH_ANTHROPIC_MODEL` | factory | `claude-sonnet-4-6` | Override Anthropic chat model |
+| `BODHYANGA_ANTHROPIC_MODEL` | factory | `claude-sonnet-4-6` | Override Anthropic chat model |
 | `OPENAI_API_KEY` | `-diagnostician=llm-openai`, OpenAI embeddings | (none) | OpenAI API key |
-| `BODH_OPENAI_MODEL` | factory | `gpt-4o` | Override OpenAI chat model |
-| `BODH_OPENAI_EMBED_MODEL` | RAG embedder selection | `text-embedding-3-small` | Override OpenAI embedding model |
+| `BODHYANGA_OPENAI_MODEL` | factory | `gpt-4o` | Override OpenAI chat model |
+| `BODHYANGA_OPENAI_EMBED_MODEL` | RAG embedder selection | `text-embedding-3-small` | Override OpenAI embedding model |
 | `OLLAMA_HOST` | Ollama chat + embeddings | `http://localhost:11434` | Local Ollama URL |
-| `BODH_OLLAMA_MODEL` | factory | `llama3.2` | Override Ollama chat model |
-| `BODH_OLLAMA_EMBED_MODEL` | RAG embedder selection | `nomic-embed-text` | Override Ollama embedding model |
+| `BODHYANGA_OLLAMA_MODEL` | factory | `llama3.2` | Override Ollama chat model |
+| `BODHYANGA_OLLAMA_EMBED_MODEL` | RAG embedder selection | `nomic-embed-text` | Override Ollama embedding model |
 | `VOYAGE_API_KEY` | Anthropic-path RAG embedder | (none) | Voyage AI key (Anthropic + Voyage pairing) |
-| `BODH_VOYAGE_EMBED_MODEL` | Voyage embedder | `voyage-3` | Override Voyage embedding model |
-| `BODH_KNOWLEDGE_CORPUS` | RAG | (unset) | Path to corpus JSON. Unset disables RAG entirely. |
-| `BODH_OTEL_ENABLED` | observability | (unset) | `1` forwards LLMTraces to the installed OTel hook |
+| `BODHYANGA_VOYAGE_EMBED_MODEL` | Voyage embedder | `voyage-3` | Override Voyage embedding model |
+| `BODHYANGA_KNOWLEDGE_CORPUS` | RAG | (unset) | Path to corpus JSON. Unset disables RAG entirely. |
+| `BODHYANGA_OTEL_ENABLED` | observability | (unset) | `1` forwards LLMTraces to the installed OTel hook |
 
 See [`.env.example`](../.env.example) for a copy-paste template covering the chat-only flow.
 
@@ -773,7 +773,7 @@ cmd/care HTTP API   ──► HITL queue (pkg/hitl)
         │                     │
         ▼                     ▼
 clinician decides      persisted as JSON dump
-(bodhctl reviews ...)  ([]medical.ReviewRequest)
+(bodhyangactl reviews ...)  ([]medical.ReviewRequest)
                               │
                               ▼
                   go run ./cmd/export-hitl-feedback
@@ -794,7 +794,7 @@ go run ./cmd/export-hitl-feedback \
 # Exported 5 SFT lines, 2 DPO pairs, 1 reviews skipped (no decision).
 ```
 
-Flags: `-in` (defaults to `$HOME/.bodh/hitl-queue.json`), `-format=sft|dpo|both`, `-out-dir`, `-min-reviews=N` (warn-only), `-include-rejected=true|false`.
+Flags: `-in` (defaults to `$HOME/.bodhyanga/hitl-queue.json`), `-format=sft|dpo|both`, `-out-dir`, `-min-reviews=N` (warn-only), `-include-rejected=true|false`.
 
 ### Output shapes
 
