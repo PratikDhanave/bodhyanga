@@ -6,25 +6,25 @@
 
 ## Summary
 
-Add an offline, accuracy-only SD-Bench harness to bodh-maf — the analog of bodh's
+Add an offline, accuracy-only SD-Bench harness to bodhyanga-maf — the analog of bodhyanga's
 `cmd/bench` and the only evaluation runner on MAF-go (the framework ships evals for .NET
-only). A new `pkg/bench` library loads a manifest of bodh-maf-native `PatientCase` fixtures
+only). A new `pkg/bench` library loads a manifest of bodhyanga-maf-native `PatientCase` fixtures
 with gold diagnoses, drives each through the existing `pkg/pipeline.Runner` with the **rule
-diagnostician** (fully offline), scores the produced diagnosis against gold with bodh's
+diagnostician** (fully offline), scores the produced diagnosis against gold with bodhyanga's
 `diagnosisMatch` semantics, aggregates accuracy, and gates CI by comparing the aggregate to
 a committed baseline (`-fail-on-regression`, `-update-baseline`). A thin `cmd/bench` wires
 flags → library → table/JSON output and exit codes. **Cost/Pareto is out of scope** because
-bodh-maf tracks no per-case cost (documented dependency, not a silent gap).
+bodhyanga-maf tracks no per-case cost (documented dependency, not a silent gap).
 
 ## Technical Context
 
-**Language/Version**: Go 1.26 (module `github.com/PratikDhanave/bodh-maf`)
+**Language/Version**: Go 1.26 (module `github.com/PratikDhanave/bodhyanga-maf`)
 
 **Primary Dependencies**: existing `pkg/pipeline` (`Runner`, `Config`, `Outcome`), `pkg/agents`
 (`PatientCase`, `CarePlan`, `CaseRejected`, rule diagnostician, `HashCaseID`), `pkg/admit`
-(`AllowAll` policy for the offline path), `github.com/PratikDhanave/bodh/pkg/audit`
-(`NewInMemory`), `github.com/PratikDhanave/bodh/pkg/eval` (`InteractionRecord`, `Store`,
-`NewInMemoryStore`) — all via the existing `replace ../bodh`. **No new module dependency**;
+(`AllowAll` policy for the offline path), `github.com/PratikDhanave/bodhyanga/pkg/audit`
+(`NewInMemory`), `github.com/PratikDhanave/bodhyanga/pkg/eval` (`InteractionRecord`, `Store`,
+`NewInMemoryStore`) — all via the existing `replace ../bodhyanga`. **No new module dependency**;
 the harness is stdlib + existing packages.
 
 **Storage**: none. Manifest, fixtures, and baseline are JSON files under `data/cases/`; the
@@ -53,7 +53,7 @@ baseline, ~10–12 tests. One-week vertical.
 
 ## Constitution Check
 
-*GATE: evaluated against `.specify/memory/constitution.md` (bodh constitution, inherited).*
+*GATE: evaluated against `.specify/memory/constitution.md` (bodhyanga constitution, inherited).*
 
 | Principle | Status | Notes |
 |---|---|---|
@@ -64,7 +64,7 @@ baseline, ~10–12 tests. One-week vertical.
 | V. Package-first | PASS | Logic lives in `pkg/bench`; `cmd/bench` is flags + I/O only, mirroring `cmd/slice` |
 | VI. Observability by default | N/A (DEFERRED) | Batch offline runner; no tracing wiring in scope, consistent with specs/001's deferral |
 
-**Deviation from bodh's `cmd/bench` (justified in Complexity Tracking): accuracy-only, no
+**Deviation from bodhyanga's `cmd/bench` (justified in Complexity Tracking): accuracy-only, no
 Pareto/cost.**
 
 **Post-design re-check**: no new violations; the cost omission is a documented pipeline
@@ -74,15 +74,15 @@ prerequisite, not a constitutional deviation.
 
 ### What imports unchanged vs. what is new
 
-| From bodh / bodh-maf | Reused as-is? | Notes |
+| From bodhyanga / bodhyanga-maf | Reused as-is? | Notes |
 |---|---|---|
-| `bodh/pkg/eval.InteractionRecord`, `Store`, `NewInMemoryStore` | **Yes** | Record shape + in-memory store; no change |
-| bodh's `diagnosisMatch` (trimmed, case-insensitive `EqualFold`) | **Re-implement, not import** | It is unexported in `bodh/pkg/eval/metrics.go`; port the ~5-line comparison into `pkg/bench` and unit-test it against the same cases. Do NOT import `bodh/pkg/eval.ScoreCase` / `CaseMetrics` — they depend on `medical.CaseState` (cost/RPM), which bodh-maf's pipeline never produces |
+| `bodhyanga/pkg/eval.InteractionRecord`, `Store`, `NewInMemoryStore` | **Yes** | Record shape + in-memory store; no change |
+| bodhyanga's `diagnosisMatch` (trimmed, case-insensitive `EqualFold`) | **Re-implement, not import** | It is unexported in `bodhyanga/pkg/eval/metrics.go`; port the ~5-line comparison into `pkg/bench` and unit-test it against the same cases. Do NOT import `bodhyanga/pkg/eval.ScoreCase` / `CaseMetrics` — they depend on `medical.CaseState` (cost/RPM), which bodhyanga-maf's pipeline never produces |
 | `pkg/pipeline.Runner`, `Config`, `Outcome` | **Yes** | The Runner is the per-case driver; `Outcome.Plan.Diagnosis` / `Outcome.Rejected` / `Outcome.Denied` / `Outcome.Failures` are the terminal signals the harness reads |
 | `pkg/agents.PatientCase`, `CarePlan`, `CaseRejected`, `HashCaseID` | **Yes** | Fixture unmarshals to `PatientCase`; produced diagnosis read from `Outcome.Plan.Diagnosis` |
 | `pkg/admit.AllowAll` | **Yes** | The offline benchmark runs with an allow-all boundary so admission never denies a benign case |
-| bodh's `data/cases/*.json`, `manifest.json`, `baseline.json` | **No — author fresh** | Incompatible case schema (`chief_complaint/hpi/...` vs `Symptoms/History`) and diagnosis vocabulary (Title-Case vs lowercase). New bodh-maf fixtures + manifest + baseline are authored under bodh-maf's own `data/cases/` |
-| bodh's `cmd/bench` manifest/baseline JSON *structure* + regression logic | **Port the shapes, drop cost** | Keep bodh's manifest v2 shape (`version`, `description`, `cases[]{id,path,gold_diagnosis,tags}`) minus `max_cost_usd`; keep the baseline shape minus `mean_cost_usd`; port `detectRegressions`/`writeBaseline` accuracy half only |
+| bodhyanga's `data/cases/*.json`, `manifest.json`, `baseline.json` | **No — author fresh** | Incompatible case schema (`chief_complaint/hpi/...` vs `Symptoms/History`) and diagnosis vocabulary (Title-Case vs lowercase). New bodhyanga-maf fixtures + manifest + baseline are authored under bodhyanga-maf's own `data/cases/` |
+| bodhyanga's `cmd/bench` manifest/baseline JSON *structure* + regression logic | **Port the shapes, drop cost** | Keep bodhyanga's manifest v2 shape (`version`, `description`, `cases[]{id,path,gold_diagnosis,tags}`) minus `max_cost_usd`; keep the baseline shape minus `mean_cost_usd`; port `detectRegressions`/`writeBaseline` accuracy half only |
 
 ### How metrics are sourced (evalhook vs. re-derive)
 
@@ -92,24 +92,24 @@ outcome, NOT diagnostic accuracy, and it has **no gold**. So:
 
 - **Accuracy is re-derived in the harness**, not read from the eval record: the harness holds
   the gold (from the manifest) and the produced diagnosis (`Outcome.Plan.Diagnosis`) and
-  compares them itself. This is unavoidable — no bodh-maf surface knows the gold.
+  compares them itself. This is unavoidable — no bodhyanga-maf surface knows the gold.
 - The eval record is still written per case by the Runner as today (`Config.EvalStore`); the
   harness MAY collect the records for a secondary confidence/forced roll-up, but the
   authoritative accuracy number comes from gold-vs-produced. Keeping the eval store wired
   costs nothing and preserves the specs/001 invariant (one record per terminal case).
 
-### Manifest + baseline formats (reuse bodh's shape, drop cost)
+### Manifest + baseline formats (reuse bodhyanga's shape, drop cost)
 
-Reuse bodh's manifest **v2** shape so the format is familiar and a future cost column slots
+Reuse bodhyanga's manifest **v2** shape so the format is familiar and a future cost column slots
 in cleanly, minus the fields with no data source:
 
 ```jsonc
-// data/cases/manifest.json  (bodh-maf-native)
-{ "version": 2, "description": "bodh-maf SD-Bench manifest — synthetic teaching cases only",
+// data/cases/manifest.json  (bodhyanga-maf-native)
+{ "version": 2, "description": "bodhyanga-maf SD-Bench manifest — synthetic teaching cases only",
   "cases": [ { "id": "maf-acs-001", "path": "data/cases/acs.json",
                "gold_diagnosis": "acute coronary syndrome", "tags": ["cardiology"] } ] }
 ```
-- Gold strings MUST match bodh-maf's rule vocabulary (lowercase: "acute coronary syndrome",
+- Gold strings MUST match bodhyanga-maf's rule vocabulary (lowercase: "acute coronary syndrome",
   "community-acquired pneumonia", "heart failure"), verified against `pkg/agents/diagnostician.go`.
 - `max_cost_usd` is **omitted** (FR-011). A later cost feature adds it back without breaking
   readers that ignore unknown fields.
@@ -120,7 +120,7 @@ in cleanly, minus the fields with no data source:
     "accuracy_pct": 100.0, "recorded_at": "2026-07-16T00:00:00Z" } ] }
 ```
 - `mean_cost_usd` omitted; accuracy floor only. Tolerance: accuracy must drop **> 1.0 pp** to
-  trip the gate (bodh's `accuracyToleranceP`).
+  trip the gate (bodhyanga's `accuracyToleranceP`).
 
 ### Staying offline for CI
 
@@ -178,27 +178,27 @@ cmd/bench/
   main.go                flags (-manifest, -baseline, -json, -fail-on-regression,
                          -update-baseline, -tau, -max-rounds), wiring, exit codes
 data/cases/
-  manifest.json          committed bodh-maf-native suite
+  manifest.json          committed bodhyanga-maf-native suite
   acs.json, cap.json, chf.json, undiff.json   synthetic fixtures (rule-vocabulary golds)
   baseline.json          committed accuracy baseline for provider "rule"
 ```
 
 **Structure Decision**: `pkg/bench` library + thin `cmd/bench`, mirroring specs/001's
-package-first layout and bodh's own `cmd/bench` split. Each file maps to one user story
+package-first layout and bodhyanga's own `cmd/bench` split. Each file maps to one user story
 concern (load / score+run → US1, baseline+gate → US2, update → US3) so tasks land
 independently.
 
 ## Complexity Tracking
 
-| Divergence from bodh's `cmd/bench` | Why | Simpler / faithful alternative rejected because |
+| Divergence from bodhyanga's `cmd/bench` | Why | Simpler / faithful alternative rejected because |
 |---|---|---|
-| **Accuracy-only; no Pareto/cost column or cost gate** | bodh-maf's pipeline emits no per-case or per-test cost (verified: no cost field in `TestResult`, planner, `DiagnosisResult`, `CarePlan`, or `evalhook`) | Fabricating a placeholder cost would produce a meaningless Pareto and a false regression signal; deferring cost keeps the number honest. Format leaves a documented extension point (FR-011) |
-| **Fresh fixtures/manifest instead of reusing bodh's** | bodh fixtures use `chief_complaint/hpi/...`→`PatientPresentation`; bodh-maf consumes `PatientCase{Symptoms,History}`, and diagnosis vocabularies differ (Title-Case vs lowercase) | Reusing bodh fixtures would require a case-schema adapter *and* a gold-vocabulary map — more code and more drift risk than authoring four small native fixtures |
-| **Re-implement `diagnosisMatch` rather than import** | It is unexported in `bodh/pkg/eval`, and `eval.ScoreCase`/`CaseMetrics` pull in `medical.CaseState` (cost/RPM) the pipeline never produces | Importing the scorer would drag the cost/RPM data model into a runner that has none; the comparison is 5 lines, unit-tested for parity |
+| **Accuracy-only; no Pareto/cost column or cost gate** | bodhyanga-maf's pipeline emits no per-case or per-test cost (verified: no cost field in `TestResult`, planner, `DiagnosisResult`, `CarePlan`, or `evalhook`) | Fabricating a placeholder cost would produce a meaningless Pareto and a false regression signal; deferring cost keeps the number honest. Format leaves a documented extension point (FR-011) |
+| **Fresh fixtures/manifest instead of reusing bodhyanga's** | bodhyanga fixtures use `chief_complaint/hpi/...`→`PatientPresentation`; bodhyanga-maf consumes `PatientCase{Symptoms,History}`, and diagnosis vocabularies differ (Title-Case vs lowercase) | Reusing bodhyanga fixtures would require a case-schema adapter *and* a gold-vocabulary map — more code and more drift risk than authoring four small native fixtures |
+| **Re-implement `diagnosisMatch` rather than import** | It is unexported in `bodhyanga/pkg/eval`, and `eval.ScoreCase`/`CaseMetrics` pull in `medical.CaseState` (cost/RPM) the pipeline never produces | Importing the scorer would drag the cost/RPM data model into a runner that has none; the comparison is 5 lines, unit-tested for parity |
 
 ## Risks
 
-- **Cost data absent (largest gap).** The whole accuracy-vs-cost Pareto — bodh's headline
+- **Cost data absent (largest gap).** The whole accuracy-vs-cost Pareto — bodhyanga's headline
   framing — has no data source. *Mitigation*: ship accuracy-only, document the pipeline
   prerequisite (per-test cost on `TestResult` + accumulation to a terminal cost field) as the
   blocker, and keep the report/baseline extensible. **Flagged as FR-011 and a follow-on
@@ -228,5 +228,5 @@ update-baseline, all edge cases, a native fixture suite, tests.
 
 **Non-goals**: cost/Pareto (blocked on pipeline cost data), LLM-provider benchmarking
 (offline-only this feature), multi-provider comparison tables, latency/step metrics, RPM/
-equity/drift metrics from bodh's wider `pkg/eval`, any pipeline modification, a CI workflow
+equity/drift metrics from bodhyanga's wider `pkg/eval`, any pipeline modification, a CI workflow
 file (the `go test` gate suffices; wiring it into a CI runner is a separate op task).

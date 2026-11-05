@@ -1,8 +1,8 @@
-# Authentication policy for Bodh — JWT signature + issuer validation.
+# Authentication policy for Bodhyanga — JWT signature + issuer validation.
 #
 # Adapted from https://github.com/ardanlabs/service/blob/master/app/sdk/auth/rego/authentication.rego
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh:
-#   - Package renamed from ardan.rego to bodh.auth.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga:
+#   - Package renamed from ardan.rego to bodhyanga.auth.
 #   - Algorithm pinned to RS256 in the verify options (defence-in-depth
 #     against `alg=none` attacks at the OPA seam, in addition to the
 #     jwt/v5 parser's WithValidMethods restriction in the Go layer).
@@ -16,10 +16,10 @@
 #                  configured with at boot. Must equal the `iss` claim.
 #
 # Output:
-#   data.bodh.auth.auth — true iff signature verifies AND iss matches AND
+#   data.bodhyanga.auth.auth — true iff signature verifies AND iss matches AND
 #                         alg == RS256. False on every other path.
 
-package bodh.auth
+package bodhyanga.auth
 
 import rego.v1
 

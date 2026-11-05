@@ -1,20 +1,20 @@
 # syntax=docker/dockerfile:1.7
 #
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/docker/dockerfile.sales
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
-# PLACEHOLDER — the bodhadmin / kronk binary is queued behind Track B and
+# PLACEHOLDER — the bodhyangaadmin / kronk binary is queued behind Track B and
 # does not yet exist in cmd/. This Dockerfile is here so the compose
-# `bodh-kronk` service has a buildable target the moment the binary lands.
+# `bodhyanga-kronk` service has a buildable target the moment the binary lands.
 #
 # When ready: drop the `-tags=kronk` (or whatever the kronk build tag turns
-# out to be), and uncomment the `bodh-kronk` service in
+# out to be), and uncomment the `bodhyanga-kronk` service in
 # zarf/compose/docker_compose.yaml.
 #
-# Until then this build will fail with "no Go files in /service/cmd/bodhadmin"
+# Until then this build will fail with "no Go files in /service/cmd/bodhyangaadmin"
 # — that failure is intentional and informative.
 
-FROM golang:1.26-alpine AS build_bodhadmin
+FROM golang:1.26-alpine AS build_bodhyangaadmin
 ENV CGO_ENABLED=0
 ARG BUILD_TAG=dev
 # Default build tag wires in the future kronk surface. Caller can override.
@@ -27,26 +27,26 @@ RUN go mod download
 
 COPY . .
 
-WORKDIR /service/cmd/bodhadmin
+WORKDIR /service/cmd/bodhyangaadmin
 RUN go build \
       -trimpath \
       -tags "${GO_BUILD_TAGS}" \
       -ldflags "-s -w -X main.tag=${BUILD_TAG}" \
-      -o /out/bodhadmin .
+      -o /out/bodhyangaadmin .
 
 FROM gcr.io/distroless/static-debian12:nonroot
 ARG BUILD_DATE
 ARG BUILD_TAG=dev
 
-COPY --from=build_bodhadmin --chown=65532:65532 /out/bodhadmin /bodhadmin
+COPY --from=build_bodhyangaadmin --chown=65532:65532 /out/bodhyangaadmin /bodhyangaadmin
 
 USER 65532:65532
-ENTRYPOINT ["/bodhadmin"]
+ENTRYPOINT ["/bodhyangaadmin"]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
-      org.opencontainers.image.title="bodh-bodhadmin" \
-      org.opencontainers.image.description="Bodh admin / kronk operator tool (PLACEHOLDER)" \
+      org.opencontainers.image.title="bodhyanga-bodhyangaadmin" \
+      org.opencontainers.image.description="Bodhyanga admin / kronk operator tool (PLACEHOLDER)" \
       org.opencontainers.image.authors="Pratik Dhanave" \
-      org.opencontainers.image.source="https://github.com/PratikDhanave/bodh" \
+      org.opencontainers.image.source="https://github.com/PratikDhanave/bodhyanga" \
       org.opencontainers.image.revision="${BUILD_TAG}" \
       org.opencontainers.image.licenses="Apache-2.0"

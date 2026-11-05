@@ -16,7 +16,7 @@ export const I18nContext = createContext<I18nContextValue | null>(null);
 // Storage key
 // ---------------------------------------------------------------------------
 
-const STORAGE_KEY = 'bodh-locale';
+const STORAGE_KEY = 'bodhyanga-locale';
 
 function readStoredLocale(): Locale {
   try {

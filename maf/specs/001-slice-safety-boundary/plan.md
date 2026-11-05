@@ -6,9 +6,9 @@
 
 ## Summary
 
-Harden the step-1 MARA pipeline with bodh's safety boundary, implemented on MAF-go
+Harden the step-1 MARA pipeline with bodhyanga's safety boundary, implemented on MAF-go
 primitives: one `pkg/admit` decorator gives every hop fail-closed governance
-(`bodh/pkg/governance.Policy`) and fail-open audit (`bodh/pkg/audit.Recorder`);
+(`bodhyanga/pkg/governance.Policy`) and fail-open audit (`bodhyanga/pkg/audit.Recorder`);
 `pkg/auditbridge` maps the workflow event stream onto the append-only trail;
 a physician-review `RequestPort` plus a Postgres `checkpoint.Store[json.RawMessage]`
 (`pkg/ckptpg`) makes paused cases survive process death; the diagnostician becomes a
@@ -18,17 +18,17 @@ per finished case. Every README exit criterion gets an automated test.
 
 ## Technical Context
 
-**Language/Version**: Go 1.26 (module `github.com/PratikDhanave/bodh-maf`)
+**Language/Version**: Go 1.26 (module `github.com/PratikDhanave/bodhyanga-maf`)
 
 **Primary Dependencies**: `microsoft/agent-framework-go` pinned
 `v0.0.0-20260710122455-75d0a647f739` (agent, workflow, checkpoint, inproc,
-anthropicprovider, openaiprovider); `github.com/PratikDhanave/bodh` via local
-`replace ../bodh` (pkg/governance, pkg/audit, pkg/eval, pkg/protocol, pkg/phi);
+anthropicprovider, openaiprovider); `github.com/PratikDhanave/bodhyanga` via local
+`replace ../bodhyanga` (pkg/governance, pkg/audit, pkg/eval, pkg/protocol, pkg/phi);
 `jackc/pgx/v5` (checkpoint store); `testcontainers-go` (test-only)
 
 **Storage**: PostgreSQL — `checkpoints` table (append-only, jsonb payload); audit uses
-bodh's `Recorder` interface (InMemory in tests/demo; the production sink chain is
-bodh's concern, not re-solved here)
+bodhyanga's `Recorder` interface (InMemory in tests/demo; the production sink chain is
+bodhyanga's concern, not re-solved here)
 
 **Testing**: stdlib `go test`; testcontainers Postgres for `pkg/ckptpg` and the
 kill/resume integration test; LLM providers mocked via custom `agent.ProviderConfig`
@@ -52,15 +52,15 @@ clinical payload / checkpoint jsonb, which is access-controlled); deterministic 
 
 ## Constitution Check
 
-*GATE: evaluated against `.specify/memory/constitution.md` (bodh constitution,
-inherited by bodh-maf).*
+*GATE: evaluated against `.specify/memory/constitution.md` (bodhyanga constitution,
+inherited by bodhyanga-maf).*
 
 | Principle | Status | Notes |
 |---|---|---|
 | I. MARA pipeline | PASS | Same 4-stage pipeline; typed messages via MAF edges instead of pkg/orchestration — the evaluated substitution, see Complexity Tracking |
 | II. LLM-agnostic provider abstraction | PASS w/ deviation | Provider seam is MAF `agent.ProviderConfig`, not `pkg/llm.Client`; tests mock the provider (RunFunc), never call real APIs. Deviation justified below |
-| III. HIPAA (non-negotiable) | PASS | bodh pkg/audit append-only trail; PHI-free events (correlation handles only); pkg/phi seam at intake; HITL gate for every AI decision; hashed case IDs everywhere observable |
-| IV. Test-first, coverage gates | PASS | Tests per exit criterion; testcontainers per bodh convention; deterministic mocks; coverage target ≥90% on new pkgs |
+| III. HIPAA (non-negotiable) | PASS | bodhyanga pkg/audit append-only trail; PHI-free events (correlation handles only); pkg/phi seam at intake; HITL gate for every AI decision; hashed case IDs everywhere observable |
+| IV. Test-first, coverage gates | PASS | Tests per exit criterion; testcontainers per bodhyanga convention; deterministic mocks; coverage target ≥90% on new pkgs |
 | V. Package-first | PASS | pkg/admit, pkg/auditbridge, pkg/ckptpg, pkg/evalhook libraries; cmd/slice stays thin |
 | VI. Observability by default | DEFERRED | MAF `WithTelemetry` exists but OTel wiring is out of slice scope; structured logging only. Recorded as a known gap, not a violation |
 
@@ -100,7 +100,7 @@ pkg/evalhook/            OutputEvent → eval.InteractionRecord
 db/0001_checkpoints.sql  append-only checkpoints table
 ```
 
-**Structure Decision**: flat `pkg/` libraries + thin `cmd/`, mirroring bodh
+**Structure Decision**: flat `pkg/` libraries + thin `cmd/`, mirroring bodhyanga
 (constitution V); each new package maps 1:1 to a spec user story to keep tasks and
 tests independently landable.
 
@@ -108,5 +108,5 @@ tests independently landable.
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| Constitution II: provider seam is MAF `ProviderConfig`, not bodh `pkg/llm.Client` | Evaluating MAF as the platform substrate IS this repo's purpose (ADR-0006/0007 context); MAF agents must own the tool/streaming loop for structured output to work | Adapter layering `pkg/llm.Client` under a MAF RunFunc was considered (research.md R6) — rejected for the slice because it would mask exactly the provider-fidelity questions the slice must answer; revisit if bodh-maf graduates |
-| New direct dep `jackc/pgx/v5` | checkpoint store needs Postgres | Reusing bodh/pkg/persistence would drag the full clinical schema into a store that needs one table |
+| Constitution II: provider seam is MAF `ProviderConfig`, not bodhyanga `pkg/llm.Client` | Evaluating MAF as the platform substrate IS this repo's purpose (ADR-0006/0007 context); MAF agents must own the tool/streaming loop for structured output to work | Adapter layering `pkg/llm.Client` under a MAF RunFunc was considered (research.md R6) — rejected for the slice because it would mask exactly the provider-fidelity questions the slice must answer; revisit if bodhyanga-maf graduates |
+| New direct dep `jackc/pgx/v5` | checkpoint store needs Postgres | Reusing bodhyanga/pkg/persistence would drag the full clinical schema into a store that needs one table |

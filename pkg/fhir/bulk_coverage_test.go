@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // waitForTerminal blocks until the export job reaches a terminal state

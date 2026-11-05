@@ -13,7 +13,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/bench"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/bench"
 )
 
 func main() {

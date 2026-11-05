@@ -51,10 +51,10 @@ export default function RunTrace() {
           <span className={`badge ${closed ? 'badge-done' : 'badge-pending'}`}>{closed ? 'closed' : 'live'}</span>
         </div>
         <div ref={containerRef} className="max-h-[70vh] overflow-y-auto p-4 space-y-2 text-sm font-mono">
-          {events.length === 0 && <p className="text-bodh-400 italic">Waiting for first message…</p>}
+          {events.length === 0 && <p className="text-bodhyanga-400 italic">Waiting for first message…</p>}
           {events.map((e, i) => (
-            <div key={i} className="border-l-2 border-bodh-200 pl-3 py-1">
-              <div className="text-xs text-bodh-400">
+            <div key={i} className="border-l-2 border-bodhyanga-200 pl-3 py-1">
+              <div className="text-xs text-bodhyanga-400">
                 <span className="font-mono">{new Date(e.ts).toLocaleTimeString()}</span> · <span className={`badge badge-normal`}>{e.type}</span> · <span className="font-mono">{e.from}</span> → <span className="font-mono">{e.to || '(broadcast)'}</span>
               </div>
               {e.content_preview && (

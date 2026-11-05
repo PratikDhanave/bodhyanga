@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 // --- stub client ---

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 func loadFixture(t *testing.T, name string) string {
@@ -124,7 +124,7 @@ func TestParseMalformedReturnsError(t *testing.T) {
 // the field delimiter should parse cleanly.
 func TestCustomEncodingChars(t *testing.T) {
 	// Field=#, Component=@, Repetition=`, Escape=\, Subcomponent=&
-	raw := "MSH#@`\\&#ADTSYS#MERCY#BODH#MERCY#20250524103045##ADT@A01@ADT_A01#MSG-CUST#P#2.5\r" +
+	raw := "MSH#@`\\&#ADTSYS#MERCY#BODHYANGA#MERCY#20250524103045##ADT@A01@ADT_A01#MSG-CUST#P#2.5\r" +
 		"EVN#A01#20250524103000\r" +
 		"PID#1##MRN999@@@MERCY@MR##DOE@JANE\r" +
 		"PV1#1#I#ICU@9@A@MERCY\r"
@@ -159,13 +159,13 @@ func TestBuildACK_AAEchoesControlIDAndFlipsRoutes(t *testing.T) {
 		t.Errorf("ACK missing expected MSA: %s", ack)
 	}
 	// Round-trip the ACK back through ParseMessage: the resulting MSH-3 (sender)
-	// must be the original MSH-5 (receiver) i.e. "BODH".
+	// must be the original MSH-5 (receiver) i.e. "BODHYANGA".
 	parsed, err := ParseMessage(ack)
 	if err != nil {
 		t.Fatalf("ACK doesn't round-trip parse: %v", err)
 	}
-	if parsed.Header.SendingApp != "BODH" {
-		t.Errorf("ACK sender = %q want BODH (flipped from inbound receiver)", parsed.Header.SendingApp)
+	if parsed.Header.SendingApp != "BODHYANGA" {
+		t.Errorf("ACK sender = %q want BODHYANGA (flipped from inbound receiver)", parsed.Header.SendingApp)
 	}
 	if parsed.Header.ReceivingApp != "ADTSYS" {
 		t.Errorf("ACK receiver = %q want ADTSYS (flipped from inbound sender)", parsed.Header.ReceivingApp)
@@ -178,7 +178,7 @@ func TestBuildACK_AECarriesErrorText(t *testing.T) {
 	hdr := MSH{
 		SendingApp:        "PARTNER",
 		SendingFacility:   "F1",
-		ReceivingApp:      "BODH",
+		ReceivingApp:      "BODHYANGA",
 		ReceivingFacility: "F2",
 		ControlID:         "CID-7",
 		TriggerEvent:      "A03",
@@ -194,7 +194,7 @@ func TestBuildACK_AECarriesErrorText(t *testing.T) {
 // TestUnsupportedTriggerEvent confirms the parser rejects an ADT trigger we
 // haven't implemented support for (e.g. A05 pre-admit).
 func TestUnsupportedTriggerEvent(t *testing.T) {
-	raw := "MSH|^~\\&|ADTSYS|MERCY|BODH|MERCY|20250524103045||ADT^A05|MSG00010|P|2.5\r" +
+	raw := "MSH|^~\\&|ADTSYS|MERCY|BODHYANGA|MERCY|20250524103045||ADT^A05|MSG00010|P|2.5\r" +
 		"PID|1||MRN1^^^MERCY^MR\r"
 	msg, err := ParseMessage(raw)
 	if err != nil {

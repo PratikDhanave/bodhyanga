@@ -1,6 +1,6 @@
-# Bodh — Evaluation Guide
+# Bodhyanga — Evaluation Guide
 
-How to measure Bodh's diagnostic accuracy, cost, and reliability — and how to gate CI on regressions.
+How to measure Bodhyanga's diagnostic accuracy, cost, and reliability — and how to gate CI on regressions.
 
 > Pairs with [data-model.md](data-model.md) (case fixture shapes) and [api.md](api.md) (for the bench runner CLI).
 
@@ -27,7 +27,7 @@ For years, **USMLE-style** multiple-choice questions were the standard AI medica
 
 The [Sequential Diagnosis Benchmark](https://microsoft.ai/news/the-path-to-medical-superintelligence/) replaces them with stepwise encounters: an agent (or physician) may **ask questions**, **order tests** (with virtual **cost**), and **update reasoning** until it provides a final diagnosis. Performance is measured on **accuracy** AND **resource expenditure** — a **Pareto frontier** of diagnosis vs cost.
 
-This matters because up to **25% of US health spending** is low-value or wasted, per Microsoft's research. A diagnostic agent that hits 95% accuracy by ordering every test isn't smart — it's expensive. Bodh's `cmd/bench` is built to measure both axes.
+This matters because up to **25% of US health spending** is low-value or wasted, per Microsoft's research. A diagnostic agent that hits 95% accuracy by ordering every test isn't smart — it's expensive. Bodhyanga's `cmd/bench` is built to measure both axes.
 
 ---
 
@@ -224,8 +224,8 @@ Beyond exact-match against `gold_diagnosis`, `eval.LLMJudge` grades a candidate 
 
 ```go
 import (
-    "github.com/PratikDhanave/bodh/pkg/eval"
-    "github.com/PratikDhanave/bodh/pkg/llm"
+    "github.com/PratikDhanave/bodhyanga/pkg/eval"
+    "github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 client := llm.NewAnthropic(os.Getenv("ANTHROPIC_API_KEY"), "claude-sonnet-4-6")
@@ -314,7 +314,7 @@ CI gate on red-team pass rate ≥ 95% before allowing LLM-provider PRs to merge.
 `pkg/analytics` aggregates `eval.InteractionRecord` into cohort metrics.
 
 ```go
-import "github.com/PratikDhanave/bodh/pkg/analytics"
+import "github.com/PratikDhanave/bodhyanga/pkg/analytics"
 
 summary := analytics.SummarizeCases(records)
 // summary = {
@@ -343,8 +343,8 @@ Use for dashboards, weekly reports, and tracking metrics over time when the audi
 | "Are we biased against any demographic?" | `eval.LLMJudge` stratified by patient cohort fields |
 | "Is the LLM hallucinating?" | `pkg/safety.CheckHallucination` against RAG citations |
 | "Is the LLM being prompted-injected?" | Red-team eval (`pkg/eval/redteam`) |
-| "What's our cost per case in production?" | Aggregate `bodh_diagnostic_cost_usd` histogram |
-| "What's our LLM fallback rate?" | Aggregate `bodh_fallback_total` counter |
+| "What's our cost per case in production?" | Aggregate `bodhyanga_diagnostic_cost_usd` histogram |
+| "What's our LLM fallback rate?" | Aggregate `bodhyanga_fallback_total` counter |
 | "Are clinicians overriding the diagnosis?" | HITL review-decision audit events: `decision=reject` rate per `hitl_kind` |
 
 The bench gives you the point-in-time number. The operational metrics tell you what changes over time. The audit log tells you what actually happened on a specific case. Use all three.

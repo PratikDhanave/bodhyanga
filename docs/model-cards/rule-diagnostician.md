@@ -1,6 +1,6 @@
 # Model Card — `DiagnosticianAgent` (rule-based)
 
-> **Card version:** 1.1.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodh maintainers
+> **Card version:** 1.1.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodhyanga maintainers
 
 ## Model details
 
@@ -11,12 +11,12 @@
 - **Default LLM model:** N/A
 - **Provider-configurable:** N/A
 - **License:** Apache-2.0
-- **Maintainer:** Bodh project ([GitHub issues](https://github.com/PratikDhanave/bodh/issues))
+- **Maintainer:** Bodhyanga project ([GitHub issues](https://github.com/PratikDhanave/bodhyanga/issues))
 
 ## Intended use
 
 - **Primary intended use:** Generate a working `DiagnosisProposal` from a `CaseState` after the test_planner has populated test results. Used both as the standalone diagnostician for the demo / no-API-key path AND as the deterministic fallback under every LLM-backed diagnostician variant.
-- **Primary intended users:** Researchers running Bodh demos; operators of LLM-backed deployments who need a deterministic floor.
+- **Primary intended users:** Researchers running Bodhyanga demos; operators of LLM-backed deployments who need a deterministic floor.
 - **Out-of-scope uses:**
   - Standalone clinical diagnosis without HITL gate
   - Diagnosis of conditions outside the supported set (currently CAP, CHF, ACS, sepsis, DKA)
@@ -90,4 +90,4 @@ Every threshold carries an inline comment: **"illustrative — educational demo,
 
 - [agents/diagnostician.go](../../agents/diagnostician.go)
 - [docs/agents.md § diagnostician](../agents.md#diagnostician)
-- [bodh-linkedin/01-bench-42-to-85.md](../../bodh-linkedin/01-bench-42-to-85.md) — the 42.9% → 85.7% story
+- [bodhyanga-linkedin/01-bench-42-to-85.md](../../bodhyanga-linkedin/01-bench-42-to-85.md) — the 42.9% → 85.7% story

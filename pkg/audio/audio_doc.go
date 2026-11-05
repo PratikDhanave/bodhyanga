@@ -1,7 +1,7 @@
-// Package audio is Bodh's seam for on-premise audio transcription of
+// Package audio is Bodhyanga's seam for on-premise audio transcription of
 // clinician-dictated notes. It defines a small Transcriber interface and
 // a PHI-free TranscriptionMeta side-channel. Implementations live behind
-// build tags so the default Bodh build links no audio runtime:
+// build tags so the default Bodhyanga build links no audio runtime:
 //
 //   - pkg/audio/mock.go        — MockTranscriber (default, no deps)
 //   - pkg/audio/kronk/         — Ardan Labs kronk SDK (//go:build kronk)

@@ -17,16 +17,16 @@ import (
 	"os"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/eval"
-	"github.com/PratikDhanave/bodh/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/microsoft/agent-framework-go/workflow"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/admit"
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
-	"github.com/PratikDhanave/bodh-maf/pkg/ckptpg"
-	"github.com/PratikDhanave/bodh-maf/pkg/pipeline"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/admit"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/ckptpg"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/pipeline"
 )
 
 func main() {

@@ -4,7 +4,7 @@
 //   Exercises the JSON-line output path of (*StdLogger).RecordLLMCall using a
 //   bytes.Buffer-backed logger built via NewLoggerTo, plus the
 //   environment-gated OTel hook. Tests reset SetLLMOTelHook(nil) and
-//   unset BODH_OTEL_ENABLED in t.Cleanup to stay isolated.
+//   unset BODHYANGA_OTEL_ENABLED in t.Cleanup to stay isolated.
 //
 // Key declarations:
 //   - TestRecordLLMCall_WritesJSONLine: confirms the "[llm-trace]" tag and that the JSON round-trips.

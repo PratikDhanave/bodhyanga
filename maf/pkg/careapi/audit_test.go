@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/admit"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/admit"
 )
 
 type auditBody struct {

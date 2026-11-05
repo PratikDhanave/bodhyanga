@@ -1,4 +1,4 @@
-// Right-to-explanation handler for Bodh.
+// Right-to-explanation handler for Bodhyanga.
 //
 // GET /explain/{case_id} returns a structured, PHI-free explanation of every
 // agent invocation, every governance decision, every human review, and the
@@ -37,7 +37,7 @@
 //     deployments leave it empty pending an operator-side policy decision
 //     (see status-resolution comment in the body).
 //
-// Multi-tenant scoping: the binary's BODH_TENANT_ID gate already scoped the
+// Multi-tenant scoping: the binary's BODHYANGA_TENANT_ID gate already scoped the
 // audit log it reads from. A future per-request tenant routing change would
 // add ?tenant_id= here.
 
@@ -49,14 +49,14 @@ import (
 	"time"
 
 	// audit is the PHI-free forensic record this handler reads.
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 	// eval is the final-metrics source (accuracy, cost, under-budget flag).
 	// InteractionRecord IS NOT a PHI surface — it stores numeric metrics
 	// and opaque IDs only.
-	"github.com/PratikDhanave/bodh/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
 	// hitl is consulted for pending reviews that haven't yet produced a
 	// KindReviewDecision audit event. Optional — see explainHandler doc.
-	"github.com/PratikDhanave/bodh/pkg/hitl"
+	"github.com/PratikDhanave/bodhyanga/pkg/hitl"
 )
 
 // Explanation is the wire shape returned by GET /explain/{case_id}.
@@ -79,7 +79,7 @@ type Explanation struct {
 
 	// TenantID is the multi-tenant scope this binary serves. Echoed back so
 	// the response is self-describing for the operator querying it; matches
-	// the BODH_TENANT_ID env at process start. Future per-request tenant
+	// the BODHYANGA_TENANT_ID env at process start. Future per-request tenant
 	// routing would set this per request.
 	TenantID string `json:"tenant_id,omitempty"`
 
@@ -296,7 +296,7 @@ func explainHandler(tenantID string, rec audit.Recorder, store eval.Store, queue
 					"separate access controls.",
 				"Snapshot generated at the time of this request; subsequent events " +
 					"are not reflected.",
-				"Bodh is a research and engineering reference. Not a medical " +
+				"Bodhyanga is a research and engineering reference. Not a medical " +
 					"device, not approved for clinical use.",
 			},
 		}

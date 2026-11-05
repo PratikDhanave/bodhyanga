@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // RedactNarrativePolicy strips free-text clinical narrative from message

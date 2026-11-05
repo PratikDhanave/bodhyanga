@@ -12,7 +12,7 @@
 //     Entry carries only opaque fingerprints (case token, session id) and
 //     clinical decision-support output (diagnosis, plan steps) — never a raw
 //     case id, patient name, symptom, or narrative. The audit read filters
-//     bodh's trail, which is already PHI-free.
+//     bodhyanga's trail, which is already PHI-free.
 //   - Auth is a documented non-goal for this slice (ADR-0006 parity): the
 //     server binds loopback by default and prints an auth-gap banner. A real
 //     deployment fronts it with authenticated ingress.

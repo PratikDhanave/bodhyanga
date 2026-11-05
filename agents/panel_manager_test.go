@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 func seedPanelRegistry() *medical.PatientRegistry {

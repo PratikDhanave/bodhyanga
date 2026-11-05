@@ -1,4 +1,4 @@
-// Typed client for the Bodh care API (pkg/careapi). All calls go through the
+// Typed client for the Bodhyanga care API (pkg/careapi). All calls go through the
 // same-origin /api/care proxy (see next.config.ts) so the browser never hits
 // the loopback Go server cross-origin.
 

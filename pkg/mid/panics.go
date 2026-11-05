@@ -1,8 +1,8 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/app/sdk/mid/panics.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 //
-// Bodh modifications vs upstream:
-//   - No metrics package dependency (Bodh metrics counter lives inline in
+// Bodhyanga modifications vs upstream:
+//   - No metrics package dependency (Bodhyanga metrics counter lives inline in
 //     pkg/mid.Metrics).
 //   - On panic the middleware emits an errs.InternalOnlyLog error so the
 //     downstream Errors middleware logs the trace but redacts it before
@@ -20,8 +20,8 @@ import (
 	"runtime/debug"
 	"sync/atomic"
 
-	"github.com/PratikDhanave/bodh/pkg/errs"
-	"github.com/PratikDhanave/bodh/pkg/web"
+	"github.com/PratikDhanave/bodhyanga/pkg/errs"
+	"github.com/PratikDhanave/bodhyanga/pkg/web"
 )
 
 // panicCount is a process-wide counter incremented every time the

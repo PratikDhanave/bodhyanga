@@ -21,7 +21,7 @@ Every playbook in this file follows the same six-phase structure adapted from NI
 
 ### Scenario 1 — Model output appears clinically dangerous in a real case
 
-**Detection.** A clinician reports via the HITL queue UI or directly via on-call channel that a Bodh-recommended diagnosis or care plan would cause patient harm if acted on. Or: the audit log surfaces a `KindReviewDecision` with `decision=reject` AND `reason` includes phrases like "would harm," "contraindicated," "incorrect."
+**Detection.** A clinician reports via the HITL queue UI or directly via on-call channel that a Bodhyanga-recommended diagnosis or care plan would cause patient harm if acted on. Or: the audit log surfaces a `KindReviewDecision` with `decision=reject` AND `reason` includes phrases like "would harm," "contraindicated," "incorrect."
 
 **Triage.** **P0.** Page on-call clinician + on-call engineer + compliance officer.
 
@@ -84,11 +84,11 @@ Every playbook in this file follows the same six-phase structure adapted from NI
 **Containment.**
 1. Identify the corpus document(s) implicated. From audit + `[llm-trace]` records, find which RAG citations the diagnosis used.
 2. Verify the corpus document is in fact outdated against current clinical evidence. (Don't assume; check.)
-3. Temporarily disable RAG (`unset BODH_KNOWLEDGE_CORPUS`) and restart `cmd/care`. The LLM diagnostician will run without retrieval. Bench accuracy may drop, but the misleading citation is gone.
+3. Temporarily disable RAG (`unset BODHYANGA_KNOWLEDGE_CORPUS`) and restart `cmd/care`. The LLM diagnostician will run without retrieval. Bench accuracy may drop, but the misleading citation is gone.
 
 **Eradication + Recovery.**
 - Update the corpus document(s) with current clinical evidence.
-- Re-enable RAG (`export BODH_KNOWLEDGE_CORPUS=...`).
+- Re-enable RAG (`export BODHYANGA_KNOWLEDGE_CORPUS=...`).
 - Add a bench fixture that exercises the corrected document.
 - Schedule a quarterly corpus review.
 
@@ -108,7 +108,7 @@ Every playbook in this file follows the same six-phase structure adapted from NI
 
 **Containment.**
 1. Verify the provider's status page / changelog. Did the provider announce a model change?
-2. Pin the model version explicitly (`BODH_ANTHROPIC_MODEL=claude-sonnet-4-6-20260520` instead of `claude-sonnet-4-6`).
+2. Pin the model version explicitly (`BODHYANGA_ANTHROPIC_MODEL=claude-sonnet-4-6-20260520` instead of `claude-sonnet-4-6`).
 3. If accuracy regressed, either switch to a different model tier or fall back to the rule-based provider while you investigate.
 
 **Eradication + Recovery.**
@@ -135,7 +135,7 @@ Every playbook in this file follows the same six-phase structure adapted from NI
 1. **Do not delete or modify the suspicious audit data.** It IS the forensic record; preserve it.
 2. Identify the time window of the integrity-check failure.
 3. Determine: was this a write that shouldn't have happened (someone bypassed the GRANT model), a delete that shouldn't have happened (UPDATE/DELETE permission leaked), or a tampering attempt (someone with DB access changed the chain)?
-4. Lock further writes if necessary by temporarily reducing the `bodh_app` role's privileges to SELECT-only until investigation completes.
+4. Lock further writes if necessary by temporarily reducing the `bodhyanga_app` role's privileges to SELECT-only until investigation completes.
 
 **Eradication + Recovery.**
 - Root-cause the integrity loss. Revoke any unauthorised access. Rotate credentials.
@@ -190,7 +190,7 @@ Operator deployments customise this matrix. The names belong to specific people;
 
 ## What this playbook does NOT cover
 
-These belong to the operator's broader incident response, not Bodh-specific:
+These belong to the operator's broader incident response, not Bodhyanga-specific:
 
 - Cloud provider outages (AWS / Azure / GCP) — standard cloud IR
 - Database outages — Postgres-specific runbooks
@@ -199,7 +199,7 @@ These belong to the operator's broader incident response, not Bodh-specific:
 - Compromised developer laptop with API keys — IAM rotation runbook
 - Workforce HR issues (badge revocation, etc.) — HR + IT
 
-The Bodh-specific playbooks above describe scenarios where the AI behavior itself is the incident.
+The Bodhyanga-specific playbooks above describe scenarios where the AI behavior itself is the incident.
 
 ---
 

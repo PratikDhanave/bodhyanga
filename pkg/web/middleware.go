@@ -1,7 +1,7 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/foundation/web/middleware.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 //
-// Bodh modifications vs upstream:
+// Bodhyanga modifications vs upstream:
 //   - Type renamed from MidFunc to Middleware to read better at call sites
 //     (`mid.Panics()` returns a Middleware, plain English).
 //   - SetStart helper is exported so the Logger middleware can stamp the
@@ -22,7 +22,7 @@ type Middleware func(HandlerFunc) HandlerFunc
 
 // wrapMiddleware composes a slice of middlewares around a base handler.
 // Middlewares run in slice order on the inbound side, reverse order on
-// the outbound side. The standard Bodh chain is:
+// the outbound side. The standard Bodhyanga chain is:
 //
 //	mid.Panics() → mid.Logger(logger) → mid.Metrics() → mid.Otel(tracer) → mid.Errors() → handler
 //

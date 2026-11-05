@@ -36,7 +36,7 @@ export default function Tasks() {
     >
       <div className="card overflow-hidden">
         <table className="min-w-full text-sm">
-          <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+          <thead className="bg-bodhyanga-50 text-bodhyanga-400 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Subject</th>
               <th className="px-4 py-2 text-left">Patient</th>
@@ -48,13 +48,13 @@ export default function Tasks() {
           </thead>
           <tbody>
             {filtered.map((t) => (
-              <tr key={t.id} className="border-t border-bodh-100">
+              <tr key={t.id} className="border-t border-bodhyanga-100">
                 <td className="px-4 py-2 font-medium">{t.subject}</td>
                 <td className="px-4 py-2 font-mono text-xs">{t.patient_id}</td>
-                <td className="px-4 py-2 text-bodh-400 text-xs">{t.kind}</td>
+                <td className="px-4 py-2 text-bodhyanga-400 text-xs">{t.kind}</td>
                 <td className="px-4 py-2"><span className={`badge badge-${t.priority === 'urgent' ? 'urgent' : 'normal'}`}>{t.priority}</span></td>
                 <td className="px-4 py-2"><span className={`badge ${t.status === 'done' ? 'badge-done' : 'badge-normal'}`}>{t.status}</span></td>
-                <td className="px-4 py-2 text-xs text-bodh-400">{new Date(t.due_at).toLocaleString()}</td>
+                <td className="px-4 py-2 text-xs text-bodhyanga-400">{new Date(t.due_at).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>

@@ -41,7 +41,7 @@ Examples of unacceptable behavior include:
 Given the sensitive nature of this project (medical AI), we additionally expect:
 
 * **No real patient data** in issues, PRs, discussions, or any public forum
-* **No clinical advice** — Bodh is a research reference, not a medical device
+* **No clinical advice** — Bodhyanga is a research reference, not a medical device
 * **Responsible disclosure** of security vulnerabilities (see SECURITY.md)
 * **Accuracy in clinical claims** — cite sources when proposing clinical rules or thresholds
 

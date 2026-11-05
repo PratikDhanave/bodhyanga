@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 func TestQueueLifecycle(t *testing.T) {

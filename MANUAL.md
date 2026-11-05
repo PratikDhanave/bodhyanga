@@ -1,10 +1,10 @@
-# Bodh — Medical Diagnostic Orchestrator & Care Services Platform (Go)
+# Bodhyanga — Medical Diagnostic Orchestrator & Care Services Platform (Go)
 
-> **Bodh** (Sanskrit: *bodhi* — knowledge, awakening, insight) is an open-source **medical AI platform** implemented in **Go**. It follows Microsoft's [**Multi-Agent Reference Architecture (MARA)**](https://microsoft.github.io/multi-agent-reference-architecture/), implements a **virtual physician panel** inspired by [**MAI-DxO**](https://microsoft.ai/news/the-path-to-medical-superintelligence/) and the [**Sequential Diagnosis Benchmark (SD Bench)**](https://microsoft.ai/news/the-path-to-medical-superintelligence/), and adds a **care-services layer** (CDM, TCM, panel management, virtual office, RPM, engagement, readmission tracking) on the same bus.
+> **Bodhyanga** (Sanskrit: *bodhyaṅga* — the factors of awakening, insight) is an open-source **medical AI platform** implemented in **Go**. It follows Microsoft's [**Multi-Agent Reference Architecture (MARA)**](https://microsoft.github.io/multi-agent-reference-architecture/), implements a **virtual physician panel** inspired by [**MAI-DxO**](https://microsoft.ai/news/the-path-to-medical-superintelligence/) and the [**Sequential Diagnosis Benchmark (SD Bench)**](https://microsoft.ai/news/the-path-to-medical-superintelligence/), and adds a **care-services layer** (CDM, TCM, panel management, virtual office, RPM, engagement, readmission tracking) on the same bus.
 
 Go · MARA · Medical AI · Sequential Diagnosis · FHIR · HL7 v2 · HIPAA-aware · Open Source
 
-**Module path:** `github.com/PratikDhanave/bodh`
+**Module path:** `github.com/PratikDhanave/bodhyanga`
 
 **Architecture diagrams:** [Architecture.png](Architecture.png) (MARA platform) · [architectureflow.png](architectureflow.png) (sequential diagnosis flow) · [14 interactive Archify diagrams](docs/architecture-diagrams.md) · [docs/diagrams.md](docs/diagrams.md) (25 mermaid views)
 
@@ -12,9 +12,9 @@ Go · MARA · Medical AI · Sequential Diagnosis · FHIR · HL7 v2 · HIPAA-awar
 
 ## ⚠️ Research disclaimer (read first)
 
-**Bodh is a research and engineering reference. It is not approved for clinical use.**
+**Bodhyanga is a research and engineering reference. It is not approved for clinical use.**
 
-- Do **not** use Bodh for real patient care, triage, treatment, or billing.
+- Do **not** use Bodhyanga for real patient care, triage, treatment, or billing.
 - Demo agents use **simulated** answers and **rule-based** inference — not validated models.
 - All thresholds (test costs, RPM alert limits, A1c/BP cutoffs, readmission weights) are **illustrative**, not clinical guidelines.
 - HIPAA, FDA, ONC, and state-law alignment described below is **architectural guidance**: the codebase is not certified, audited, or under a Business Associate Agreement (BAA).
@@ -25,17 +25,17 @@ Go · MARA · Medical AI · Sequential Diagnosis · FHIR · HL7 v2 · HIPAA-awar
 
 ## 🆕 What's new (May 2026)
 
-Seven PRs merged in the latest sprint move Bodh from "demo with good bones" to "credible production-ready substrate":
+Seven PRs merged in the latest sprint move Bodhyanga from "demo with good bones" to "credible production-ready substrate":
 
 | PR | Track | Highlight |
 |---|---|---|
-| [#6](https://github.com/PratikDhanave/bodh/pull/6) | Clinical | **Asthma** care plan + 2 panel rules (`no_controller_persistent_asthma`, `act_overdue`); proves the composition pattern — zero platform changes |
-| [#7](https://github.com/PratikDhanave/bodh/pull/7) | Production | **OpenTelemetry OTLP exporter** for `LLMTrace`, build-tag isolated (`-tags otel`); sha256-hashed `case_id` in spans (never raw MRN) |
-| [#8](https://github.com/PratikDhanave/bodh/pull/8) | Standards | **HL7 v2 ADT parser** + `POST /hl7/adt` endpoint; supports MSH/EVN/PID/PV1/DG1, ADT^A01/A02/A03/A04/A08, custom delimiters per MSH-1/MSH-2 |
-| [#9](https://github.com/PratikDhanave/bodh/pull/9) | Eval | **SD-Bench manifest runner** in `cmd/bench` with baseline regression gating (`-fail-on-regression`, `-update-baseline`) and 4 new synthetic fixtures (ACS, septic UTI, DKA, elderly CAP) |
-| [#10](https://github.com/PratikDhanave/bodh/pull/10) | Production | **PostgreSQL persistence** with **tenant row-level security**; `audit_events` table is append-only enforced at DB grants (SELECT+INSERT only) |
-| [#11](https://github.com/PratikDhanave/bodh/pull/11) | Clinical | **Rule-path specialty rules** for ACS / sepsis / DKA / CHF — bench moved from **42.9% → 85.7%** accuracy; 5 new TestCatalog entries (BNP, troponin, lactate, urine ketones, procalcitonin) |
-| [#12](https://github.com/PratikDhanave/bodh/pull/12) | Compliance | **Orchestrator audit + eval wiring** — every clinical message produces an `audit.Event`; **HIPAA §164.312(b) audit controls moves from "partial" → "wired"** |
+| [#6](https://github.com/PratikDhanave/bodhyanga/pull/6) | Clinical | **Asthma** care plan + 2 panel rules (`no_controller_persistent_asthma`, `act_overdue`); proves the composition pattern — zero platform changes |
+| [#7](https://github.com/PratikDhanave/bodhyanga/pull/7) | Production | **OpenTelemetry OTLP exporter** for `LLMTrace`, build-tag isolated (`-tags otel`); sha256-hashed `case_id` in spans (never raw MRN) |
+| [#8](https://github.com/PratikDhanave/bodhyanga/pull/8) | Standards | **HL7 v2 ADT parser** + `POST /hl7/adt` endpoint; supports MSH/EVN/PID/PV1/DG1, ADT^A01/A02/A03/A04/A08, custom delimiters per MSH-1/MSH-2 |
+| [#9](https://github.com/PratikDhanave/bodhyanga/pull/9) | Eval | **SD-Bench manifest runner** in `cmd/bench` with baseline regression gating (`-fail-on-regression`, `-update-baseline`) and 4 new synthetic fixtures (ACS, septic UTI, DKA, elderly CAP) |
+| [#10](https://github.com/PratikDhanave/bodhyanga/pull/10) | Production | **PostgreSQL persistence** with **tenant row-level security**; `audit_events` table is append-only enforced at DB grants (SELECT+INSERT only) |
+| [#11](https://github.com/PratikDhanave/bodhyanga/pull/11) | Clinical | **Rule-path specialty rules** for ACS / sepsis / DKA / CHF — bench moved from **42.9% → 85.7%** accuracy; 5 new TestCatalog entries (BNP, troponin, lactate, urine ketones, procalcitonin) |
+| [#12](https://github.com/PratikDhanave/bodhyanga/pull/12) | Compliance | **Orchestrator audit + eval wiring** — every clinical message produces an `audit.Event`; **HIPAA §164.312(b) audit controls moves from "partial" → "wired"** |
 
 ### Headline numbers
 
@@ -54,7 +54,7 @@ Beyond this README, the [docs/](docs/) tree has deep dives for each subsystem:
 
 | Doc | What it covers |
 |---|---|
-| **[docs/aigp-governance-mapping.md](docs/aigp-governance-mapping.md)** | **NEW** — IAPP AIGP body-of-knowledge mapping with practice scenarios, gap analysis, and a cross-reference index from AIGP codes to Bodh files. |
+| **[docs/aigp-governance-mapping.md](docs/aigp-governance-mapping.md)** | **NEW** — IAPP AIGP body-of-knowledge mapping with practice scenarios, gap analysis, and a cross-reference index from AIGP codes to Bodhyanga files. |
 | **[docs/agent-interop.md](docs/agent-interop.md)** | **NEW** — MCP / A2A / token-exchange / SPIFFE proposals informed by *Generative AI on Kubernetes* Ch. 9. |
 | **[docs/aiia-template.md](docs/aiia-template.md)** | **NEW** — Fillable AI Impact Assessment template for clinically-consequential PRs. |
 | **[docs/incident-playbook.md](docs/incident-playbook.md)** | **NEW** — Six AI-specific incident runbooks (clinically dangerous output, prompt injection, RAG poisoning, silent model change, audit integrity, tenant isolation breach). |
@@ -79,11 +79,11 @@ Beyond this README, the [docs/](docs/) tree has deep dives for each subsystem:
 
 ## Companion: `maf/` — the MARA pipeline on Microsoft Agent Framework (Go)
 
-The [`maf/`](maf/) subdirectory is **bodh-maf**, a vertical-slice reimplementation of bodh's MARA clinical pipeline on [`microsoft/agent-framework-go`](https://github.com/microsoft/agent-framework-go) (MAF-go, public preview). It exists to answer one question with test evidence: *can MAF-go carry bodh's safety boundary?* Like bodh, it is **research/education code — not a medical device, not for clinical use**.
+The [`maf/`](maf/) subdirectory is **bodhyanga-maf**, a vertical-slice reimplementation of bodhyanga's MARA clinical pipeline on [`microsoft/agent-framework-go`](https://github.com/microsoft/agent-framework-go) (MAF-go, public preview). It exists to answer one question with test evidence: *can MAF-go carry bodhyanga's safety boundary?* Like bodhyanga, it is **research/education code — not a medical device, not for clinical use**.
 
-It reuses bodh, it does not fork it. The compliance layer — `pkg/governance`, `pkg/audit`, `pkg/phi`, `pkg/eval` — is **imported unchanged** (fail-closed governance, fail-open audit, zero PHI in audit/checkpoint/logs). Only the orchestration substrate is swapped: the 4-agent pipeline (intake → test planner → diagnostician → care plan) becomes a MAF workflow graph, with the diagnostician loop-back as a conditional edge, a physician-review HITL gate that survives process restart via a Postgres `checkpoint.Store`, and rule/LLM diagnosticians swappable by flag. All five exit criteria are proven by tests.
+It reuses bodhyanga, it does not fork it. The compliance layer — `pkg/governance`, `pkg/audit`, `pkg/phi`, `pkg/eval` — is **imported unchanged** (fail-closed governance, fail-open audit, zero PHI in audit/checkpoint/logs). Only the orchestration substrate is swapped: the 4-agent pipeline (intake → test planner → diagnostician → care plan) becomes a MAF workflow graph, with the diagnostician loop-back as a conditional edge, a physician-review HITL gate that survives process restart via a Postgres `checkpoint.Store`, and rule/LLM diagnosticians swappable by flag. All five exit criteria are proven by tests.
 
-`maf/` is a **nested Go module** (`github.com/PratikDhanave/bodh-maf`) — built and tested separately from the parent `bodh` module:
+`maf/` is a **nested Go module** (`github.com/PratikDhanave/bodhyanga-maf`) — built and tested separately from the parent `bodhyanga` module:
 
 ```bash
 cd maf
@@ -97,9 +97,9 @@ go run ./cmd/bench                        # SD-Bench accuracy + mean-cost (the P
 
 ---
 
-## What is Bodh?
+## What is Bodhyanga?
 
-Bodh is two things in one repository:
+Bodhyanga is two things in one repository:
 
 1. **A multi-agent diagnostic orchestrator** — a virtual physician panel that asks targeted questions, orders cost-aware tests, infers a working diagnosis, and verifies its reasoning. Inspired by Microsoft's [MAI-DxO](https://microsoft.ai/news/the-path-to-medical-superintelligence/) and benchmarked against the Sequential Diagnosis Benchmark.
 
@@ -109,7 +109,7 @@ The platform layer (orchestrator, registry, bus, governance, evaluation, observa
 
 ### Engineering reality
 
-Bodh is a **Go codebase** with rule-based agents and an in-memory bus. It is intentionally:
+Bodhyanga is a **Go codebase** with rule-based agents and an in-memory bus. It is intentionally:
 
 - **Model-agnostic** — every agent is a struct that implements one interface; an LLM-backed version drops in by composition.
 - **Cost-aware** — every diagnostic test has a virtual USD price; a Cost Guardian enforces a per-case budget.
@@ -176,7 +176,7 @@ That is exactly what MARA's building blocks describe: an **orchestrator**, **spe
 No Docker, no Ollama, no API keys. Just Go 1.26:
 
 ```bash
-git clone https://github.com/PratikDhanave/bodh.git && cd bodh
+git clone https://github.com/PratikDhanave/bodhyanga.git && cd bodhyanga
 make care DIAGNOSTICIAN=rule          # deterministic rule engine — nothing external needed
 open http://localhost:8088/ui/        # clinician console
 ```
@@ -197,9 +197,9 @@ fixture, and watch the diagnostic pipeline stream to the console live.
 The full local-dev stack (Postgres + care + Ollama + Prometheus + Grafana + Tempo + Loki) boots with one command:
 
 ```bash
-git clone https://github.com/PratikDhanave/bodh.git && cd bodh
+git clone https://github.com/PratikDhanave/bodhyanga.git && cd bodhyanga
 docker compose -f zarf/compose/docker_compose.yaml up -d
-docker exec bodh-ollama ollama pull llama3.2       # one-time model pull
+docker exec bodhyanga-ollama ollama pull llama3.2       # one-time model pull
 open http://localhost:8088                          # care API
 open http://localhost:3000                          # Grafana (admin / admin)
 ```
@@ -209,9 +209,9 @@ Deeper setup: [docs/deployment.md](docs/deployment.md) for K8s (kind / GKE) and 
 ### Setup (5 steps) — running Go binaries directly
 
 1. **Install Go 1.22+** — verify with `go version`.
-2. **Clone the repo:** `git clone https://github.com/PratikDhanave/bodh.git && cd bodh`.
+2. **Clone the repo:** `git clone https://github.com/PratikDhanave/bodhyanga.git && cd bodhyanga`.
 3. **Pick a provider.** The rule-based agents work with no setup. To enable the LLM-backed diagnostician, follow one of the three walkthroughs in [docs/setup.md](docs/setup.md): Anthropic, OpenAI, or Ollama (local).
-4. **(Optional) Enable RAG** by pointing at the shipped 15-doc demo corpus: `export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json`. Anthropic users also need `VOYAGE_API_KEY` for embeddings; OpenAI / Ollama users already have an embedder.
+4. **(Optional) Enable RAG** by pointing at the shipped 15-doc demo corpus: `export BODHYANGA_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json`. Anthropic users also need `VOYAGE_API_KEY` for embeddings; OpenAI / Ollama users already have an embedder.
 5. **Run an entry point** — `go run ./cmd/demo` (diagnostic flow), `go run ./cmd/caredemo` (care services), or `go run ./cmd/care -addr=:8088` (HTTP API).
 
 Deep dive: [docs/setup.md](docs/setup.md) for provider account creation, smoke tests, and cost notes; [docs/ai-features.md](docs/ai-features.md) for what each LLM feature does and how it's wired.
@@ -219,8 +219,8 @@ Deep dive: [docs/setup.md](docs/setup.md) for provider account creation, smoke t
 ### Commands
 
 ```bash
-git clone https://github.com/PratikDhanave/bodh.git
-cd bodh
+git clone https://github.com/PratikDhanave/bodhyanga.git
+cd bodhyanga
 
 # Diagnostic flow (MAI-DxO / SD-Bench style)
 go run ./cmd/demo
@@ -252,9 +252,9 @@ go run -tags kronk ./cmd/demo -diagnostician=llm-kronk    # in-process llama.cpp
 go run ./cmd/bench -providers=rule,llm-anthropic,llm-openai,llm-ollama  # side-by-side compare
 
 # Operator CLI — manage reviews / tasks / notifications against a running cmd/care
-go install ./cmd/bodhctl
-bodhctl reviews pending
-bodhctl reviews approve <id>
+go install ./cmd/bodhyangactl
+bodhyangactl reviews pending
+bodhyangactl reviews approve <id>
 
 # Common dev workflow via Makefile
 make all          # vet + test + build
@@ -272,13 +272,13 @@ go test ./...
 You should see logs like:
 
 ```
-[bodh] [intake] case=demo-case-001 chief_complaint="Cough and fever"
-[bodh] [supervisor] starting sequential diagnosis for case demo-case-001
-[bodh] [test_planner] ordering complete_blood_count ($45)
-[bodh] [cost_guardian] APPROVE: $220.00 / $500.00 budget (44% utilized)
-[bodh] [diagnostician] diagnosis="Community-acquired pneumonia" confidence=87%
-[bodh] [reasoning_verifier] VERIFIED diagnosis "Community-acquired pneumonia"
-[bodh] [supervisor] gold standard: Community-acquired pneumonia | match=true
+[bodhyanga] [intake] case=demo-case-001 chief_complaint="Cough and fever"
+[bodhyanga] [supervisor] starting sequential diagnosis for case demo-case-001
+[bodhyanga] [test_planner] ordering complete_blood_count ($45)
+[bodhyanga] [cost_guardian] APPROVE: $220.00 / $500.00 budget (44% utilized)
+[bodhyanga] [diagnostician] diagnosis="Community-acquired pneumonia" confidence=87%
+[bodhyanga] [reasoning_verifier] VERIFIED diagnosis "Community-acquired pneumonia"
+[bodhyanga] [supervisor] gold standard: Community-acquired pneumonia | match=true
 ```
 
 **LLM diagnostician.** Pass `-diagnostician=llm-anthropic`, `-diagnostician=llm-openai`, `-diagnostician=llm-ollama`, or `-diagnostician=llm-kronk` (build with `-tags=kronk` for the in-process llama.cpp provider via [Ardan Labs kronk](https://github.com/ardanlabs/kronk) — no daemon, no API call, no PHI leaves the box) to `cmd/demo`, `cmd/care`, or `cmd/bench` to route the diagnosis step through an LLM. The agent emits a structured `DiagnosisProposal` matching the same JSON shape as the rule-based one, so the rest of the pipeline (cost guardian, reasoning verifier, HITL) is unchanged. If the LLM call fails (timeout, bad JSON, low confidence, transport error), the agent falls back to the rule-based diagnostician — the case always finalizes.
@@ -288,19 +288,19 @@ Required env vars:
 - `ANTHROPIC_API_KEY` — for `llm-anthropic`
 - `OPENAI_API_KEY` — for `llm-openai`
 - (no key) — for `llm-ollama`; uses the local Ollama server, set `OLLAMA_HOST` to override `http://localhost:11434`
-- (no key, build tag `kronk`) — for `llm-kronk`; pulls the model into the kronk cache on first run, set `BODH_KRONK_MODEL` to override `unsloth/Qwen3-0.6B-Q8_0`
+- (no key, build tag `kronk`) — for `llm-kronk`; pulls the model into the kronk cache on first run, set `BODHYANGA_KRONK_MODEL` to override `unsloth/Qwen3-0.6B-Q8_0`
 
-Optional model overrides: `BODH_ANTHROPIC_MODEL` (default `claude-sonnet-4-6`), `BODH_OPENAI_MODEL` (default `gpt-4o`), `BODH_OLLAMA_MODEL` (default `llama3.2`). See `.env.example`.
+Optional model overrides: `BODHYANGA_ANTHROPIC_MODEL` (default `claude-sonnet-4-6`), `BODHYANGA_OPENAI_MODEL` (default `gpt-4o`), `BODHYANGA_OLLAMA_MODEL` (default `llama3.2`). See `.env.example`.
 
 For the care demo:
 
 ```
-[bodh] [cdm_planner] plan condition=dm goals=1 meds=1 monitors=1 next_review=...
-[bodh] [tcm_coordinator] discharge pt-001 primary=ADHF tasks=5 conflicts=0
-[bodh] [panel_manager] panel=3 gaps=4 roll=map[chf:1 copd:1 dm:1 htn:1]
-[bodh] [readmission_tracker] patient=pt-001 discharge risk=0.66 band=high
-[bodh] [engagement] sms -> pt-002 template=care_gap reason=a1c_overdue
-[bodh] === summary === nurse tasks: 12 — notifications sent: 8
+[bodhyanga] [cdm_planner] plan condition=dm goals=1 meds=1 monitors=1 next_review=...
+[bodhyanga] [tcm_coordinator] discharge pt-001 primary=ADHF tasks=5 conflicts=0
+[bodhyanga] [panel_manager] panel=3 gaps=4 roll=map[chf:1 copd:1 dm:1 htn:1]
+[bodhyanga] [readmission_tracker] patient=pt-001 discharge risk=0.66 band=high
+[bodhyanga] [engagement] sms -> pt-002 template=care_gap reason=a1c_overdue
+[bodhyanga] === summary === nurse tasks: 12 — notifications sent: 8
 ```
 
 ---
@@ -314,7 +314,7 @@ Two canonical diagrams ship in the repo root. Start here.
 The Microsoft-style **Multi-Agent Reference Architecture (MARA)** mapping — user, application, orchestrator, classifier, registry, knowledge/storage, supervisor/worker agents, MCP, observability, evaluation.
 
 <p align="center">
-  <img src="./Architecture.png" alt="Bodh platform architecture aligned with Microsoft MARA" width="820"/>
+  <img src="./Architecture.png" alt="Bodhyanga platform architecture aligned with Microsoft MARA" width="820"/>
 </p>
 
 ### Clinical flow — [`architectureflow.png`](architectureflow.png)
@@ -336,7 +336,7 @@ End-to-end **sequential diagnosis** for one case: presentation → RPM monitor �
 One Go binary: clients → orchestrator → in-process bus → agents, gated by governance, HITL, and an append-only audit log.
 
 <p align="center">
-  <a href="docs/diagrams/platform.architecture.html"><img src="docs/diagrams/platform.architecture.svg" alt="Bodh platform architecture (MARA)" width="880"/></a>
+  <a href="docs/diagrams/platform.architecture.html"><img src="docs/diagrams/platform.architecture.svg" alt="Bodhyanga platform architecture (MARA)" width="880"/></a>
 </p>
 
 <sub>▶ <a href="docs/diagrams/platform.architecture.html">Interactive version</a></sub>
@@ -393,9 +393,9 @@ Every message forks into a PHI-minimized, append-only audit log (Merkle-chained)
 
 ### How each box maps to the Go code
 
-| Area on diagram | Bodh implementation | Go path |
+| Area on diagram | Bodhyanga implementation | Go path |
 |-----------------|---------------------|---------|
-| User / User application | Entry that publishes the first `protocol.Message` | `cmd/demo`, `cmd/caredemo`, `cmd/care` (HTTP), `cmd/bodhctl` (CLI) |
+| User / User application | Entry that publishes the first `protocol.Message` | `cmd/demo`, `cmd/caredemo`, `cmd/care` (HTTP), `cmd/bodhyangactl` (CLI) |
 | Orchestrator | Subscribes agents, runs governance, calls `HandleMessage`, republishes outputs | `pkg/orchestration` |
 | Classifier | Route intent (chest pain vs rash, refill vs urgent) | `inbox_triage` agent · future `pkg/classifier` |
 | Agent registry | Lists agents, resolves capabilities | `pkg/registry` |
@@ -415,7 +415,7 @@ Every message forks into a PHI-minimized, append-only audit log (Merkle-chained)
 ## Repository layout
 
 ```
-bodh/
+bodhyanga/
 ├── Architecture.png             # MARA platform map
 ├── architectureflow.png         # Sequential diagnosis flow
 ├── architectureflow.webp        # WebP source for the flow diagram
@@ -440,7 +440,7 @@ bodh/
 │   ├── caredemo/                # Care-services workflows
 │   ├── care/                    # HTTP API (POST /hl7/adt, GET /audit, ...)
 │   ├── bench/                   # SD-Bench manifest runner with baseline gating
-│   ├── bodhctl/                 # Operator CLI
+│   ├── bodhyangactl/                 # Operator CLI
 │   └── export-hitl-feedback/    # HITL feedback export
 ├── agents/                      # Virtual physician panel + care services (17+ agents)
 │   ├── intake.go
@@ -531,9 +531,9 @@ The [Sequential Diagnosis Benchmark](https://microsoft.ai/news/the-path-to-medic
 
 MAI-DxO paired with OpenAI's **o3** reportedly reached **~85.5%** accuracy on these cases, vs. **~20%** mean for experienced physicians in their study setup. Microsoft cites up to ~25% of U.S. health spending as low-value or wasted — the cost dimension is real.
 
-### What Bodh implements today
+### What Bodhyanga implements today
 
-| SD Bench / MAI-DxO idea | Bodh status |
+| SD Bench / MAI-DxO idea | Bodhyanga status |
 |-------------------------|-------------|
 | Sequential ask → test → diagnose | Done — demo workflow |
 | Virtual cost per test | Done — `medical.TestCatalog`, 13 tests (PR #11 added 5) |
@@ -563,7 +563,7 @@ Microsoft's [Multi-Agent Reference Architecture](https://microsoft.github.io/mul
 | **Operations** | Audit logs, evaluation vs. gold diagnosis, regression tests |
 | **Safety** | Fail closed; explainable denials; human-in-the-loop hooks |
 
-A single monolithic LLM call is hard to **audit**, **cap cost**, **swap models per step**, or **regression-test** when clinical guidelines change. Bodh keeps the orchestrator generic and puts clinical policy in **agents + governance**.
+A single monolithic LLM call is hard to **audit**, **cap cost**, **swap models per step**, or **regression-test** when clinical guidelines change. Bodhyanga keeps the orchestrator generic and puts clinical policy in **agents + governance**.
 
 **Further reading:** [MARA Reference Architecture](https://microsoft.github.io/multi-agent-reference-architecture/docs/reference-architecture/Reference-Architecture.html) · [Building blocks](https://microsoft.github.io/multi-agent-reference-architecture/docs/building-blocks/Building-Blocks.html)
 
@@ -571,9 +571,9 @@ A single monolithic LLM call is hard to **audit**, **cap cost**, **swap models p
 
 ## Care-services catalog
 
-Each service is one or more Bodh agents subscribing to specific message types, sharing in-memory state (patient registry, nurse task queue, notifier) injected through agent struct fields. The catalog covers the core workflows of value-based primary care.
+Each service is one or more Bodhyanga agents subscribing to specific message types, sharing in-memory state (patient registry, nurse task queue, notifier) injected through agent struct fields. The catalog covers the core workflows of value-based primary care.
 
-| Service | Bodh agent(s) | Status |
+| Service | Bodhyanga agent(s) | Status |
 |------------------------|---------------|--------|
 | Remote Patient Monitoring (RPM) | `rpm_monitor` + device webhooks via `pkg/medical/rpm.go` | Done |
 | Chronic Disease Management (CDM) | `cdm_planner` + `medical.CarePlan` templates (HTN, DM, CHF, CKD, COPD) | Done |
@@ -592,7 +592,7 @@ Each service is one or more Bodh agents subscribing to specific message types, s
 
 ## AI features
 
-Bodh ships a complete LLM stack alongside the rule-based agents: provider-agnostic chat / embeddings / vision clients, an in-process knowledge store for RAG, an LLM-as-judge for evaluation, lightweight safety guardrails, and structured per-call tracing. Every LLM-backed agent has a rule-based fallback — failures don't break the pipeline, they just degrade to deterministic behaviour.
+Bodhyanga ships a complete LLM stack alongside the rule-based agents: provider-agnostic chat / embeddings / vision clients, an in-process knowledge store for RAG, an LLM-as-judge for evaluation, lightweight safety guardrails, and structured per-call tracing. Every LLM-backed agent has a rule-based fallback — failures don't break the pipeline, they just degrade to deterministic behaviour.
 
 For depth on each subsection, see the companion [docs/ai-features.md](docs/ai-features.md). For account creation and smoke tests, see [docs/setup.md](docs/setup.md). For interactive diagrams, see [docs/diagrams.md § G. AI subsystem](docs/diagrams.md#g-ai-subsystem).
 
@@ -616,17 +616,17 @@ Embedding adapters live in [`pkg/embeddings`](pkg/embeddings/); chat clients in 
 
    ```bash
    export ANTHROPIC_API_KEY=sk-ant-...
-   # Optional: export BODH_ANTHROPIC_MODEL=claude-sonnet-4-6
+   # Optional: export BODHYANGA_ANTHROPIC_MODEL=claude-sonnet-4-6
    go run ./cmd/demo -diagnostician=llm-anthropic
    ```
 
 3. Expected first few log lines:
 
    ```
-   [demo] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)
-   [bodh] [intake] case=demo-case-001 chief_complaint="Cough and fever"
-   [bodh] [diagnostician/llm] provider=anthropic model=claude-sonnet-4-6 diagnosis="Community-acquired pneumonia" confidence=87%
-   [bodh] [diagnostician/llm] tokens in=812 out=146 cached=0 stop=tool_use
+   [demo] RAG disabled (BODHYANGA_KNOWLEDGE_CORPUS not set)
+   [bodhyanga] [intake] case=demo-case-001 chief_complaint="Cough and fever"
+   [bodhyanga] [diagnostician/llm] provider=anthropic model=claude-sonnet-4-6 diagnosis="Community-acquired pneumonia" confidence=87%
+   [bodhyanga] [diagnostician/llm] tokens in=812 out=146 cached=0 stop=tool_use
    ```
 
 If the LLM call fails, the agent transparently falls back to the deterministic rule-based diagnostician — the case always finalises.
@@ -638,15 +638,15 @@ If the LLM call fails, the agent transparently falls back to the deterministic r
 
    ```bash
    export OPENAI_API_KEY=sk-...
-   # Optional: export BODH_OPENAI_MODEL=gpt-4o
+   # Optional: export BODHYANGA_OPENAI_MODEL=gpt-4o
    go run ./cmd/demo -diagnostician=llm-openai
    ```
 
 3. Expected first few log lines:
 
    ```
-   [bodh] [diagnostician/llm] provider=openai model=gpt-4o diagnosis="Community-acquired pneumonia" confidence=86%
-   [bodh] [diagnostician/llm] tokens in=798 out=142 cached=0 stop=stop
+   [bodhyanga] [diagnostician/llm] provider=openai model=gpt-4o diagnosis="Community-acquired pneumonia" confidence=86%
+   [bodhyanga] [diagnostician/llm] tokens in=798 out=142 cached=0 stop=stop
    ```
 
 If the LLM call fails, the agent transparently falls back to the deterministic rule-based diagnostician — the case always finalises.
@@ -668,11 +668,11 @@ If the LLM call fails, the agent transparently falls back to the deterministic r
 3. Expected first few log lines:
 
    ```
-   [bodh] [diagnostician/llm] provider=ollama model=llama3.2 diagnosis="Community-acquired pneumonia" confidence=72%
-   [bodh] [diagnostician/llm] tokens in=842 out=156 cached=0 stop=stop
+   [bodhyanga] [diagnostician/llm] provider=ollama model=llama3.2 diagnosis="Community-acquired pneumonia" confidence=72%
+   [bodhyanga] [diagnostician/llm] tokens in=842 out=156 cached=0 stop=stop
    ```
 
-For vision use `BODH_OLLAMA_MODEL=llama3.2-vision` (or `bakllava`); for embeddings stick with `nomic-embed-text` or `mxbai-embed-large`. If the LLM call fails, the agent transparently falls back to the deterministic rule-based diagnostician — the case always finalises.
+For vision use `BODHYANGA_OLLAMA_MODEL=llama3.2-vision` (or `bakllava`); for embeddings stick with `nomic-embed-text` or `mxbai-embed-large`. If the LLM call fails, the agent transparently falls back to the deterministic rule-based diagnostician — the case always finalises.
 
 ### LLM-backed diagnostician
 
@@ -715,9 +715,9 @@ go run ./cmd/bench -providers=rule,llm-anthropic,llm-openai,llm-ollama
 **Example log output:**
 
 ```
-[bodh] [diagnostician/llm] provider=anthropic model=claude-sonnet-4-6 diagnosis="Community-acquired pneumonia" confidence=87%
-[bodh] [diagnostician/llm] rationale: Productive cough with fever, neutrophilic leukocytosis, and RLL consolidation on CXR are consistent with bacterial CAP.
-[bodh] [diagnostician/llm] tokens in=812 out=146 cached=624 stop=tool_use
+[bodhyanga] [diagnostician/llm] provider=anthropic model=claude-sonnet-4-6 diagnosis="Community-acquired pneumonia" confidence=87%
+[bodhyanga] [diagnostician/llm] rationale: Productive cough with fever, neutrophilic leukocytosis, and RLL consolidation on CXR are consistent with bacterial CAP.
+[bodhyanga] [diagnostician/llm] tokens in=812 out=146 cached=624 stop=tool_use
 [llm-trace] {"started_at":"2026-05-23T09:14:21Z","duration_ms":2438,"provider":"anthropic","model":"claude-sonnet-4-6","agent_id":"diagnostician","case_id":"demo-case-001","input_tokens":812,"output_tokens":146,"cached_tokens":624,"stop_reason":"tool_use","kind":"completion"}
 ```
 
@@ -725,7 +725,7 @@ go run ./cmd/bench -providers=rule,llm-anthropic,llm-openai,llm-ollama
 
 ### Retrieval-Augmented Generation (RAG)
 
-Set `BODH_KNOWLEDGE_CORPUS` to a JSON corpus, configure an embedder credential for your provider, and the diagnostician runs RAG: it composes a query from the CaseState, retrieves the top-k matching documents, prepends them as an `Evidence:` block, and surfaces them as `Citations[]` on the final `DiagnosisProposal`.
+Set `BODHYANGA_KNOWLEDGE_CORPUS` to a JSON corpus, configure an embedder credential for your provider, and the diagnostician runs RAG: it composes a query from the CaseState, retrieves the top-k matching documents, prepends them as an `Evidence:` block, and surfaces them as `Citations[]` on the final `DiagnosisProposal`.
 
 ```mermaid
 flowchart TB
@@ -744,7 +744,7 @@ flowchart TB
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 export VOYAGE_API_KEY=pa-...      # for Anthropic, embeddings come from Voyage
-export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
+export BODHYANGA_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
 go run ./cmd/demo -diagnostician=llm-anthropic
 # [demo] RAG enabled with 15 docs
 # [diagnostician/llm] rag retrieved 4 citations
@@ -754,7 +754,7 @@ For OpenAI both chat and embeddings use the same key:
 
 ```bash
 export OPENAI_API_KEY=sk-...
-export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
+export BODHYANGA_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
 go run ./cmd/demo -diagnostician=llm-openai
 ```
 
@@ -762,7 +762,7 @@ For Ollama everything is local:
 
 ```bash
 ollama pull llama3.2 && ollama pull nomic-embed-text
-export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
+export BODHYANGA_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
 go run ./cmd/demo -diagnostician=llm-ollama
 ```
 
@@ -852,8 +852,8 @@ flowchart TB
 
 ```go
 import (
-    "github.com/PratikDhanave/bodh/pkg/eval"
-    "github.com/PratikDhanave/bodh/pkg/llm"
+    "github.com/PratikDhanave/bodhyanga/pkg/eval"
+    "github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 client := llm.NewAnthropic(os.Getenv("ANTHROPIC_API_KEY"), "claude-sonnet-4-6")
@@ -900,7 +900,7 @@ flowchart TB
     Agent[LLM-backed agent] --> Call[llm.Complete]
     Call --> Build[Build LLMTrace<br/>provider · model · duration_ms<br/>input/output/cached tokens<br/>stop_reason · agent_id<br/>case_id · trace_id · tool_calls]
     Build --> Log["StdLogger.RecordLLMCall<br/>'[llm-trace] {json}' line"]
-    Log --> Gate{BODH_OTEL_ENABLED=1<br/>AND otelHook set?}
+    Log --> Gate{BODHYANGA_OTEL_ENABLED=1<br/>AND otelHook set?}
     Gate -->|yes| Hook["otelHook(LLMTrace)<br/>SetLLMOTelHook(fn)"]
     Hook --> OTLP[(OTLP collector)]
     Gate -->|no| Done[no-op]
@@ -926,12 +926,12 @@ go mod tidy
 docker run -p 4318:4318 otel/opentelemetry-collector:latest
 
 # 3. launch care with OTLP export on
-BODH_OTEL_EXPORT=1 \
-  BODH_OTEL_ENDPOINT=http://localhost:4318 \
+BODHYANGA_OTEL_EXPORT=1 \
+  BODHYANGA_OTEL_ENDPOINT=http://localhost:4318 \
   go run -tags otel ./cmd/care
 ```
 
-Default builds do **not** link the OTel SDK — the real exporter lives in `pkg/observability/otlp.go` behind `//go:build otel`; a no-op stub takes its place when the tag is off. `BODH_OTEL_EXPORT` enables OTLP shipping; `BODH_OTEL_ENABLED` (set internally by `cmd/care`) gates the dispatch from `RecordLLMCall` to the installed hook. PHI is never attached to spans — `case_id` is sha256-hashed before becoming a span attribute.
+Default builds do **not** link the OTel SDK — the real exporter lives in `pkg/observability/otlp.go` behind `//go:build otel`; a no-op stub takes its place when the tag is off. `BODHYANGA_OTEL_EXPORT` enables OTLP shipping; `BODHYANGA_OTEL_ENABLED` (set internally by `cmd/care`) gates the dispatch from `RecordLLMCall` to the installed hook. PHI is never attached to spans — `case_id` is sha256-hashed before becoming a span attribute.
 
 ### LLM variants of other agents
 
@@ -939,7 +939,7 @@ Three more agents have drop-in LLM variants. Each is a struct that wraps an `llm
 
 | Agent | LLM type | Factory | Env vars |
 |---|---|---|---|
-| Questioner | [`LLMQuestioner`](agents/questioner_llm.go) | `agents.NewQuestioner(provider)` | `*_API_KEY`, `BODH_*_MODEL`, `OLLAMA_HOST` |
+| Questioner | [`LLMQuestioner`](agents/questioner_llm.go) | `agents.NewQuestioner(provider)` | `*_API_KEY`, `BODHYANGA_*_MODEL`, `OLLAMA_HOST` |
 | Inbox Triage | [`LLMInboxTriage`](agents/inbox_triage_llm.go) | `agents.NewInboxTriage(provider, taskQueue)` | same |
 | Reasoning Verifier | [`LLMReasoningVerifier`](agents/reasoning_verifier_llm.go) | `agents.NewReasoningVerifier(provider, hitl)` | same |
 
@@ -969,19 +969,19 @@ The struct types and factory functions ship today (`agents/diagnostician_{debate
 | Variable | Used by | Default | Description |
 |---|---|---|---|
 | `ANTHROPIC_API_KEY` | `-diagnostician=llm-anthropic` | (none) | Anthropic Messages API key |
-| `BODH_ANTHROPIC_MODEL` | factory | `claude-sonnet-4-6` | Override Anthropic chat model |
+| `BODHYANGA_ANTHROPIC_MODEL` | factory | `claude-sonnet-4-6` | Override Anthropic chat model |
 | `OPENAI_API_KEY` | `-diagnostician=llm-openai`, OpenAI embeddings | (none) | OpenAI API key |
-| `BODH_OPENAI_MODEL` | factory | `gpt-4o` | Override OpenAI chat model |
-| `BODH_OPENAI_EMBED_MODEL` | RAG embedder | `text-embedding-3-small` | Override OpenAI embedding model |
+| `BODHYANGA_OPENAI_MODEL` | factory | `gpt-4o` | Override OpenAI chat model |
+| `BODHYANGA_OPENAI_EMBED_MODEL` | RAG embedder | `text-embedding-3-small` | Override OpenAI embedding model |
 | `OLLAMA_HOST` | Ollama chat + embeddings | `http://localhost:11434` | Local Ollama URL |
-| `BODH_OLLAMA_MODEL` | factory | `llama3.2` | Override Ollama chat model |
-| `BODH_OLLAMA_EMBED_MODEL` | RAG embedder | `nomic-embed-text` | Override Ollama embedding model |
+| `BODHYANGA_OLLAMA_MODEL` | factory | `llama3.2` | Override Ollama chat model |
+| `BODHYANGA_OLLAMA_EMBED_MODEL` | RAG embedder | `nomic-embed-text` | Override Ollama embedding model |
 | `VOYAGE_API_KEY` | Anthropic-path RAG embeddings | (none) | Voyage key for embeddings (Anthropic + Voyage pairing) |
-| `BODH_VOYAGE_EMBED_MODEL` | Voyage embedder | `voyage-3` | Override Voyage embedding model |
-| `BODH_KNOWLEDGE_CORPUS` | RAG | (unset) | Path to corpus JSON. Unset disables RAG entirely. |
-| `BODH_OTEL_ENABLED` | observability | (unset) | `1` forwards `LLMTrace` records to the installed OTel hook (set automatically by `cmd/care`) |
-| `BODH_OTEL_EXPORT` | observability | (unset) | `1` enables real OTLP/HTTP export from `cmd/care` (requires `-tags otel` build) |
-| `BODH_OTEL_ENDPOINT` | observability | `http://localhost:4318` | OTLP/HTTP collector endpoint used when `BODH_OTEL_EXPORT=1` |
+| `BODHYANGA_VOYAGE_EMBED_MODEL` | Voyage embedder | `voyage-3` | Override Voyage embedding model |
+| `BODHYANGA_KNOWLEDGE_CORPUS` | RAG | (unset) | Path to corpus JSON. Unset disables RAG entirely. |
+| `BODHYANGA_OTEL_ENABLED` | observability | (unset) | `1` forwards `LLMTrace` records to the installed OTel hook (set automatically by `cmd/care`) |
+| `BODHYANGA_OTEL_EXPORT` | observability | (unset) | `1` enables real OTLP/HTTP export from `cmd/care` (requires `-tags otel` build) |
+| `BODHYANGA_OTEL_ENDPOINT` | observability | `http://localhost:4318` | OTLP/HTTP collector endpoint used when `BODHYANGA_OTEL_EXPORT=1` |
 
 Full deep-dive: [docs/ai-features.md](docs/ai-features.md). Provider setup: [docs/setup.md](docs/setup.md). Diagrams: [docs/diagrams.md § G](docs/diagrams.md#g-ai-subsystem).
 
@@ -1000,7 +1000,7 @@ This table is the **map of the codebase**.
 | Orchestrator | Subscribe agents, apply policy, dispatch | `pkg/orchestration` | `Orchestrator`, `SimpleEnvironment` |
 | Governance | Allow / deny before an agent sees a message | `pkg/governance` | `Policy`, `CompositePolicy`, `medical_policy.go` |
 | Memory | Short / long-term context | `pkg/memory` | `KeyValueStore`, `InMemoryKV` |
-| Observability | Logs, clocks | `pkg/observability` | `Logger`, `Clock`, `[bodh]` prefix |
+| Observability | Logs, clocks | `pkg/observability` | `Logger`, `Clock`, `[bodhyanga]` prefix |
 | Evaluation | Record runs for offline / online eval | `pkg/eval` | `InteractionRecord`, `CaseMetrics`, `Store` |
 | Medical domain | Case state, tests, diagnoses, care plans, panel, ADT, RPM | `pkg/medical` | `CaseState`, `TestCatalog`, `DiagnosisProposal`, `CarePlan`, `PanelReport`, `ADTEvent`, `RPMObservation`, `PatientRegistry` |
 | Clinical agents | Virtual physician panel + care services | `agents/` | 17 agents |
@@ -1061,7 +1061,7 @@ Sends `diagnosis_proposal` JSON to `reasoning_verifier`.
 
 ## Human-in-the-loop (HITL) — clinical oversight gate
 
-Every clinically consequential action in Bodh can be **gated by a human reviewer** before the platform acts on it. This is the FDA Clinical Decision Support (CDS) carve-out criterion #4 ("enable the clinician to independently review the basis for the recommendations") expressed in code: the platform proposes, a clinician disposes.
+Every clinically consequential action in Bodhyanga can be **gated by a human reviewer** before the platform acts on it. This is the FDA Clinical Decision Support (CDS) carve-out criterion #4 ("enable the clinician to independently review the basis for the recommendations") expressed in code: the platform proposes, a clinician disposes.
 
 ### How it works
 
@@ -1148,7 +1148,7 @@ The gate is **opt-in per agent** and **lossless on reject** (the original messag
 
 ## Care-services workflows
 
-Bodh implements a care-services layer as additional agents on the same bus. They share the platform with the diagnostic panel and add their own message types.
+Bodhyanga implements a care-services layer as additional agents on the same bus. They share the platform with the diagnostic panel and add their own message types.
 
 | Service | Agent | Input `Type` | Output `Type` |
 |---------|-------|--------------|---------------|
@@ -1232,7 +1232,7 @@ type Message struct {
 
 ### Message roles
 
-| Role | Use in Bodh |
+| Role | Use in Bodhyanga |
 |------|-------------|
 | `user` | Initial `presentation` / API call |
 | `agent` | Plans, case state, delegations |
@@ -1434,7 +1434,7 @@ type Policy interface {
 | Package | Today | Direction |
 |---------|-------|-----------|
 | `memory` | `InMemoryKV` | per-case scratchpad; conversation STM |
-| `observability` | `[bodh]` stdout logger | `trace_id`, OpenTelemetry |
+| `observability` | `[bodhyanga]` stdout logger | `trace_id`, OpenTelemetry |
 | `eval` | `InteractionRecord` + `CaseMetrics` | SD-Bench accuracy/cost reports |
 
 ### `pkg/tasks` — nurse work queue
@@ -1544,16 +1544,16 @@ time.Sleep(3 * time.Second)
 Final summary line:
 
 ```
-[bodh] === summary ===
-[bodh] nurse tasks: 12 open / 12 total — kinds=map[inbox:1 prior_auth:1 tcm_follow_up:10]
-[bodh] notifications sent: 8
+[bodhyanga] === summary ===
+[bodhyanga] nurse tasks: 12 open / 12 total — kinds=map[inbox:1 prior_auth:1 tcm_follow_up:10]
+[bodhyanga] notifications sent: 8
 ```
 
 ---
 
 ## Healthcare standards & interoperability
 
-Real-world clinical software must speak the lingua franca of healthcare IT. Bodh tracks the following standards; each section in [docs/healthcare-standards.md](docs/healthcare-standards.md) explains scope, why it matters for Bodh, and current status.
+Real-world clinical software must speak the lingua franca of healthcare IT. Bodhyanga tracks the following standards; each section in [docs/healthcare-standards.md](docs/healthcare-standards.md) explains scope, why it matters for Bodhyanga, and current status.
 
 - **FHIR R4** — implemented for `Patient`, `Observation`, `Encounter`, `Condition` ([pkg/fhir](pkg/fhir/)). HTTP endpoints under `/fhir/*`.
 - **HL7 v2** — planned `pkg/hl7v2`; ADT, ORM, ORU, SIU, DFT, MDM message types map onto bus messages.
@@ -1573,12 +1573,12 @@ Full detail: [docs/healthcare-standards.md](docs/healthcare-standards.md).
 
 ## Security & HIPAA compliance
 
-> Bodh is a research demo. The architecture below is the **target** for a production HIPAA-aligned deployment. The current codebase does **not** ship with a BAA, encryption-at-rest, identity provider, or audit pipeline.
+> Bodhyanga is a research demo. The architecture below is the **target** for a production HIPAA-aligned deployment. The current codebase does **not** ship with a BAA, encryption-at-rest, identity provider, or audit pipeline.
 
 The deep version of this section lives in [docs/compliance.md](docs/compliance.md). It covers:
 
 - **PHI handling principles** — minimum necessary, opaque identifiers, fail closed, audit everything, no PHI in third-party telemetry, de-identify for evaluation, encrypt in transit and at rest, support right to delete.
-- **Security architecture** — IdP → API gateway (TLS 1.3, JWT, WAF) → Bodh API (scope/tenant binding) → orchestrator + bus (trace_id, tenant_id) → persistence (column-level PHI encryption, RLS) → observability and audit sinks.
+- **Security architecture** — IdP → API gateway (TLS 1.3, JWT, WAF) → Bodhyanga API (scope/tenant binding) → orchestrator + bus (trace_id, tenant_id) → persistence (column-level PHI encryption, RLS) → observability and audit sinks.
 - **Authn / authz** — OIDC + SMART scopes, mTLS service-to-service, fine-grained governance policies, patient-context binding.
 - **Cryptography & key management** — AES-256-GCM with KMS, EdDSA/RSA-PSS signing, `crypto/rand`, CMK in cloud KMS, annual rotation drills.
 - **HIPAA Privacy Rule** — uses/disclosures, patient rights, BAA elements, BAA-eligible subcontractors.
@@ -1590,7 +1590,7 @@ The deep version of this section lives in [docs/compliance.md](docs/compliance.m
 - **GDPR / international privacy** — Art. 5, 9, 15, 17, 22, 25, 32, 33/34, 35; UK GDPR, PIPEDA, LGPD, India DPDP.
 - **HITRUST CSF, SOC 2, ISO 27001/27799, NIST SP 800-66, NIST AI RMF** — framework choices.
 - **De-identification** — Safe Harbor and Expert Determination methods; re-identification risk drivers.
-- **Governance policies in Bodh** — live policies (`MaxContentLengthPolicy`, `RequireCaseIDPolicy`, `MaxDiagnosticCostPolicy`, `ResearchDisclaimerPolicy`) and the planned set (`RequireTenantPolicy`, `RequireScopePolicy`, `RedactNarrativePolicy`, `Part2ConsentPolicy`, `BreakGlassPolicy`, `RateLimitPolicy`).
+- **Governance policies in Bodhyanga** — live policies (`MaxContentLengthPolicy`, `RequireCaseIDPolicy`, `MaxDiagnosticCostPolicy`, `ResearchDisclaimerPolicy`) and the planned set (`RequireTenantPolicy`, `RequireScopePolicy`, `RedactNarrativePolicy`, `Part2ConsentPolicy`, `BreakGlassPolicy`, `RateLimitPolicy`).
 
 Run the governance tests:
 
@@ -1605,7 +1605,7 @@ go test ./pkg/medical/...     -v
 
 ### FDA — Software as a Medical Device (SaMD)
 
-The FDA regulates software as a medical device when it is **intended for use in the diagnosis, treatment, mitigation, cure, or prevention of disease.** Sequential-diagnosis tooling like MAI-DxO / Bodh sits squarely in that zone.
+The FDA regulates software as a medical device when it is **intended for use in the diagnosis, treatment, mitigation, cure, or prevention of disease.** Sequential-diagnosis tooling like MAI-DxO / Bodhyanga sits squarely in that zone.
 
 | Risk class | Examples | Pathway |
 |------------|----------|---------|
@@ -1624,11 +1624,11 @@ Under **section 3060 of the 21st Century Cures Act** (codified at 21 USC § 360j
 3. Support or provide recommendations to a **health care professional** about prevention, diagnosis, or treatment.
 4. Enable the HCP to **independently review** the basis for the recommendations.
 
-Bodh's transparency goals (explanations in `rationale`, rule-based gap detection, score breakdowns) target criterion (4). If an LLM-backed Bodh ever opaques the rationale, criterion (4) is at risk and SaMD classification becomes likely.
+Bodhyanga's transparency goals (explanations in `rationale`, rule-based gap detection, score breakdowns) target criterion (4). If an LLM-backed Bodhyanga ever opaques the rationale, criterion (4) is at risk and SaMD classification becomes likely.
 
 ### Other regulatory regimes
 
-- **21 CFR Part 11** — electronic records & signatures for FDA-regulated submissions or clinical trials. Bodh's audit-log pattern is compatible; production deployments add cryptographic timestamping (RFC 3161).
+- **21 CFR Part 11** — electronic records & signatures for FDA-regulated submissions or clinical trials. Bodhyanga's audit-log pattern is compatible; production deployments add cryptographic timestamping (RFC 3161).
 - **ONC Health IT Certification** — 2015 Edition Cures Update criteria: USCDI, FHIR R4 with US Core, SMART App Launch, Bulk Data, Information Blocking compliance, patient API access.
 - **CMS quality programs** — MIPS, MSSP/ACOs, HRRP (readmission tracker), CCM/PCM/RPM/RTM/TCM (CDM + TCM agents), BPCI-A, REACH.
 
@@ -1636,7 +1636,7 @@ Bodh's transparency goals (explanations in `rationale`, rule-based gap detection
 
 1. **Retrospective validation** — held-out dataset (NEJM SD Bench, MIMIC-IV) vs gold standard.
 2. **Silent prospective deployment** — run alongside clinicians without showing outputs.
-3. **Shadow review** — clinicians see recommendations, a second clinician reviews Bodh output.
+3. **Shadow review** — clinicians see recommendations, a second clinician reviews Bodhyanga output.
 4. **IRB-approved pragmatic trial** — measure outcomes under randomization.
 5. **Post-market surveillance** — drift detection, equity audits, adverse-event reporting.
 
@@ -1653,7 +1653,7 @@ A clinical AI system can hurt patients via:
 | Automation bias | Clinicians over-trust the recommendation | UI shows confidence + rationale + dissenting hypotheses |
 | Cybersecurity attacks | Prompt injection in clinical narrative | Sanitize Content before LLM call; structured outputs |
 
-**Model governance** for a future LLM-backed Bodh: pin per-agent model versions, A/B canary, rollback on metric regression, scrub then log prompts/responses, annual bias audit and public report.
+**Model governance** for a future LLM-backed Bodhyanga: pin per-agent model versions, A/B canary, rollback on metric regression, scrub then log prompts/responses, annual bias audit and public report.
 
 ---
 
@@ -1661,7 +1661,7 @@ A clinical AI system can hurt patients via:
 
 ### Observability
 
-Today: stdout `Logger` with `[bodh]` prefix and microsecond timestamps. Logs every `agent.HandleMessage` entry/exit, every governance decision (`allow` / `deny` with `reason`), and every clinical inference (diagnosis, care plan, gap, risk band).
+Today: stdout `Logger` with `[bodhyanga]` prefix and microsecond timestamps. Logs every `agent.HandleMessage` entry/exit, every governance decision (`allow` / `deny` with `reason`), and every clinical inference (diagnosis, care plan, gap, risk band).
 
 Production target:
 
@@ -1700,8 +1700,8 @@ Records are **fail-open**: a recorder error is logged via `env.Logf` and the pip
 
 `cmd/care` exposes the log at `GET /audit?kind=<filter>&limit=<N>` (default 100) for development visibility — reads from whichever backend is wired:
 
-- `BODH_DB_DSN` unset → in-memory `audit.NewInMemory()` (demo path).
-- `BODH_DB_DSN` set → Postgres-backed `*Store.AuditRecorder(tenant)` scoped via row-level security to `BODH_TENANT_ID`.
+- `BODHYANGA_DB_DSN` unset → in-memory `audit.NewInMemory()` (demo path).
+- `BODHYANGA_DB_DSN` set → Postgres-backed `*Store.AuditRecorder(tenant)` scoped via row-level security to `BODHYANGA_TENANT_ID`.
 
 `cmd/care` also mirrors completed diagnostic cases into `eval.Store` (in-memory or Postgres) via `Orchestrator.SetEvalStore` so SD-Bench replay and post-hoc audits share one source of truth.
 
@@ -1727,17 +1727,17 @@ Current entry points read flags only:
 Production target: read from environment / file / Kubernetes ConfigMap. Recommended layout:
 
 ```
-BODH_LISTEN_ADDR=:8088
-BODH_TLS_CERT=/etc/bodh/tls.crt
-BODH_TLS_KEY=/etc/bodh/tls.key
-BODH_OIDC_ISSUER=https://idp.example.com
-BODH_OIDC_AUDIENCE=bodh-care
-BODH_BUS=nats://nats:4222
-BODH_DB_DSN=postgres://...
-BODH_LOG_LEVEL=info
-BODH_TRACE_ENDPOINT=http://otel-collector:4318
-BODH_TENANT_ID=tenant-acme
-BODH_MAX_COST_USD=500
+BODHYANGA_LISTEN_ADDR=:8088
+BODHYANGA_TLS_CERT=/etc/bodhyanga/tls.crt
+BODHYANGA_TLS_KEY=/etc/bodhyanga/tls.key
+BODHYANGA_OIDC_ISSUER=https://idp.example.com
+BODHYANGA_OIDC_AUDIENCE=bodhyanga-care
+BODHYANGA_BUS=nats://nats:4222
+BODHYANGA_DB_DSN=postgres://...
+BODHYANGA_LOG_LEVEL=info
+BODHYANGA_TRACE_ENDPOINT=http://otel-collector:4318
+BODHYANGA_TENANT_ID=tenant-acme
+BODHYANGA_MAX_COST_USD=500
 ```
 
 ### Deployment topologies
@@ -1776,24 +1776,24 @@ Minimal Kubernetes Deployment (planned):
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bodh-care
+  name: bodhyanga-care
 spec:
   replicas: 3
-  selector: { matchLabels: { app: bodh-care } }
+  selector: { matchLabels: { app: bodhyanga-care } }
   template:
-    metadata: { labels: { app: bodh-care } }
+    metadata: { labels: { app: bodhyanga-care } }
     spec:
-      serviceAccountName: bodh-care
+      serviceAccountName: bodhyanga-care
       containers:
       - name: care
-        image: ghcr.io/PratikDhanave/bodh-care:latest
+        image: ghcr.io/PratikDhanave/bodhyanga-care:latest
         readinessProbe:
           httpGet: { path: /healthz, port: 8088 }
         livenessProbe:
           httpGet: { path: /healthz, port: 8088 }
         env:
-        - name: BODH_OIDC_ISSUER
-          valueFrom: { configMapKeyRef: { name: bodh-config, key: oidcIssuer } }
+        - name: BODHYANGA_OIDC_ISSUER
+          valueFrom: { configMapKeyRef: { name: bodhyanga-config, key: oidcIssuer } }
         resources:
           limits: { cpu: 500m, memory: 512Mi }
         securityContext:
@@ -1915,7 +1915,7 @@ data/cases/
 
 ## Develop
 
-### Add your first Bodh agent
+### Add your first Bodhyanga agent
 
 **1. Create `agents/radiologist.go`:**
 
@@ -1924,8 +1924,8 @@ package agents
 
 import (
     "context"
-    "github.com/PratikDhanave/bodh/pkg/agent"
-    "github.com/PratikDhanave/bodh/pkg/medical"
+    "github.com/PratikDhanave/bodhyanga/pkg/agent"
+    "github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 type RadiologistAgent struct{}
@@ -2116,7 +2116,7 @@ For the full status with phase grouping and decision log, see [ROADMAP.md](ROADM
 | Multi-tenant + scope policies | Done | `governance.RequireTenantPolicy`, `RequireScopePolicy` |
 | **SD-Bench manifest runner + baseline gating** | **Done (PR #9)** | `cmd/bench -manifest=... -fail-on-regression` — rule provider at 85.7% |
 | Synthetic bench fixtures | Done (PR #9) — 4 new: ACS, septic UTI, DKA, elderly CAP | `data/cases/bench_*.json` |
-| Operator CLI | Done | `cmd/bodhctl` |
+| Operator CLI | Done | `cmd/bodhyangactl` |
 | FHIR R4 adapter | Done — minimal | `pkg/fhir` |
 | **HL7 v2 ADT adapter** | **Done (PR #8)** | `pkg/hl7v2` + `POST /hl7/adt` — MSH/EVN/PID/PV1/DG1; ADT^A01/A02/A03/A04/A08 |
 | Cohort analytics | Done | `pkg/analytics` |
@@ -2131,7 +2131,7 @@ For the full status with phase grouping and decision log, see [ROADMAP.md](ROADM
 | LLM-as-judge | Done | `pkg/eval.LLMJudge` (4-dimensional rubric) |
 | Red-team eval catalog | Done | `pkg/eval/redteam` + `data/eval/redteam.json` |
 | Safety guardrails | Done | `pkg/safety` (refusal / hallucination / PHI patterns) |
-| **OpenTelemetry export** | **Done (PR #7)** | `pkg/observability` + `BODH_OTEL_EXPORT=1` (`-tags otel`) — sha256-hashed `case_id` in spans |
+| **OpenTelemetry export** | **Done (PR #7)** | `pkg/observability` + `BODHYANGA_OTEL_EXPORT=1` (`-tags otel`) — sha256-hashed `case_id` in spans |
 | Provenance type for diagnoses | Done | `pkg/medical/provenance.go` |
 | Project infra | Done | `Makefile`, `Dockerfile`, `.github/workflows/ci.yml` |
 | Column-level encryption (PHI columns) | Planned | pgcrypto / KMS envelope on `*_ct BYTEA` columns; no schema migration needed |

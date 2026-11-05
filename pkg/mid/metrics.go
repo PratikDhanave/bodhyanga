@@ -1,7 +1,7 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/app/sdk/mid/metrics.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 //
-// Bodh modifications vs upstream:
+// Bodhyanga modifications vs upstream:
 //   - Pure process-local atomic counters. No expvar dep, no Prometheus
 //     dep (those live in pkg/observability behind build tags). Operators
 //     who need scrapeable metrics export the snapshot via the /api/admin
@@ -18,8 +18,8 @@ import (
 	"net/http"
 	"sync/atomic"
 
-	"github.com/PratikDhanave/bodh/pkg/errs"
-	"github.com/PratikDhanave/bodh/pkg/web"
+	"github.com/PratikDhanave/bodhyanga/pkg/errs"
+	"github.com/PratikDhanave/bodhyanga/pkg/web"
 )
 
 // requestCount + errorCount are process-wide atomic counters. The

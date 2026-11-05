@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/PratikDhanave/bodh/pkg/knowledge"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge"
 )
 
 // fakeKnowledge is a stub knowledge.Store for tests. Set Resp / Err to control

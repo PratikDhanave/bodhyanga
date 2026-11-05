@@ -4,13 +4,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
 
-	"github.com/PratikDhanave/bodh-maf/internal/slicetest"
-	"github.com/PratikDhanave/bodh-maf/pkg/admit"
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
-	"github.com/PratikDhanave/bodh-maf/pkg/pipeline"
+	"github.com/PratikDhanave/bodhyanga-maf/internal/slicetest"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/admit"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/pipeline"
 )
 
 func admittedRun(t *testing.T, pol governance.Policy) (slicetest.Result, *audit.InMemory) {

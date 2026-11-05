@@ -1,6 +1,6 @@
 # Model Card — `LLMDiagnosticianVision`
 
-> **Card version:** 1.0.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodh maintainers
+> **Card version:** 1.0.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodhyanga maintainers
 
 ## Model details
 
@@ -9,7 +9,7 @@
 - **Type:** Single-LLM-call agent with image attachment + deterministic fallback
 - **Default LLM provider:** Anthropic (vision-capable: Sonnet, Opus) / OpenAI (`gpt-4o`, `gpt-4o-mini`) / Ollama (`llama3.2-vision`, `bakllava`, `llava:13b`)
 - **Provider-configurable:** yes
-- **License:** Apache-2.0 (Bodh) / provider terms (LLM)
+- **License:** Apache-2.0 (Bodhyanga) / provider terms (LLM)
 
 ## Intended use
 
@@ -28,7 +28,7 @@
 
 ## Metrics
 
-This variant is harder to bench because Bodh's fixture set doesn't yet include images. Recommended: hold-out a small fixture set with attached chest X-rays (synthetic / public datasets only — NEVER patient PHI) and measure per-fixture.
+This variant is harder to bench because Bodhyanga's fixture set doesn't yet include images. Recommended: hold-out a small fixture set with attached chest X-rays (synthetic / public datasets only — NEVER patient PHI) and measure per-fixture.
 
 ## Evaluation data
 
@@ -57,7 +57,7 @@ Inherits the underlying vision LLM's training data. Refer to:
 ## Caveats and recommendations
 
 - **Image attachment is best-effort.** If reading the file fails or the format is unsupported, the agent transparently falls through to text-only diagnosis. The case still finalizes.
-- **HITL is strongly recommended for every image-attached diagnosis.** Radiology interpretation by LLM is the highest-risk inference path in Bodh.
+- **HITL is strongly recommended for every image-attached diagnosis.** Radiology interpretation by LLM is the highest-risk inference path in Bodhyanga.
 - **Don't pass image_path to the LLM call body.** The path is read locally and the image bytes attached; the path itself never goes over the wire.
 - **Local Ollama** is the right deployment for HIPAA-sensitive image diagnosis until vendor BAAs explicitly cover vision endpoints.
 

@@ -35,7 +35,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/PratikDhanave/bodh/pkg/evals/laminar"
+	"github.com/PratikDhanave/bodhyanga/pkg/evals/laminar"
 )
 
 func main() {

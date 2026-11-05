@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 // ---------------------------------------------------------------------------

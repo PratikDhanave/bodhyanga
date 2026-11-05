@@ -1,7 +1,7 @@
 // Package hl7v2 — ORM^O01 (Order Message) builder, encoder, and parser.
 //
 // ORM^O01 is the HL7 v2 message type used to transmit lab or radiology orders
-// from Bodh to an external EHR / LIS / RIS system. The segment structure is:
+// from Bodhyanga to an external EHR / LIS / RIS system. The segment structure is:
 //
 //	MSH — message header
 //	PID — patient identification
@@ -51,7 +51,7 @@ type ORMMessage struct {
 //
 // Parameters:
 //   - patientID: the patient's medical record number (MR identifier)
-//   - caseID: Bodh internal case identifier used as the placer order number
+//   - caseID: Bodhyanga internal case identifier used as the placer order number
 //   - loincCode: LOINC code for the ordered test (e.g. "58410-2")
 //   - testName: human-readable test name (e.g. "CBC panel")
 //   - priority: order priority — "R" (routine), "S" (stat), or "A" (asap)
@@ -65,8 +65,8 @@ func BuildORM(patientID, caseID, loincCode, testName, priority string) ORMMessag
 
 	return ORMMessage{
 		MSH: MSHSegment{
-			SendingApp:        "BODH",
-			SendingFacility:   "BODH",
+			SendingApp:        "BODHYANGA",
+			SendingFacility:   "BODHYANGA",
 			ReceivingApp:      "EHR",
 			ReceivingFacility: "EHR",
 			Timestamp:         now.Format("20060102150405"),
@@ -137,7 +137,7 @@ func (m ORMMessage) Encode() string {
 		"PID",
 		"1",        // PID-1 set id
 		"",         // PID-2 patient id (external, deprecated)
-		m.PID.PatientID + "^^^BODH^MR", // PID-3
+		m.PID.PatientID + "^^^BODHYANGA^MR", // PID-3
 		"",         // PID-4
 		m.PID.FamilyName + c + m.PID.GivenName, // PID-5
 		"",         // PID-6

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"sort"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 // Tool is a callable, deterministic clinical utility the LLM may invoke

@@ -1,9 +1,9 @@
 # Adapted from the ardanlabs/service zarf layout
 # (https://github.com/ardanlabs/service/blob/master/zarf/k8s/base/) — the
 # upstream does not ship a NetworkPolicy, but the layout discipline is
-# theirs. Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# theirs. Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
-# Default-deny + explicit allow-list. Bodh egresses to exactly three things:
+# Default-deny + explicit allow-list. Bodhyanga egresses to exactly three things:
 #   1. DNS (kube-dns / coredns) on UDP+TCP 53
 #   2. Postgres on TCP 5432 (in-cluster dev OR cloudsqlproxy sidecar in prod)
 #   3. LLM provider HTTPS — narrow to {Anthropic, OpenAI, Voyage, Ollama LB}
@@ -15,11 +15,11 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: bodh-care
+  name: bodhyanga-care
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: bodh-care
+      app.kubernetes.io/name: bodhyanga-care
   policyTypes:
     - Ingress
     - Egress

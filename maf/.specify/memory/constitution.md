@@ -1,9 +1,9 @@
-# Bodh Constitution
+# Bodhyanga Constitution
 
 ## Core Principles
 
 ### I. MARA Pipeline Architecture
-Bodh implements the Multi-Agent Reference Architecture (MARA) for clinical decision support.
+Bodhyanga implements the Multi-Agent Reference Architecture (MARA) for clinical decision support.
 Every clinical workflow flows through the pipeline: Intake Agent -> Test Planner -> Diagnostician -> Care Plan Generator.
 Agents communicate via typed messages through `pkg/orchestration` (in-process message bus).
 The Diagnostician slot is provider-pluggable: Rule | LLM-Anthropic | LLM-OpenAI | LLM-Ollama.
@@ -17,7 +17,7 @@ Build tags (`otel`, `kronk`) gate optional features; every tagged file has a `_s
 ### III. HIPAA Compliance (NON-NEGOTIABLE)
 `pkg/audit` writes an append-only audit log for every clinical action.
 `pkg/phi` de-identifies Protected Health Information before any external transmission.
-`bodh.case_id` is always `sha256(caseID)[:8]` hex on spans -- raw MRNs must NEVER appear in collectors, logs, or test assertions.
+`bodhyanga.case_id` is always `sha256(caseID)[:8]` hex on spans -- raw MRNs must NEVER appear in collectors, logs, or test assertions.
 API keys go in `.env` only -- never in tracked files or code.
 `pkg/hitl` captures human feedback for every AI decision (human-in-the-loop).
 
@@ -45,7 +45,7 @@ Grafana dashboards and alert rules in `zarf/compose/`.
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Go 1.26, module `github.com/PratikDhanave/bodh` |
+| Backend | Go 1.26, module `github.com/PratikDhanave/bodhyanga` |
 | Database | PostgreSQL (pgx/v5), tenant RLS |
 | Frontend | React 18 + TypeScript, Vite, Tailwind CSS |
 | Testing (Go) | stdlib `testing` + testcontainers-go |
@@ -99,7 +99,7 @@ Grafana dashboards and alert rules in `zarf/compose/`.
 
 ## Governance
 
-This constitution supersedes all other development practices for Bodh.
+This constitution supersedes all other development practices for Bodhyanga.
 Amendments require documentation update, code review, and migration plan.
 All PRs must verify compliance with HIPAA constraints and testing gates.
 Clinical safety features (decision confirmation, confidence display) are highest priority.

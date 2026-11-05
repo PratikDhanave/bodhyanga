@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/tasks"
+	"github.com/PratikDhanave/bodhyanga/pkg/tasks"
 )
 
 func TestNewDiagnosticianRule(t *testing.T) {
@@ -472,7 +472,7 @@ func TestDefaultEmbedderForProvider(t *testing.T) {
 }
 
 func TestLoadDefaultKnowledgeNoPath(t *testing.T) {
-	os.Unsetenv("BODH_KNOWLEDGE_CORPUS")
+	os.Unsetenv("BODHYANGA_KNOWLEDGE_CORPUS")
 	store, err := LoadDefaultKnowledge(nil, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -483,7 +483,7 @@ func TestLoadDefaultKnowledgeNoPath(t *testing.T) {
 }
 
 func TestLoadDefaultKnowledgeNilEmbedder(t *testing.T) {
-	t.Setenv("BODH_KNOWLEDGE_CORPUS", "/some/path")
+	t.Setenv("BODHYANGA_KNOWLEDGE_CORPUS", "/some/path")
 	_, err := LoadDefaultKnowledge(nil, nil)
 	if err == nil {
 		t.Error("nil embedder should error")

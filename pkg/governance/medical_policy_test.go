@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 func TestRequireCaseIDPolicy_DeniesClinicalWithoutCaseID(t *testing.T) {

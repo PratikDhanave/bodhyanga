@@ -260,7 +260,7 @@ func (d *Dispatcher) sendTeams(ctx context.Context, n Notification, cfg ChannelC
 // Payload shape:
 //
 //	{"routing_key": "<token>", "event_action": "trigger",
-//	 "payload": {"summary": "<title>", "severity": "<mapped>", "source": "bodh"}}
+//	 "payload": {"summary": "<title>", "severity": "<mapped>", "source": "bodhyanga"}}
 func (d *Dispatcher) sendPagerDuty(ctx context.Context, n Notification, cfg ChannelConfig) error {
 	payload := map[string]any{
 		"routing_key":  cfg.Token,
@@ -268,7 +268,7 @@ func (d *Dispatcher) sendPagerDuty(ctx context.Context, n Notification, cfg Chan
 		"payload": map[string]any{
 			"summary":  n.Title,
 			"severity": mapPagerDutySeverity(n.Priority),
-			"source":   "bodh",
+			"source":   "bodhyanga",
 		},
 	}
 	headers := map[string]string{
@@ -277,7 +277,7 @@ func (d *Dispatcher) sendPagerDuty(ctx context.Context, n Notification, cfg Chan
 	return d.postJSON(ctx, "https://events.pagerduty.com/v2/enqueue", payload, headers)
 }
 
-// mapPagerDutySeverity converts a Bodh Priority to a PagerDuty severity string.
+// mapPagerDutySeverity converts a Bodhyanga Priority to a PagerDuty severity string.
 // PagerDuty accepts: info, warning, error, critical.
 func mapPagerDutySeverity(p Priority) string {
 	switch p {
@@ -298,7 +298,7 @@ func mapPagerDutySeverity(p Priority) string {
 // environment variables:
 //   - SMTP_HOST: SMTP server hostname (e.g. "smtp.example.com")
 //   - SMTP_PORT: SMTP server port (default "587")
-//   - SMTP_FROM: sender address (e.g. "bodh@example.com")
+//   - SMTP_FROM: sender address (e.g. "bodhyanga@example.com")
 //
 // cfg.Endpoint is the recipient address. cfg.Token, if non-empty, is used as
 // the SMTP password for PLAIN auth (username = SMTP_FROM).
@@ -317,7 +317,7 @@ func (d *Dispatcher) sendEmail(_ context.Context, n Notification, cfg ChannelCon
 	}
 	to := cfg.Endpoint
 
-	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: [bodh] %s\r\n\r\n%s\r\n",
+	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: [bodhyanga] %s\r\n\r\n%s\r\n",
 		from, to, n.Title, n.Body)
 
 	addr := fmt.Sprintf("%s:%s", host, port)

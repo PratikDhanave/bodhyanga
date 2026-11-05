@@ -1,12 +1,12 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/foundation/web/response.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 //
-// Bodh modifications vs upstream:
+// Bodhyanga modifications vs upstream:
 //   - Respond accepts an Encoder; nil → 204 No Content; NoResponse → caller
 //     already wrote the body (used by RawHandlerFunc).
 //   - The httpStatus interface assertion is preserved so *errs.Error sets
 //     the response status from its code without a per-handler switch.
-//   - Respond does NOT call addSpan (Bodh tracing lives in pkg/observability
+//   - Respond does NOT call addSpan (Bodhyanga tracing lives in pkg/observability
 //     behind a build tag).
 
 package web
@@ -31,7 +31,7 @@ func (NoResponse) Encode() ([]byte, string, error) {
 }
 
 // JSON wraps any value as a JSON-encodable Encoder with a default 200 OK
-// status. The most common return from a Bodh handler.
+// status. The most common return from a Bodhyanga handler.
 type JSON struct {
 	Status int
 	Value  any

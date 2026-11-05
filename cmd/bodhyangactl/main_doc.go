@@ -9,7 +9,7 @@
 //   - main: dispatches subcommands (reviews, tasks, notifications, panel, case).
 //   - reviewsCmd / decide / panelCmd / caseCmd: subcommand handlers.
 //   - simpleGet / postJSON / prettyPrint: HTTP and output helpers.
-//   - defaultAPI: fallback BODH_API_URL.
+//   - defaultAPI: fallback BODHYANGA_API_URL.
 //
 // See doc.go for package-level documentation.
 

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // CDMPlannerAgent generates a condition-specific care plan for chronic disease

@@ -12,7 +12,7 @@
 
 ## What this repo is
 
-**Bodh** is a HIPAA-aware, multi-agent medical AI platform written in Go. It is a
+**Bodhyanga** is a HIPAA-aware, multi-agent medical AI platform written in Go. It is a
 working implementation of Microsoft's [Multi-Agent Reference Architecture](https://github.com/microsoft/multi-agent-reference-architecture)
 (MARA), specialised for clinical decision support, panel management, and care-services
 workflows. It runs Eric Horvitz's *Sequential Diagnosis with Language Models*
@@ -36,7 +36,7 @@ violates any of them, do not propose it — propose a different change.
    refill approvals, and outreach to patients on protected conditions (42 CFR Part 2)
    must flow through `agents/human_review.go` → `pkg/hitl.Queue` → clinician decision.
    The gate is the 21st Century Cures Act §3060 "independent review" criterion 4
-   expressed as code; without it Bodh becomes a regulated medical device. See
+   expressed as code; without it Bodhyanga becomes a regulated medical device. See
    [docs/governance.md](docs/governance.md) and [docs/compliance.md](docs/compliance.md).
 
 2. **Never widen the PHI surface of the audit log.** `pkg/audit` records *enough
@@ -62,13 +62,13 @@ violates any of them, do not propose it — propose a different change.
 ## Project layout
 
 ```
-bodh/
+bodhyanga/
 ├── cmd/                       entry points (six binaries)
 │   ├── demo/                  sequential diagnosis headless runner
 │   ├── caredemo/              care-services workflows (CDM, TCM, panel, virtual office)
 │   ├── care/                  HTTP API server + embedded clinician SPA
 │   ├── bench/                 SD-Bench runner with baseline regression gate
-│   ├── bodhctl/               operator CLI (stdlib-only, no external deps)
+│   ├── bodhyangactl/               operator CLI (stdlib-only, no external deps)
 │   └── export-hitl-feedback/  turn HITL decisions into SFT / DPO JSONL
 ├── agents/                    47 agent implementations + factories
 ├── pkg/                       26 reusable packages (see below)
@@ -113,7 +113,7 @@ bodh/
 | `care` | HTTP API + clinician SPA on `:8088` | `-diagnostician`, `-serve-ui` |
 | `caredemo` | In-process care-services workflows | `-workflow={cdm\|tcm\|panel\|virtual-office\|...}` |
 | `bench` | SD-Bench runner with baseline regression gate | `-cases`, `-providers`, `-update-baseline`, `-json` |
-| `bodhctl` | Operator CLI for the `care` API | `reviews list/approve/reject`, `tasks list`, `panel <cond>` |
+| `bodhyangactl` | Operator CLI for the `care` API | `reviews list/approve/reject`, `tasks list`, `panel <cond>` |
 | `export-hitl-feedback` | HITL decisions → SFT + DPO JSONL | `-in`, `-out-dir` |
 
 ---

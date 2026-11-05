@@ -6,9 +6,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/tasks"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/tasks"
 )
 
 func newInboxMessageJSON(t *testing.T, subject, body string) string {

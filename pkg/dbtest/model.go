@@ -1,4 +1,4 @@
-// Copyright 2024-2026 Pratik Dhanave and Bodh contributors.
+// Copyright 2024-2026 Pratik Dhanave and Bodhyanga contributors.
 // Portions adapted from github.com/ardanlabs/service/business/sdk/unittest,
 // Copyright (c) 2018-2026 Ardan Labs, licensed under the Apache License 2.0.
 //
@@ -13,14 +13,14 @@ package dbtest
 import (
 	"context"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/eval"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // SeedData groups the seed fixtures so a test that calls Seed(t, db) can
 // also receive the slices it just wrote. Mirrors the SeedData struct in
-// ardanlabs/service/business/sdk/unittest/model.go but shaped to Bodh's
+// ardanlabs/service/business/sdk/unittest/model.go but shaped to Bodhyanga's
 // medical domain (patients, case states, audit events, interactions —
 // not users + products).
 type SeedData struct {
@@ -49,7 +49,7 @@ type SeedData struct {
 //
 // The "diff" idiom comes straight from ardanlabs's pattern (see
 // business/sdk/unittest/unittest.go upstream). It plays nicely with
-// go-cmp's cmp.Diff but does NOT introduce a dependency — Bodh keeps
+// go-cmp's cmp.Diff but does NOT introduce a dependency — Bodhyanga keeps
 // production deps minimal, and tests can hand-roll the diff with stdlib
 // reflect.DeepEqual.
 type Table struct {

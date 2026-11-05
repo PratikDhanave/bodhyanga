@@ -45,8 +45,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/PratikDhanave/bodh/pkg/agent/intro"
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent/intro"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 func main() {

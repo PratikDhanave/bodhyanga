@@ -3,7 +3,7 @@ package intake
 import (
 	"encoding/json"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
 // Translate is the front-door dispatcher: it routes an Inbound to the decoder

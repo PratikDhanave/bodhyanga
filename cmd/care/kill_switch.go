@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
 // These endpoints must be protected by the JWT + OPA middleware stack at the
 // gateway level (not here — cmd/care's middleware chain already wraps the mux).
 // In the default dev compose stack the /admin/ prefix is not exposed outside
-// the bodh-net bridge network.
+// the bodhyanga-net bridge network.
 package main
 
 import (

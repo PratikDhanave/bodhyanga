@@ -223,7 +223,7 @@ func TestORUObservedAtParsed(t *testing.T) {
 // TestORUInlineMessage exercises ParseORU with an inline raw string (no file)
 // to verify the units field parsing and multi-segment flow without testdata.
 func TestORUInlineMessage(t *testing.T) {
-	raw := "MSH|^~\\&|LABSYS|MERCY|BODH|MERCY|20250524160000||ORU^R01^ORU_R01|LABINLINE|P|2.5\r" +
+	raw := "MSH|^~\\&|LABSYS|MERCY|BODHYANGA|MERCY|20250524160000||ORU^R01^ORU_R01|LABINLINE|P|2.5\r" +
 		"PID|1||PT-001^^^MERCY^MR||PATIENT^TEST||19900101|F\r" +
 		"OBR|1||FIL-INLINE|1558-6^Glucose 2h post 75g^LN|||20250524155000\r" +
 		"OBX|1|NM|1558-6^Glucose 2h post 75g^LN||185|mg/dL|<140|H|||P|||20250524155500\r"
@@ -262,7 +262,7 @@ func TestORUWrongMessageType(t *testing.T) {
 
 // TestORUMissingPID ensures ParseORU returns an error when PID is absent.
 func TestORUMissingPID(t *testing.T) {
-	raw := "MSH|^~\\&|LABSYS|MERCY|BODH|MERCY|20250524160000||ORU^R01^ORU_R01|LAB-NOPID|P|2.5\r" +
+	raw := "MSH|^~\\&|LABSYS|MERCY|BODHYANGA|MERCY|20250524160000||ORU^R01^ORU_R01|LAB-NOPID|P|2.5\r" +
 		"OBR|1||FIL-X|58410-2^CBC^LN|||20250524133000\r" +
 		"OBX|1|NM|6690-2^WBC^LN||7.5|10*3/uL|4.5-11.0|N|||F\r"
 	_, err := ParseORU(raw)
@@ -273,7 +273,7 @@ func TestORUMissingPID(t *testing.T) {
 
 // TestORUNoOBR ensures ParseORU returns an error when there are no OBR/OBX segments.
 func TestORUNoOBR(t *testing.T) {
-	raw := "MSH|^~\\&|LABSYS|MERCY|BODH|MERCY|20250524160000||ORU^R01^ORU_R01|LAB-NOOBR|P|2.5\r" +
+	raw := "MSH|^~\\&|LABSYS|MERCY|BODHYANGA|MERCY|20250524160000||ORU^R01^ORU_R01|LAB-NOOBR|P|2.5\r" +
 		"PID|1||MRN11111^^^MERCY^MR\r"
 	_, err := ParseORU(raw)
 	if err == nil {

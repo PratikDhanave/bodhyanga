@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 // Portions Copyright Ardan Labs, Bill Kennedy
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -8,14 +8,14 @@
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Adapted from github.com/ardanlabs/service business/sdk/migrate/migrate.go.
-// The upstream delegates to ardanlabs/darwin; Bodh implements the
+// The upstream delegates to ardanlabs/darwin; Bodhyanga implements the
 // numeric-prefix migration runner inline because (a) we want to stay
 // free of the darwin dep, (b) we need to wire a per-migration
 // audit_events row that darwin doesn't model, and (c) the runner
 // already exists in pkg/persistence/postgres/migrations.go — this
 // package generalises it.
 
-// Package migrate is the Bodh schema migration runner. It reads SQL
+// Package migrate is the Bodhyanga schema migration runner. It reads SQL
 // files from an embed.FS, applies any whose NNNN version exceeds the
 // highest recorded in schema_migrations, and writes an audit_events
 // row per applied migration so the schema change itself is auditable.
@@ -47,8 +47,8 @@
 //
 // pkg/persistence/postgres has its own migration runner today
 // (migrations.go). Up is the more general version: it accepts any
-// fs.FS so callers (cmd/care, cmd/bodhadmin, tests) can pass either
-// the Bodh-canonical migrations or a test-local one. The existing
+// fs.FS so callers (cmd/care, cmd/bodhyangaadmin, tests) can pass either
+// the Bodhyanga-canonical migrations or a test-local one. The existing
 // runner stays in place to keep pkg/persistence/postgres compiling
 // while consumers move over.
 package migrate
@@ -67,7 +67,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/PratikDhanave/bodh/pkg/sqldb"
+	"github.com/PratikDhanave/bodhyanga/pkg/sqldb"
 )
 
 // File is one parsed migration. Exported for tests that want to
@@ -140,12 +140,12 @@ func Load(f fs.FS) ([]File, error) {
 	return out, nil
 }
 
-// AuditTenant is the tenant_id Bodh stamps on migration audit_events
+// AuditTenant is the tenant_id Bodhyanga stamps on migration audit_events
 // rows. Migrations are operator actions, not patient actions; we use a
 // reserved sentinel rather than co-opting a real tenant ID so the
-// audit log can be filtered (kind='migration' OR tenant_id='_bodh_system')
+// audit log can be filtered (kind='migration' OR tenant_id='_bodhyanga_system')
 // without leaking schema-change records into a real tenant's view.
-const AuditTenant = "_bodh_system"
+const AuditTenant = "_bodhyanga_system"
 
 // auditKind labels the migration audit rows. Matches the discipline
 // in pkg/audit (string kinds, grep-able). Not exported through pkg/audit
@@ -266,7 +266,7 @@ func applyOne(ctx context.Context, b sqldb.Beginner, m File) error {
 			(tenant_id, id, at, kind, agent_id, reason)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (tenant_id, id) DO NOTHING
-	`, AuditTenant, auditID, now, auditKind, "bodh-migrator", m.Name+": "+m.Description); err != nil {
+	`, AuditTenant, auditID, now, auditKind, "bodhyanga-migrator", m.Name+": "+m.Description); err != nil {
 		// If audit_events does not yet exist (we're applying 0001
 		// which creates it), the INSERT can't run. We tolerate this
 		// for the very first migration only — every subsequent
@@ -293,13 +293,13 @@ func applyOne(ctx context.Context, b sqldb.Beginner, m File) error {
 // and group schema-change events.
 func deterministicID(version int, name string) string {
 	h := sha256.New()
-	fmt.Fprintf(h, "bodh-migrate-v1|%d|%s", version, name)
+	fmt.Fprintf(h, "bodhyanga-migrate-v1|%d|%s", version, name)
 	sum := h.Sum(nil)
 	return "mig-" + hex.EncodeToString(sum[:8])
 }
 
 // PingedBeginner is a small convenience: open + StatusCheck +
-// NewBeginner in one call, used by cmd/care and cmd/bodhadmin.
+// NewBeginner in one call, used by cmd/care and cmd/bodhyangaadmin.
 // Callers who want finer control wire the three calls themselves.
 func PingedBeginner(ctx context.Context, dsn string) (*sqldb.PoolBeginner, error) {
 	pool, err := sqldb.Open(ctx, sqldb.Config{DSN: dsn})

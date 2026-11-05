@@ -1,6 +1,6 @@
 // otlp_stub.go — no-op shim used when the `otel` build tag is NOT set.
 //
-// Bodh's default build does not link the OTel SDK. This stub keeps the
+// Bodhyanga's default build does not link the OTel SDK. This stub keeps the
 // OTLPLLMExporter type and methods compiling so callers can reference them
 // unconditionally if they wish, while the real implementation lives in
 // otlp.go behind `//go:build otel`.

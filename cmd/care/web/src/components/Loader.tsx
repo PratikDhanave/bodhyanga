@@ -6,7 +6,7 @@ export default function Loader({ what }: LoaderProps) {
   return (
     <div className="card">
       <div className="card-body text-center py-8">
-        <div className="inline-block animate-pulse text-sm text-bodh-400">
+        <div className="inline-block animate-pulse text-sm text-bodhyanga-400">
           Loading{what ? ` ${what}` : ''}…
         </div>
       </div>

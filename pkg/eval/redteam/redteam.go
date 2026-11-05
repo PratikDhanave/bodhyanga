@@ -1,4 +1,4 @@
-// Package redteam implements adversarial red-team evaluation for Bodh agents.
+// Package redteam implements adversarial red-team evaluation for Bodhyanga agents.
 //
 // A RedTeamSuite defines a set of adversarial prompts and expected behaviors.
 // Each RedTeamCase specifies an input and one or more expectations:
@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/safety"
+	"github.com/PratikDhanave/bodhyanga/pkg/safety"
 )
 
 // RedTeamCase is a single adversarial test case.

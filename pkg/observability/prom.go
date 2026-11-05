@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -6,7 +6,7 @@
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
 
-// Prometheus metrics for the Bodh care HTTP API.
+// Prometheus metrics for the Bodhyanga care HTTP API.
 //
 // This file is compiled in every build (no build tag) because Prometheus
 // scraping is an operational baseline — there is no dep-size penalty
@@ -15,11 +15,11 @@
 //
 // # Metric families
 //
-//	bodh_http_requests_total{method, path, status}     counter
-//	bodh_http_request_duration_seconds{method, path}   histogram
-//	bodh_llm_calls_total{provider, model, agent_id}    counter
-//	bodh_llm_tokens_total{provider, model, direction}  counter
-//	bodh_llm_duration_seconds{provider, model}         histogram
+//	bodhyanga_http_requests_total{method, path, status}     counter
+//	bodhyanga_http_request_duration_seconds{method, path}   histogram
+//	bodhyanga_llm_calls_total{provider, model, agent_id}    counter
+//	bodhyanga_llm_tokens_total{provider, model, direction}  counter
+//	bodhyanga_llm_duration_seconds{provider, model}         histogram
 //
 // # Path normalisation
 //
@@ -56,7 +56,7 @@ import (
 var (
 	httpRequestsTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Namespace: "bodh",
+			Namespace: "bodhyanga",
 			Subsystem: "http",
 			Name:      "requests_total",
 			Help:      "Total number of HTTP requests processed, labelled by method, normalised path, and status code.",
@@ -66,7 +66,7 @@ var (
 
 	httpRequestDuration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Namespace: "bodh",
+			Namespace: "bodhyanga",
 			Subsystem: "http",
 			Name:      "request_duration_seconds",
 			Help:      "HTTP request wall-clock latency in seconds.",
@@ -77,7 +77,7 @@ var (
 
 	llmCallsTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Namespace: "bodh",
+			Namespace: "bodhyanga",
 			Subsystem: "llm",
 			Name:      "calls_total",
 			Help:      "Total LLM (completion + embedding) calls, labelled by provider, model, and agent_id.",
@@ -87,7 +87,7 @@ var (
 
 	llmTokensTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Namespace: "bodh",
+			Namespace: "bodhyanga",
 			Subsystem: "llm",
 			Name:      "tokens_total",
 			Help:      "Total tokens consumed, labelled by provider, model, and direction (input|output|cached).",
@@ -97,7 +97,7 @@ var (
 
 	llmDurationSeconds = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Namespace: "bodh",
+			Namespace: "bodhyanga",
 			Subsystem: "llm",
 			Name:      "duration_seconds",
 			Help:      "LLM call latency in seconds.",
@@ -154,7 +154,7 @@ func (r *statusRecorder) code() int {
 }
 
 // PromMiddleware wraps next with Prometheus HTTP instrumentation. It records
-// bodh_http_requests_total and bodh_http_request_duration_seconds for every
+// bodhyanga_http_requests_total and bodhyanga_http_request_duration_seconds for every
 // request. The /metrics endpoint itself is excluded to avoid self-referential
 // cardinality noise.
 func PromMiddleware(next http.Handler) http.Handler {
@@ -180,7 +180,7 @@ func PromMiddleware(next http.Handler) http.Handler {
 
 // PrometheusHandler returns the standard promhttp.Handler() for mounting at
 // GET /metrics. It exposes all registered collectors (default Go runtime
-// metrics + the bodh_* families above).
+// metrics + the bodhyanga_* families above).
 func PrometheusHandler() http.Handler {
 	return promhttp.Handler()
 }

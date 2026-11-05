@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
 )
 
 // ---- Crypto nil paths ----
@@ -99,7 +99,7 @@ func TestDecrypt_TamperedCiphertext(t *testing.T) {
 }
 
 func TestNewEncryptorFromEnv_Absent(t *testing.T) {
-	os.Unsetenv("BODH_ENCRYPTION_KEY")
+	os.Unsetenv("BODHYANGA_ENCRYPTION_KEY")
 	enc, err := NewEncryptorFromEnv()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -110,7 +110,7 @@ func TestNewEncryptorFromEnv_Absent(t *testing.T) {
 }
 
 func TestNewEncryptorFromEnv_BadBase64(t *testing.T) {
-	t.Setenv("BODH_ENCRYPTION_KEY", "not-valid-base64!!!")
+	t.Setenv("BODHYANGA_ENCRYPTION_KEY", "not-valid-base64!!!")
 	_, err := NewEncryptorFromEnv()
 	if err == nil {
 		t.Error("expected error for invalid base64")

@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
-// Manifest is the bodh-maf v2 case index (no max_cost_usd — accuracy-only).
+// Manifest is the bodhyanga-maf v2 case index (no max_cost_usd — accuracy-only).
 type Manifest struct {
 	Version     int     `json:"version"`
 	Description string  `json:"description"`
@@ -32,7 +32,7 @@ type Fixture struct {
 }
 
 // LoadManifest reads a manifest and every fixture it names. Fixture paths
-// resolve relative to the manifest file (mirroring bodh's resolver). Fails fast
+// resolve relative to the manifest file (mirroring bodhyanga's resolver). Fails fast
 // on an empty suite, a missing path, or an unreadable/unparseable fixture — a
 // silent gap would understate accuracy.
 func LoadManifest(path string) ([]Fixture, error) {

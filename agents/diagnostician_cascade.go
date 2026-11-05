@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // CascadeDiagnostician is a small-then-big LLM diagnostician. It first asks a

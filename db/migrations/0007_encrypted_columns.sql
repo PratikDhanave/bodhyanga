@@ -11,7 +11,7 @@
 --
 -- Key versioning:
 --   enc_version = 'v1' denotes AES-256-GCM with a 12-byte random nonce and
---   16-byte authentication tag, key loaded from BODH_ENCRYPTION_KEY.
+--   16-byte authentication tag, key loaded from BODHYANGA_ENCRYPTION_KEY.
 
 COMMENT ON COLUMN audit_events.payload_ct IS 'AES-256-GCM encrypted JSON blob';
 

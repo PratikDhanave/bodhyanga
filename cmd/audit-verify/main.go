@@ -1,8 +1,8 @@
-// Command audit-verify verifies the integrity of a Bodh immutable audit log.
+// Command audit-verify verifies the integrity of a Bodhyanga immutable audit log.
 //
 // Usage:
 //
-//	go run ./cmd/audit-verify -file /var/lib/bodh/audit.jsonl
+//	go run ./cmd/audit-verify -file /var/lib/bodhyanga/audit.jsonl
 //
 // Exit codes:
 //
@@ -18,7 +18,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 )
 
 func main() {

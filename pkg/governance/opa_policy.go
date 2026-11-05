@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 	"github.com/open-policy-agent/opa/v1/rego"
 )
 
@@ -55,7 +55,7 @@ type OPAPolicy struct {
 // NewOPAPolicy compiles module and prepares the evaluation query for queryPath.
 //
 // queryPath must be the full OPA rule path including the "data." prefix, e.g.
-// "data.bodh.governance.medical.case_id_result". The rule at that path must
+// "data.bodhyanga.governance.medical.case_id_result". The rule at that path must
 // evaluate to an {"allowed": bool, "reason": string} object.
 //
 // Returns an error if the Rego source fails to parse or compile. A compile
@@ -167,7 +167,7 @@ func messageToOPAInput(msg protocol.Message) map[string]any {
 }
 
 // =============================================================================
-// Domain factory functions — pre-wired for Bodh's standard policies
+// Domain factory functions — pre-wired for Bodhyanga's standard policies
 // =============================================================================
 
 // NewCaseIDOPAPolicy returns an OPA-backed Policy that denies clinical
@@ -177,7 +177,7 @@ func messageToOPAInput(msg protocol.Message) map[string]any {
 // Prefer the Go policy for maximum performance; use this when you need the
 // rule to be independently auditable or swappable at deploy time.
 func NewCaseIDOPAPolicy() (*OPAPolicy, error) {
-	return NewOPAPolicy(regoMedical, "data.bodh.governance.medical.case_id_result")
+	return NewOPAPolicy(regoMedical, "data.bodhyanga.governance.medical.case_id_result")
 }
 
 // NewDiagnosticCostOPAPolicy returns an OPA-backed Policy that denies
@@ -186,7 +186,7 @@ func NewCaseIDOPAPolicy() (*OPAPolicy, error) {
 //
 // Mirrors MaxDiagnosticCostPolicy using the embedded medical.rego.
 func NewDiagnosticCostOPAPolicy() (*OPAPolicy, error) {
-	return NewOPAPolicy(regoMedical, "data.bodh.governance.medical.diagnostic_cost_result")
+	return NewOPAPolicy(regoMedical, "data.bodhyanga.governance.medical.diagnostic_cost_result")
 }
 
 // NewTenantOPAPolicy returns an OPA-backed Policy that denies messages
@@ -194,7 +194,7 @@ func NewDiagnosticCostOPAPolicy() (*OPAPolicy, error) {
 //
 // Mirrors RequireTenantPolicy using the embedded medical.rego.
 func NewTenantOPAPolicy() (*OPAPolicy, error) {
-	return NewOPAPolicy(regoMedical, "data.bodh.governance.medical.tenant_result")
+	return NewOPAPolicy(regoMedical, "data.bodhyanga.governance.medical.tenant_result")
 }
 
 // NewContentLengthOPAPolicy returns an OPA-backed Policy that denies messages
@@ -209,7 +209,7 @@ func NewContentLengthOPAPolicy(maxBytes int) (*OPAPolicy, error) {
 		return nil, fmt.Errorf("opa content policy: maxBytes must be positive, got %d", maxBytes)
 	}
 	return NewOPAPolicy(buildContentLengthModule(maxBytes),
-		"data.bodh.governance.content.result")
+		"data.bodhyanga.governance.content.result")
 }
 
 // NewScopeOPAPolicy returns an OPA-backed Policy that enforces SMART-on-FHIR
@@ -224,7 +224,7 @@ func NewContentLengthOPAPolicy(maxBytes int) (*OPAPolicy, error) {
 // (space-separated OAuth 2.0 introspection format, same as the Go policy).
 func NewScopeOPAPolicy(required map[string]string) (*OPAPolicy, error) {
 	return NewOPAPolicy(buildScopeModule(required),
-		"data.bodh.governance.scope.result")
+		"data.bodhyanga.governance.scope.result")
 }
 
 // =============================================================================
@@ -235,7 +235,7 @@ func NewScopeOPAPolicy(required map[string]string) (*OPAPolicy, error) {
 // exceeding maxBytes code points. The max is baked in as a literal so the
 // policy is self-contained and auditable.
 func buildContentLengthModule(maxBytes int) string {
-	return fmt.Sprintf(`package bodh.governance.content
+	return fmt.Sprintf(`package bodhyanga.governance.content
 import rego.v1
 
 # max_codepoints is %d (baked in at policy construction time).
@@ -256,7 +256,7 @@ result := {"allowed": true, "reason": "within content length limit"} if {
 // map (keys are sorted for reproducibility in tests).
 func buildScopeModule(required map[string]string) string {
 	var sb strings.Builder
-	sb.WriteString(`package bodh.governance.scope
+	sb.WriteString(`package bodhyanga.governance.scope
 import rego.v1
 
 # required_scope maps message type -> SMART-on-FHIR scope string.

@@ -28,7 +28,7 @@ export default function Reviews() {
     >
       <div className="card overflow-hidden">
         <table className="min-w-full text-sm">
-          <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+          <thead className="bg-bodhyanga-50 text-bodhyanga-400 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Subject</th>
               <th className="px-4 py-2 text-left">Kind</th>
@@ -40,12 +40,12 @@ export default function Reviews() {
           </thead>
           <tbody>
             {data.map((r) => (
-              <tr key={r.id} className="border-t border-bodh-100 hover:bg-bodh-50">
+              <tr key={r.id} className="border-t border-bodhyanga-100 hover:bg-bodhyanga-50">
                 <td className="px-4 py-2 font-medium">{r.subject}</td>
-                <td className="px-4 py-2 text-bodh-400 text-xs">{r.kind}</td>
+                <td className="px-4 py-2 text-bodhyanga-400 text-xs">{r.kind}</td>
                 <td className="px-4 py-2"><span className={`badge badge-${r.priority === 'urgent' || r.priority === 'high' ? 'urgent' : 'normal'}`}>{r.priority || 'normal'}</span></td>
                 <td className="px-4 py-2"><span className={`badge badge-${r.status}`}>{r.status}</span></td>
-                <td className="px-4 py-2 text-xs text-bodh-400">{new Date(r.submitted_at).toLocaleString()}</td>
+                <td className="px-4 py-2 text-xs text-bodhyanga-400">{new Date(r.submitted_at).toLocaleString()}</td>
                 <td className="px-4 py-2 text-right">
                   <Link to={`/reviews/${r.id}`} className="btn-secondary">Open</Link>
                 </td>

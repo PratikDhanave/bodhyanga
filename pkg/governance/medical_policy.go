@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // RequireCaseIDPolicy denies clinical messages missing case_id in metadata.
@@ -29,7 +29,7 @@ import (
 //	 type: "presentation", from: "user", to: "intake"}
 //
 // Aligns with MARA governance: fail closed before agents handle PHI-bearing
-// payloads (Bodh design rule 4).
+// payloads (Bodhyanga design rule 4).
 type RequireCaseIDPolicy struct{}
 
 // Evaluate enforces the case_id correlator on clinical message types.
@@ -155,7 +155,7 @@ func (MaxDiagnosticCostPolicy) Evaluate(_ context.Context, msg protocol.Message)
 // and the disclaimer at the top of README.md.
 //
 // Why ship a no-op policy at all? Because the Reason string lands in the
-// audit log: anyone forensically reviewing a Bodh case trace can confirm
+// audit log: anyone forensically reviewing a Bodhyanga case trace can confirm
 // from the audit pipeline alone that the system was running in research
 // mode at the time. The presence/absence of this Reason in production
 // audit dumps is itself a compliance check.
@@ -184,7 +184,7 @@ func (ResearchDisclaimerPolicy) Evaluate(_ context.Context, _ protocol.Message) 
 // enforce (e.g. PostgreSQL row-level security).
 //
 // Regulatory anchor: HIPAA §164.308(a)(4) information-access management
-// — tenant isolation is the architectural primitive that lets one Bodh
+// — tenant isolation is the architectural primitive that lets one Bodhyanga
 // deployment serve multiple covered entities under separate BAAs.
 //
 // Example deny audit record:

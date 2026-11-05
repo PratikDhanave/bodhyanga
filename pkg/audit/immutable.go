@@ -35,7 +35,7 @@ import (
 )
 
 // S3Sink describes an S3-compatible upload target.
-// Authentication uses BODH_S3_ACCESS_KEY + BODH_S3_SECRET_KEY env vars via
+// Authentication uses BODHYANGA_S3_ACCESS_KEY + BODHYANGA_S3_SECRET_KEY env vars via
 // AWS Signature Version 4 computed with stdlib net/http — no AWS SDK.
 type S3Sink struct {
 	// Bucket is the S3 bucket name.
@@ -341,10 +341,10 @@ func (r *ImmutableRecorder) List() []Event {
 
 // s3Put uploads payload to the configured S3-compatible endpoint using a
 // pre-computed AWS SigV4 Authorization header. No AWS SDK is used.
-// Credentials are read from BODH_S3_ACCESS_KEY + BODH_S3_SECRET_KEY env vars.
+// Credentials are read from BODHYANGA_S3_ACCESS_KEY + BODHYANGA_S3_SECRET_KEY env vars.
 func s3Put(ctx context.Context, sink *S3Sink, key string, payload []byte) error {
-	accessKey := os.Getenv("BODH_S3_ACCESS_KEY")
-	secretKey := os.Getenv("BODH_S3_SECRET_KEY")
+	accessKey := os.Getenv("BODHYANGA_S3_ACCESS_KEY")
+	secretKey := os.Getenv("BODHYANGA_S3_SECRET_KEY")
 
 	now := time.Now().UTC()
 	dateStamp := now.Format("20060102")

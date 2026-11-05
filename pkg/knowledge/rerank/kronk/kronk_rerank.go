@@ -3,7 +3,7 @@
 // Package kronk wraps the ardanlabs/kronk cross-encoder SDK to satisfy the
 // rerank.Reranker interface.
 //
-// This file is only compiled with `-tags=kronk`. The default Bodh build uses
+// This file is only compiled with `-tags=kronk`. The default Bodhyanga build uses
 // the sibling stub (kronk_rerank_stub.go) so the project's go.sum stays
 // minimal and the binary does not transitively pull in any kronk deps.
 //
@@ -11,7 +11,7 @@
 //
 //	go get github.com/ardanlabs/kronk
 //	go build -tags=kronk ./cmd/care
-//	BODH_RERANKER=kronk ./care
+//	BODHYANGA_RERANKER=kronk ./care
 //
 // Reference: https://github.com/ardanlabs/kronk/blob/main/examples/rerank/main.go
 package kronk
@@ -23,7 +23,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/PratikDhanave/bodh/pkg/knowledge/rerank"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge/rerank"
 
 	// The kronk SDK; only present in the build graph under the kronk tag.
 	// The exact import path follows the ardanlabs/kronk example.
@@ -62,14 +62,14 @@ func WithModelSource(src string) Option {
 // The first argument is typed `any` so the call signature is identical
 // between this real build and the default-build stub — callers in
 // cmd/care can pass nil and let New() build a default client from
-// BODH_KRONK_ENDPOINT.
+// BODHYANGA_KRONK_ENDPOINT.
 func New(client any, opts ...Option) (*Reranker, error) {
 	c, ok := client.(*kronksdk.Client)
 	if !ok || c == nil {
-		// Default: build a client from BODH_KRONK_ENDPOINT.
-		endpoint := os.Getenv("BODH_KRONK_ENDPOINT")
+		// Default: build a client from BODHYANGA_KRONK_ENDPOINT.
+		endpoint := os.Getenv("BODHYANGA_KRONK_ENDPOINT")
 		if endpoint == "" {
-			return nil, errors.New("rerank/kronk: nil client and BODH_KRONK_ENDPOINT not set")
+			return nil, errors.New("rerank/kronk: nil client and BODHYANGA_KRONK_ENDPOINT not set")
 		}
 		c = kronksdk.New(endpoint)
 	}

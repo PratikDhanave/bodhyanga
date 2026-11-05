@@ -6,7 +6,7 @@ import (
 	"errors"
 )
 
-// Client is the provider-agnostic LLM interface used by Bodh agents.
+// Client is the provider-agnostic LLM interface used by Bodhyanga agents.
 type Client interface {
 	// Provider returns a short identifier for the underlying provider
 	// (e.g. "anthropic", "openai", "mock"). Used in logs and bench output.

@@ -1,5 +1,5 @@
 apiVersion: v2
-name: bodh
+name: bodhyanga
 description: "HIPAA-grade medical AI orchestration platform"
 type: application
 version: 0.1.0
@@ -10,9 +10,9 @@ keywords:
   - hipaa
   - clinical-decision-support
   - orchestration
-home: https://github.com/PratikDhanave/bodh
+home: https://github.com/PratikDhanave/bodhyanga
 sources:
-  - https://github.com/PratikDhanave/bodh
+  - https://github.com/PratikDhanave/bodhyanga
 maintainers:
   - name: PratikDhanave
     email: i.pratikdhanave@gmail.com

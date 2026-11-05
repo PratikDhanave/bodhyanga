@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/embeddings"
-	"github.com/PratikDhanave/bodh/pkg/tasks"
+	"github.com/PratikDhanave/bodhyanga/pkg/embeddings"
+	"github.com/PratikDhanave/bodhyanga/pkg/tasks"
 )
 
 // Test buildDiagnostician with Anthropic key set.
@@ -252,7 +252,7 @@ func TestLoadDefaultKnowledgeWithFile(t *testing.T) {
 	path := filepath.Join(dir, "corpus.json")
 	// Write a valid corpus JSON file.
 	os.WriteFile(path, []byte(`{"documents":[]}`), 0644)
-	t.Setenv("BODH_KNOWLEDGE_CORPUS", path)
+	t.Setenv("BODHYANGA_KNOWLEDGE_CORPUS", path)
 
 	// Use a simple embedder.
 	e := embeddings.NewOllama("", "nomic-embed-text")
@@ -267,7 +267,7 @@ func TestLoadDefaultKnowledgeWithFile(t *testing.T) {
 
 // Test LoadDefaultKnowledge with an invalid file path.
 func TestLoadDefaultKnowledgeInvalidPath(t *testing.T) {
-	t.Setenv("BODH_KNOWLEDGE_CORPUS", "/nonexistent/path/corpus.json")
+	t.Setenv("BODHYANGA_KNOWLEDGE_CORPUS", "/nonexistent/path/corpus.json")
 	e := embeddings.NewOllama("", "nomic-embed-text")
 	_, err := LoadDefaultKnowledge(context.Background(), e)
 	if err == nil {

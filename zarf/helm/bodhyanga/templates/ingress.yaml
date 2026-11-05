@@ -1,5 +1,5 @@
 {{- if .Values.ingress.enabled -}}
-# Ingress for the Bodh care HTTP API.
+# Ingress for the Bodhyanga care HTTP API.
 # Disabled by default — enable by setting ingress.enabled=true and
 # configuring ingress.hosts and optionally ingress.tls.
 #
@@ -10,21 +10,21 @@
 #     annotations:
 #       cert-manager.io/cluster-issuer: letsencrypt-prod
 #     hosts:
-#       - host: bodh.example.com
+#       - host: bodhyanga.example.com
 #         paths:
 #           - path: /
 #             pathType: Prefix
 #     tls:
-#       - secretName: bodh-tls
+#       - secretName: bodhyanga-tls
 #         hosts:
-#           - bodh.example.com
+#           - bodhyanga.example.com
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "bodh.fullname" . }}
+  name: {{ include "bodhyanga.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "bodh.labels" . | nindent 4 }}
+    {{- include "bodhyanga.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -53,7 +53,7 @@ spec:
             pathType: {{ .pathType }}
             backend:
               service:
-                name: {{ include "bodh.fullname" $ }}
+                name: {{ include "bodhyanga.fullname" $ }}
                 port:
                   name: http
           {{- end }}

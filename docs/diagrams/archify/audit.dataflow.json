@@ -222,7 +222,7 @@
       "dot": "cyan",
       "title": "Hashed traces",
       "items": [
-        "bodh.case_id is sha256(caseID)[:8] on every span",
+        "bodhyanga.case_id is sha256(caseID)[:8] on every span",
         "Raw MRNs never reach a third-party collector",
         "OTLP export is isolated behind the otel build tag"
       ]

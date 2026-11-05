@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 
-	"github.com/PratikDhanave/bodh/pkg/sqldb"
+	"github.com/PratikDhanave/bodhyanga/pkg/sqldb"
 )
 
 // TestLoad_RejectsBadFilenames covers the parser without needing a DB.
@@ -83,7 +83,7 @@ func TestLoad_SortsAscending(t *testing.T) {
 	}
 }
 
-// TestEmbeddedFS_LoadsCanonicalSet checks that the bodh-canonical
+// TestEmbeddedFS_LoadsCanonicalSet checks that the bodhyanga-canonical
 // migrations (the ones shipped in pkg/migrate/sql) actually parse.
 // This is the fastest way to catch a packaging regression — a future
 // PR that drops a malformed file fails the test instantly without
@@ -115,9 +115,9 @@ func requirePostgres(t *testing.T) *sqldb.PoolBeginner {
 	t.Cleanup(cancel)
 
 	container, err := tcpostgres.Run(ctx, "postgres:16-alpine",
-		tcpostgres.WithDatabase("bodh"),
-		tcpostgres.WithUsername("bodh"),
-		tcpostgres.WithPassword("bodh"),
+		tcpostgres.WithDatabase("bodhyanga"),
+		tcpostgres.WithUsername("bodhyanga"),
+		tcpostgres.WithPassword("bodhyanga"),
 		tcpostgres.BasicWaitStrategies(),
 		tcpostgres.WithSQLDriver("pgx"),
 	)

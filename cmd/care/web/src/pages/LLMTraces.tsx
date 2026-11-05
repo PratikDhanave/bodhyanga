@@ -15,7 +15,7 @@ export default function LLMTraces() {
     <Page title="LLM traces" subtitle={`${data.length} most recent`} actions={<button onClick={reload} className="btn-secondary">Refresh</button>}>
       <div className="card overflow-hidden">
         <table className="min-w-full text-sm">
-          <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+          <thead className="bg-bodhyanga-50 text-bodhyanga-400 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Time</th>
               <th className="px-4 py-2 text-left">Provider</th>
@@ -31,8 +31,8 @@ export default function LLMTraces() {
           </thead>
           <tbody>
             {data.map((t, i) => (
-              <tr key={`${t.started_at}-${i}`} className={`border-t border-bodh-100 ${t.error ? 'bg-rose-50' : ''}`}>
-                <td className="px-4 py-2 text-xs text-bodh-400">{new Date(t.started_at).toLocaleTimeString()}</td>
+              <tr key={`${t.started_at}-${i}`} className={`border-t border-bodhyanga-100 ${t.error ? 'bg-rose-50' : ''}`}>
+                <td className="px-4 py-2 text-xs text-bodhyanga-400">{new Date(t.started_at).toLocaleTimeString()}</td>
                 <td className="px-4 py-2 font-mono text-xs">{t.provider}</td>
                 <td className="px-4 py-2 font-mono text-xs">{t.model}</td>
                 <td className="px-4 py-2 font-mono text-xs">{t.agent_id ?? '–'}</td>
@@ -41,7 +41,7 @@ export default function LLMTraces() {
                 <td className="px-4 py-2 text-right">{t.cached_tokens}</td>
                 <td className="px-4 py-2 text-right">{t.tool_calls ?? 0}</td>
                 <td className="px-4 py-2 text-right">{t.duration_ms}</td>
-                <td className="px-4 py-2 text-xs text-bodh-400">{t.stop_reason ?? t.error ?? '–'}</td>
+                <td className="px-4 py-2 text-xs text-bodhyanga-400">{t.stop_reason ?? t.error ?? '–'}</td>
               </tr>
             ))}
           </tbody>

@@ -1,5 +1,5 @@
 {
-  "_notice": "demo-synth — synthetic teaching prose written for the bodh-maf RAG slice test suite. NOT real clinical guidelines; must never be used for patient care. Every document's source is 'demo-synth'.",
+  "_notice": "demo-synth — synthetic teaching prose written for the bodhyanga-maf RAG slice test suite. NOT real clinical guidelines; must never be used for patient care. Every document's source is 'demo-synth'.",
   "documents": [
     {
       "id": "acs-001",

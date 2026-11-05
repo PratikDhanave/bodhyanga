@@ -3,7 +3,7 @@ package eval
 import (
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // CaseMetrics captures SD Bench–style outcomes plus RPM-aware population health proxies.

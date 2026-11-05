@@ -21,7 +21,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/hl7v2"
+	"github.com/PratikDhanave/bodhyanga/pkg/hl7v2"
 )
 
 func main() {

@@ -1,7 +1,7 @@
 package judges
 
 // This file defines three clinical domain LLM-as-Judge evaluators for
-// the Bodh MARA pipeline. Each judge includes a system prompt and 2-3
+// the Bodhyanga MARA pipeline. Each judge includes a system prompt and 2-3
 // few-shot examples from different outcome categories.
 
 // DiagnosisAccuracyJudge evaluates whether a diagnosis is clinically

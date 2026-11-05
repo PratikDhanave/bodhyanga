@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // ---- Subscribe broadcast (agentID="") ----

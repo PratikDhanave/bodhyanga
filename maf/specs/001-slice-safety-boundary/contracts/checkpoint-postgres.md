@@ -16,7 +16,7 @@ func New(pool *pgxpool.Pool) *Store          // table per db/0001_checkpoints.sq
 
 **Guarantees**
 - Append-only at the application layer; migration grants INSERT+SELECT only to the
-  app role (bodh persistence discipline).
+  app role (bodhyanga persistence discipline).
 - `data` (jsonb) is PHI-bearing: never logged, never in errors, never in test
   assertions beyond byte-equality round-trips.
 - Concurrent-safe via pgxpool; no cross-session interference (session_id scoping).

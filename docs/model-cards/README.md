@@ -1,4 +1,4 @@
-# Bodh Model Cards
+# Bodhyanga Model Cards
 
 Per Mitchell et al. (2018), [*Model Cards for Model Reporting*](https://arxiv.org/abs/1810.03677), every machine-learning model that ships to production should be accompanied by a Model Card documenting:
 
@@ -12,7 +12,7 @@ Per Mitchell et al. (2018), [*Model Cards for Model Reporting*](https://arxiv.or
 - Ethical considerations
 - Caveats and recommendations
 
-Bodh doesn't train custom models — every "model" in Bodh is either a vendor LLM (Anthropic, OpenAI, Ollama) accessed through `pkg/llm.Client`, or a deterministic rule-based agent. Both have model-card-shaped documentation needs.
+Bodhyanga doesn't train custom models — every "model" in Bodhyanga is either a vendor LLM (Anthropic, OpenAI, Ollama) accessed through `pkg/llm.Client`, or a deterministic rule-based agent. Both have model-card-shaped documentation needs.
 
 This directory holds one card per **agent variant**, not per underlying LLM. The agent variant is the integration shape (rule-based, single-LLM call, debate, reflexion, cascade, vision, tool-using) — the LLM provider is a configurable parameter of each variant.
 
@@ -53,4 +53,4 @@ When an existing variant's behavior changes meaningfully (provider swap, prompt 
 
 ## Disclaimer
 
-These model cards describe agent variants for research purposes. Bodh is not a medical device and not approved for clinical use. Production deployments must conduct their own validation, including clinical-team review of every threshold, prompt, and fallback decision documented here.
+These model cards describe agent variants for research purposes. Bodhyanga is not a medical device and not approved for clinical use. Production deployments must conduct their own validation, including clinical-team review of every threshold, prompt, and fallback decision documented here.

@@ -1,6 +1,6 @@
 // Package evalhook writes ONE eval.InteractionRecord per case that reaches a
 // terminal state — closing the eval-mirror gap documented in
-// bodh/pkg/runtime/doc.go via its option (b): a per-deployment terminal-hop
+// bodhyanga/pkg/runtime/doc.go via its option (b): a per-deployment terminal-hop
 // subscriber, owned here by the pipeline Runner. Records are keyed on the
 // opaque case token; no PHI (research.md R7).
 package evalhook
@@ -8,7 +8,7 @@ package evalhook
 import (
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
 	"github.com/google/uuid"
 )
 
@@ -28,7 +28,7 @@ type CaseOutcome struct {
 	EndedAt       time.Time
 }
 
-// Record maps the outcome onto bodh's InteractionRecord and saves it.
+// Record maps the outcome onto bodhyanga's InteractionRecord and saves it.
 // Success = approved AND not forced (a forced progression reaching approval
 // is still a quality miss worth surfacing).
 func Record(store eval.Store, o CaseOutcome) (eval.InteractionRecord, error) {

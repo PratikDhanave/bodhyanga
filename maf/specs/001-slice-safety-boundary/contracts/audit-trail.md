@@ -1,6 +1,6 @@
 # Contract: Audit Trail (per case)
 
-The trail is bodh `audit.Event` rows (schema owned by bodh — this repo adds no
+The trail is bodhyanga `audit.Event` rows (schema owned by bodhyanga — this repo adds no
 fields). For the canonical happy-path case (1 loop-back, approved review) the trail
 MUST contain, in a causally coherent order:
 

@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/eval"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // TestOrchestrator_RecordsEvalOnSupervisorDiagnosisFinal asserts that when

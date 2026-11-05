@@ -374,8 +374,8 @@ func TestImmutableRecorder_ExportToS3_WithMockServer(t *testing.T) {
 	path := dir + "/s3export.jsonl"
 	sink := &S3Sink{Bucket: "test-bucket", Prefix: "audit/", Region: "us-east-1", Endpoint: server.URL}
 
-	t.Setenv("BODH_S3_ACCESS_KEY", "testkey")
-	t.Setenv("BODH_S3_SECRET_KEY", "testsecret")
+	t.Setenv("BODHYANGA_S3_ACCESS_KEY", "testkey")
+	t.Setenv("BODHYANGA_S3_SECRET_KEY", "testsecret")
 
 	rec, err := NewImmutableRecorder(path, nil, sink)
 	if err != nil {
@@ -413,8 +413,8 @@ func TestImmutableRecorder_ExportToS3_ServerError(t *testing.T) {
 	path := dir + "/s3err.jsonl"
 	sink := &S3Sink{Bucket: "b", Prefix: "", Region: "us-east-1", Endpoint: server.URL}
 
-	t.Setenv("BODH_S3_ACCESS_KEY", "k")
-	t.Setenv("BODH_S3_SECRET_KEY", "s")
+	t.Setenv("BODHYANGA_S3_ACCESS_KEY", "k")
+	t.Setenv("BODHYANGA_S3_SECRET_KEY", "s")
 
 	rec, _ := NewImmutableRecorder(path, nil, sink)
 	defer rec.Close()
@@ -438,8 +438,8 @@ func TestImmutableRecorder_RecordWithS3Fire(t *testing.T) {
 	path := dir + "/s3fire.jsonl"
 	sink := &S3Sink{Bucket: "b", Prefix: "p/", Region: "us-east-1", Endpoint: server.URL}
 
-	t.Setenv("BODH_S3_ACCESS_KEY", "k")
-	t.Setenv("BODH_S3_SECRET_KEY", "s")
+	t.Setenv("BODHYANGA_S3_ACCESS_KEY", "k")
+	t.Setenv("BODHYANGA_S3_SECRET_KEY", "s")
 
 	rec, _ := NewImmutableRecorder(path, nil, sink)
 	defer rec.Close()

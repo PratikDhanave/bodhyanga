@@ -1,4 +1,4 @@
-// Package shadow implements shadow-mode deployment for the Bodh diagnostic
+// Package shadow implements shadow-mode deployment for the Bodhyanga diagnostic
 // pipeline. Shadow mode runs the AI pipeline in parallel with clinician
 // decisions, capturing concordance metrics without affecting patient care.
 // This is critical for pre-deployment validation: before an AI diagnostician
@@ -31,14 +31,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PratikDhanave/bodh/agents"
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/comm"
-	"github.com/PratikDhanave/bodh/pkg/governance"
-	"github.com/PratikDhanave/bodh/pkg/medical"
-	"github.com/PratikDhanave/bodh/pkg/observability"
-	"github.com/PratikDhanave/bodh/pkg/orchestration"
-	"github.com/PratikDhanave/bodh/pkg/registry"
+	"github.com/PratikDhanave/bodhyanga/agents"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/comm"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/orchestration"
+	"github.com/PratikDhanave/bodhyanga/pkg/registry"
 )
 
 // Mode controls whether the shadow pipeline blocks on the AI result or

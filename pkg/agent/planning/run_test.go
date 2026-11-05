@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/agent/planning"
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/tools"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent/planning"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/tools"
 )
 
 // mockSequentialClient returns a different response on each call, cycling

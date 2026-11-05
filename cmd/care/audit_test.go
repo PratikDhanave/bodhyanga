@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 )
 
 // TestAuditEndpoint_ListAndFilter exercises the /audit handler end-to-end:

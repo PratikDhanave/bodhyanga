@@ -1,4 +1,4 @@
-# Bodh Agent Decoupling — Plan & Thinking (External Review Edition)
+# Bodhyanga Agent Decoupling — Plan & Thinking (External Review Edition)
 
 > **Companion to** `specs/002-agent-decoupling/plan.md`. The plan states *what* the
 > target architecture is. This document adds the *thinking* the plan omits: the
@@ -11,9 +11,9 @@
 
 ## 0. How to review this document
 
-### What Bodh is
+### What Bodhyanga is
 
-Bodh is a **HIPAA-grade medical-AI orchestration platform written in Go**. It implements
+Bodhyanga is a **HIPAA-grade medical-AI orchestration platform written in Go**. It implements
 the Multi-Agent Reference Architecture (MARA) for clinical decision support. The clinical
 pipeline is a sequential-diagnosis state machine:
 
@@ -33,7 +33,7 @@ communicating over **NATS JetStream**.
 ### The hard constraints (these are invariants, not preferences)
 
 1. **Zero agent code in the backend.** The new backend binary `cmd/api/` must compile
-   without importing `github.com/PratikDhanave/bodh/agents`, `pkg/agent`, or
+   without importing `github.com/PratikDhanave/bodhyanga/agents`, `pkg/agent`, or
    `pkg/orchestration`. This is meant to be enforced at the *module* boundary, not by a
    lint rule. The security argument for the whole rearchitecture rests on this: a
    compromised public HTTP surface must not contain the diagnostician's LLM client or the
@@ -41,7 +41,7 @@ communicating over **NATS JetStream**.
 2. **API keys live only in `.env`** (and, in production, per-agent Kubernetes Secrets).
    They never appear in tracked files or code. Per-agent binaries mean the intake binary's
    process env must not carry the diagnostician's key.
-3. **PHI rule: `bodh.case_id = sha256(caseID)[:8]` (hex) on all spans.** Raw MRNs / raw
+3. **PHI rule: `bodhyanga.case_id = sha256(caseID)[:8]` (hex) on all spans.** Raw MRNs / raw
    `caseID` must never appear in collectors, logs, or telemetry. `msg.Content` (chief
    complaint, HPI, diagnosis narrative, care-plan JSON) is raw PHI and must never be copied
    into the audit log.
@@ -135,7 +135,7 @@ idempotent — false for side-effecting agents; **isolation assumes independent 
 but NATS / Postgres / the LLM endpoint are common-mode dependencies, so the win protects
 against agent-local faults (panic, OOM, RCE), not shared-substrate outages.
 
-**Why the decisive axis is binary-content isolation (the steelman judgment).** Bodh is
+**Why the decisive axis is binary-content isolation (the steelman judgment).** Bodhyanga is
 HIPAA-grade, and its agents have radically heterogeneous trust, blast-radius, and resource
 profiles. Today cmd/care holds *both* `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` in one process
 and runs LLM agents next to rule agents. The threat model for a clinical LLM platform is
@@ -155,8 +155,8 @@ That is the entire crux of the decision.
 
 ### 2.2 Decision B — Compile-time boundary: separate Go module for `agents/`
 
-**Chosen.** Split `agents/` into its own module `github.com/PratikDhanave/bodh/agents`
-(with its own `go.mod` that `require`s `bodh`), joined to the main module by a `go.work`
+**Chosen.** Split `agents/` into its own module `github.com/PratikDhanave/bodhyanga/agents`
+(with its own `go.mod` that `require`s `bodhyanga`), joined to the main module by a `go.work`
 workspace for local dev, with `cmd/care` relocated into the agents module to break the
 otherwise-circular module dependency.
 
@@ -195,7 +195,7 @@ directive, no version bump. `go.work` is a **local-development** construct: it i
 `go.work.sum` is the workspace checksum file (`go work sync`) and must be committed alongside.
 **The trap:** `go.work` papers over version skew between the two `go.mod`s during development —
 `make test` can pass in workspace mode while a clean module-isolated build (`cd agents && go
-build ./...` against the *published* `bodh` version) fails because `agents/go.mod` pins a `bodh`
+build ./...` against the *published* `bodhyanga` version) fails because `agents/go.mod` pins a `bodhyanga`
 version lacking a symbol present in local source. CI must therefore run at least one
 `GOWORK=off` build per module — which the plan does not mention. **Release tax:** two modules =
 two version lines; the convention is tag prefix `agents/vX.Y.Z` for the nested module and
@@ -208,7 +208,7 @@ present) and bites only on external independent `go get`.
 ### 2.3 Decision C — Supervisor stays an agent container (eval-mirror split out)
 
 **Chosen.** `DiagnosticSupervisor` remains a standalone binary subscribing to
-`bodh.{tenant}.diagnostic_supervisor` and routing by `msg.Type`, exactly like every other
+`bodhyanga.{tenant}.diagnostic_supervisor` and routing by `msg.Type`, exactly like every other
 agent. The eval-mirror side-channel (previously hardcoded inside the orchestrator closure)
 becomes its own standalone NATS subscriber (`cmd/eval-mirror/`). The backend imports zero
 agent code.
@@ -285,7 +285,7 @@ exhaustion as agents scale (N pools vs one Postgres); distributing DB credential
 credential blast radius; migration coordination across many binaries; shared mutable
 current-state under concurrent writers → lost updates without explicit concurrency control;
 **the audit hash-chain is currently file/JSONL** — migration 0005 provisions
-`bodh_audit_app` but notes the Postgres audit sink is "pending a future PR," so the
+`bodhyanga_audit_app` but notes the Postgres audit sink is "pending a future PR," so the
 §164.312(b) guarantee leaned on to reject event-sourcing is weaker than assumed until that
 is wired; the interface seam only keeps B/C cheap if adapters don't leak Postgres-specific
 semantics (`*pgx` types, SQL errors, RLS assumptions).
@@ -373,9 +373,9 @@ plan's file-change list should include both.
 | Claim | Verdict | Evidence |
 |---|---|---|
 | cmd/care imports both `agents` and `pkg/agent` | **confirmed** | main.go:19 `agents`, :20 `pkg/agent`. Both used: :97 `for _, a := range []agent.Agent{`; :98–114 instantiate `&agents.IntakeAgent{}` etc. |
-| `protocol.Message` is canonical; `agent.Message` is a type alias of it | **confirmed** | types.go:44 `type Message = protocol.Message` (true alias). Struct defined message.go:71. `pkg/protocol/*.go` has **zero** internal-bodh imports → a safe leaf dependency a zero-agent backend can import alone. |
-| The circular-dependency reasoning (agents-module + cmd/care-stays → cycle) | **confirmed** | Sound and grounded: if `agents/` becomes a module requiring `bodh`, keeping cmd/care in `bodh` forces `bodh` to require `bodh/agents`, while `bodh/agents` requires `bodh` → cycle (Go forbids). Moving cmd/care into the agents module yields one-way `bodh/agents → bodh`. **Forward-looking**: no `agents/go.mod`, no `go.work` exist today; go.mod declares the single module `github.com/PratikDhanave/bodh` (go 1.26). |
-| Plan §3 "becomes strictly one-way: `bodh/agents → bodh`" | **REFUTED — feasibility-blocking** | `pkg/shadow/shadow.go` (non-test, **main module**) imports and instantiates agents: **verified** shadow.go:352 `agents.NewDiagnostician(provider)`, :358 `&agents.IntakeAgent{}`, :359 `&agents.RPMMonitorAgent{}`, :360 `&agents.DiagnosticSupervisor{}`, :361 `&agents.QuestionerAgent{}`, :362 `&agents.TestPlannerAgent{}`, :363 `&agents.CostGuardianAgent{}`, :365 `&agents.ReasoningVerifierAgent{}`. A main-module library importing agents means the desired direction is **violated today**. The split cannot compile until `pkg/shadow` is moved into the agents module, inverted to an injected agent-registry interface, or deleted. The plan omits this entirely. |
+| `protocol.Message` is canonical; `agent.Message` is a type alias of it | **confirmed** | types.go:44 `type Message = protocol.Message` (true alias). Struct defined message.go:71. `pkg/protocol/*.go` has **zero** internal-bodhyanga imports → a safe leaf dependency a zero-agent backend can import alone. |
+| The circular-dependency reasoning (agents-module + cmd/care-stays → cycle) | **confirmed** | Sound and grounded: if `agents/` becomes a module requiring `bodhyanga`, keeping cmd/care in `bodhyanga` forces `bodhyanga` to require `bodhyanga/agents`, while `bodhyanga/agents` requires `bodhyanga` → cycle (Go forbids). Moving cmd/care into the agents module yields one-way `bodhyanga/agents → bodhyanga`. **Forward-looking**: no `agents/go.mod`, no `go.work` exist today; go.mod declares the single module `github.com/PratikDhanave/bodhyanga` (go 1.26). |
+| Plan §3 "becomes strictly one-way: `bodhyanga/agents → bodhyanga`" | **REFUTED — feasibility-blocking** | `pkg/shadow/shadow.go` (non-test, **main module**) imports and instantiates agents: **verified** shadow.go:352 `agents.NewDiagnostician(provider)`, :358 `&agents.IntakeAgent{}`, :359 `&agents.RPMMonitorAgent{}`, :360 `&agents.DiagnosticSupervisor{}`, :361 `&agents.QuestionerAgent{}`, :362 `&agents.TestPlannerAgent{}`, :363 `&agents.CostGuardianAgent{}`, :365 `&agents.ReasoningVerifierAgent{}`. A main-module library importing agents means the desired direction is **violated today**. The split cannot compile until `pkg/shadow` is moved into the agents module, inverted to an injected agent-registry interface, or deleted. The plan omits this entirely. |
 
 **Correction (the single most important one):** Plan §3's "strictly one-way" is false as the
 code stands. Before the module split can even compile, `pkg/shadow` (and the test-only
@@ -397,9 +397,9 @@ the coupling surface is larger than implied.
 | The per-agent subscription closure begins at orchestrator.go:244 | **confirmed** | :244 `o.bus.Subscribe(agentID, func(c context.Context, msg agent.Message) {` (body ~244–359). |
 | The closure does 5 things (governance, audit, agent-exec, eval-mirror, fan-out) | **confirmed** | In-line labels: :245 `Step 1: Governance` (Evaluate :258), :289 `Step 2: Record the agent invocation` (:299), :301 `Step 3: Delegate to the agent` (:315), :326/:340 `Step 4: Eval mirror`, :344 `Step 5: Fan-out` (:356–358). |
 | Eval mirror hardcoded to `agentID=="diagnostic_supervisor" && msg.Type=="diagnosis"` (+`len(out)==0`) at ~line 340 | **confirmed** | :340 `if len(out) == 0 && agentID == "diagnostic_supervisor" && msg.Type == "diagnosis" {` → :341 `o.recordCaseEval(msg)`. |
-| pkg/comm/nats.go: durable JetStream consumers, AckExplicit, per-agent names, subject `bodh.{t}.{id}`, broadcast subject | **confirmed** | ConsumerConfig :205–211 (`Durable`, `FilterSubject`, `AckExplicitPolicy`, `DeliverNewPolicy`); `subject()` :165–172 = `bodh.{tenant}.{id}`; empty id → `bodh.{tenant}.broadcast`; stream `bodh.>` :149. |
+| pkg/comm/nats.go: durable JetStream consumers, AckExplicit, per-agent names, subject `bodhyanga.{t}.{id}`, broadcast subject | **confirmed** | ConsumerConfig :205–211 (`Durable`, `FilterSubject`, `AckExplicitPolicy`, `DeliverNewPolicy`); `subject()` :165–172 = `bodhyanga.{tenant}.{id}`; empty id → `bodhyanga.{tenant}.broadcast`; stream `bodhyanga.>` :149. |
 | NATSBus serializes `protocol.Message` to JSON | **confirmed** | :307 `json.Marshal(msg)`; :256–257 `json.Unmarshal(...)`. |
-| Each process calls `comm.NewNATSBus()` independently, no shared state | **confirmed** | nats.go:101 `func NewNATSBus() (*NATSBus, error)` — **no args**, env-driven (`NATS_URL` :102, `BODH_TENANT_ID` :123); own conn + JetStream ctx; idempotent `CreateOrUpdateStream`. |
+| Each process calls `comm.NewNATSBus()` independently, no shared state | **confirmed** | nats.go:101 `func NewNATSBus() (*NATSBus, error)` — **no args**, env-driven (`NATS_URL` :102, `BODHYANGA_TENANT_ID` :123); own conn + JetStream ctx; idempotent `CreateOrUpdateStream`. |
 | nats.go ~355 lines | **confirmed** | `wc -l` = **355** (verified). |
 | Orchestrator NOT modified/deleted; only decoupled mode skips it | **partial** | Forward-looking; can't fully verify against present code. Verifiable: the orchestrator closure is today's sole governance+audit+eval+fan-out point. `pkg/runtime`, `pkg/gateway`, `cmd/eval-mirror`, `cmd/api` **do not exist yet**. |
 | Eval-mirror keeps supervisor "completely clean (zero eval dependency)" | **REFUTED** | supervisor.go:253 `metrics := eval.ScoreCase(state, ...)` — finalize() **already imports and calls `pkg/eval`** for a local metrics log (:254–255). The supervisor is NOT zero-eval-dependency today. Durable persistence (`eval.Store.Save`) is orchestrator-side only (orchestrator.go:426–465); supervisor holds no `eval.Store` field. |
@@ -467,7 +467,7 @@ without rewriting `Subscribe`.
 
 ```go
 // StreamConfig (~:149–153)
-Subjects: []string{"bodh.>"},
+Subjects: []string{"bodhyanga.>"},
 MaxAge:   24 * time.Hour,
 Storage:  jetstream.FileStorage,
 Replicas: 1,                         // ← SPOF: one node loss ⇒ whole-fleet outage + data loss window
@@ -475,7 +475,7 @@ Replicas: 1,                         // ← SPOF: one node loss ⇒ whole-fleet 
 // ConsumerConfig (~:205–211)
 Name:          durableName,
 Durable:       durableName,
-FilterSubject: subj,                 // bodh.{tenant}.{agentID}
+FilterSubject: subj,                 // bodhyanga.{tenant}.{agentID}
 AckPolicy:     jetstream.AckExplicitPolicy,
 DeliverPolicy: jetstream.DeliverNewPolicy,   // ← gap messages before consumer-creation are never delivered
 // NOTE: no AckWait, no MaxDeliver, no DeadLetter subject configured
@@ -529,11 +529,11 @@ diagnosis narrative) — the HIPAA regression in Section 5.3.
 ┌──────────────┐   HTTP    ┌─────────────────────┐   NATS   ┌──────────────────────────┐
 │  Frontend    │──────────▶│   API Service        │─────────▶│  NATS JetStream          │
 │  (React SPA) │           │   cmd/api/           │          │                          │
-│  Static/CDN  │           │  - HTTP endpoints    │          │  bodh.{t}.intake         │
-│              │           │  - Auth (JWT+OPA)    │          │  bodh.{t}.diagnostic_... │
-│              │           │  - Postgres reads    │          │  bodh.{t}.diagnostician  │
-│              │           │  - HITL management   │          │  bodh.{t}.human_review   │
-│              │           │  - Publish to NATS   │          │  bodh.{t}.broadcast      │
+│  Static/CDN  │           │  - HTTP endpoints    │          │  bodhyanga.{t}.intake         │
+│              │           │  - Auth (JWT+OPA)    │          │  bodhyanga.{t}.diagnostic_... │
+│              │           │  - Postgres reads    │          │  bodhyanga.{t}.diagnostician  │
+│              │           │  - HITL management   │          │  bodhyanga.{t}.human_review   │
+│              │           │  - Publish to NATS   │          │  bodhyanga.{t}.broadcast      │
 │              │◀── SSE ───│  - broadcast sub     │          │  ... 29 subjects total   │
 │              │           │                      │          │                          │
 │              │           │  ❌ NO agents/        │          └────────────┬─────────────┘
@@ -570,9 +570,9 @@ retained `cmd/care` monolith. The plan states "24 binaries total" (§3) but "23 
 ### 4.3 Module split & the circular-dependency reasoning
 
 ```
-github.com/PratikDhanave/bodh           ← MAIN MODULE (SDK + backend)
-  go.mod                                  module github.com/PratikDhanave/bodh
-  pkg/protocol  ← wire type (Message), zero internal-bodh imports (safe leaf)
+github.com/PratikDhanave/bodhyanga           ← MAIN MODULE (SDK + backend)
+  go.mod                                  module github.com/PratikDhanave/bodhyanga
+  pkg/protocol  ← wire type (Message), zero internal-bodhyanga imports (safe leaf)
   pkg/comm      ← Bus interface + NATSBus (//go:build nats; stub otherwise)
   pkg/agent     ← Agent, Environment; Message = protocol.Message (alias)  [agents module only]
   pkg/medical   ← CaseState, PatientStore (NEW)
@@ -582,7 +582,7 @@ github.com/PratikDhanave/bodh           ← MAIN MODULE (SDK + backend)
   pkg/gateway   ← NEW pipeline builder
   cmd/api, cmd/eval-mirror   ← NEW (zero agent imports)
 
-github.com/PratikDhanave/bodh/agents    ← AGENTS MODULE (separate go.mod, requires bodh)
+github.com/PratikDhanave/bodhyanga/agents    ← AGENTS MODULE (separate go.mod, requires bodhyanga)
   agents/*.go                             ← all agent impls (fields → interfaces)
   cmd/agents/<name>/main.go               ← 21 per-agent binaries
   cmd/care/                               ← MONOLITH (moved here to break the cycle)
@@ -591,10 +591,10 @@ go.work  →  use .  +  use ./agents       (local-dev workspace; commit go.work 
 ```
 
 **Why cmd/care moves:** cmd/care imports both `agents` and many `pkg/*`. If it stayed in the
-main module while `agents/` became a module requiring `bodh`, the main module would need to
-`require bodh/agents`, while `bodh/agents` already requires `bodh` → **circular module
+main module while `agents/` became a module requiring `bodhyanga`, the main module would need to
+`require bodhyanga/agents`, while `bodhyanga/agents` already requires `bodhyanga` → **circular module
 dependency** (forbidden). Relocating cmd/care into the agents module makes the graph one-way
-(`bodh/agents → bodh`).
+(`bodhyanga/agents → bodhyanga`).
 
 > **Blocking caveat (verified):** This is only achievable after `pkg/shadow` (main-module
 > library, shadow.go:352–365) and the test `pkg/orchestration/integration_test.go` — both of
@@ -608,7 +608,7 @@ dependency** (forbidden). Relocating cmd/care into the agents module makes the g
 (plan §5) — note the **gap** vs current `pkg/comm`:
 
 ```
-Subscribe on bodh.{tenant}.{agent.ID()}:
+Subscribe on bodhyanga.{tenant}.{agent.ID()}:
   1. pipeline.Pre(ctx, msg)      → governance + audit + safety; deny ⇒ stop (already audited)
   2. out, err := a.HandleMessage(ctx, msg, env)
        err ⇒ pipeline.RecordError; nak → redelivery
@@ -640,22 +640,22 @@ relaxes governance/audit on one agent.)
 
 ```
 User → React SPA → POST /api/cases → cmd/api
-  └ protocol.NewMessage("api","intake",RoleUser,"presentation",...) → NATS bodh.{t}.intake
-     [intake] → bodh.{t}.rpm_monitor → [rpm-monitor] → bodh.{t}.diagnostic_supervisor
+  └ protocol.NewMessage("api","intake",RoleUser,"presentation",...) → NATS bodhyanga.{t}.intake
+     [intake] → bodhyanga.{t}.rpm_monitor → [rpm-monitor] → bodhyanga.{t}.diagnostic_supervisor
        [supervisor] switch msg.Type:
          "case_state"        → questioner    → (back to supervisor)
          "questions_complete"→ test_planner  → cost_guardian → (back to supervisor)
          "tests_complete"    → diagnostician (LLM) → reasoning_verifier
               reasoning_verifier:
-                ├ HITL needed → bodh.{t}.human_review
+                ├ HITL needed → bodhyanga.{t}.human_review
                 │   [human-review] HumanReviewAgent.HandleMessage → ReviewStore.Submit() → Postgres
                 │   cmd/api broadcast sub → SSE → clinician UI
                 │   clinician Approve → POST /api/reviews/{id}/decide → cmd/api:
                 │      (a) reviewStore.Decide(...)              [Postgres commit]
                 │      (b) hitl.BuildResumeMessage(r,...)       [pure data, NO agents import]
                 │      (c) bus.Publish(resume → r.NextTo)       [NATS]
-                │      → bodh.{t}.diagnostic_supervisor  (resume)
-                └ pass        → bodh.{t}.diagnostic_supervisor  ("diagnosis", terminal)
+                │      → bodhyanga.{t}.diagnostic_supervisor  (resume)
+                └ pass        → bodhyanga.{t}.diagnostic_supervisor  ("diagnosis", terminal)
                                  [supervisor] finalize, emits nothing
                                  [eval-mirror] ScoreCase → eval.Store (Postgres)
 
@@ -689,7 +689,7 @@ plan addresses it (mostly: not addressed / contradicted).
 | **Cost vs monolith never quantified.** Diagnostician 500m/512Mi; every pure agent 50m/64Mi; 21 agents at `minReplicas:1` ⇒ ~1.5 vCPU / ~2Gi of *idle* requests 24/7, + NATS + Postgres + cmd/api + eval-mirror. The monolith is ONE pod. | medium | Not addressed; §15 "Hybrid" mode gestures at it with no grouping design, cost model, or break-even volume. |
 | **Local-dev/CI friction underestimated & self-contradicting.** Open Q2 pushes devs to the monolith — but the decoupled stack is the **only** thing exercising NATS routing, ack semantics, HITL-over-NATS, eval-mirror (the highest-risk code). NATS is **not** in the existing compose stack (postgres/ollama/care/prometheus/grafana/tempo/loki only), so the "production-ready" bus has never run in dev/CI; every CI run uses InMemoryBus via the monolith. | high | Open Q2 resolves heaviness by steering to the monolith, structurally guaranteeing the decoupled path is under-exercised. Phase 5 integration tests aren't wired into default `make test` (no tags). NATS-absent-from-compose not noted. |
 | **HITL split-brain (writer ↔ writer).** cmd/api (`Decide`) and human-review (`Submit`) both write `review_requests`; cmd/api publishes the resume after `Decide`, but `Decide` + NATS publish are **not** one transaction — commit-then-publish-fails (broker down) ⇒ decided-but-never-resumed, no outbox/retry. | medium | §12 describes only the happy path; §13's "compute from message content" idempotency doesn't cover HITL state in Postgres. |
-| **"True binary isolation" weaker operationally.** All agents share one `go.mod` requiring `bodh`, so a CVE in any shared dep (pgx, nats.go, otel, LLM SDK) rebuilds/redeploys **all 24** images. Per-agent secret isolation is also achievable with one binary + per-workload ServiceAccounts + scoped Secrets. | low | §4/§11 argue binary isolation but don't address the inverse 24× patch fan-out, and overstate that secret isolation requires per-agent binaries. |
+| **"True binary isolation" weaker operationally.** All agents share one `go.mod` requiring `bodhyanga`, so a CVE in any shared dep (pgx, nats.go, otel, LLM SDK) rebuilds/redeploys **all 24** images. Per-agent secret isolation is also achievable with one binary + per-workload ServiceAccounts + scoped Secrets. | low | §4/§11 argue binary isolation but don't address the inverse 24× patch fan-out, and overstate that secret isolation requires per-agent binaries. |
 | **LOC/effort estimates understate operational deliverables.** Phase 2 "15 min"; Phase 4 "~2200 lines of YAML." The repo has exactly ONE production k8s deployment today. None of NATS HA, the ack rewrite, schema versioning, trace propagation, config validation, per-agent dashboards/SLOs, rollout ordering, or CI for 24 images appears as a line item. | medium | §17 totals ~5,900 LOC and frames the dangerous parts as cheap. The hard SRE work is absent from the phase tables. |
 
 **Reviewer questions (operational):**
@@ -730,7 +730,7 @@ plan addresses it (mostly: not addressed / contradicted).
 | **HITL resume: lost-resume / double-resume across cmd/api↔NATS.** `Decide()` (Postgres) then `BuildResumeMessage()` then `Publish()` are not atomic. Crash between (a) and (c) ⇒ decided-but-never-published, **permanently stuck** (`Decide` retry returns `ok=false`). Two concurrent/double-clicked Approves can both pass `Decide` if the adapter's status-check+flip isn't transactionally guarded ⇒ two resume messages. | high | The plan **splits** a single in-process op into a non-transactional saga with no outbox, no idempotent resume (NextTo agent has no dedup), no stuck-case detector. The "Decide is single-shot" property that makes lossless-on-reject safe becomes a permanent-stall liability. |
 | **Non-atomic double-publish (target + broadcast).** nats.go:318 (target) and :329 (broadcast) are independent. Crash between ⇒ the agent gets the message but the SSE/audit-observability stream doesn't (or vice-versa); cmd/api's SSE feed diverges from what agents processed — an audit-completeness gap. | medium | Relies on the broadcast mirror for SSE + observability; never notes the two publishes can partially fail. |
 | **Poison messages acked-and-dropped silently.** nats.go:257–262: on unmarshal failure, `Ack()` + continue. A schema-incompatible `CaseState` (guaranteed under independent per-agent rollouts) is silently swallowed — case stalls, no DLQ, no alert, no audit error. | medium | Independent deploy makes schema skew normal, not exceptional. No version field, no compatibility policy, no DLQ. A correctness regression specific to decoupling. |
-| **Pre-existing routing bug becomes fatal.** cardiologist.go:118 emits to `"supervisor"`, but the supervisor's ID is `"diagnostic_supervisor"` (supervisor.go:57). In-process this is a silent no-op; in NATS it publishes to `bodh.{t}.supervisor` with no consumer → retained 24h then discarded. Any specialist→supervisor consult is silently broken. | medium | Not detected. The §0.2 audit lists 29 IDs but never validates every emitted `msg.To` ∈ registered IDs. A static routing-graph check must be a build gate. |
+| **Pre-existing routing bug becomes fatal.** cardiologist.go:118 emits to `"supervisor"`, but the supervisor's ID is `"diagnostic_supervisor"` (supervisor.go:57). In-process this is a silent no-op; in NATS it publishes to `bodhyanga.{t}.supervisor` with no consumer → retained 24h then discarded. Any specialist→supervisor consult is silently broken. | medium | Not detected. The §0.2 audit lists 29 IDs but never validates every emitted `msg.To` ∈ registered IDs. A static routing-graph check must be a build gate. |
 | **Partial pipeline failure: no completion guarantee.** If a mid-pipeline agent crashes (message lost per the ack bug) or errors (outputs dropped), the case never reaches finalize. No per-case watchdog, timeout-to-terminal, or stuck-case detector; the SSE stream waits forever. | medium | Monolith has the same gap, but decoupling multiplies the surface (24 processes + network + NATS). The 60s message timeout bounds one `HandleMessage`, not the case. |
 | **Delivery guarantee never declared.** §13 borrows the favorable properties of both at-least-once (durability) and the unbuilt ack-after-work model, while the code is at-most-once. | medium | Must pick **at-least-once + consumer idempotency** (the only tractable NATS choice) and enumerate the per-store idempotency mechanism. NATS `Nats-Msg-Id` dedup covers producer retries, not consumer-side reprocessing after a crash. |
 
@@ -864,7 +864,7 @@ top five are the highest-value.
 
 8. **Module split feasibility ordering.** Given `pkg/shadow` (main module) instantiates concrete
    agents (verified shadow.go:352–365), order the prerequisite refactors so the
-   `bodh/agents → bodh` graph actually becomes one-way and compiles, and decide whether
+   `bodhyanga/agents → bodhyanga` graph actually becomes one-way and compiles, and decide whether
    `pkg/shadow` should move, invert to an injected interface, or be deleted.
 
 9. **Schema versioning across independent rollouts.** With JSON `protocol.Message`/`CaseState`

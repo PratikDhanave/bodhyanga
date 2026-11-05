@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 )
 
 // safeMarker is a test error that opts into verbatim audit text.

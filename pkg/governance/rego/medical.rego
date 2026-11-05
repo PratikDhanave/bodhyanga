@@ -1,13 +1,13 @@
-# Bodh governance policies — medical domain.
+# Bodhyanga governance policies — medical domain.
 #
 # These are the OPA Rego equivalents of the Go policy structs in
 # medical_policy.go. Expressing them in Rego lets operators audit, test
 # (opa test), and swap policies without recompiling Go.
 #
 # The three exported result rules are loaded by pkg/governance.OPAPolicy:
-#   data.bodh.governance.medical.case_id_result
-#   data.bodh.governance.medical.diagnostic_cost_result
-#   data.bodh.governance.medical.tenant_result
+#   data.bodhyanga.governance.medical.case_id_result
+#   data.bodhyanga.governance.medical.diagnostic_cost_result
+#   data.bodhyanga.governance.medical.tenant_result
 #
 # Input contract (set by messageToOPAInput in opa_policy.go):
 #   input.id         — message UUID
@@ -26,7 +26,7 @@
 # helper docstrings in medical_policy.go). SIEM dashboards group by Reason;
 # pkg/governance tests assert specific strings.
 
-package bodh.governance.medical
+package bodhyanga.governance.medical
 
 import rego.v1
 

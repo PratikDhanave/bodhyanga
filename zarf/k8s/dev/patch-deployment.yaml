@@ -1,5 +1,5 @@
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/dev/sales/dev-sales-patch-deploy.yaml
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
 # Dev patch — single replica, Recreate strategy (one Pod at a time, no
 # parallel old+new), unconstrained resource limits so a laptop kind cluster
@@ -8,7 +8,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bodh-care
+  name: bodhyanga-care
 spec:
   replicas: 1
   strategy:
@@ -21,9 +21,9 @@ spec:
       containers:
         - name: care
           env:
-            - name: BODH_DB_DSN
-              value: "postgres://postgres:postgres@postgres:5432/bodh?sslmode=disable"
-            - name: BODH_TENANT_ID
+            - name: BODHYANGA_DB_DSN
+              value: "postgres://postgres:postgres@postgres:5432/bodhyanga?sslmode=disable"
+            - name: BODHYANGA_TENANT_ID
               value: "dev"
           resources:
             # Looser than base — dev clusters tolerate burst.

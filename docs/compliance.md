@@ -1,14 +1,14 @@
-# Bodh — Security & HIPAA compliance
+# Bodhyanga — Security & HIPAA compliance
 
-This document is the deep reference for how Bodh approaches PHI handling, security architecture, HIPAA, HITECH, 42 CFR Part 2, GDPR, audit frameworks, de-identification, and the governance policies that live in the codebase. The [main README](../README.md) keeps a short summary and links here.
+This document is the deep reference for how Bodhyanga approaches PHI handling, security architecture, HIPAA, HITECH, 42 CFR Part 2, GDPR, audit frameworks, de-identification, and the governance policies that live in the codebase. The [main README](../README.md) keeps a short summary and links here.
 
-> **Note:** Bodh is a research demo. The text below describes the architectural target needed for a production HIPAA-aligned deployment. The current codebase does **not** ship with a BAA, encryption-at-rest, identity provider, or audit pipeline.
+> **Note:** Bodhyanga is a research demo. The text below describes the architectural target needed for a production HIPAA-aligned deployment. The current codebase does **not** ship with a BAA, encryption-at-rest, identity provider, or audit pipeline.
 
 ---
 
 ## PHI handling principles
 
-Bodh follows these principles for **Protected Health Information (PHI)**:
+Bodhyanga follows these principles for **Protected Health Information (PHI)**:
 
 1. **Minimum necessary** — agents see only the fields required for their task. Don't pass the full clinical narrative when only the chief complaint is needed.
 2. **Opaque identifiers** — `case_id` and `patient_id` are routing tokens, not MRNs. Real MRNs / SSNs / DOBs never appear in logs or message Metadata in production.
@@ -17,7 +17,7 @@ Bodh follows these principles for **Protected Health Information (PHI)**:
 5. **No PHI in third-party telemetry** — if you wire OpenTelemetry, redact `Content` and `Metadata` before export.
 6. **De-identify for evaluation** — `gold_diagnosis` and benchmark records use synthetic or de-identified data; never production PHI in CI.
 7. **Encrypted at rest and in transit** — production deployments must encrypt the bus (TLS), the persistence layer (KMS-backed AES-256-GCM), and all backups.
-8. **Right to delete** — Bodh's persistence layer must support point-deletion of a patient's records (GDPR Article 17 / state laws).
+8. **Right to delete** — Bodhyanga's persistence layer must support point-deletion of a patient's records (GDPR Article 17 / state laws).
 
 ## Security architecture
 
@@ -38,7 +38,7 @@ Production target architecture (not yet built into the codebase):
 └─────────────────────────────┬──────────────────────────────────┘
                               │ mTLS
 ┌─────────────────────────────▼──────────────────────────────────┐
-│                      Bodh API (cmd/care)                       │
+│                      Bodhyanga API (cmd/care)                       │
 │   - Scope check (SMART scopes → governance policies)            │
 │   - Patient context binding (sub, fhirUser, encounter)         │
 │   - Emits audit event for every request                        │
@@ -82,7 +82,7 @@ Production target architecture (not yet built into the codebase):
 ### Authorization
 
 - **Coarse-grained (route)** — gateway checks scope (`patient/*.read`, `user/CarePlan.write`).
-- **Fine-grained (resource)** — Bodh governance policies check `tenant_id`, `patient_id`, and `case_id`. Extend `pkg/governance` with `RequireScopePolicy{Scope: "user/CarePlan.write"}`.
+- **Fine-grained (resource)** — Bodhyanga governance policies check `tenant_id`, `patient_id`, and `case_id`. Extend `pkg/governance` with `RequireScopePolicy{Scope: "user/CarePlan.write"}`.
 - **Patient-context binding** — a SMART-launched session is locked to one `patient_id`; cross-patient reads are denied.
 
 ### Cryptography
@@ -128,11 +128,11 @@ Production target architecture (not yet built into the codebase):
 
 **45 CFR Part 160 and 164 Subparts A and E.**
 
-The Privacy Rule governs **uses and disclosures of PHI** by covered entities (providers, plans, clearinghouses) and their **business associates** (vendors processing PHI on their behalf). If Bodh is deployed by a covered entity, **the operator is a business associate** and must sign a Business Associate Agreement (BAA).
+The Privacy Rule governs **uses and disclosures of PHI** by covered entities (providers, plans, clearinghouses) and their **business associates** (vendors processing PHI on their behalf). If Bodhyanga is deployed by a covered entity, **the operator is a business associate** and must sign a Business Associate Agreement (BAA).
 
-### Required practices in a production Bodh deployment
+### Required practices in a production Bodhyanga deployment
 
-| Requirement | How Bodh maps |
+| Requirement | How Bodhyanga maps |
 |-------------|---------------|
 | **Minimum Necessary Standard** | `RequireCaseIDPolicy` ensures correlation tokens only; planned `RedactNarrativePolicy` for logs |
 | **Use & Disclosure** | `pkg/governance` denies messages outside allowed flows; audit captures every cross-boundary disclosure |
@@ -140,12 +140,12 @@ The Privacy Rule governs **uses and disclosures of PHI** by covered entities (pr
 | **Right to Amendment** (164.526) | Persistence layer must support corrections with audit trail |
 | **Right to Accounting of Disclosures** (164.528) | Immutable audit log |
 | **Right to Restrict** (164.522) | Per-patient consent flags on `PatientRecord` |
-| **Notice of Privacy Practices** (164.520) | Operator obligation; Bodh ships a template |
+| **Notice of Privacy Practices** (164.520) | Operator obligation; Bodhyanga ships a template |
 | **Marketing & Sale** (164.508) | Engagement notifier must respect opt-out and never sell PHI |
 
 ### Business Associate Agreement (BAA)
 
-A BAA is required between the covered entity and Bodh's operator. The BAA must include the elements in 45 CFR 164.504(e):
+A BAA is required between the covered entity and Bodhyanga's operator. The BAA must include the elements in 45 CFR 164.504(e):
 
 - Permitted uses/disclosures
 - Safeguards (refer to Security Rule controls)
@@ -154,7 +154,7 @@ A BAA is required between the covered entity and Bodh's operator. The BAA must i
 - Return / destruction of PHI on termination
 - Compliance with Privacy Rule when carrying out covered entity obligations
 
-**Common BAA-eligible subcontractors** when running Bodh on cloud infrastructure:
+**Common BAA-eligible subcontractors** when running Bodhyanga on cloud infrastructure:
 
 | Provider | Notes |
 |----------|-------|
@@ -173,14 +173,14 @@ The Security Rule applies to **electronic PHI (ePHI)** and is organized into thr
 
 ### Administrative safeguards (164.308)
 
-| Standard | Status | Bodh / operator responsibility |
+| Standard | Status | Bodhyanga / operator responsibility |
 |----------|--------|--------------------------------|
 | Security Management Process (R) | operator | Risk analysis, risk management, sanction policy, info system activity review |
 | Assigned Security Responsibility (R) | operator | Named Security Officer |
 | Workforce Security (R) | operator | Authorization, supervision, termination procedures |
-| Information Access Management (R) | operator + Bodh | RBAC + SMART scopes |
+| Information Access Management (R) | operator + Bodhyanga | RBAC + SMART scopes |
 | Security Awareness & Training (R) | operator | Annual workforce training |
-| Security Incident Procedures (R) | operator | Incident response plan; Bodh audit log is the forensic source |
+| Security Incident Procedures (R) | operator | Incident response plan; Bodhyanga audit log is the forensic source |
 | Contingency Plan (R) | operator | Data backup, DR, emergency mode, testing |
 | Evaluation (R) | operator | Periodic technical/non-technical evaluation |
 | Business Associate Contracts (R) | operator | BAAs with covered entities and subcontractors |
@@ -194,7 +194,7 @@ The Security Rule applies to **electronic PHI (ePHI)** and is organized into thr
 | Workstation Security (R) | operator | Locking, encryption |
 | Device & Media Controls (R) | operator | Disposal, reuse, accountability, backup |
 
-For cloud-deployed Bodh, the cloud provider's HIPAA / SOC 2 attestation covers most physical safeguards (with a BAA in place).
+For cloud-deployed Bodhyanga, the cloud provider's HIPAA / SOC 2 attestation covers most physical safeguards (with a BAA in place).
 
 ### Technical safeguards (164.312)
 
@@ -212,7 +212,7 @@ For cloud-deployed Bodh, the cloud provider's HIPAA / SOC 2 attestation covers m
 
 ### HIPAA Security Rule controls — code-level cross-walk
 
-| Control | Bodh code |
+| Control | Bodhyanga code |
 |---------|-----------|
 | Audit log of every interaction | `pkg/orchestration` logs each `HandleMessage`, every governance decision |
 | Access control — correlation | `RequireCaseIDPolicy` in [pkg/governance/medical_policy.go](../pkg/governance/medical_policy.go) |
@@ -234,7 +234,7 @@ If a breach of unsecured PHI occurs:
 | Prominent media (≥500 in a state) | 60 days | 164.406 |
 | Business associate → covered entity | "without unreasonable delay and in no case later than 60 days" | 164.410 |
 
-Bodh's audit log is the **forensic record** that lets the operator determine the breach scope (what PHI, whose, what users).
+Bodhyanga's audit log is the **forensic record** that lets the operator determine the breach scope (what PHI, whose, what users).
 
 **Safe Harbor exclusion (encryption):** a breach of *encrypted* data that meets the HHS Guidance (FIPS 140-2/3 cryptographic modules, NIST-approved algorithms) does **not** count as a breach. This is why encryption at rest and in transit is non-negotiable.
 
@@ -244,13 +244,13 @@ Bodh's audit log is the **forensic record** that lets the operator determine the
 
 **21st Century Cures Act (2016)** and the **ONC Information Blocking Rule (45 CFR Part 171):** prohibit "actions likely to interfere with access, exchange, or use of EHI" by clinicians, EHR vendors, and HIEs. There are eight named exceptions (Preventing Harm, Privacy, Security, Infeasibility, Health IT Performance, Content & Manner, Fees, Licensing).
 
-**Bodh implication:** if Bodh sits inside a HIPAA-regulated workflow, it must not technically block legitimate access requests. The FHIR adapter and HTTP API should expose patient-mediated read access without artificial friction.
+**Bodhyanga implication:** if Bodhyanga sits inside a HIPAA-regulated workflow, it must not technically block legitimate access requests. The FHIR adapter and HTTP API should expose patient-mediated read access without artificial friction.
 
 ## 42 CFR Part 2 (substance-use records)
 
 Stricter than HIPAA for **federally assisted programs treating substance use disorder (SUD)**. Requires patient consent for many disclosures HIPAA otherwise allows. Re-disclosure prohibited without a specific consent each time.
 
-**Bodh status:** not addressed. If Bodh ever stores SUD treatment records, add a `SegmentationPolicy` that flags Part 2 patients and demands an explicit consent token in `Metadata` before disclosing.
+**Bodhyanga status:** not addressed. If Bodhyanga ever stores SUD treatment records, add a `SegmentationPolicy` that flags Part 2 patients and demands an explicit consent token in `Metadata` before disclosing.
 
 ## State privacy laws (CMIA, NY SHIELD)
 
@@ -267,20 +267,20 @@ A non-exhaustive list of state laws that may impose obligations stricter than HI
 
 ## GDPR and international privacy
 
-If Bodh processes EU residents' health data, **GDPR Article 9** (special categories) and the **EHDS (European Health Data Space)** apply. Key obligations:
+If Bodhyanga processes EU residents' health data, **GDPR Article 9** (special categories) and the **EHDS (European Health Data Space)** apply. Key obligations:
 
-| GDPR Article | Bodh implication |
+| GDPR Article | Bodhyanga implication |
 |--------------|-------------------|
 | Art. 5 — lawfulness, fairness, transparency, minimization | Same as HIPAA minimum necessary |
 | Art. 6 + 9 — lawful basis & special-category basis | Need explicit consent or substantial public interest |
 | Art. 15 — right of access | Patient export API |
 | Art. 17 — right to erasure | Persistence layer must support hard-delete by `patient_id` |
 | Art. 20 — portability | FHIR / Bulk Data export |
-| Art. 25 — Privacy by design | Bodh's governance-before-handler is exactly this |
+| Art. 25 — Privacy by design | Bodhyanga's governance-before-handler is exactly this |
 | Art. 32 — security of processing | Encryption, audit, access control |
 | Art. 33 / 34 — breach notification | 72 h to supervisory authority |
 | Art. 35 — DPIA | Required for AI-based clinical decision support |
-| Art. 22 — automated decision-making | "Right not to be subject to a decision based solely on automated processing" — Bodh's verifier + human review pattern fits this |
+| Art. 22 — automated decision-making | "Right not to be subject to a decision based solely on automated processing" — Bodhyanga's verifier + human review pattern fits this |
 | Cross-border transfers (Ch V) | SCCs / adequacy decisions; data residency controls |
 
 Other relevant regimes:
@@ -300,11 +300,11 @@ Three frameworks operators commonly pursue:
 | **ISO/IEC 27001** | Information security management system | International recognition |
 | **ISO/IEC 27799** | Health-sector application of 27002 | Adjunct to 27001 for healthcare |
 | **NIST SP 800-66** | HIPAA implementation guide | Not certifiable; useful as a control-mapping checklist |
-| **NIST AI RMF (AI 600-1)** | AI Risk Management Framework — generative AI profile | Required if Bodh uses LLMs |
+| **NIST AI RMF (AI 600-1)** | AI Risk Management Framework — generative AI profile | Required if Bodhyanga uses LLMs |
 
 ## De-identification and re-identification risk
 
-If Bodh processes data without HIPAA's restrictions, **the data must be de-identified.** HIPAA permits two methods:
+If Bodhyanga processes data without HIPAA's restrictions, **the data must be de-identified.** HIPAA permits two methods:
 
 1. **Safe Harbor (164.514(b)(2))** — remove the 18 listed identifiers (names, geography smaller than state, dates, SSN, MRN, IPs, biometrics, photos, etc.) AND have no actual knowledge that the remaining data could re-identify.
 2. **Expert Determination (164.514(b)(1))** — a qualified statistician certifies "very small risk" of re-identification.
@@ -315,9 +315,9 @@ If Bodh processes data without HIPAA's restrictions, **the data must be de-ident
 - Geographic granularity (ZIP3 vs ZIP5)
 - Free-text narrative (clinical notes may contain names, addresses)
 
-**Bodh's role:** today the demo runs only on synthetic data. A production export pipeline must run de-identification *before* records leave the regulated boundary.
+**Bodhyanga's role:** today the demo runs only on synthetic data. A production export pipeline must run de-identification *before* records leave the regulated boundary.
 
-## Governance policies in Bodh
+## Governance policies in Bodhyanga
 
 Live in [pkg/governance/](../pkg/governance/). Composed via `governance.NewComposite(...)` and applied by the orchestrator before every `HandleMessage`.
 

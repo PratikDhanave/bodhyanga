@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/ckptpg"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/ckptpg"
 )
 
 // With a Cipher configured, the payload round-trips through the DB unchanged,

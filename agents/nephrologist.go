@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
 )
 
 // NephrologistAgent evaluates renal function from laboratory data and

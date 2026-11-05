@@ -14,10 +14,10 @@ import (
 	"github.com/openai/openai-go/v3"
 	openaioption "github.com/openai/openai-go/v3/option"
 
-	"github.com/PratikDhanave/bodh/pkg/embeddings"
+	"github.com/PratikDhanave/bodhyanga/pkg/embeddings"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/admit"
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/admit"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
 const diagnosticianInstructions = "You are a diagnostic decision-support engine " +
@@ -40,7 +40,7 @@ func buildDiagnostician(kind string, boundary *admit.Boundary, dxCfg agents.Diag
 			anthropic.NewClient(anthropicoption.WithAPIKey(key)),
 			anthropicprovider.AgentConfig{
 				Config:       llmAgentConfig(boundary),
-				Model:        cmp.Or(os.Getenv("BODH_ANTHROPIC_MODEL"), "claude-sonnet-4-6"),
+				Model:        cmp.Or(os.Getenv("BODHYANGA_ANTHROPIC_MODEL"), "claude-sonnet-4-6"),
 				Instructions: diagnosticianInstructions,
 			})
 	case "llm-ollama":
@@ -52,7 +52,7 @@ func buildDiagnostician(kind string, boundary *admit.Boundary, dxCfg agents.Diag
 			),
 			openaiprovider.AgentConfig{
 				Config:       llmAgentConfig(boundary),
-				Model:        cmp.Or(os.Getenv("BODH_OLLAMA_MODEL"), "llama3.2"),
+				Model:        cmp.Or(os.Getenv("BODHYANGA_OLLAMA_MODEL"), "llama3.2"),
 				Instructions: diagnosticianInstructions,
 			})
 	default:
@@ -70,7 +70,7 @@ func buildEmbedder(kind string) (embeddings.Embedder, error) {
 		return &embeddings.Mock{}, nil
 	case "ollama":
 		host := cmp.Or(os.Getenv("OLLAMA_HOST"), "http://localhost:11434")
-		model := cmp.Or(os.Getenv("BODH_OLLAMA_EMBED_MODEL"), "nomic-embed-text")
+		model := cmp.Or(os.Getenv("BODHYANGA_OLLAMA_EMBED_MODEL"), "nomic-embed-text")
 		return embeddings.NewOllama(host, model), nil
 	default:
 		return nil, fmt.Errorf("unknown -embedder %q (mock | ollama)", kind)

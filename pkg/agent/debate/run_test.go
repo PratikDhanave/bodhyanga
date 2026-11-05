@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 // positionJSON builds a minimal valid positionResponse JSON string.

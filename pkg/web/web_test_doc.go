@@ -1,4 +1,4 @@
-// web_test.go — table-driven tests for the Bodh HTTP framework.
+// web_test.go — table-driven tests for the Bodhyanga HTTP framework.
 //
 // Overview:
 //   Verifies handler registration (App.HandlerFunc → ServeHTTP path),

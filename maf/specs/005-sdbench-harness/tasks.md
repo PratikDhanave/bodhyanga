@@ -15,13 +15,13 @@ green before the next starts.
 
 - **[P]**: parallelizable (different files, no dependency on an incomplete task)
 - **[Story]**: US1–US3 per spec.md
-- All paths are under `/Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodh-maf/`
+- All paths are under `/Users/genesis/Developer/goworkspace/src/github.com/PratikDhanave/bodhyanga-maf/`
 
 ## Phase 1: Setup
 
 - [ ] T001 Confirm no new module dependency is needed: the harness uses only `pkg/pipeline`,
-  `pkg/agents`, `pkg/admit`, and (via existing `replace ../bodh`) `bodh/pkg/audit` +
-  `bodh/pkg/eval`; run `go build ./...` green in `go.mod` before adding files. Create the
+  `pkg/agents`, `pkg/admit`, and (via existing `replace ../bodhyanga`) `bodhyanga/pkg/audit` +
+  `bodhyanga/pkg/eval`; run `go build ./...` green in `go.mod` before adding files. Create the
   empty package dir `pkg/bench/` and `pkg/bench/testdata/`.
 
 ## Phase 2: Foundational (blocking prerequisites)
@@ -32,7 +32,7 @@ green before the next starts.
   (`pkg/agents/diagnostician.go`) yields, respectively, "acute coronary syndrome",
   "community-acquired pneumonia", "heart failure", and "undifferentiated presentation".
   Synthetic only — no real patient data (NOTICE).
-- [ ] T003 [P] Author `data/cases/manifest.json` (bodh-maf v2 shape per plan.md: `version`,
+- [ ] T003 [P] Author `data/cases/manifest.json` (bodhyanga-maf v2 shape per plan.md: `version`,
   `description`, `cases[]{id,path,gold_diagnosis,tags}`; NO `max_cost_usd`) with a gold per
   fixture matching the rule engine's **lowercase** vocabulary; and `data/cases/baseline.json`
   (accuracy-only: `{version, providers[]{provider,cases,accuracy_pct,recorded_at}}`) left
@@ -49,7 +49,7 @@ print per-case + aggregate accuracy (table + JSON).
 prints per-case gold/produced/match and aggregate accuracy = matches ÷ scored (SC-001, SC-002).
 
 - [ ] T004 [P] [US1] Scoring tests first (red) in `pkg/bench/score_test.go`: `Match` is
-  trimmed + case-insensitive (bodh `diagnosisMatch` parity — exact, whitespace-diff, case-diff,
+  trimmed + case-insensitive (bodhyanga `diagnosisMatch` parity — exact, whitespace-diff, case-diff,
   empty-gold=unscored); classify a case as scored-match / scored-miss / unscored (no gold) /
   failure (no terminal plan).
 - [ ] T005 [P] [US1] Manifest-load tests first (red) in `pkg/bench/manifest_test.go` using
@@ -61,7 +61,7 @@ prints per-case gold/produced/match and aggregate accuracy = matches ÷ scored (
   `Status ∈ {match, miss, unscored, failure}`; `Score(gold, produced string) Status`.
 - [ ] T007 [US1] Implement `pkg/bench/manifest.go`: `Manifest`/`Entry` structs (v2 shape,
   no cost); `LoadManifest(path) ([]Fixture, error)` resolving fixture paths
-  manifest-relative (mirror bodh's resolver) and unmarshaling each to `agents.PatientCase`;
+  manifest-relative (mirror bodhyanga's resolver) and unmarshaling each to `agents.PatientCase`;
   empty-manifest + missing-fixture errors.
 - [ ] T008 [US1] Run tests first (red) in `pkg/bench/run_test.go`: a benign fixture reaches
   `Outcome.Plan != nil` (NOT `Paused`) under the harness Runner config (allow-all boundary,
@@ -96,7 +96,7 @@ gate exits non-zero naming old vs new; missing baseline ⇒ informational, exit 
 
 - [ ] T013 [P] [US2] Baseline tests first (red) in `pkg/bench/baseline_test.go`: load
   baseline; `DetectRegression` fires when `accuracy_pct + 1.0 < baseline` and not within
-  tolerance (port bodh's `accuracyToleranceP=1.0`, accuracy-only); missing baseline file ⇒
+  tolerance (port bodhyanga's `accuracyToleranceP=1.0`, accuracy-only); missing baseline file ⇒
   informational (no error surfaced to the gate, returns "create one" message); malformed
   baseline ⇒ error.
 - [ ] T014 [US2] Implement `pkg/bench/baseline.go`: `Baseline`/`BaselineEntry` (accuracy-only,
@@ -127,7 +127,7 @@ during the update run (SC-004).
   (extend): `WriteBaseline(path, summary)` writes provider `rule`, case count, accuracy_pct,
   and a UTC RFC3339 timestamp; round-trips through `LoadBaseline`; a subsequent
   `DetectRegression` against the written baseline is empty.
-- [ ] T018 [US3] Implement `WriteBaseline` in `pkg/bench/baseline.go` (port bodh's
+- [ ] T018 [US3] Implement `WriteBaseline` in `pkg/bench/baseline.go` (port bodhyanga's
   `writeBaseline`, accuracy-only, `MarshalIndent`, `MkdirAll`) and wire `-update-baseline`
   into `cmd/bench/main.go`: write baseline, print confirmation, **skip** the regression gate,
   exit 0 (FR-009); run it once to populate the real `data/cases/baseline.json` (finishing T003).

@@ -25,8 +25,8 @@ import (
 
 	"github.com/ardanlabs/kronk"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
 )
 
 // skipUnsupportedOS guards tests that need the CGO backend even via a fake

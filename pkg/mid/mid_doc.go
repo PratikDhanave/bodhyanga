@@ -1,4 +1,4 @@
-// Package mid hosts the standard Bodh HTTP middleware chain.
+// Package mid hosts the standard Bodhyanga HTTP middleware chain.
 //
 // Adapted from Bill Kennedy / Ardan Labs' Ultimate Service template
 // (https://github.com/ardanlabs/service), licensed Apache 2.0. See NOTICE

@@ -3,7 +3,7 @@ import "./globals.css";
 import { AppShell } from "@/components/AppShell";
 
 export const metadata: Metadata = {
-  title: "Bodh — Clinician Console",
+  title: "Bodhyanga — Clinician Console",
   description:
     "Review AI diagnostic decisions: submit cases, approve or reject at the confidence gate, and read the audit trail.",
 };

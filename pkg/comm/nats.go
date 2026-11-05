@@ -17,16 +17,16 @@
 //
 // Subject naming:
 //
-//	Point-to-point: bodh.{tenantID}.{agentID}
-//	Broadcast:      bodh.{tenantID}.broadcast
+//	Point-to-point: bodhyanga.{tenantID}.{agentID}
+//	Broadcast:      bodhyanga.{tenantID}.broadcast
 //
-// Stream:   BODH_MESSAGES  (subjects: bodh.>)
+// Stream:   BODHYANGA_MESSAGES  (subjects: bodhyanga.>)
 // Consumer: durable, AckExplicit, per-agent name derived from agentID.
 //
 // # Environment variables
 //
 //	NATS_URL       NATS server URL (default nats://localhost:4222)
-//	BODH_TENANT_ID Tenant identifier used in subject prefix (default "default")
+//	BODHYANGA_TENANT_ID Tenant identifier used in subject prefix (default "default")
 //
 // # Limitations
 //
@@ -49,19 +49,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )
 
 const (
-	// natsStreamName is the JetStream stream that carries all bodh messages.
+	// natsStreamName is the JetStream stream that carries all bodhyanga messages.
 	// A single stream with a wildcard subject filter avoids the overhead of
 	// per-tenant streams while keeping subjects namespaced.
-	natsStreamName = "BODH_MESSAGES"
+	natsStreamName = "BODHYANGA_MESSAGES"
 
-	// natsSubjectPrefix is the top-level subject prefix for all Bodh messages.
-	natsSubjectPrefix = "bodh"
+	// natsSubjectPrefix is the top-level subject prefix for all Bodhyanga messages.
+	natsSubjectPrefix = "bodhyanga"
 
 	// natsBroadcastSegment is the final subject segment used for broadcast
 	// subscribers (agentID == "").
@@ -90,11 +90,11 @@ type natsSub struct {
 	done     chan struct{}       // closed when the goroutine exits
 }
 
-// NewNATSBus connects to a NATS server, ensures the BODH_MESSAGES stream
+// NewNATSBus connects to a NATS server, ensures the BODHYANGA_MESSAGES stream
 // exists, and returns a ready-to-use NATSBus.
 //
 // Connection URL is read from NATS_URL (default nats://localhost:4222).
-// The tenant prefix is read from BODH_TENANT_ID (default "default").
+// The tenant prefix is read from BODHYANGA_TENANT_ID (default "default").
 //
 // Returns (nil, error) on connection or stream-setup failure. The caller
 // should fall back to NewInMemoryBus in that case.
@@ -105,7 +105,7 @@ func NewNATSBus() (*NATSBus, error) {
 	}
 
 	nc, err := nats.Connect(url,
-		nats.Name("bodh-bus"),
+		nats.Name("bodhyanga-bus"),
 		nats.Timeout(5*time.Second),
 		nats.MaxReconnects(10),
 		nats.ReconnectWait(2*time.Second),
@@ -120,7 +120,7 @@ func NewNATSBus() (*NATSBus, error) {
 		return nil, fmt.Errorf("comm.NATSBus: create JetStream context: %w", err)
 	}
 
-	tenant := os.Getenv("BODH_TENANT_ID")
+	tenant := os.Getenv("BODHYANGA_TENANT_ID")
 	if tenant == "" {
 		tenant = "default"
 	}
@@ -139,8 +139,8 @@ func NewNATSBus() (*NATSBus, error) {
 	return bus, nil
 }
 
-// ensureStream creates or updates the BODH_MESSAGES stream. The stream
-// covers all subjects under "bodh.>" so every tenant and agent subject is
+// ensureStream creates or updates the BODHYANGA_MESSAGES stream. The stream
+// covers all subjects under "bodhyanga.>" so every tenant and agent subject is
 // captured by a single stream. Calling this on an already-existing stream
 // is idempotent.
 func (b *NATSBus) ensureStream(ctx context.Context) error {
@@ -175,13 +175,13 @@ func (b *NATSBus) subject(agentID string) string {
 // the agentID. Consumer names must be alphanumeric + dash/underscore.
 func consumerName(agentID string) string {
 	if agentID == "" {
-		return "bodh-broadcast"
+		return "bodhyanga-broadcast"
 	}
 	r := strings.NewReplacer(
 		" ", "-", "_", "-", ".", "-",
 		"*", "x", ">", "x", "/", "-",
 	)
-	return "bodh-" + r.Replace(agentID)
+	return "bodhyanga-" + r.Replace(agentID)
 }
 
 // Subscribe creates a durable JetStream push consumer for the given agentID

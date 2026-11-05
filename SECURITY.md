@@ -8,7 +8,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in Bodh, please report it responsibly.
+If you discover a security vulnerability in Bodhyanga, please report it responsibly.
 
 **Do NOT open a public GitHub issue for security vulnerabilities.**
 
@@ -23,7 +23,7 @@ You should receive a response within 48 hours. We will work with you to understa
 
 ## Security Considerations
 
-Bodh is a **research and engineering reference** for medical AI systems. It is **not approved for clinical use** and must not be used to make decisions affecting real patients.
+Bodhyanga is a **research and engineering reference** for medical AI systems. It is **not approved for clinical use** and must not be used to make decisions affecting real patients.
 
 That said, the codebase implements production-grade security patterns as a reference:
 
@@ -31,7 +31,7 @@ That said, the codebase implements production-grade security patterns as a refer
 
 - **`pkg/phi`** — Safe Harbor de-identification (SSN, MRN, phone, email, date patterns)
 - **`pkg/audit`** — Append-only audit log; `Event.Reason` is always PHI-free
-- **OTel spans** — `bodh.case_id` is always `sha256(caseID)[:8]` hex, never a raw MRN
+- **OTel spans** — `bodhyanga.case_id` is always `sha256(caseID)[:8]` hex, never a raw MRN
 - **`pkg/persistence/crypto`** — AES-256-GCM column-level encryption for PHI at rest
 - **Immutable audit** — Merkle chain-hash for tamper-evident audit trail
 
@@ -42,7 +42,7 @@ That said, the codebase implements production-grade security patterns as a refer
 - **Row-level security** — PostgreSQL RLS with `SET LOCAL app.tenant_id` per query
 - **Demo credentials** — `cmd/care` seeds the illustrative login
   `clinician@hospital.org` / `clinic123` **only in this research build**. It logs
-  a startup security warning and honours **`BODH_DEMO_USERS=0`** to seed nothing;
+  a startup security warning and honours **`BODHYANGA_DEMO_USERS=0`** to seed nothing;
   any non-demo deployment must set it and wire its own credential store.
 
 ### Network Security
@@ -72,5 +72,5 @@ govulncheck ./...
 
 - API keys go in `.env` only (gitignored) — never in tracked files
 - `.env.example` contains blank placeholders
-- `BODH_ENCRYPTION_KEY` (base64, 32 bytes) encrypts PHI columns
-- `BODH_JWT_SECRET` signs JWT tokens — change from default in production
+- `BODHYANGA_ENCRYPTION_KEY` (base64, 32 bytes) encrypts PHI columns
+- `BODHYANGA_JWT_SECRET` signs JWT tokens — change from default in production

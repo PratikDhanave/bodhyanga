@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply text-bodh-800 antialiased bg-white;
+    @apply text-bodhyanga-800 antialiased bg-white;
     font-feature-settings: 'cv11', 'ss01';
   }
   .dark body {
@@ -17,11 +17,11 @@
 
 @layer components {
   .card {
-    @apply bg-white rounded-lg border border-bodh-200 shadow-sm
+    @apply bg-white rounded-lg border border-bodhyanga-200 shadow-sm
            dark:bg-gray-800 dark:border-gray-700;
   }
   .card-header {
-    @apply px-4 py-3 border-b border-bodh-200 font-medium text-bodh-700
+    @apply px-4 py-3 border-b border-bodhyanga-200 font-medium text-bodhyanga-700
            dark:border-gray-700 dark:text-gray-100;
   }
   .card-body {
@@ -29,12 +29,12 @@
   }
   .btn {
     @apply inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium
-           bg-bodh-600 text-white hover:bg-bodh-700 disabled:bg-bodh-200
-           disabled:text-bodh-400 disabled:cursor-not-allowed;
+           bg-bodhyanga-600 text-white hover:bg-bodhyanga-700 disabled:bg-bodhyanga-200
+           disabled:text-bodhyanga-400 disabled:cursor-not-allowed;
   }
   .btn-secondary {
     @apply inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium
-           bg-white border border-bodh-200 text-bodh-700 hover:bg-bodh-50
+           bg-white border border-bodhyanga-200 text-bodhyanga-700 hover:bg-bodhyanga-50
            dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-600;
   }
   .badge {
@@ -47,12 +47,12 @@
   .badge-normal { @apply bg-sky-100 text-sky-800; }
   .badge-done { @apply bg-emerald-100 text-emerald-800; }
   .nav-link {
-    @apply block px-3 py-2 rounded-md text-sm font-medium text-bodh-700
-           hover:bg-bodh-100
+    @apply block px-3 py-2 rounded-md text-sm font-medium text-bodhyanga-700
+           hover:bg-bodhyanga-100
            dark:text-gray-300 dark:hover:bg-gray-700;
   }
   .nav-link-active {
-    @apply bg-bodh-600 text-white hover:bg-bodh-700
-           dark:bg-bodh-700 dark:hover:bg-bodh-600;
+    @apply bg-bodhyanga-600 text-white hover:bg-bodhyanga-700
+           dark:bg-bodhyanga-700 dark:hover:bg-bodhyanga-600;
   }
 }

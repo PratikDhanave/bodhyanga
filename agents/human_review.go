@@ -1,13 +1,13 @@
 package agents
 
-// File human_review.go: the human_review agent — the Bodh platform's
+// File human_review.go: the human_review agent — the Bodhyanga platform's
 // HITL gate. This file is the architectural expression of the 21 USC
 // §360j(o)(1) Clinical Decision Support carve-out **criterion 4**:
 //
 //	"enable [the clinician] to independently review the basis for the
 //	 recommendations."
 //
-// See bodh-linkedin/02-cures-act-as-code.md for the regulatory
+// See bodhyanga-linkedin/02-cures-act-as-code.md for the regulatory
 // background and docs/architecture.md § Human-in-the-loop pattern for the
 // full envelope spec.
 //
@@ -33,15 +33,15 @@ package agents
 //
 // GDPR Article 22 ("not subject to a decision based solely on automated
 // processing") is satisfied by the same architecture. One gate, two
-// regulatory regimes covered. See bodh-linkedin/02-cures-act-as-code.md.
+// regulatory regimes covered. See bodhyanga-linkedin/02-cures-act-as-code.md.
 
 import (
 	"context"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/hitl"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/hitl"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // HumanReviewAgent is the platform's human-in-the-loop (HITL) gate.
@@ -69,7 +69,7 @@ import (
 //   - prior_auth          → prior_auth_review
 //   - readmission_tracker → discharge_review (priority scales with risk band)
 //
-// See bodh-linkedin/02-cures-act-as-code.md § Seven gated agents and
+// See bodhyanga-linkedin/02-cures-act-as-code.md § Seven gated agents and
 // docs/agents.md § HITL.
 type HumanReviewAgent struct {
 	// Queue is the in-memory review queue. cmd/care swaps in a
@@ -211,7 +211,7 @@ func (a *HumanReviewAgent) HandleMessage(_ context.Context, msg agent.Message, e
 // emitted to its intended recipient — no SMS sent, no PA submitted, no
 // TCM cascade started. The audit log records a KindReviewDecision with
 // decision=reject and the reviewer's Reason, and that's the only
-// artefact that survives. See bodh-linkedin/02-cures-act-as-code.md
+// artefact that survives. See bodhyanga-linkedin/02-cures-act-as-code.md
 // § "Lossless on reject" is the key property.
 //
 // SLA expiry has the same shape: an expired request can never be

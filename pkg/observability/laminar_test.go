@@ -106,16 +106,16 @@ func TestLaminarExporter_SetsRequiredAttributes(t *testing.T) {
 	if intAttrs["gen_ai.usage.cache_read_input_tokens"] != 30 {
 		t.Errorf("gen_ai.usage.cache_read_input_tokens = %d, want 30", intAttrs["gen_ai.usage.cache_read_input_tokens"])
 	}
-	if intAttrs["bodh.tool_calls"] != 2 {
-		t.Errorf("bodh.tool_calls = %d, want 2", intAttrs["bodh.tool_calls"])
+	if intAttrs["bodhyanga.tool_calls"] != 2 {
+		t.Errorf("bodhyanga.tool_calls = %d, want 2", intAttrs["bodhyanga.tool_calls"])
 	}
 
 	// Optional attributes.
 	if attrs["gen_ai.response.finish_reasons"] != "end_turn" {
 		t.Errorf("gen_ai.response.finish_reasons = %q, want end_turn", attrs["gen_ai.response.finish_reasons"])
 	}
-	if attrs["bodh.agent_id"] != "diagnostician" {
-		t.Errorf("bodh.agent_id = %q, want diagnostician", attrs["bodh.agent_id"])
+	if attrs["bodhyanga.agent_id"] != "diagnostician" {
+		t.Errorf("bodhyanga.agent_id = %q, want diagnostician", attrs["bodhyanga.agent_id"])
 	}
 }
 
@@ -186,15 +186,15 @@ func TestLaminarExporter_PHICaseIDHashed(t *testing.T) {
 	}
 	attrs := attrMap(spans[0].Attributes)
 
-	caseAttr := attrs["bodh.case_id"]
+	caseAttr := attrs["bodhyanga.case_id"]
 	if caseAttr == "MRN-12345" {
 		t.Error("raw MRN leaked into Laminar span — PHI violation")
 	}
 	if caseAttr == "" {
-		t.Error("bodh.case_id missing — correlation broken")
+		t.Error("bodhyanga.case_id missing — correlation broken")
 	}
 	if strings.Contains(caseAttr, "MRN") {
-		t.Errorf("bodh.case_id contains MRN substring: %q", caseAttr)
+		t.Errorf("bodhyanga.case_id contains MRN substring: %q", caseAttr)
 	}
 }
 

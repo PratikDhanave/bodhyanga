@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
 )
 
 // RadiologistAgent interprets imaging reports using rule-based critical finding

@@ -1,7 +1,7 @@
 // Package pool provides a concurrent-safe, refcounted, optionally
 // TTL-evicted cache of llm.Client instances keyed by ModelSpec.
 //
-// The motivating use case: when Bodh runs on-premise with a local llama.cpp
+// The motivating use case: when Bodhyanga runs on-premise with a local llama.cpp
 // stack (kronk), several models share a single GPU — typically a chat
 // diagnostician, a vision diagnostician, and an embedding model. GPU memory
 // is finite, so we keep N models resident and evict idle ones after a TTL.
@@ -21,8 +21,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
 )
 
 // ModelSpec is the key the pool uses to identify a unique resident client.

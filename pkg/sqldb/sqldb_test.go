@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,11 +58,11 @@ func TestClassifyError_Passthrough(t *testing.T) {
 // here breaks their muscle memory.
 func TestBuildDSN_HappyPath(t *testing.T) {
 	got := buildDSN(Config{
-		User: "bodh_app", Password: "pw",
-		Host: "db:5432", Name: "bodh",
+		User: "bodhyanga_app", Password: "pw",
+		Host: "db:5432", Name: "bodhyanga",
 		DisableTLS: true,
 	})
-	want := "postgres://bodh_app:pw@db:5432/bodh?sslmode=disable&timezone=utc"
+	want := "postgres://bodhyanga_app:pw@db:5432/bodhyanga?sslmode=disable&timezone=utc"
 	if got != want {
 		t.Fatalf("buildDSN got %q want %q", got, want)
 	}

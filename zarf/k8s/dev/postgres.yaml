@@ -1,5 +1,5 @@
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/dev/database/
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
 # In-cluster Postgres for dev / kind clusters. Single replica, emptyDir
 # storage, no TLS, no backups. Production deployments use Cloud SQL / RDS /
@@ -37,7 +37,7 @@ spec:
             - name: POSTGRES_PASSWORD
               value: "postgres"
             - name: POSTGRES_DB
-              value: "bodh"
+              value: "bodhyanga"
             - name: PGDATA
               value: "/var/lib/postgresql/data/pgdata"
           readinessProbe:

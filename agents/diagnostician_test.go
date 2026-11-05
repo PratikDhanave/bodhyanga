@@ -3,7 +3,7 @@ package agents
 import (
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // TestInferDiagnosisSpecialtyRules exercises every rule branch in the

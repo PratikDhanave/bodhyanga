@@ -1,4 +1,4 @@
-// Copyright 2024-2026 Pratik Dhanave and Bodh contributors.
+// Copyright 2024-2026 Pratik Dhanave and Bodhyanga contributors.
 // Licensed under the Apache License, Version 2.0.
 
 package dbtest
@@ -295,9 +295,9 @@ func TestLoadFixture_InvalidJSON(t *testing.T) {
 // ---------- rewriteUser ----------
 
 func TestRewriteUser_HappyPath(t *testing.T) {
-	dsn := "postgres://owner:ownerpass@localhost:5432/bodh?sslmode=disable"
+	dsn := "postgres://owner:ownerpass@localhost:5432/bodhyanga?sslmode=disable"
 	got := rewriteUser(dsn, "app", "apppass")
-	want := "postgres://app:apppass@localhost:5432/bodh?sslmode=disable"
+	want := "postgres://app:apppass@localhost:5432/bodhyanga?sslmode=disable"
 	if got != want {
 		t.Errorf("rewriteUser:\ngot  %q\nwant %q", got, want)
 	}

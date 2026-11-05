@@ -32,7 +32,7 @@ async function fetchAudit(params: {
   agent?: string;
 }): Promise<AuditPage> {
   // The /api/audit endpoint is tenant-scoped and rejects requests without a
-  // tenant_id (single-tenant binary today; BODH_TENANT_ID defaults to "default").
+  // tenant_id (single-tenant binary today; BODHYANGA_TENANT_ID defaults to "default").
   const qs = new URLSearchParams({ limit: String(params.limit), tenant_id: 'default' });
   if (params.after) qs.set('after', params.after);
   if (params.case_id) qs.set('case_id', params.case_id);
@@ -135,33 +135,33 @@ export default function AuditLog() {
         <div className="card-body">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">Case ID</span>
+              <span className="text-xs uppercase tracking-wide text-bodhyanga-400">Case ID</span>
               <input
                 type="text"
                 value={filterCaseId}
                 onChange={(e) => setFilterCaseId(e.target.value)}
                 placeholder="e.g. a3f1b9c2"
-                className="mt-1 w-full border border-bodh-200 rounded px-2 py-1 text-sm"
+                className="mt-1 w-full border border-bodhyanga-200 rounded px-2 py-1 text-sm"
               />
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">Event Kind</span>
+              <span className="text-xs uppercase tracking-wide text-bodhyanga-400">Event Kind</span>
               <input
                 type="text"
                 value={filterKind}
                 onChange={(e) => setFilterKind(e.target.value)}
                 placeholder="e.g. diagnosis, review_request"
-                className="mt-1 w-full border border-bodh-200 rounded px-2 py-1 text-sm"
+                className="mt-1 w-full border border-bodhyanga-200 rounded px-2 py-1 text-sm"
               />
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-bodh-400">Agent</span>
+              <span className="text-xs uppercase tracking-wide text-bodhyanga-400">Agent</span>
               <input
                 type="text"
                 value={filterAgent}
                 onChange={(e) => setFilterAgent(e.target.value)}
                 placeholder="e.g. diagnostician"
-                className="mt-1 w-full border border-bodh-200 rounded px-2 py-1 text-sm"
+                className="mt-1 w-full border border-bodhyanga-200 rounded px-2 py-1 text-sm"
               />
             </label>
           </div>
@@ -179,7 +179,7 @@ export default function AuditLog() {
       {!error && (
         <div className="card overflow-hidden">
           <table className="min-w-full text-sm">
-            <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+            <thead className="bg-bodhyanga-50 text-bodhyanga-400 text-xs uppercase tracking-wide">
               <tr>
                 <th className="px-4 py-2 text-left">Timestamp</th>
                 <th className="px-4 py-2 text-left">Agent</th>
@@ -191,8 +191,8 @@ export default function AuditLog() {
             </thead>
             <tbody>
               {events.map((e) => (
-                <tr key={e.id} className="border-t border-bodh-100 hover:bg-bodh-50">
-                  <td className="px-4 py-2 text-xs text-bodh-400 whitespace-nowrap">
+                <tr key={e.id} className="border-t border-bodhyanga-100 hover:bg-bodhyanga-50">
+                  <td className="px-4 py-2 text-xs text-bodhyanga-400 whitespace-nowrap">
                     {e.at ? new Date(e.at).toLocaleString() : '–'}
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">{e.agent_id ?? '–'}</td>
@@ -204,10 +204,10 @@ export default function AuditLog() {
                     {e.decision ? (
                       <span className={`badge badge-${decisionBadge(e.decision)}`}>{e.decision}</span>
                     ) : (
-                      <span className="text-bodh-300">–</span>
+                      <span className="text-bodhyanga-300">–</span>
                     )}
                   </td>
-                  <td className="px-4 py-2 text-xs text-bodh-500 max-w-xs truncate" title={e.reason}>
+                  <td className="px-4 py-2 text-xs text-bodhyanga-500 max-w-xs truncate" title={e.reason}>
                     {e.reason ?? '–'}
                   </td>
                 </tr>
@@ -215,7 +215,7 @@ export default function AuditLog() {
               {!loading && events.length === 0 && initialLoaded && (
                 <tr>
                   <td colSpan={6} className="px-4 py-8">
-                    <div className="text-center text-sm text-bodh-400">
+                    <div className="text-center text-sm text-bodhyanga-400">
                       No audit events found.
                     </div>
                   </td>
@@ -226,14 +226,14 @@ export default function AuditLog() {
 
           {/* Loading spinner row */}
           {loading && (
-            <div className="px-4 py-6 text-center text-sm text-bodh-400 animate-pulse">
+            <div className="px-4 py-6 text-center text-sm text-bodhyanga-400 animate-pulse">
               Loading audit events…
             </div>
           )}
 
           {/* Load more */}
           {!loading && hasMore && events.length > 0 && (
-            <div className="px-4 py-3 border-t border-bodh-100 text-center">
+            <div className="px-4 py-3 border-t border-bodhyanga-100 text-center">
               <button onClick={() => load(false)} className="btn-secondary">
                 Load more
               </button>
@@ -242,7 +242,7 @@ export default function AuditLog() {
 
           {/* End-of-log indicator */}
           {!loading && !hasMore && events.length > 0 && (
-            <div className="px-4 py-3 border-t border-bodh-100 text-center text-xs text-bodh-300">
+            <div className="px-4 py-3 border-t border-bodhyanga-100 text-center text-xs text-bodhyanga-300">
               End of audit log ({events.length} events)
             </div>
           )}

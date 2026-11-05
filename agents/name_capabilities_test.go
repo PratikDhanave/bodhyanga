@@ -3,10 +3,10 @@ package agents
 import (
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/hitl"
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/medical"
-	"github.com/PratikDhanave/bodh/pkg/tasks"
+	"github.com/PratikDhanave/bodhyanga/pkg/hitl"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/tasks"
 )
 
 // TestAllAgentNameAndCapabilities exercises every agent's Name() and

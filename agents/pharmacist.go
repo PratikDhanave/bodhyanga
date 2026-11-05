@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
 )
 
 // PharmacistAgent checks drug-drug interactions before a care plan is

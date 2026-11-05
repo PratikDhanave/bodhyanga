@@ -36,10 +36,10 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	"github.com/PratikDhanave/bodh/agents"
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/audio"
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/agents"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/audio"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 )
 
 // MaxAudioUploadBytes caps the multipart upload at 50 MiB. WAV @ 16kHz

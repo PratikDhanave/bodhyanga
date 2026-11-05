@@ -1,4 +1,4 @@
-// Package bench provides performance benchmarks for Bodh's core subsystems.
+// Package bench provides performance benchmarks for Bodhyanga's core subsystems.
 //
 // Run all benchmarks:
 //
@@ -23,14 +23,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/comm"
-	"github.com/PratikDhanave/bodh/pkg/governance"
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/observability"
-	"github.com/PratikDhanave/bodh/pkg/orchestration"
-	"github.com/PratikDhanave/bodh/pkg/protocol"
-	"github.com/PratikDhanave/bodh/pkg/registry"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/comm"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/orchestration"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/registry"
 )
 
 // ----------------------------------------------------------------------------

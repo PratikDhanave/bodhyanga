@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 // Portions Copyright Ardan Labs, Bill Kennedy
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -8,7 +8,7 @@
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Adapted from github.com/ardanlabs/service business/sdk/sqldb/tran.go.
-// The original wraps sqlx.DB.Beginx; Bodh wraps pgxpool.Pool.Begin and
+// The original wraps sqlx.DB.Beginx; Bodhyanga wraps pgxpool.Pool.Begin and
 // returns pgx.Tx instead so the rest of the codebase keeps using
 // pgx.Tx.QueryRow / pgx.Tx.Exec directly.
 
@@ -129,7 +129,7 @@ func WithTx(ctx context.Context, b Beginner, fn func(pgx.Tx) error) (err error) 
 }
 
 // SetTenant binds the Postgres session variable app.tenant_id for
-// the duration of tx. Every domain store in Bodh that touches
+// the duration of tx. Every domain store in Bodhyanga that touches
 // PHI-bearing tables calls this immediately after Begin so the RLS
 // policies in db/migrations/0002_rls.sql can scope rows by tenant.
 //

@@ -1,16 +1,16 @@
 <div align="center">
 
-# Bodh
+# Bodhyanga
 
 **A governed multi-agent platform for medical sequential diagnosis and value-based care — in Go.**
 
-[![CI](https://github.com/PratikDhanave/bodh/actions/workflows/ci.yml/badge.svg)](https://github.com/PratikDhanave/bodh/actions/workflows/ci.yml)
+[![CI](https://github.com/PratikDhanave/bodhyanga/actions/workflows/ci.yml/badge.svg)](https://github.com/PratikDhanave/bodhyanga/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)](go.mod)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Architecture: MARA](https://img.shields.io/badge/architecture-MARA-6E4AFF)](https://microsoft.github.io/multi-agent-reference-architecture/)
 [![Status: research reference](https://img.shields.io/badge/status-research%20reference-orange)](#-research-use-only)
 
-*Bodh* (Sanskrit *bodhi* — knowledge, insight) implements Microsoft's
+*Bodhyanga* (Sanskrit *bodhyaṅga* — factors of awakening, insight) implements Microsoft's
 [Multi-Agent Reference Architecture (MARA)](https://microsoft.github.io/multi-agent-reference-architecture/)
 as a virtual physician panel — inspired by [MAI-DxO](https://microsoft.ai/news/the-path-to-medical-superintelligence/)
 and the Sequential Diagnosis Benchmark — plus a care-services layer, all on one in-process message bus.
@@ -21,7 +21,7 @@ and the Sequential Diagnosis Benchmark — plus a care-services layer, all on on
 
 ## ⚠️ Research use only
 
-**Bodh is a research and engineering reference. It is not a medical device and is not approved for clinical use.**
+**Bodhyanga is a research and engineering reference. It is not a medical device and is not approved for clinical use.**
 
 - Do **not** use it for real patient care, triage, treatment, or billing.
 - Agents use **simulated / rule-based** inference; all clinical thresholds are **illustrative**, not guidelines.
@@ -30,7 +30,7 @@ and the Sequential Diagnosis Benchmark — plus a care-services layer, all on on
 
 ---
 
-## Why Bodh
+## Why Bodhyanga
 
 - **MARA, done properly** — agents never call each other; they emit typed `Message`s routed by a central orchestrator and gated by governance policies *before* any agent sees them.
 - **Cost-aware diagnosis** — every test carries a virtual price; a Cost Guardian enforces a per-case budget, reproducing the MAI-DxO accuracy-vs-cost tradeoff.
@@ -44,7 +44,7 @@ and the Sequential Diagnosis Benchmark — plus a care-services layer, all on on
 Clients → orchestrator → in-process bus → specialized agents, gated by governance, HITL, and an append-only audit log — one Go binary.
 
 <div align="center">
-  <a href="docs/diagrams/platform.architecture.html"><img src="docs/diagrams/platform.architecture.svg" alt="Bodh platform architecture (MARA)" width="820"/></a>
+  <a href="docs/diagrams/platform.architecture.html"><img src="docs/diagrams/platform.architecture.svg" alt="Bodhyanga platform architecture (MARA)" width="820"/></a>
 </div>
 
 > A message is published → the orchestrator routes it to the right agent → the agent returns zero or more messages → governance gates each hop → the workflow continues until a terminal agent decides it is done.
@@ -56,14 +56,14 @@ Clients → orchestrator → in-process bus → specialized agents, gated by gov
 **Clinician console, zero external dependencies** (deterministic rule engine — no API key, no model):
 
 ```bash
-git clone https://github.com/PratikDhanave/bodh.git && cd bodh
+git clone https://github.com/PratikDhanave/bodhyanga.git && cd bodhyanga
 make care DIAGNOSTICIAN=rule      # HTTP API + embedded SPA on :8088
 open http://localhost:8088/ui/    # log in: clinician@hospital.org / clinic123
 ```
 
 Open **Case runner**, pick the `demo-case-001` fixture, and watch the diagnostic pipeline stream live.
 
-> Demo credentials are seeded only for this research build (with a startup warning); set `BODH_DEMO_USERS=0` to seed none. **Go 1.26** is the only hard requirement; Docker is needed only for the container-backed test suite. Full walkthrough: [`docs/setup.md`](docs/setup.md).
+> Demo credentials are seeded only for this research build (with a startup warning); set `BODHYANGA_DEMO_USERS=0` to seed none. **Go 1.26** is the only hard requirement; Docker is needed only for the container-backed test suite. Full walkthrough: [`docs/setup.md`](docs/setup.md).
 
 Other entry points:
 

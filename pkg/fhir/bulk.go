@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 	"github.com/google/uuid"
 )
 

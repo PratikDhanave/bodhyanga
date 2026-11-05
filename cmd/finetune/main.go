@@ -30,7 +30,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/finetune"
+	"github.com/PratikDhanave/bodhyanga/pkg/finetune"
 )
 
 func main() {
@@ -300,7 +300,7 @@ func printFileLineCount(path, label string) {
 	fmt.Printf("  %s lines: %d\n", label, count)
 }
 
-const usage = `finetune — fine-tuning data pipeline for Bodh
+const usage = `finetune — fine-tuning data pipeline for Bodhyanga
 
 Subcommands:
   validate <dataset.jsonl>    validate SFT JSONL and print stats

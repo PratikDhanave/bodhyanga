@@ -1,45 +1,45 @@
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/compose/docker_compose.yaml
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
 # Local-dev stack. `docker compose up` launches:
-#   - postgres       — durable Bodh DB (RLS-bound bodh_app role)
-#   - bodh-care      — HTTP API (cmd/care) on :8088
-#   - bodh-ollama    — local LLM provider for llm-ollama
+#   - postgres       — durable Bodhyanga DB (RLS-bound bodhyanga_app role)
+#   - bodhyanga-care      — HTTP API (cmd/care) on :8088
+#   - bodhyanga-ollama    — local LLM provider for llm-ollama
 #   - prometheus     — metrics scrape
 #   - grafana        — dashboards (admin/admin out of the box)
 #   - tempo          — distributed tracing backend for OTLP exports
 #   - loki           — logs aggregation
-#   - bodh-kronk     — optional admin tool, commented out by default
+#   - bodhyanga-kronk     — optional admin tool, commented out by default
 #                      (needs `-tags=kronk`; uncomment after the binary lands)
 services:
   postgres:
     # Pinned minor — never use :latest. Bump deliberately.
     image: postgres:16.4-alpine
-    container_name: bodh-postgres
+    container_name: bodhyanga-postgres
     ports:
       - "5432:5432"
     environment:
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: bodh
+      POSTGRES_DB: bodhyanga
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
     command: ["postgres", "-c", "hba_file=/etc/postgresql/pg_hba.conf"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -U postgres -d bodh"]
+      test: ["CMD-SHELL", "pg_isready -h localhost -U postgres -d bodhyanga"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
     restart: unless-stopped
     networks:
-      bodh-net:
+      bodhyanga-net:
         ipv4_address: 10.6.0.2
 
-  bodh-ollama:
+  bodhyanga-ollama:
     # ollama/ollama publishes per-version tags. Pin to a known minor.
     image: ollama/ollama:0.5.4
-    container_name: bodh-ollama
+    container_name: bodhyanga-ollama
     ports:
       - "11434:11434"
     volumes:
@@ -53,30 +53,30 @@ services:
       start_period: 30s
     restart: unless-stopped
     networks:
-      bodh-net:
+      bodhyanga-net:
         ipv4_address: 10.6.0.3
 
-  bodh-care:
+  bodhyanga-care:
     # Built from zarf/docker/Dockerfile.care. The tag matches `make docker`.
-    image: localhost/bodh-care:dev
+    image: localhost/bodhyanga-care:dev
     pull_policy: never
     build:
       context: ../..
       dockerfile: zarf/docker/Dockerfile.care
-    container_name: bodh-care
+    container_name: bodhyanga-care
     ports:
       - "8088:8088"
     environment:
-      BODH_LISTEN_ADDR: ":8088"
-      BODH_DB_DSN: "postgres://postgres:postgres@postgres:5432/bodh?sslmode=disable"
-      BODH_TENANT_ID: "compose-dev"
-      BODH_DIAGNOSTICIAN: "llm-ollama"
-      OLLAMA_HOST: "http://bodh-ollama:11434"
-      BODH_KNOWLEDGE_CORPUS: "/data/knowledge/corpus.json"
-      BODH_AUDIT_SINK: "/var/lib/bodh/audit.log"
-      BODH_LOG_LEVEL: "debug"
+      BODHYANGA_LISTEN_ADDR: ":8088"
+      BODHYANGA_DB_DSN: "postgres://postgres:postgres@postgres:5432/bodhyanga?sslmode=disable"
+      BODHYANGA_TENANT_ID: "compose-dev"
+      BODHYANGA_DIAGNOSTICIAN: "llm-ollama"
+      OLLAMA_HOST: "http://bodhyanga-ollama:11434"
+      BODHYANGA_KNOWLEDGE_CORPUS: "/data/knowledge/corpus.json"
+      BODHYANGA_AUDIT_SINK: "/var/lib/bodhyanga/audit.log"
+      BODHYANGA_LOG_LEVEL: "debug"
     volumes:
-      - audit-data:/var/lib/bodh
+      - audit-data:/var/lib/bodhyanga
     healthcheck:
       # /healthz is the cmd/care liveness endpoint registered in
       # cmd/care/health.go — always 200 while the process is running.
@@ -90,15 +90,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      bodh-ollama:
+      bodhyanga-ollama:
         condition: service_started
     networks:
-      bodh-net:
+      bodhyanga-net:
         ipv4_address: 10.6.0.10
 
   prometheus:
     image: prom/prometheus:v2.55.1
-    container_name: bodh-prometheus
+    container_name: bodhyanga-prometheus
     ports:
       - "9090:9090"
     command:
@@ -114,16 +114,16 @@ services:
       retries: 3
       start_period: 10s
     depends_on:
-      bodh-care:
+      bodhyanga-care:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      bodh-net:
+      bodhyanga-net:
         ipv4_address: 10.6.0.20
 
   grafana:
     image: grafana/grafana:11.3.0
-    container_name: bodh-grafana
+    container_name: bodhyanga-grafana
     ports:
       - "3000:3000"
     environment:
@@ -142,12 +142,12 @@ services:
       - tempo
       - loki
     networks:
-      bodh-net:
+      bodhyanga-net:
         ipv4_address: 10.6.0.21
 
   tempo:
     image: grafana/tempo:2.6.1
-    container_name: bodh-tempo
+    container_name: bodhyanga-tempo
     ports:
       - "4317:4317" # OTLP gRPC
       - "4318:4318" # OTLP HTTP
@@ -161,12 +161,12 @@ services:
       start_period: 20s
     restart: unless-stopped
     networks:
-      bodh-net:
+      bodhyanga-net:
         ipv4_address: 10.6.0.22
 
   loki:
     image: grafana/loki:3.2.1
-    container_name: bodh-loki
+    container_name: bodhyanga-loki
     ports:
       - "3100:3100"
     command: ["-config.file=/etc/loki/local-config.yaml"]
@@ -178,28 +178,28 @@ services:
       start_period: 20s
     restart: unless-stopped
     networks:
-      bodh-net:
+      bodhyanga-net:
         ipv4_address: 10.6.0.23
 
   # ----------------------------------------------------------------------
-  # OPTIONAL — bodh-kronk admin tool. Uncomment after the binary ships and
-  # the Dockerfile.bodhadmin build context is wired into CI. The image must
-  # be built with `-tags=kronk` (see zarf/docker/Dockerfile.bodhadmin).
+  # OPTIONAL — bodhyanga-kronk admin tool. Uncomment after the binary ships and
+  # the Dockerfile.bodhyangaadmin build context is wired into CI. The image must
+  # be built with `-tags=kronk` (see zarf/docker/Dockerfile.bodhyangaadmin).
   # ----------------------------------------------------------------------
-  # bodh-kronk:
-  #   image: localhost/bodh-kronk:dev
+  # bodhyanga-kronk:
+  #   image: localhost/bodhyanga-kronk:dev
   #   pull_policy: never
   #   build:
   #     context: ../..
-  #     dockerfile: zarf/docker/Dockerfile.bodhadmin
-  #   container_name: bodh-kronk
+  #     dockerfile: zarf/docker/Dockerfile.bodhyangaadmin
+  #   container_name: bodhyanga-kronk
   #   environment:
-  #     BODH_API: "http://bodh-care:8088"
+  #     BODHYANGA_API: "http://bodhyanga-care:8088"
   #   depends_on:
-  #     bodh-care:
+  #     bodhyanga-care:
   #       condition: service_healthy
   #   networks:
-  #     bodh-net:
+  #     bodhyanga-net:
   #       ipv4_address: 10.6.0.30
 
 volumes:
@@ -208,7 +208,7 @@ volumes:
   audit-data: {}
 
 networks:
-  bodh-net:
+  bodhyanga-net:
     driver: bridge
     ipam:
       config:

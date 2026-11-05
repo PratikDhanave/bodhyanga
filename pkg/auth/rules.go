@@ -1,5 +1,5 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/app/sdk/auth/rules.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh:
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga:
 //   - Different rego module set (authentication + explain + reviews + audit).
 //   - Module string constants exported so middleware in pkg/mid can pick a
 //     module per-route.
@@ -15,20 +15,20 @@ var (
 	regoAuthentication string
 
 	// ModuleExplain is the Rego module for GET /explain/{case_id}.
-	// The exposed rule is "data.bodh.explain.allow".
+	// The exposed rule is "data.bodhyanga.explain.allow".
 	//
 	//go:embed rego/explain.rego
 	ModuleExplain string
 
 	// ModuleReviews is the Rego module for /api/reviews + /api/reviews/{id}
 	// + /api/reviews/{id}/decide. The exposed rule is
-	// "data.bodh.reviews.allow"; the policy switches on input.Method.
+	// "data.bodhyanga.reviews.allow"; the policy switches on input.Method.
 	//
 	//go:embed rego/reviews.rego
 	ModuleReviews string
 
 	// ModuleAudit is the Rego module for GET /api/audit (auditor only).
-	// The exposed rule is "data.bodh.audit.allow".
+	// The exposed rule is "data.bodhyanga.audit.allow".
 	//
 	//go:embed rego/audit.rego
 	ModuleAudit string
@@ -37,9 +37,9 @@ var (
 // Rule queries — paired with the modules above. Constants keep call sites
 // in pkg/mid free of string-typo risk.
 const (
-	QueryExplainAllow = "data.bodh.explain.allow"
-	QueryReviewsAllow = "data.bodh.reviews.allow"
-	QueryAuditAllow   = "data.bodh.audit.allow"
+	QueryExplainAllow = "data.bodhyanga.explain.allow"
+	QueryReviewsAllow = "data.bodhyanga.reviews.allow"
+	QueryAuditAllow   = "data.bodhyanga.audit.allow"
 )
 
 // Role catalogue — the canonical set of role strings that appear in

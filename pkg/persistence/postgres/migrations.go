@@ -70,7 +70,7 @@ func loadMigrations() ([]migration, error) {
 // through one file rolls back to a clean state.
 //
 // Permission handling: the migrator is intended to run as the DB owner, but
-// New() is also called by the application connecting as the bodh_app role
+// New() is also called by the application connecting as the bodhyanga_app role
 // (which lacks DDL). When the schema is already up-to-date AND the calling
 // role is read-only on schema_migrations, the runner is a no-op. Any actual
 // pending migration that the app role cannot apply returns the underlying

@@ -5,7 +5,7 @@
 // Usage:
 //
 //	q := hitl.NewQueue()
-//	cp := hitl.NewCheckpointer(q, "/var/lib/bodh/hitl-queue.json")
+//	cp := hitl.NewCheckpointer(q, "/var/lib/bodhyanga/hitl-queue.json")
 //	if err := cp.Restore(); err != nil { ... }  // on startup
 //	defer cp.Flush()                              // on shutdown
 //
@@ -20,7 +20,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // CheckpointData is the JSON envelope written to disk.
@@ -87,7 +87,7 @@ func (cp *Checkpointer) Flush() error {
 	if err := os.WriteFile(tmpPath, b, 0o600); err != nil {
 		return fmt.Errorf("hitl checkpoint: write tmp: %w", err)
 	}
-	// os.Rename is atomic on POSIX; on Windows it is not, but Bodh targets Linux.
+	// os.Rename is atomic on POSIX; on Windows it is not, but Bodhyanga targets Linux.
 	if err := os.Rename(tmpPath, cp.path); err != nil {
 		// Best-effort cleanup of the tmp file; ignore the removal error.
 		_ = os.Remove(tmpPath)

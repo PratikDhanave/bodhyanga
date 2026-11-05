@@ -3,8 +3,8 @@ package careapi
 import (
 	"github.com/microsoft/agent-framework-go/workflow"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
-	"github.com/PratikDhanave/bodh-maf/pkg/pipeline"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/pipeline"
 )
 
 // pendingReview extracts the parked ReviewRequest from a paused run's event

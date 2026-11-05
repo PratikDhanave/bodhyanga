@@ -11,32 +11,32 @@ configured knowledge store is queried with a de-identified summary of the case; 
 are prepended to the model prompt as an Evidence block and surfaced on the diagnosis output.
 Retrieval is strictly additive — every failure mode (embedder error, empty corpus, empty query, zero
 results) still produces a diagnosis with zero citations, mirroring the audit fail-open invariant.
-Bodh's `pkg/knowledge` hybrid store (vector cosine + BM25 + reciprocal-rank fusion) and
+Bodhyanga's `pkg/knowledge` hybrid store (vector cosine + BM25 + reciprocal-rank fusion) and
 `pkg/embeddings` provider-agnostic embedder are **imported unchanged** via the existing
-`replace ../bodh`; the only new bodh-maf code is a thin retriever seam in `pkg/agents` plus the
+`replace ../bodhyanga`; the only new bodhyanga-maf code is a thin retriever seam in `pkg/agents` plus the
 per-hop prompt/citation wiring inside the LLM diagnostician. The graph is untouched.
 
 ## Technical Context
 
-**Language/Version**: Go 1.26 (module `github.com/PratikDhanave/bodh-maf`)
+**Language/Version**: Go 1.26 (module `github.com/PratikDhanave/bodhyanga-maf`)
 
 **Primary Dependencies**:
 - `microsoft/agent-framework-go` pinned `v0.0.0-20260710122455-75d0a647f739` — unchanged; the model
   call already uses `agent.RunText(...).Collect()` with `agent.WithStructuredOutput` in
   `pkg/agents/llm_diagnostician.go`.
-- `github.com/PratikDhanave/bodh` via local `replace ../bodh` — **new imports**:
+- `github.com/PratikDhanave/bodhyanga` via local `replace ../bodhyanga` — **new imports**:
   `pkg/knowledge` (`Store` interface, `NewHybridStore`, `LoadCorpus`, `Document`, `Citation`) and
   `pkg/embeddings` (`Embedder` interface, `Mock`, `NewOllama`). Both packages depend only on each
   other (`knowledge.NewHybridStore` imports `pkg/embeddings` and nothing heavier), so they import
   cleanly. **`knowledge.NewInMemoryStore` is deliberately NOT used** — it pulls in
-  `pkg/knowledge/rerank` and `pkg/observability`; `NewHybridStore` is the clean seam and is bodh's
+  `pkg/knowledge/rerank` and `pkg/observability`; `NewHybridStore` is the clean seam and is bodhyanga's
   own default retrieval path.
 - No new third-party direct dependency; no new database table; no new migration.
 
 **Storage**: none new. The corpus is an in-memory index built at construction from a JSON file
 (`knowledge.LoadCorpus` → `Store.Index`). Nothing about RAG is persisted or checkpointed.
 
-**Testing**: stdlib `go test`, fully offline. Retrieval is exercised with `embeddings.Mock` (bodh's
+**Testing**: stdlib `go test`, fully offline. Retrieval is exercised with `embeddings.Mock` (bodhyanga's
 deterministic test embedder: i-th input → vector `[float32(i),0,…]`, plus injectable `Err` and
 `Resp`) so cosine/BM25/RRF ranking is deterministic and every degrade path is reachable without a
 network. The model call continues to use the existing fake `agent.ProviderConfig{Run: …}` from
@@ -58,11 +58,11 @@ intake, upstream); deterministic offline tests (FR-010).
 
 **Scale/Scope**: 1 new package (`pkg/agents` retriever seam — likely one new file + edits to
 `llm_diagnostician.go` and `types.go` for the citation field), no graph change, no new agent, ~6–8
-new tests, 1 demo corpus reused from bodh, CLI flags on `cmd/slice`.
+new tests, 1 demo corpus reused from bodhyanga, CLI flags on `cmd/slice`.
 
 ## Constitution Check
 
-*GATE: evaluated against the bodh constitution inherited by bodh-maf (same file specs/001 used).*
+*GATE: evaluated against the bodhyanga constitution inherited by bodhyanga-maf (same file specs/001 used).*
 
 | Principle | Status | Notes |
 |---|---|---|
@@ -70,7 +70,7 @@ new tests, 1 demo corpus reused from bodh, CLI flags on `cmd/slice`.
 | II. LLM-agnostic provider abstraction | PASS | The embedder is provider-agnostic (`embeddings.Embedder`); tests use the deterministic `Mock`, never a real API. Extends the same "provider seam, mocked in tests" discipline to the embedding provider. |
 | III. HIPAA (non-negotiable) | PASS | Query built from de-identified case content only; query text and snippets never enter the trail, checkpoints, or logs at PHI level (FR-009); retrieval is fail-open like audit. Citations carry guideline provenance, not patient data. |
 | IV. Test-first, coverage gates | PASS | TDD per user story; deterministic mock embedder; degrade paths each have a red-first test; coverage target ≥90% on the new retriever seam. |
-| V. Package-first | PASS | Retrieval store/embedder are imported bodh libraries; the only new bodh-maf surface is a small retriever seam in `pkg/agents`; `cmd/slice` stays thin. |
+| V. Package-first | PASS | Retrieval store/embedder are imported bodhyanga libraries; the only new bodhyanga-maf surface is a small retriever seam in `pkg/agents`; `cmd/slice` stays thin. |
 | VI. Observability by default | DEFERRED | Same standing deferral as specs/001 — structured logging for retrieval hit/miss/failure (PHI-free counts only); no OTel wiring in slice scope. |
 
 **Post-design re-check**: no new violations; no new external dependency; no new persistence surface.
@@ -99,31 +99,31 @@ This preserves the property that **the boundary is checked before any retrieval 
 happens** (a denied hop does no embedding call), and keeps retrieval a private detail of the LLM node
 — the rule diagnostician and the graph never see it (FR-008).
 
-### bodh packages: import unchanged vs. adapt
+### bodhyanga packages: import unchanged vs. adapt
 
-| bodh symbol | Decision | Rationale |
+| bodhyanga symbol | Decision | Rationale |
 |---|---|---|
 | `knowledge.Store` (interface) | **import unchanged** | The retriever seam depends on this interface, not a concrete type — swappable stores. |
-| `knowledge.NewHybridStore(embedder)` | **import unchanged** | bodh's default hybrid retrieval; depends only on `pkg/embeddings`. Clean import. |
+| `knowledge.NewHybridStore(embedder)` | **import unchanged** | bodhyanga's default hybrid retrieval; depends only on `pkg/embeddings`. Clean import. |
 | `knowledge.LoadCorpus(path)` + `knowledge.Document` | **import unchanged** | JSON corpus loader + doc type; no adaptation. |
 | `knowledge.Citation` | **import unchanged** at the seam; **map to a slice-local type** at the output | See below. |
 | `embeddings.Embedder`, `embeddings.Mock`, `embeddings.NewOllama` | **import unchanged** | Provider-agnostic interface + deterministic test double + one real backend. |
 | `knowledge.NewInMemoryStore` | **do NOT use** | Pulls `rerank` + `observability`; unnecessary weight for the slice. |
-| `medical.DiagnosisCitation` | **do NOT import; mirror as a slice-local `agents.Citation`** | Importing it drags the whole `pkg/medical` package (care-plan generators, ADT, NEWS2, registry) into bodh-maf's minimal `agents` types. bodh-maf already defines its own lean message structs (`DiagnosisResult`, `CarePlan`) rather than reusing `pkg/medical`; a slice-local `Citation{Source,Title,Snippet,Score}` (identical shape) keeps that boundary. The seam converts `knowledge.Citation` → `agents.Citation` — a 4-field copy. |
+| `medical.DiagnosisCitation` | **do NOT import; mirror as a slice-local `agents.Citation`** | Importing it drags the whole `pkg/medical` package (care-plan generators, ADT, NEWS2, registry) into bodhyanga-maf's minimal `agents` types. bodhyanga-maf already defines its own lean message structs (`DiagnosisResult`, `CarePlan`) rather than reusing `pkg/medical`; a slice-local `Citation{Source,Title,Snippet,Score}` (identical shape) keeps that boundary. The seam converts `knowledge.Citation` → `agents.Citation` — a 4-field copy. |
 
-**Net**: retrieval logic (embedding, cosine, BM25, RRF, corpus loading) is 100% imported bodh code,
-zero reimplementation (FR-012). The only new bodh-maf code is (a) a `Retriever` seam that owns the
+**Net**: retrieval logic (embedding, cosine, BM25, RRF, corpus loading) is 100% imported bodhyanga code,
+zero reimplementation (FR-012). The only new bodhyanga-maf code is (a) a `Retriever` seam that owns the
 store + query construction + fail-open behavior, and (b) the prompt/citation wiring inside the
 existing LLM node.
 
-### Reusing bodh's query + prompt pattern
+### Reusing bodhyanga's query + prompt pattern
 
-bodh's `agents/diagnostician_llm.go` already established the exact pattern this port mirrors:
+bodhyanga's `agents/diagnostician_llm.go` already established the exact pattern this port mirrors:
 `buildRetrievalQuery(state)` composes one string from salient case fields;
 `Store.Search(ctx, query, k)` returns citations; on error it *logs and continues without citations*;
 an `Evidence:\n- [source] title — snippet` block is prepended to the user content; and
 `if len(model.Citations)==0 && len(retrieved)>0 { use retrieved }` reconciles provenance. The
-bodh-maf port reuses this shape adapted to the slice's `Workup`/`DiagnosisResult` types (bodh-maf has
+bodhyanga-maf port reuses this shape adapted to the slice's `Workup`/`DiagnosisResult` types (bodhyanga-maf has
 no `medical.CaseState`; the query is built from `wu.Query.Case.Symptoms`, `.History`,
 `wu.Query.Round`, and `wu.Results`).
 
@@ -152,7 +152,7 @@ no `medical.CaseState`; the query is built from `wu.Query.Case.Symptoms`, `.Hist
   reproducible and the embedder-error degrade path is directly triggerable — no network.
 - The model remains the step-4 fake `agent.ProviderConfig{Run: …}`, scripted to return diagnoses with
   and without a `citations` array to exercise reconciliation.
-- The corpus is a small fixture (a copy of / minimal subset modeled on bodh's synthetic
+- The corpus is a small fixture (a copy of / minimal subset modeled on bodhyanga's synthetic
   `data/knowledge/corpus.json`) checked into `pkg/agents/testdata/`.
 - Live embedding (`NewOllama`) is reachable only from `cmd/slice` behind an env flag; no test depends
   on it.
@@ -164,9 +164,9 @@ no `medical.CaseState`; the query is built from `wu.Query.Case.Symptoms`, `.Hist
 | **Preview churn** in MAF-go changing the `RunText`/`WithStructuredOutput` surface | RAG does not touch that surface — it only changes the prompt string and post-run assembly. The pinned commit is unchanged; no MAF upgrade in this feature. |
 | **Embedder cost / credentials** for a real backend | The automated suite never calls a real embedder (mock only, FR-010); real backends are opt-in via env flag on `cmd/slice`. No credential is required to build, test, or demo (Ollama is local/free; even that is optional). |
 | **PHI leaking into the retrieval query or trail** | Query built only from already-de-identified case content; query/snippet never enter the trail or checkpoints; a trail-scan test enforces zero query/snippet content (SC-004, FR-009). |
-| **Bodh package pulling unexpected heavy deps** | Verified: `knowledge.NewHybridStore` + `LoadCorpus` depend only on `pkg/embeddings`; the heavy path (`NewInMemoryStore` → rerank/observability) is deliberately avoided. Confirmed by reading `pkg/knowledge/hybrid.go`, `corpus.go`, `store.go` and `pkg/embeddings/embedder.go`, `mock.go`. |
+| **Bodhyanga package pulling unexpected heavy deps** | Verified: `knowledge.NewHybridStore` + `LoadCorpus` depend only on `pkg/embeddings`; the heavy path (`NewInMemoryStore` → rerank/observability) is deliberately avoided. Confirmed by reading `pkg/knowledge/hybrid.go`, `corpus.go`, `store.go` and `pkg/embeddings/embedder.go`, `mock.go`. |
 | **Retrieval failure silently degrading quality** (fails open but nobody notices) | Fail-open is intentional and required (FR-004); the failure is logged loudly (FR-005). A future observable metric is the standing Principle-VI deferral, not a slice blocker. |
-| **`replace ../bodh`** unversioned | Same standing risk as specs/001; a bodh version tag is required before bodh-maf is ever published. Out of this feature's scope. |
+| **`replace ../bodhyanga`** unversioned | Same standing risk as specs/001; a bodhyanga version tag is required before bodhyanga-maf is ever published. Out of this feature's scope. |
 
 ## Scope
 
@@ -177,7 +177,7 @@ configuration on `cmd/slice`; a test corpus fixture; the offline test suite prov
 **Explicit non-goals**:
 - Re-ranking (`pkg/knowledge/rerank`) — the hybrid RRF ranking is the slice's retrieval.
 - A minimum-score citation cutoff / relevance thresholding.
-- Enforcing "model citations ⊆ retrieved set" — provenance reconciliation matches bodh's behavior; no
+- Enforcing "model citations ⊆ retrieved set" — provenance reconciliation matches bodhyanga's behavior; no
   hard membership check.
 - Retrieval on any node other than the LLM diagnostician (no RAG for rule/intake/planner/care-plan).
 - Per-case re-indexing, corpus hot-reload, or a persisted / distributed knowledge service.
@@ -205,7 +205,7 @@ pkg/agents/
   llm_diagnostician.go      EDIT — Retrieve before model call; Evidence block in buildPrompt; reconcile citations
   llm_diagnostician_test.go NEW/EDIT — with-corpus → citations; no-corpus → none; model-subset vs retrieved
   types.go                  EDIT — add slice-local Citation type + Citations field on DiagnosisResult
-  testdata/corpus.json      NEW — small synthetic PHI-free fixture (modeled on bodh's demo corpus)
+  testdata/corpus.json      NEW — small synthetic PHI-free fixture (modeled on bodhyanga's demo corpus)
 cmd/slice/
   providers.go              EDIT — -corpus <path>, -embedder mock|ollama flags; build Retriever, inject into LLM node
 pkg/pipeline/

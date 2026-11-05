@@ -12,7 +12,7 @@ package agents
 // History: PR #11 lifted the bench-suite accuracy from 42.9% → 85.7% by
 // adding the specialty rules below (ACS, sepsis, DKA, CHF) plus the
 // "marker-after" semantics fix in extractFirstNumber. See
-// bodh-linkedin/01-bench-42-to-85.md for the full field report —
+// bodhyanga-linkedin/01-bench-42-to-85.md for the full field report —
 // essential reading before touching any threshold here.
 //
 // **Every numeric threshold in this file is illustrative — educational
@@ -31,8 +31,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // DiagnosticianAgent implements MAI-DxO "Provide Diagnosis" from
@@ -142,7 +142,7 @@ func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
 	//
 	// Signal source: test_planner.simulatedTestResult("troponin_i",
 	// "acs") returns "elevated 5.2 ng/mL" when state.Condition=="acs"
-	// (see bodh-linkedin/01-bench-42-to-85.md § Step 3 for the
+	// (see bodhyanga-linkedin/01-bench-42-to-85.md § Step 3 for the
 	// rationale on condition-aware simulated labs). Real lab feeds
 	// replace this in production.
 	//
@@ -316,7 +316,7 @@ func inferDiagnosis(state medical.CaseState) medical.DiagnosisProposal {
 	// the bench at 42.9% accuracy was producing "Community-acquired
 	// pneumonia" for every case that had CBC + CXR in the workup
 	// (every case, because the old test_planner ordered CBC+CXR+BMP
-	// for everything). See bodh-linkedin/01-bench-42-to-85.md
+	// for everything). See bodhyanga-linkedin/01-bench-42-to-85.md
 	// § What the bench was telling me.
 	//
 	// **Illustrative threshold only.** Real CAP diagnosis requires
@@ -510,7 +510,7 @@ var numberPattern = regexp.MustCompile(`[-+]?\d*\.?\d+`)
 // 4.1, bicarbonate 12 mEq/L" — both extractFirstNumber(s, "glucose") and
 // extractFirstNumber(s, "bicarbonate") returned 412, so
 // `glucose > 250 && bicarb < 18` was NEVER both-true and DKA cases fell
-// through to CAP. See bodh-linkedin/01-bench-42-to-85.md § Step 4 for
+// through to CAP. See bodhyanga-linkedin/01-bench-42-to-85.md § Step 4 for
 // the field report.
 //
 // The fix: anchor the search slice to the substring **after** marker's

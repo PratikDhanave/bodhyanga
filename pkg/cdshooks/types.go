@@ -1,5 +1,5 @@
 // Package cdshooks implements the HL7 CDS Hooks standard for real-time
-// clinical decision support. EHRs such as Epic and Cerner call Bodh at
+// clinical decision support. EHRs such as Epic and Cerner call Bodhyanga at
 // key workflow moments (patient-view, order-sign, medication-prescribe,
 // encounter-discharge) and receive decision-support cards in response.
 //

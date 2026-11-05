@@ -1,6 +1,6 @@
 package multiturneval
 
-import "github.com/PratikDhanave/bodh/pkg/llm"
+import "github.com/PratikDhanave/bodhyanga/pkg/llm"
 
 // ConversationTurn is one user message + expected assistant behavior in a multi-turn script.
 type ConversationTurn struct {

@@ -27,7 +27,7 @@ test('HITL reviews page updates live when a case produces a review (no reload)',
   // Run a case out-of-band (no navigation, no reload of the reviews page). The
   // rule diagnostician completes in <1s and the reasoning verifier emits a
   // review_request → Queue.Submit → WS review_submitted.
-  const token = await page.evaluate(() => localStorage.getItem('bodh_jwt'));
+  const token = await page.evaluate(() => localStorage.getItem('bodhyanga_jwt'));
   const res = await page.request.post('/api/runs', {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     data: { fixture: 'demo-case-001' },

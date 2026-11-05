@@ -5,11 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/admit"
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
-	"github.com/PratikDhanave/bodh-maf/pkg/pipeline"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/admit"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/pipeline"
 )
 
 func hl7Fixture(t *testing.T, name string) []byte {

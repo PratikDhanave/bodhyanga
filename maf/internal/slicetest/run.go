@@ -11,7 +11,7 @@ import (
 	"github.com/microsoft/agent-framework-go/workflow"
 	"github.com/microsoft/agent-framework-go/workflow/inproc"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
 // Result collects one run's observable outcomes.

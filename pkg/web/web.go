@@ -1,23 +1,23 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/foundation/web/web.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 //
-// Bodh modifications vs upstream:
+// Bodhyanga modifications vs upstream:
 //   - Stdlib net/http only. The upstream wraps every handler with
-//     otelhttp.NewHandler; Bodh keeps the OTel pieces behind the
+//     otelhttp.NewHandler; Bodhyanga keeps the OTel pieces behind the
 //     pkg/observability/otel build tag so the default go.sum stays
 //     minimal (see AGENTS.md #12, the otel-tagged dep rule).
 //   - The Logger signature matches pkg/observability.Logger (Printf-style)
 //     rather than the upstream slog-style "Logger.Info(ctx, msg, kv...)"
-//     because Bodh routes everything through pkg/phi.LoggerWrapper at the
+//     because Bodhyanga routes everything through pkg/phi.LoggerWrapper at the
 //     boundary. Adding a structured-log surface here would create a second
 //     log seam that the LoggerWrapper would not protect.
-//   - HandlerFunc returns `error` rather than `Encoder`. Bodh handlers
+//   - HandlerFunc returns `error` rather than `Encoder`. Bodhyanga handlers
 //     express "happy path returns nil, anything else returns *errs.Error"
 //     because the error envelope is the wire contract. When a handler
 //     wants to write a custom success body it does so by returning a
 //     Respondable value via Respond directly inside the handler, or by
 //     returning a Resp wrapping the encoder. This keeps the signature
-//     symmetric with the rest of the Bodh codebase (every agent returns
+//     symmetric with the rest of the Bodhyanga codebase (every agent returns
 //     `error`).
 
 package web
@@ -30,14 +30,14 @@ import (
 )
 
 // Encoder defines anything that can render itself as a byte payload with a
-// content type. Both *errs.Error and the Bodh Respondable wrappers satisfy
+// content type. Both *errs.Error and the Bodhyanga Respondable wrappers satisfy
 // this. Returning nil from a HandlerFunc means "no body, web framework
 // will write 204 No Content".
 type Encoder interface {
 	Encode() (data []byte, contentType string, err error)
 }
 
-// HandlerFunc is the Bodh handler signature. The handler reads from r,
+// HandlerFunc is the Bodhyanga handler signature. The handler reads from r,
 // returns either a Respondable value (will be JSON-encoded) or an error
 // (will be translated to the structured error envelope by pkg/mid.Errors).
 //
@@ -54,7 +54,7 @@ type Logger interface {
 	Printf(format string, v ...any)
 }
 
-// App is the Bodh equivalent of a net/http server registry. Hold one per
+// App is the Bodhyanga equivalent of a net/http server registry. Hold one per
 // process; register routes onto it; pass it to http.ListenAndServe.
 type App struct {
 	log     Logger
@@ -113,7 +113,7 @@ func (a *App) EnableCORS(origins []string) {
 	a.origins = origins
 }
 
-// HandlerFunc registers a Bodh-style handler. The framework composes
+// HandlerFunc registers a Bodhyanga-style handler. The framework composes
 // middleware around it and wires the http.ResponseWriter into the
 // request context so handlers that need it (file streaming, SSE) can
 // pull it back out via GetWriter.

@@ -86,7 +86,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-3 px-4 py-4">
           <Mark />
           <div className="leading-tight">
-            <div className="text-sm font-semibold text-ink-800">Bodh</div>
+            <div className="text-sm font-semibold text-ink-800">Bodhyanga</div>
             <div className="text-xs text-ink-400">Clinician console</div>
           </div>
         </div>

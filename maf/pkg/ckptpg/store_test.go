@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/ckptpg"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/ckptpg"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 	poolErr  error
 )
 
-// testPool starts one Postgres container per test binary (bodh dbtest pattern).
+// testPool starts one Postgres container per test binary (bodhyanga dbtest pattern).
 func testPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	poolOnce.Do(func() {

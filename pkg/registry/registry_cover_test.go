@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
 )
 
 // --- Register: nil agent ---

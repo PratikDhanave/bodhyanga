@@ -1,7 +1,7 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/app/sdk/mid/errors.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 //
-// Bodh modifications vs upstream:
+// Bodhyanga modifications vs upstream:
 //   - The middleware logs through pkg/phi.LoggerWrapper, never the raw
 //     observability.Logger. This is the AGENTS.md invariant #2 line: the
 //     audit log surface stays clean of err.Error() strings whose wrapped
@@ -25,10 +25,10 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/PratikDhanave/bodh/pkg/errs"
-	"github.com/PratikDhanave/bodh/pkg/observability"
-	"github.com/PratikDhanave/bodh/pkg/phi"
-	"github.com/PratikDhanave/bodh/pkg/web"
+	"github.com/PratikDhanave/bodhyanga/pkg/errs"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/phi"
+	"github.com/PratikDhanave/bodhyanga/pkg/web"
 )
 
 // Errors returns the innermost middleware in the standard chain — last

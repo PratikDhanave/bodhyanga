@@ -21,12 +21,12 @@ export default function FineTune() {
         <div className="card-header">How to export</div>
         <div className="card-body space-y-2 text-sm">
           <p>The HITL review queue can be exported as fine-tuning data via the CLI:</p>
-          <pre className="bg-bodh-50 rounded p-3 overflow-x-auto text-xs">{`# Save the current queue to a JSON file (DB-backed export comes next),
+          <pre className="bg-bodhyanga-50 rounded p-3 overflow-x-auto text-xs">{`# Save the current queue to a JSON file (DB-backed export comes next),
 # then run:
 go run ./cmd/export-hitl-feedback \\
   -in ./data/hitl-sample.json \\
   -out-dir /tmp/ft-out`}</pre>
-          <p>Outputs <code>sft.jsonl</code> + <code>dpo.jsonl</code>. See <a className="text-bodh-600 underline" href="https://github.com/PratikDhanave/bodh/blob/main/docs/ai-features.md#fine-tuning-from-hitl-decisions">docs/ai-features.md</a>.</p>
+          <p>Outputs <code>sft.jsonl</code> + <code>dpo.jsonl</code>. See <a className="text-bodhyanga-600 underline" href="https://github.com/PratikDhanave/bodhyanga/blob/main/docs/ai-features.md#fine-tuning-from-hitl-decisions">docs/ai-features.md</a>.</p>
         </div>
       </div>
     </Page>
@@ -37,7 +37,7 @@ function Stat({ label, value, emphasis }: { label: string; value: number; emphas
   return (
     <div className={`card ${emphasis ? 'border-amber-300 bg-amber-50' : ''}`}>
       <div className="card-body">
-        <div className="text-xs uppercase tracking-wide text-bodh-400">{label}</div>
+        <div className="text-xs uppercase tracking-wide text-bodhyanga-400">{label}</div>
         <div className="text-3xl font-semibold mt-2">{value}</div>
       </div>
     </div>

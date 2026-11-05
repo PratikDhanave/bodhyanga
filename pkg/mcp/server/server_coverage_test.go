@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/mcp"
-	"github.com/PratikDhanave/bodh/pkg/tools"
+	"github.com/PratikDhanave/bodhyanga/pkg/mcp"
+	"github.com/PratikDhanave/bodhyanga/pkg/tools"
 )
 
 // ---- Config defaults ----

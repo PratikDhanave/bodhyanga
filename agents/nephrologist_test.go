@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
 )
 
 // nephroConsultMsg builds an agent.Message for a nephrology_consult.

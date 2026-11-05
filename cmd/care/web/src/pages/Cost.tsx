@@ -50,7 +50,7 @@ function ProviderBars({ providers }: { providers: CostAnalytics['providers'] }) 
         const color = PROVIDER_COLORS[p.provider] ?? '#64748b';
         return (
           <div key={p.provider}>
-            <div className="flex justify-between text-xs text-bodh-500 mb-1">
+            <div className="flex justify-between text-xs text-bodhyanga-500 mb-1">
               <span className="font-mono capitalize">{p.provider}</span>
               <span>
                 {p.spend_usd === 0 ? 'free' : `$${p.spend_usd.toFixed(2)}`}
@@ -58,7 +58,7 @@ function ProviderBars({ providers }: { providers: CostAnalytics['providers'] }) 
                 {p.calls} calls
               </span>
             </div>
-            <div className="h-3 bg-bodh-100 rounded-full overflow-hidden">
+            <div className="h-3 bg-bodhyanga-100 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{ width: `${pct}%`, backgroundColor: color }}
@@ -114,9 +114,9 @@ function DailySparkline({ daily }: { daily: CostAnalytics['daily'] }) {
           stroke="none"
         />
       </svg>
-      <div className="flex justify-between text-xs text-bodh-400 mt-1">
+      <div className="flex justify-between text-xs text-bodhyanga-400 mt-1">
         <span>{daily[0]?.date?.slice(5)}</span>
-        <span className="text-bodh-600 font-medium">
+        <span className="text-bodhyanga-600 font-medium">
           peak ${maxSpend.toFixed(2)} · today ${lastDay?.spend_usd.toFixed(2)}
         </span>
         <span>{lastDay?.date?.slice(5)}</span>
@@ -157,9 +157,9 @@ function SummaryCard({
   return (
     <div className={`card ${highlight ? 'border-green-300 bg-green-50' : ''}`}>
       <div className="card-body">
-        <div className="text-xs uppercase tracking-wide text-bodh-400">{label}</div>
+        <div className="text-xs uppercase tracking-wide text-bodhyanga-400">{label}</div>
         <div className="text-2xl font-semibold mt-2">{value}</div>
-        {sub && <div className="text-xs text-bodh-400 mt-1">{sub}</div>}
+        {sub && <div className="text-xs text-bodhyanga-400 mt-1">{sub}</div>}
       </div>
     </div>
   );
@@ -234,7 +234,7 @@ export default function Cost() {
       <div className="card overflow-hidden">
         <div className="card-header">Top agents by spend</div>
         <table className="min-w-full text-sm">
-          <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+          <thead className="bg-bodhyanga-50 text-bodhyanga-400 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Agent</th>
               <th className="px-4 py-2 text-right">Calls</th>
@@ -244,7 +244,7 @@ export default function Cost() {
           </thead>
           <tbody>
             {data.top_agents.map((a) => (
-              <tr key={a.agent} className="border-t border-bodh-100">
+              <tr key={a.agent} className="border-t border-bodhyanga-100">
                 <td className="px-4 py-2 font-mono text-xs">{a.agent}</td>
                 <td className="px-4 py-2 text-right">{a.calls.toLocaleString()}</td>
                 <td className="px-4 py-2 text-right">{a.tokens.toLocaleString()}</td>

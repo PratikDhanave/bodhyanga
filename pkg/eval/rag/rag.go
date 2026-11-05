@@ -1,7 +1,7 @@
 // Package rag implements retrieval-quality and generation-quality metrics for
 // RAG (Retrieval-Augmented Generation) pipelines.
 //
-// Bodh uses pkg/knowledge/ for hybrid BM25+vector retrieval. This package
+// Bodhyanga uses pkg/knowledge/ for hybrid BM25+vector retrieval. This package
 // measures how well the retrieval stage surfaces relevant documents and how
 // faithfully the generation stage uses those documents to answer queries.
 //

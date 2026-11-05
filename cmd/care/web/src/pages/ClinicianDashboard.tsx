@@ -79,9 +79,9 @@ function StatCard({
       ? 'border-amber-300 bg-amber-50'
       : '';
   return (
-    <Link to={to} className={`card hover:bg-bodh-50 ${colorClass}`}>
+    <Link to={to} className={`card hover:bg-bodhyanga-50 ${colorClass}`}>
       <div className="card-body">
-        <div className="text-xs uppercase tracking-wide text-bodh-400">{label}</div>
+        <div className="text-xs uppercase tracking-wide text-bodhyanga-400">{label}</div>
         <div className="text-3xl font-semibold mt-2">{value ?? '–'}</div>
       </div>
     </Link>
@@ -108,7 +108,7 @@ function RecentCasesTable({ patients }: { patients: import('../types').PatientRe
     <div className="card overflow-hidden">
       <div className="card-header">Recent Cases</div>
       <table className="min-w-full text-sm">
-        <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+        <thead className="bg-bodhyanga-50 text-bodhyanga-400 text-xs uppercase tracking-wide">
           <tr>
             <th className="px-4 py-2 text-left">Case ID</th>
             <th className="px-4 py-2 text-left">Patient</th>
@@ -121,23 +121,23 @@ function RecentCasesTable({ patients }: { patients: import('../types').PatientRe
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.caseId} className="border-t border-bodh-100 hover:bg-bodh-50">
+            <tr key={r.caseId} className="border-t border-bodhyanga-100 hover:bg-bodhyanga-50">
               <td className="px-4 py-2 font-mono text-xs">{r.caseId}</td>
               <td className="px-4 py-2 text-sm">{r.patient}</td>
-              <td className="px-4 py-2 text-xs text-bodh-500">{r.condition}</td>
+              <td className="px-4 py-2 text-xs text-bodhyanga-500">{r.condition}</td>
               <td className="px-4 py-2 text-xs">{r.diagnosis}</td>
               <td className="px-4 py-2 text-xs">{r.confidence}</td>
               <td className="px-4 py-2">
                 <span className={`badge ${r.status === 'active' ? 'badge-normal' : 'badge-done'}`}>{r.status}</span>
               </td>
-              <td className="px-4 py-2 text-xs text-bodh-400">
+              <td className="px-4 py-2 text-xs text-bodhyanga-400">
                 {r.time ? new Date(r.time).toLocaleString() : '–'}
               </td>
             </tr>
           ))}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={7} className="px-4 py-6 text-center text-sm text-bodh-400">
+              <td colSpan={7} className="px-4 py-6 text-center text-sm text-bodhyanga-400">
                 No cases found.
               </td>
             </tr>
@@ -178,18 +178,18 @@ function HitlQueue({
     <div className="card">
       <div className="card-header flex items-center justify-between">
         <span>HITL Queue</span>
-        <Link to="/reviews" className="text-xs text-bodh-400 hover:text-bodh-700">
+        <Link to="/reviews" className="text-xs text-bodhyanga-400 hover:text-bodhyanga-700">
           View all
         </Link>
       </div>
       <div className="card-body space-y-3">
         {pending.length === 0 && (
-          <p className="text-sm text-bodh-400">No pending reviews.</p>
+          <p className="text-sm text-bodhyanga-400">No pending reviews.</p>
         )}
         {pending.map((r) => (
-          <div key={r.id} className="border border-bodh-100 rounded-md p-3 space-y-2">
+          <div key={r.id} className="border border-bodhyanga-100 rounded-md p-3 space-y-2">
             <div className="text-sm font-medium leading-snug">{r.subject}</div>
-            <div className="text-xs text-bodh-400">{r.kind}</div>
+            <div className="text-xs text-bodhyanga-400">{r.kind}</div>
             <div className="flex gap-2">
               <button
                 disabled={busy === r.id}
@@ -233,12 +233,12 @@ function AccuracyChart({ bench }: { bench: BenchResult[] | null }) {
           return (
             <div key={b.provider}>
               <div className="flex justify-between text-xs mb-1">
-                <span className="font-medium text-bodh-700">{b.provider}</span>
-                <span className="text-bodh-400">{b.mean_accuracy_pct.toFixed(1)}%</span>
+                <span className="font-medium text-bodhyanga-700">{b.provider}</span>
+                <span className="text-bodhyanga-400">{b.mean_accuracy_pct.toFixed(1)}%</span>
               </div>
-              <div className="h-3 bg-bodh-100 rounded-full overflow-hidden">
+              <div className="h-3 bg-bodhyanga-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-bodh-600 rounded-full transition-all duration-500"
+                  className="h-full bg-bodhyanga-600 rounded-full transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>

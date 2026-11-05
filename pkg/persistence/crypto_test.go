@@ -167,7 +167,7 @@ func TestNewEncryptorKeyLength(t *testing.T) {
 // TestNewEncryptorFromEnvNoKey confirms that a missing env var returns
 // (nil, nil) for dev-mode passthrough.
 func TestNewEncryptorFromEnvNoKey(t *testing.T) {
-	t.Setenv("BODH_ENCRYPTION_KEY", "")
+	t.Setenv("BODHYANGA_ENCRYPTION_KEY", "")
 
 	enc, err := NewEncryptorFromEnv()
 	if err != nil {
@@ -182,7 +182,7 @@ func TestNewEncryptorFromEnvNoKey(t *testing.T) {
 func TestNewEncryptorFromEnvValidKey(t *testing.T) {
 	key := makeKey(0xDE)
 	encoded := base64.StdEncoding.EncodeToString(key)
-	t.Setenv("BODH_ENCRYPTION_KEY", encoded)
+	t.Setenv("BODHYANGA_ENCRYPTION_KEY", encoded)
 
 	enc, err := NewEncryptorFromEnv()
 	if err != nil {
@@ -198,7 +198,7 @@ func TestNewEncryptorFromEnvValidKey(t *testing.T) {
 
 // TestNewEncryptorFromEnvBadBase64 confirms that malformed base64 is rejected.
 func TestNewEncryptorFromEnvBadBase64(t *testing.T) {
-	t.Setenv("BODH_ENCRYPTION_KEY", "not-valid-base64!!!")
+	t.Setenv("BODHYANGA_ENCRYPTION_KEY", "not-valid-base64!!!")
 
 	if _, err := NewEncryptorFromEnv(); err == nil {
 		t.Error("expected error for malformed base64, got nil")

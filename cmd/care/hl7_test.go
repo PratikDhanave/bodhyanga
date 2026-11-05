@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/comm"
-	"github.com/PratikDhanave/bodh/pkg/hl7v2"
-	"github.com/PratikDhanave/bodh/pkg/medical"
-	"github.com/PratikDhanave/bodh/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/comm"
+	"github.com/PratikDhanave/bodhyanga/pkg/hl7v2"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
 )
 
 // hl7ADTHandler is the http.HandlerFunc the test mounts on /hl7/adt. It

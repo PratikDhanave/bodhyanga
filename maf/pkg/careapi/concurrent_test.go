@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
 // N distinct cases submitted in parallel yield N independent handles and

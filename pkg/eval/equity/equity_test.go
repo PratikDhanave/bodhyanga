@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
 )
 
 // ----------------------------------------------------------------------------

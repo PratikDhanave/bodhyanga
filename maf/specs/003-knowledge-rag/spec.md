@@ -9,10 +9,10 @@
 **Input**: User description: "Give the LLM diagnostician retrieval-augmented grounding — before
 it forms a diagnosis, retrieve the top-k most relevant clinical-evidence snippets from a swappable
 knowledge corpus, inject them as an Evidence block into the model prompt, and surface the matching
-citations on the diagnosis output. RAG is bodh's differentiator that MAF-go has no equivalent for
-(RAG is .NET-only in the framework). Port bodh's hybrid retrieval store (vector cosine + BM25 +
-reciprocal-rank fusion) and its provider-agnostic embedder as-is via the existing `replace ../bodh`,
-and slot retrieval into bodh-maf's existing LLM-diagnostician node without changing the graph.
+citations on the diagnosis output. RAG is bodhyanga's differentiator that MAF-go has no equivalent for
+(RAG is .NET-only in the framework). Port bodhyanga's hybrid retrieval store (vector cosine + BM25 +
+reciprocal-rank fusion) and its provider-agnostic embedder as-is via the existing `replace ../bodhyanga`,
+and slot retrieval into bodhyanga-maf's existing LLM-diagnostician node without changing the graph.
 Retrieval must degrade safely: an unavailable embedder, empty corpus, or zero results never breaks a
 case — the diagnostician just proceeds ungrounded. Success = the LLM diagnostician returns citations
 when a corpus is configured, the corpus is a configuration choice, and every failure mode leaves the
@@ -126,7 +126,7 @@ repeat with an empty corpus and with a query that yields zero matches — each s
   top-k); scoring is informational and never a hard filter in this slice. A minimum-score cutoff is a
   documented non-goal.
 - **Model fabricates a citation not in the Evidence block** → the port keeps the model's citations as
-  returned (matching bodh's reconciliation), because the model is instructed to cite only supplied
+  returned (matching bodhyanga's reconciliation), because the model is instructed to cite only supplied
   evidence; enforcing "citation ∈ retrieved set" is a documented non-goal for this slice.
 - **Retrieval query would leak PHI** → the query is built only from de-identified case content (PHI is
   stripped at intake, upstream of the diagnostician), and neither the query nor any snippet is ever
@@ -163,7 +163,7 @@ repeat with an empty corpus and with a query that yields zero matches — each s
   flag.
 - **FR-011**: The corpus is loaded and indexed once at diagnostician construction and reused across
   cases within a process; re-indexing is not required per case.
-- **FR-012**: Bodh's retrieval store and embedder abstractions MUST be consumed as libraries (via the
+- **FR-012**: Bodhyanga's retrieval store and embedder abstractions MUST be consumed as libraries (via the
   existing local module reference), not reimplemented; their retrieval semantics are the authority.
 
 ### Key Entities

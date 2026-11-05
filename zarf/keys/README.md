@@ -2,9 +2,9 @@
 
 > Adapted from the Ardan Labs `service` layout
 > ([`zarf/keys/`](https://github.com/ardanlabs/service/tree/master/zarf/keys)).
-> Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+> Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 
-This directory holds **sample** RS256 / EdDSA JWT signing keys used by Bodh
+This directory holds **sample** RS256 / EdDSA JWT signing keys used by Bodhyanga
 when running locally (compose, kind, dev overlay). The shipped key file is
 clearly marked `DO-NOT-USE-IN-PROD` and is rotated only as a placeholder.
 
@@ -17,7 +17,7 @@ clearly marked `DO-NOT-USE-IN-PROD` and is rotated only as a placeholder.
 | AKS | Azure Key Vault → mounted via [Secrets Store CSI driver](https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-driver) |
 | Bare metal | HashiCorp Vault → mounted via [Vault Agent injector](https://developer.hashicorp.com/vault/docs/platform/k8s/injector) |
 
-The Bodh deployment manifests (`zarf/k8s/prod/`) reference a `bodh-care-secrets`
+The Bodhyanga deployment manifests (`zarf/k8s/prod/`) reference a `bodhyanga-care-secrets`
 Secret resource — populate that via SealedSecret, ExternalSecret, or directly
 from your chosen secret store. **Do not** copy `*.pem` files from this directory
 into a prod-shaped Secret resource.
@@ -67,6 +67,6 @@ The intended flow:
 | `54bb2165-71e1-41a6-af3e-7da4a0e1e2c1.pem.example` | Sample RS256 private key — DO-NOT-USE-IN-PROD. The filename mirrors the upstream Ardan Labs sample. The `.example` suffix is intentional so this file is never accidentally read by a real auth service. |
 
 The literal sample key bytes from the Ardan Labs repo are **not** vendored
-here — every Bodh deployment generates its own keys per the recipe above.
+here — every Bodhyanga deployment generates its own keys per the recipe above.
 The `.example` file is empty by design: copy it to `<uuid>.pem`, then
 `openssl genrsa -out <uuid>.pem 2048` to materialise the actual key bytes.

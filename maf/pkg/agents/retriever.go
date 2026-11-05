@@ -4,15 +4,15 @@ import (
 	"context"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/embeddings"
-	"github.com/PratikDhanave/bodh/pkg/knowledge"
+	"github.com/PratikDhanave/bodhyanga/pkg/embeddings"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge"
 )
 
 // defaultK is the number of citations retrieved when none is configured.
 const defaultK = 4
 
 // Retriever grounds the LLM diagnostician in a knowledge corpus. It owns a
-// knowledge.Store (bodh's hybrid vector+BM25 store, imported unchanged) and
+// knowledge.Store (bodhyanga's hybrid vector+BM25 store, imported unchanged) and
 // builds the retrieval query from de-identified workup content only. It is a
 // private detail of the LLM node — the rule diagnostician and the graph never
 // see it (plan §Where retrieval sits).
@@ -54,7 +54,7 @@ func LoadRetriever(corpusPath string, emb embeddings.Embedder, k int) (*Retrieve
 
 // Retrieve returns up to k citations relevant to the workup. It builds the
 // query from the de-identified case symptoms, history, and prior test results
-// (a port of bodh's buildRetrievalQuery). A nil receiver, nil store, or empty
+// (a port of bodhyanga's buildRetrievalQuery). A nil receiver, nil store, or empty
 // query short-circuits to (nil, nil) with no embedder call. A store error is
 // returned for the caller to log-and-swallow — it never panics.
 func (r *Retriever) Retrieve(ctx context.Context, wu Workup) ([]Citation, error) {
@@ -83,7 +83,7 @@ func (r *Retriever) Retrieve(ctx context.Context, wu Workup) ([]Citation, error)
 
 // buildRetrievalQuery composes one query string from de-identified workup
 // fields only. PHI is stripped upstream at intake; the case ID is never
-// included. Mirrors bodh's agents/diagnostician_llm.go query shape.
+// included. Mirrors bodhyanga's agents/diagnostician_llm.go query shape.
 func buildRetrievalQuery(wu Workup) string {
 	parts := make([]string, 0, len(wu.Query.Case.Symptoms)+len(wu.Query.Case.History)+len(wu.Results))
 	parts = append(parts, wu.Query.Case.Symptoms...)

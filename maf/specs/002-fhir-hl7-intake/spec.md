@@ -33,7 +33,7 @@ JSON runs, so that a real hospital front-door produces a care plan without me pr
 to the slice's private format.
 
 **Why this priority**: HL7 v2 ADT is the single most common "front door" in US hospital
-integrations, and bodh already ships a battle-tested ADT parser (`bodh/pkg/hl7v2`) we can
+integrations, and bodhyanga already ships a battle-tested ADT parser (`bodhyanga/pkg/hl7v2`) we can
 import unchanged — so this is the highest-value, lowest-risk first increment and it stands
 alone (it needs neither FHIR nor the malformed-handling story to be demoable).
 
@@ -70,8 +70,8 @@ alongside HL7.
 **Why this priority**: FHIR is the modern, second-most-common front door and reuses the same
 translation seam and the same admission/trail invariants as US1, so it is a clean parallel
 increment. It ranks below US1 because the ported FHIR code parses *individual* resources but
-has **no bundle decoder** (`bodh/pkg/fhir` has Patient/Observation/Encounter/Condition types
-but no `Bundle` type — verified in `bodh/pkg/fhir/fhir.go` and `bulk.go`), so this story
+has **no bundle decoder** (`bodhyanga/pkg/fhir` has Patient/Observation/Encounter/Condition types
+but no `Bundle` type — verified in `bodhyanga/pkg/fhir/fhir.go` and `bulk.go`), so this story
 carries slightly more new code than US1.
 
 **Independent Test**: Feed a FHIR R4 transaction/collection bundle containing one Patient and
@@ -139,7 +139,7 @@ the trail.
 
 - **Message that is well-formed but not ADT** (e.g. an ORU results message) → rejected as
   "unsupported message type"; the ported parser's `MessageToADTEvent` already refuses
-  non-ADT (`bodh/pkg/hl7v2/hl7v2.go:347`), so the front-door surfaces that as a category
+  non-ADT (`bodhyanga/pkg/hl7v2/hl7v2.go:347`), so the front-door surfaces that as a category
   rejection, not a panic.
 - **ADT with no DG1 / FHIR bundle with a Patient but no Condition/Observation** → a case with
   empty clinical content is *undifferentiated*, not an error: it produces a `PatientCase` with
@@ -148,7 +148,7 @@ the trail.
   reality, not a parse failure.
 - **Custom HL7 encoding characters** (a sender using `#` instead of `|`) → honored, because the
   ported parser reads delimiters off MSH-1/MSH-2 rather than hardcoding them
-  (`bodh/pkg/hl7v2/hl7v2.go:100`); no special handling needed here, but a test asserts it.
+  (`bodhyanga/pkg/hl7v2/hl7v2.go:100`); no special handling needed here, but a test asserts it.
 - **HL7 timestamp precision variance** (YYYY vs YYYYMMDDHHMMSS, ±TZ) → handled by the ported
   parser; the front-door does not re-parse time and never puts a raw timestamp on the trail.
 - **Multiple patients in one FHIR bundle** → out of scope for the slice; the front-door
@@ -192,12 +192,12 @@ the trail.
 - **FR-008**: A message with no coded clinical findings (no DG1 / no Condition) MUST NOT be an
   error; it MUST produce an undifferentiated `PatientCase` that flows into the pipeline's
   existing forced-progression path.
-- **FR-009**: The HL7 and FHIR parsing logic MUST reuse bodh's parsers where they exist
-  (import unchanged, not reimplement) — `bodh/pkg/hl7v2` for ADT; `bodh/pkg/fhir` resource
-  types for FHIR — with new code limited to (a) a FHIR *bundle* envelope decoder (which bodh
-  lacks) and (b) the mapping from bodh's `medical.*` types to `agents.PatientCase`.
+- **FR-009**: The HL7 and FHIR parsing logic MUST reuse bodhyanga's parsers where they exist
+  (import unchanged, not reimplement) — `bodhyanga/pkg/hl7v2` for ADT; `bodhyanga/pkg/fhir` resource
+  types for FHIR — with new code limited to (a) a FHIR *bundle* envelope decoder (which bodhyanga
+  lacks) and (b) the mapping from bodhyanga's `medical.*` types to `agents.PatientCase`.
 - **FR-010**: Automated tests MUST cover the happy path and every rejection category using
-  fixture messages (HL7 fixtures may reuse `bodh/pkg/hl7v2/testdata`); no external EHR, FHIR
+  fixture messages (HL7 fixtures may reuse `bodhyanga/pkg/hl7v2/testdata`); no external EHR, FHIR
   server, or network is contacted (consistent with specs/001 deterministic-test rule).
 
 ### Key Entities
@@ -235,13 +235,13 @@ the trail.
 
 ## Assumptions
 
-- bodh's `pkg/hl7v2` and `pkg/fhir` are consumable unchanged via the existing
-  `replace ../bodh` directive; their only transitive bodh deps are `pkg/llm` and `pkg/medical`,
+- bodhyanga's `pkg/hl7v2` and `pkg/fhir` are consumable unchanged via the existing
+  `replace ../bodhyanga` directive; their only transitive bodhyanga deps are `pkg/llm` and `pkg/medical`,
   which are already reachable (verified with `go list -deps`).
 - The slice remains single-process and single-patient-per-case; batch ingestion, multi-patient
   bundles, and a live FHIR/HL7 *network listener* are out of scope (the front-door is a
   library + a CLI flag reading a file, not a server).
-- bodh's parsers map to `medical.ADTEvent` / `medical.PatientRecord`, **not** to
+- bodhyanga's parsers map to `medical.ADTEvent` / `medical.PatientRecord`, **not** to
   `agents.PatientCase`; the semantic mapping (diagnosis/condition → symptom/history) is a
   deliberate, testable adaptation local to this feature, acknowledged as demo-grade clinical
   fidelity (consistent with the whole repo's research-not-clinical stance).

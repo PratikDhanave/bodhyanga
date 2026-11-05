@@ -1,8 +1,8 @@
-# Bodh — Deployment Guide
+# Bodhyanga — Deployment Guide
 
-How to run Bodh in development, in pilot, and in production. Targeted at engineers and platform operators.
+How to run Bodhyanga in development, in pilot, and in production. Targeted at engineers and platform operators.
 
-> **Status disclaimer.** Bodh is a research / engineering reference. It is **not** a medical device, **not** approved for clinical use, **not** under a Business Associate Agreement. The deployment topologies described here are architectural targets — not operational claims. See [docs/compliance.md](compliance.md) for the regulatory caveats.
+> **Status disclaimer.** Bodhyanga is a research / engineering reference. It is **not** a medical device, **not** approved for clinical use, **not** under a Business Associate Agreement. The deployment topologies described here are architectural targets — not operational claims. See [docs/compliance.md](compliance.md) for the regulatory caveats.
 
 ---
 
@@ -46,8 +46,8 @@ How to run Bodh in development, in pilot, and in production. Targeted at enginee
 ### Common commands
 
 ```bash
-git clone https://github.com/PratikDhanave/bodh.git
-cd bodh
+git clone https://github.com/PratikDhanave/bodhyanga.git
+cd bodhyanga
 
 # Diagnostic flow (rule-based)
 go run ./cmd/demo
@@ -72,9 +72,9 @@ go run ./cmd/bench -providers=rule,llm-anthropic,llm-openai,llm-ollama \
   -manifest=data/cases/manifest.json
 
 # Operator CLI
-go install ./cmd/bodhctl
-bodhctl reviews pending
-bodhctl reviews approve <id>
+go install ./cmd/bodhyangactl
+bodhyangactl reviews pending
+bodhyangactl reviews approve <id>
 
 # Full validation
 make all       # vet + test + build
@@ -107,16 +107,16 @@ The first step beyond pure-in-memory. Adds durable persistence + tenant isolatio
 
 ### 1. Provision Postgres
 
-Any Postgres 14+ instance works. Required: `superuser` access to run migrations, and a `bodh_app` role created by the migrations.
+Any Postgres 14+ instance works. Required: `superuser` access to run migrations, and a `bodhyanga_app` role created by the migrations.
 
 ```bash
 # Local docker postgres
-docker run -d --name bodh-pg -p 5432:5432 \
+docker run -d --name bodhyanga-pg -p 5432:5432 \
   -e POSTGRES_PASSWORD=postgres \
   postgres:16
 
 # Create the database
-psql -h localhost -U postgres -c "CREATE DATABASE bodh;"
+psql -h localhost -U postgres -c "CREATE DATABASE bodhyanga;"
 ```
 
 ### 2. Run migrations
@@ -129,15 +129,15 @@ Migrations live in two places (kept in sync; `go:embed` can't reach `../../../db
 The in-process runner runs on `pkg/persistence/postgres.New(...)` boot. For a one-shot manual application:
 
 ```bash
-psql -h localhost -U postgres -d bodh -f db/migrations/0001_init.sql
-psql -h localhost -U postgres -d bodh -f db/migrations/0002_rls.sql
+psql -h localhost -U postgres -d bodhyanga -f db/migrations/0001_init.sql
+psql -h localhost -U postgres -d bodhyanga -f db/migrations/0002_rls.sql
 ```
 
 ### 3. Start cmd/care pointing at Postgres
 
 ```bash
-export BODH_DB_DSN="postgres://bodh_app:strong-password@localhost:5432/bodh?sslmode=disable"
-export BODH_TENANT_ID="tenant-pilot"  # single-tenant binary scopes everything to this
+export BODHYANGA_DB_DSN="postgres://bodhyanga_app:strong-password@localhost:5432/bodhyanga?sslmode=disable"
+export BODHYANGA_TENANT_ID="tenant-pilot"  # single-tenant binary scopes everything to this
 go run ./cmd/care -addr=:8088
 ```
 
@@ -185,7 +185,7 @@ ENTRYPOINT ["/care"]
 Build with OTel support enabled:
 
 ```bash
-docker build --build-arg GO_BUILD_TAGS=otel -t bodh-care:latest .
+docker build --build-arg GO_BUILD_TAGS=otel -t bodhyanga-care:latest .
 ```
 
 (Add the build-tag arg to your Dockerfile.)
@@ -200,38 +200,38 @@ A minimal Deployment + Service + ConfigMap + SealedSecret. Replace placeholders 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bodh-care
-  namespace: bodh
+  name: bodhyanga-care
+  namespace: bodhyanga
 spec:
   replicas: 3
   selector:
-    matchLabels: { app: bodh-care }
+    matchLabels: { app: bodhyanga-care }
   template:
     metadata:
-      labels: { app: bodh-care }
+      labels: { app: bodhyanga-care }
     spec:
-      serviceAccountName: bodh-care
+      serviceAccountName: bodhyanga-care
       containers:
         - name: care
-          image: ghcr.io/your-org/bodh-care:latest
+          image: ghcr.io/your-org/bodhyanga-care:latest
           ports:
             - containerPort: 8088
           env:
-            - name: BODH_LISTEN_ADDR
+            - name: BODHYANGA_LISTEN_ADDR
               value: ":8088"
-            - name: BODH_DB_DSN
+            - name: BODHYANGA_DB_DSN
               valueFrom:
-                secretKeyRef: { name: bodh-db, key: dsn }
-            - name: BODH_TENANT_ID
+                secretKeyRef: { name: bodhyanga-db, key: dsn }
+            - name: BODHYANGA_TENANT_ID
               valueFrom:
-                configMapKeyRef: { name: bodh-config, key: tenantId }
-            - name: BODH_OTEL_EXPORT
+                configMapKeyRef: { name: bodhyanga-config, key: tenantId }
+            - name: BODHYANGA_OTEL_EXPORT
               value: "1"
-            - name: BODH_OTEL_ENDPOINT
+            - name: BODHYANGA_OTEL_ENDPOINT
               value: "http://otel-collector.observability:4318"
             - name: ANTHROPIC_API_KEY
               valueFrom:
-                secretKeyRef: { name: bodh-llm, key: anthropic }
+                secretKeyRef: { name: bodhyanga-llm, key: anthropic }
           readinessProbe:
             httpGet: { path: /readyz, port: 8088 }
             initialDelaySeconds: 5
@@ -253,10 +253,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: bodh-care
-  namespace: bodh
+  name: bodhyanga-care
+  namespace: bodhyanga
 spec:
-  selector: { app: bodh-care }
+  selector: { app: bodhyanga-care }
   ports:
     - port: 8088
       targetPort: 8088
@@ -264,11 +264,11 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: bodh-care
-  namespace: bodh
+  name: bodhyanga-care
+  namespace: bodhyanga
 spec:
   podSelector:
-    matchLabels: { app: bodh-care }
+    matchLabels: { app: bodhyanga-care }
   policyTypes: ["Ingress", "Egress"]
   ingress:
     - from:
@@ -326,25 +326,25 @@ Inside a cell, RLS still enforces per-tenant isolation. Cell boundaries protect 
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `BODH_LISTEN_ADDR` | no | `:8088` | HTTP listen address |
-| `BODH_TENANT_ID` | when DB-backed | (none) | Single-tenant binary identity |
-| `BODH_DB_DSN` | no | (in-memory) | Postgres DSN; selects backend at boot |
-| `BODH_OTEL_EXPORT` | no | `0` | Set `1` to enable OTLP export (build must include `-tags otel`) |
-| `BODH_OTEL_ENDPOINT` | no | `http://localhost:4318` | OTLP collector HTTP endpoint |
-| `BODH_KNOWLEDGE_CORPUS` | no | (RAG disabled) | Path to RAG corpus JSON |
-| `BODH_LOG_LEVEL` | no | `info` | `debug` / `info` / `warn` / `error` |
+| `BODHYANGA_LISTEN_ADDR` | no | `:8088` | HTTP listen address |
+| `BODHYANGA_TENANT_ID` | when DB-backed | (none) | Single-tenant binary identity |
+| `BODHYANGA_DB_DSN` | no | (in-memory) | Postgres DSN; selects backend at boot |
+| `BODHYANGA_OTEL_EXPORT` | no | `0` | Set `1` to enable OTLP export (build must include `-tags otel`) |
+| `BODHYANGA_OTEL_ENDPOINT` | no | `http://localhost:4318` | OTLP collector HTTP endpoint |
+| `BODHYANGA_KNOWLEDGE_CORPUS` | no | (RAG disabled) | Path to RAG corpus JSON |
+| `BODHYANGA_LOG_LEVEL` | no | `info` | `debug` / `info` / `warn` / `error` |
 | `ANTHROPIC_API_KEY` | for `llm-anthropic` | (none) | Anthropic Messages API key |
 | `OPENAI_API_KEY` | for `llm-openai` | (none) | OpenAI API key |
 | `OLLAMA_HOST` | for `llm-ollama` | `http://localhost:11434` | Local Ollama URL |
 | `VOYAGE_API_KEY` | for Anthropic-path RAG embeddings | (none) | Voyage key |
-| `BODH_ANTHROPIC_MODEL` | no | `claude-sonnet-4-6` | Override Anthropic chat model |
-| `BODH_OPENAI_MODEL` | no | `gpt-4o` | Override OpenAI chat model |
-| `BODH_OLLAMA_MODEL` | no | `llama3.2` | Override Ollama chat model |
-| `BODH_OPENAI_EMBED_MODEL` | no | `text-embedding-3-small` | Override OpenAI embedding model |
-| `BODH_OLLAMA_EMBED_MODEL` | no | `nomic-embed-text` | Override Ollama embedding model |
-| `BODH_VOYAGE_EMBED_MODEL` | no | `voyage-3` | Override Voyage embedding model |
+| `BODHYANGA_ANTHROPIC_MODEL` | no | `claude-sonnet-4-6` | Override Anthropic chat model |
+| `BODHYANGA_OPENAI_MODEL` | no | `gpt-4o` | Override OpenAI chat model |
+| `BODHYANGA_OLLAMA_MODEL` | no | `llama3.2` | Override Ollama chat model |
+| `BODHYANGA_OPENAI_EMBED_MODEL` | no | `text-embedding-3-small` | Override OpenAI embedding model |
+| `BODHYANGA_OLLAMA_EMBED_MODEL` | no | `nomic-embed-text` | Override Ollama embedding model |
+| `BODHYANGA_VOYAGE_EMBED_MODEL` | no | `voyage-3` | Override Voyage embedding model |
 
-Production (planned env additions): `BODH_TLS_CERT`, `BODH_TLS_KEY`, `BODH_OIDC_ISSUER`, `BODH_OIDC_AUDIENCE`, `BODH_BUS_URL` (Kafka/NATS), `BODH_MAX_COST_USD` (override default budget).
+Production (planned env additions): `BODHYANGA_TLS_CERT`, `BODHYANGA_TLS_KEY`, `BODHYANGA_OIDC_ISSUER`, `BODHYANGA_OIDC_AUDIENCE`, `BODHYANGA_BUS_URL` (Kafka/NATS), `BODHYANGA_MAX_COST_USD` (override default budget).
 
 ---
 
@@ -399,7 +399,7 @@ The cascade pattern (cheap small model first, escalate on low confidence) reduce
 
 ## HIPAA / BAA chain
 
-If a covered entity deploys Bodh, the operator becomes a business associate under 45 CFR §164.504(e). BAAs required with:
+If a covered entity deploys Bodhyanga, the operator becomes a business associate under 45 CFR §164.504(e). BAAs required with:
 
 | Subcontractor | Notes |
 |---|---|
@@ -419,10 +419,10 @@ See [docs/compliance.md](compliance.md) for the full HIPAA Privacy / Security / 
 
 ```bash
 # 1. Postgres
-docker run -d --name bodh-pg -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:16
-psql -h localhost -U postgres -c "CREATE DATABASE bodh;"
-psql -h localhost -U postgres -d bodh -f db/migrations/0001_init.sql
-psql -h localhost -U postgres -d bodh -f db/migrations/0002_rls.sql
+docker run -d --name bodhyanga-pg -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:16
+psql -h localhost -U postgres -c "CREATE DATABASE bodhyanga;"
+psql -h localhost -U postgres -d bodhyanga -f db/migrations/0001_init.sql
+psql -h localhost -U postgres -d bodhyanga -f db/migrations/0002_rls.sql
 
 # 2. OTel collector (optional)
 docker run -d --name otel-collector -p 4318:4318 \
@@ -430,9 +430,9 @@ docker run -d --name otel-collector -p 4318:4318 \
 
 # 3. Build with OTel + start
 go build -tags otel -o ./care ./cmd/care
-BODH_DB_DSN="postgres://bodh_app:postgres@localhost:5432/bodh?sslmode=disable" \
-BODH_TENANT_ID="pilot" \
-BODH_OTEL_EXPORT=1 \
+BODHYANGA_DB_DSN="postgres://bodhyanga_app:postgres@localhost:5432/bodhyanga?sslmode=disable" \
+BODHYANGA_TENANT_ID="pilot" \
+BODHYANGA_OTEL_EXPORT=1 \
 ANTHROPIC_API_KEY=sk-ant-... \
 ./care -addr=:8088
 

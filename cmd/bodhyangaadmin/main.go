@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -6,7 +6,7 @@
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
 
-// Command bodhadmin is the operator CLI for the Bodh control plane.
+// Command bodhyangaadmin is the operator CLI for the Bodhyanga control plane.
 // Subcommands run discrete jobs that would otherwise be one-off psql
 // scripts or in-process API calls.
 //
@@ -18,10 +18,10 @@
 //
 // Usage:
 //
-//	bodhadmin migrate [-dsn=...]
-//	bodhadmin keys generate [-out <dir>] [-kid <name>]
-//	bodhadmin keys list [-dir <dir>]
-//	bodhadmin token issue -kid <name> -dir <dir> -role <role> [...]
+//	bodhyangaadmin migrate [-dsn=...]
+//	bodhyangaadmin keys generate [-out <dir>] [-kid <name>]
+//	bodhyangaadmin keys list [-dir <dir>]
+//	bodhyangaadmin token issue -kid <name> -dir <dir> -role <role> [...]
 //
 // Operators run it from CI / a bastion / a sidecar; cmd/care also
 // runs migrations on boot as a defence in depth.
@@ -50,17 +50,17 @@ func main() {
 		usage()
 		return
 	default:
-		fmt.Fprintf(os.Stderr, "bodhadmin: unknown subcommand %q\n", cmd)
+		fmt.Fprintf(os.Stderr, "bodhyangaadmin: unknown subcommand %q\n", cmd)
 		usage()
 		os.Exit(2)
 	}
 }
 
 func usage() {
-	fmt.Fprint(os.Stderr, `bodhadmin -- Bodh operator CLI
+	fmt.Fprint(os.Stderr, `bodhyangaadmin -- Bodhyanga operator CLI
 
 usage:
-  bodhadmin <subcommand> [flags]
+  bodhyangaadmin <subcommand> [flags]
 
 subcommands:
   migrate    Apply pending schema migrations (idempotent).
@@ -68,8 +68,8 @@ subcommands:
   token      Mint a signed JWT for dev / testing.
 
 environment:
-  BODH_DB_DSN          Postgres DSN (overridden by migrate -dsn).
-  BODH_AUTH_KEYS_DIR   Directory of <kid>.pem files (overridden by -dir).
+  BODHYANGA_DB_DSN          Postgres DSN (overridden by migrate -dsn).
+  BODHYANGA_AUTH_KEYS_DIR   Directory of <kid>.pem files (overridden by -dir).
 
 `)
 }

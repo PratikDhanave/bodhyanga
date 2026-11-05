@@ -1,14 +1,14 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/app/sdk/auth/auth.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh:
-//   - Claims carries tenant_id and roles for Bodh's multi-tenant + RBAC model.
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga:
+//   - Claims carries tenant_id and roles for Bodhyanga's multi-tenant + RBAC model.
 //   - jwt/v5 instead of jwt/v4 (upstream still uses v4 at time of adaptation).
-//   - No userbus dependency; user-credential flow is out of scope for Bodh.
-//   - Rego package namespace is bodh.auth (not ardan.rego).
+//   - No userbus dependency; user-credential flow is out of scope for Bodhyanga.
+//   - Rego package namespace is bodhyanga.auth (not ardan.rego).
 //   - Authenticator is the type name (not Auth) for clarity at call sites.
 
 // Package auth provides JWT authentication (RS256) and OPA Rego-based
-// authorization for Bodh. It is the foundation under cmd/care's HTTP
-// surface when BODH_AUTH=jwt.
+// authorization for Bodhyanga. It is the foundation under cmd/care's HTTP
+// surface when BODHYANGA_AUTH=jwt.
 //
 // Authentication: an Authenticator parses a Bearer token, looks up the
 // public key by the JWT header's `kid`, and asks the OPA engine to
@@ -17,16 +17,16 @@
 // on success.
 //
 // Authorization: a separate Evaluate call runs a named Rego rule (e.g.
-// "bodh.explain.allow") against a structured input (roles, tenant, method,
+// "bodhyanga.explain.allow") against a structured input (roles, tenant, method,
 // path). The middleware in pkg/mid wraps this in a stdlib HTTP middleware.
 //
 // Key management: KeyLookup is a tiny interface satisfied by *KeyStore in
 // this package. Keys are RSA 2048+ PEM-encoded; the keystore loads from a
 // filesystem (one .pem file per kid) or from an in-memory JSON document.
 //
-// Bodh does not manage user credentials. The Authenticator only verifies
+// Bodhyanga does not manage user credentials. The Authenticator only verifies
 // tokens; issuing tokens is the operator's responsibility (the dev path
-// uses cmd/bodhadmin to mint a token signed by a generated key pair).
+// uses cmd/bodhyangaadmin to mint a token signed by a generated key pair).
 package auth
 
 import (
@@ -59,13 +59,13 @@ var (
 	ErrForbidden = errors.New("forbidden: authorization rule denied")
 )
 
-// Claims is the Bodh JWT claim set. It embeds the registered JWT claims
-// (iss, sub, aud, exp, iat, nbf, jti) plus two Bodh-specific fields:
+// Claims is the Bodhyanga JWT claim set. It embeds the registered JWT claims
+// (iss, sub, aud, exp, iat, nbf, jti) plus two Bodhyanga-specific fields:
 //
-//   - TenantID is the tenant scope the subject belongs to. Bodh policies
+//   - TenantID is the tenant scope the subject belongs to. Bodhyanga policies
 //     compare this against the resource's tenant for the "same tenant"
 //     check. Single-tenant binaries derive ResourceTenantID from
-//     BODH_TENANT_ID at boot.
+//     BODHYANGA_TENANT_ID at boot.
 //   - Roles is the array of role strings (e.g. "clinician", "auditor").
 //     The Rego policies compare these against required role sets.
 //
@@ -119,7 +119,7 @@ func New(cfg Config) *Authenticator {
 func (a *Authenticator) Issuer() string { return a.issuer }
 
 // GenerateToken signs the supplied claims with the private key for kid.
-// Used by cmd/bodhadmin and by tests; production Bodh deployments would
+// Used by cmd/bodhyangaadmin and by tests; production Bodhyanga deployments would
 // have an external issuer (the demo issues its own tokens for self-hosted
 // runs).
 func (a *Authenticator) GenerateToken(kid string, claims Claims) (string, error) {
@@ -179,7 +179,7 @@ func (a *Authenticator) Parse(ctx context.Context, bearer string) (Claims, error
 		"Key":   pubPEM,
 		"ISS":   a.issuer,
 	}
-	allowed, err := evalRule(ctx, regoAuthentication, "data.bodh.auth.auth", input)
+	allowed, err := evalRule(ctx, regoAuthentication, "data.bodhyanga.auth.auth", input)
 	if err != nil {
 		return Claims{}, fmt.Errorf("authn rego: %w", err)
 	}
@@ -205,7 +205,7 @@ func (a *Authenticator) Parse(ctx context.Context, bearer string) (Claims, error
 // Returns ErrForbidden on rule-denied so middleware can map to HTTP 403.
 //
 // query is the full path including the data prefix
-// (e.g. "data.bodh.explain.allow"); module is the embedded Rego source.
+// (e.g. "data.bodhyanga.explain.allow"); module is the embedded Rego source.
 func (a *Authenticator) Evaluate(ctx context.Context, module, query string, input map[string]any) error {
 	allowed, err := evalRule(ctx, module, query, input)
 	if err != nil {

@@ -7,7 +7,7 @@
 //
 // Key declarations:
 //   - Logger: Printf-style interface satisfied by std-log and PHI-redacting wrappers.
-//   - StdLogger / NewStdLogger: stdout logger with timestamp and "[bodh]" prefix.
+//   - StdLogger / NewStdLogger: stdout logger with timestamp and "[bodhyanga]" prefix.
 //   - NewLoggerTo: constructs a StdLogger backed by an arbitrary io.Writer (for tests).
 //   - Clock: Now() abstraction for deterministic tests.
 //   - SystemClock: real-time implementation returning time.Now().UTC().

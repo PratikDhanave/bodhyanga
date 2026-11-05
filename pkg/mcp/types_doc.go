@@ -1,7 +1,7 @@
 // types.go — JSON-RPC 2.0 envelopes and MCP wire-format types.
 //
 // Overview:
-//   Defines every shape Bodh's MCP client serialises across the wire:
+//   Defines every shape Bodhyanga's MCP client serialises across the wire:
 //   Request / Response / Error envelopes, plus the MCP-specific Tool /
 //   Resource / ToolResult / ContentItem / InitializeResult types.
 //

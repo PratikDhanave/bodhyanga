@@ -5,8 +5,8 @@
 //
 // Contract:
 //
-//   - Import-unchanged: HL7 parsing (bodh/pkg/hl7v2) and FHIR resource types
-//     (bodh/pkg/fhir) are imported as-is via the module's replace ../bodh. Only
+//   - Import-unchanged: HL7 parsing (bodhyanga/pkg/hl7v2) and FHIR resource types
+//     (bodhyanga/pkg/fhir) are imported as-is via the module's replace ../bodhyanga. Only
 //     the medical.*→agents.PatientCase mapping and a minimal FHIR Bundle
 //     envelope are new code here.
 //   - Dependency direction is one-way: intake → agents. The Inbound/Format
@@ -19,8 +19,8 @@
 //     identifiers and diagnoses, not a symptom workup, so undifferentiated
 //     cases are an expected, designed outcome (FR-008), not an error.
 //
-// Dependency note (T001): `go list -deps github.com/PratikDhanave/bodh/pkg/hl7v2
-// github.com/PratikDhanave/bodh/pkg/fhir` resolves through the existing
-// `replace ../bodh` (go.mod) with no new require — hl7v2 pulls only bodh/pkg/llm
-// and bodh/pkg/medical, both already in the module graph.
+// Dependency note (T001): `go list -deps github.com/PratikDhanave/bodhyanga/pkg/hl7v2
+// github.com/PratikDhanave/bodhyanga/pkg/fhir` resolves through the existing
+// `replace ../bodhyanga` (go.mod) with no new require — hl7v2 pulls only bodhyanga/pkg/llm
+// and bodhyanga/pkg/medical, both already in the module graph.
 package intake

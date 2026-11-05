@@ -18,7 +18,7 @@
 // Flags:
 //
 //	-in              path to JSON queue dump ([]medical.ReviewRequest).
-//	                 Defaults to $HOME/.bodh/hitl-queue.json when unset.
+//	                 Defaults to $HOME/.bodhyanga/hitl-queue.json when unset.
 //	-format          one of "sft" | "dpo" | "both" (default "both").
 //	-out-dir         directory to write sft.jsonl / dpo.jsonl (default "./fine-tune-data").
 //	-min-reviews     warn (not fail) when fewer than N decided reviews are found.
@@ -39,7 +39,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // DiagnosticianSystemPrompt mirrors the production LLM diagnostician's
@@ -138,7 +138,7 @@ func parseFlags(args []string) (config, error) {
 }
 
 // resolveInputPath returns the configured input path, falling back to
-// $HOME/.bodh/hitl-queue.json. Returns ("", err) when neither exists so the
+// $HOME/.bodhyanga/hitl-queue.json. Returns ("", err) when neither exists so the
 // caller can map that to exit code 3.
 func resolveInputPath(in string) (string, error) {
 	if in != "" {
@@ -154,7 +154,7 @@ func resolveInputPath(in string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("export-hitl-feedback: no -in flag and could not resolve $HOME: %w", err)
 	}
-	candidate := filepath.Join(home, ".bodh", "hitl-queue.json")
+	candidate := filepath.Join(home, ".bodhyanga", "hitl-queue.json")
 	if _, err := os.Stat(candidate); err != nil {
 		return "", fmt.Errorf("export-hitl-feedback: no -in flag and default %s not found", candidate)
 	}

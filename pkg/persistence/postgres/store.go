@@ -1,4 +1,4 @@
-// Package postgres is the production-grade backend for Bodh's eval.Store,
+// Package postgres is the production-grade backend for Bodhyanga's eval.Store,
 // medical.PatientRegistry, and audit.Recorder contracts.
 //
 // It is wire-compatible with the JSON FileStore in pkg/persistence and the
@@ -18,7 +18,7 @@
 //
 // The file/in-memory backends in pkg/persistence and pkg/audit are still the
 // supported demo path; cmd/care selects the Postgres backend only when
-// BODH_DB_DSN is set.
+// BODHYANGA_DB_DSN is set.
 package postgres
 
 import (
@@ -32,10 +32,10 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/eval"
-	"github.com/PratikDhanave/bodh/pkg/medical"
-	"github.com/PratikDhanave/bodh/pkg/persistence"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/persistence"
 )
 
 // Store is the multi-tenant PostgreSQL backend.
@@ -47,7 +47,7 @@ import (
 // and SET LOCAL is scoped to the surrounding tx).
 //
 // PHI column encryption: the enc field wraps AES-256-GCM authenticated
-// encryption for all bytea payload_ct columns. When enc is nil (BODH_ENCRYPTION_KEY
+// encryption for all bytea payload_ct columns. When enc is nil (BODHYANGA_ENCRYPTION_KEY
 // unset) the store operates in plaintext passthrough mode, which is safe for
 // local development but must not be used in production.
 type Store struct {
@@ -67,7 +67,7 @@ type Store struct {
 //
 // dsn is a standard pgx/libpq connection string, e.g.:
 //
-//	postgres://bodh:bodh@localhost:5432/bodh?sslmode=disable
+//	postgres://bodhyanga:bodhyanga@localhost:5432/bodhyanga?sslmode=disable
 //
 // Migrations are applied with a single dedicated connection acquired from
 // the pool. Failures abort startup — the demo backend is not a silent
@@ -108,7 +108,7 @@ func New(ctx context.Context, dsn string) (*Store, error) {
 
 	// Load the column-level encryptor from the environment. A missing key is
 	// allowed (returns nil enc) for local development; production deployments
-	// must set BODH_ENCRYPTION_KEY.
+	// must set BODHYANGA_ENCRYPTION_KEY.
 	enc, err := persistence.NewEncryptorFromEnv()
 	if err != nil {
 		pool.Close()

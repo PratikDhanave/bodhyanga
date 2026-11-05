@@ -1,5 +1,5 @@
 {{- if .Values.autoscaling.enabled -}}
-# HorizontalPodAutoscaler for the Bodh care deployment.
+# HorizontalPodAutoscaler for the Bodhyanga care deployment.
 #
 # When autoscaling is enabled, replicas is removed from the Deployment spec
 # so HPA owns the replica count. The HPA will scale between minReplicas and
@@ -10,15 +10,15 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "bodh.fullname" . }}
+  name: {{ include "bodhyanga.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "bodh.labels" . | nindent 4 }}
+    {{- include "bodhyanga.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "bodh.fullname" . }}
+    name: {{ include "bodhyanga.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

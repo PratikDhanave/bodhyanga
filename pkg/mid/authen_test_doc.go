@@ -6,7 +6,7 @@
 // docs/auth.md.
 //
 // Coverage:
-//   - BODH_AUTH=disabled bypass (Authenticator == nil): 200 with no token.
+//   - BODHYANGA_AUTH=disabled bypass (Authenticator == nil): 200 with no token.
 //   - Missing token in jwt mode: 401.
 //   - Expired token: 401.
 //   - Clinician same-tenant on /explain: 200.

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/agent/selfcorrect"
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent/selfcorrect"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 // ----- stub LLM client -----

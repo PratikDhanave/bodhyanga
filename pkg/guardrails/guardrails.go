@@ -346,7 +346,7 @@ type ToxicityGuardrail struct{}
 // toxicPatterns are lowercased substrings that indicate harmful content.
 // These are intentionally broad to err on the side of caution. The list
 // focuses on harmful medical advice rather than general toxicity, since
-// Bodh is a clinical platform.
+// Bodhyanga is a clinical platform.
 var toxicPatterns = []string{
 	"kill yourself",
 	"commit suicide",

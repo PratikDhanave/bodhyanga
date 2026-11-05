@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/PratikDhanave/bodh/pkg/agent/agentloop"
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent/agentloop"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 func main() {
@@ -111,7 +111,7 @@ func buildClient(provider, model, ollamaHost string) (llm.Client, error) {
 		}
 		m := model
 		if m == "" {
-			m = envOr("BODH_ANTHROPIC_MODEL", "claude-sonnet-4-6")
+			m = envOr("BODHYANGA_ANTHROPIC_MODEL", "claude-sonnet-4-6")
 		}
 		return llm.NewAnthropic(apiKey, m), nil
 

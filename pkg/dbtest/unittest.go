@@ -1,4 +1,4 @@
-// Copyright 2024-2026 Pratik Dhanave and Bodh contributors.
+// Copyright 2024-2026 Pratik Dhanave and Bodhyanga contributors.
 // Portions adapted from github.com/ardanlabs/service/business/sdk/unittest,
 // Copyright (c) 2018-2026 Ardan Labs, licensed under the Apache License 2.0.
 //
@@ -16,7 +16,7 @@ import (
 )
 
 // TableOption tweaks a single Run invocation. Modelled after ardanlabs's
-// OptionFunc — kept minimal because Bodh tests rarely need more than skip.
+// OptionFunc — kept minimal because Bodhyanga tests rarely need more than skip.
 type TableOption func(*tableOptions)
 
 type tableOptions struct {
@@ -37,7 +37,7 @@ func WithSkip(skip bool, msg string) TableOption {
 // Run executes every row in table as a sub-test named "<testName>/<row.Name>".
 //
 // Adapted from ardanlabs/service/business/sdk/unittest/unittest.go.Run: the
-// shape is identical, but Bodh's variant defaults to context.Background()
+// shape is identical, but Bodhyanga's variant defaults to context.Background()
 // for the per-row call (the upstream uses the same default) and prints the
 // diff via t.Logf rather than fmt.Printf so it appears in test output
 // captured by -v.

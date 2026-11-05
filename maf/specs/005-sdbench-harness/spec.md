@@ -6,11 +6,11 @@
 
 **Status**: Draft
 
-**Input**: User description: "Port bodh's SD-Bench regression runner (`cmd/bench`) to bodh-maf:
+**Input**: User description: "Port bodhyanga's SD-Bench regression runner (`cmd/bench`) to bodhyanga-maf:
 an offline evaluation harness that loads a manifest of case fixtures, drives each through
 the MAF-go slice pipeline with the rule diagnostician (fully offline, CI-friendly), scores
 each case against its gold diagnosis, aggregates an accuracy report, and gates CI by
-failing on regression versus a stored baseline — the bodh-maf analog of `cmd/bench`, and
+failing on regression versus a stored baseline — the bodhyanga-maf analog of `cmd/bench`, and
 the only place evaluation exists on MAF-go (the framework is .NET-only for evals)."
 
 ## Context
@@ -19,7 +19,7 @@ The slice safety boundary (specs/001) is complete and green. The pipeline —
 `intake → test_planner → diagnostician → care_plan` with an admission boundary on every
 hop, an audit bridge, durable physician review, and a terminal-hop eval record — runs one
 case at a time via `pkg/pipeline.Runner` (`cmd/slice`). Each terminal case already emits
-exactly one `eval.InteractionRecord` (`pkg/evalhook`, closing bodh's eval-mirror gap).
+exactly one `eval.InteractionRecord` (`pkg/evalhook`, closing bodhyanga's eval-mirror gap).
 
 This feature adds the **fleet-level** view: run *many* fixtures in one headless pass, score
 each against a gold label, and compare the aggregate against a committed baseline so CI can
@@ -28,26 +28,26 @@ network, no Docker), which is what lets this harness run as a plain `go test` / 
 
 ### Ground-truth findings that shape this spec (all cited from files read, not assumed)
 
-- **No gold label in bodh-maf.** `agents.PatientCase` (`pkg/agents/types.go`) has only
+- **No gold label in bodhyanga-maf.** `agents.PatientCase` (`pkg/agents/types.go`) has only
   `CaseID`, `Symptoms []string`, `History []string` — no gold diagnosis. `evalhook.CaseOutcome`
   (`pkg/evalhook/hook.go`) records `Diagnosis` but no gold and no accuracy. **Gold must be
-  supplied by a manifest and accuracy re-derived by this harness**, exactly as bodh's
-  `cmd/bench` does (bodh's gold lives in `data/cases/manifest.json`, not in the case files).
-- **No cost data anywhere in bodh-maf.** A full scan (`grep -rin cost|usd|budget|price`)
+  supplied by a manifest and accuracy re-derived by this harness**, exactly as bodhyanga's
+  `cmd/bench` does (bodhyanga's gold lives in `data/cases/manifest.json`, not in the case files).
+- **No cost data anywhere in bodhyanga-maf.** A full scan (`grep -rin cost|usd|budget|price`)
   found no cost tracking in any executor or message: tests carry no price
   (`agents.TestResult` = `{Name, Value}`), the planner orders tests without cost
-  (`pkg/agents/testplanner.go`), and `DiagnosisResult`/`CarePlan` have no cost field. bodh's
+  (`pkg/agents/testplanner.go`), and `DiagnosisResult`/`CarePlan` have no cost field. bodhyanga's
   entire Pareto axis (`CostUSD`, `MeanCostUSD`, per-case `max_cost_usd`, the cost-ceiling
   regression gate) **has no data source here.** This feature therefore ships an
   **accuracy-only** benchmark; cost is a documented, flagged dependency (see FR-011 and the
-  Cost prerequisite). This is the single largest divergence from bodh's `cmd/bench`.
-- **Fixtures are not reusable as-is.** bodh's `bench_*.json` / `demo_*.json` fixtures carry
+  Cost prerequisite). This is the single largest divergence from bodhyanga's `cmd/bench`.
+- **Fixtures are not reusable as-is.** bodhyanga's `bench_*.json` / `demo_*.json` fixtures carry
   `chief_complaint`/`hpi`/`demographics`/`vitals` feeding `medical.PatientPresentation`;
-  bodh-maf's pipeline consumes `PatientCase{Symptoms, History}`. The vocabularies also
-  differ: bodh's rule engine yields Title-Case golds ("Diabetic ketoacidosis") while
-  bodh-maf's toy rules emit lowercase strings ("acute coronary syndrome",
+  bodhyanga-maf's pipeline consumes `PatientCase{Symptoms, History}`. The vocabularies also
+  differ: bodhyanga's rule engine yields Title-Case golds ("Diabetic ketoacidosis") while
+  bodhyanga-maf's toy rules emit lowercase strings ("acute coronary syndrome",
   "community-acquired pneumonia", "heart failure"; `pkg/agents/diagnostician.go`). **New
-  bodh-maf-native fixtures + manifest are required**; bodh's fixtures cannot be copied.
+  bodhyanga-maf-native fixtures + manifest are required**; bodhyanga's fixtures cannot be copied.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -81,7 +81,7 @@ produced / match, and one aggregate accuracy figure that equals matches ÷ score
    diff, in addition to (or instead of) the human table.
 4. **Given** a case whose produced diagnosis differs from gold only by surrounding
    whitespace or letter case, **When** it is scored, **Then** it counts as a match
-   (case-insensitive, trimmed comparison — bodh's `diagnosisMatch` semantics).
+   (case-insensitive, trimmed comparison — bodhyanga's `diagnosisMatch` semantics).
 
 ---
 
@@ -157,7 +157,7 @@ gate run against that fresh baseline reports no regression.
   declares no cases" message rather than reporting 100%/0% of nothing.
 - **Baseline file absent on first run** → treated as informational (not fatal): the report
   still prints, the message directs the user to update-baseline mode to create one, and the
-  gate cannot fire (nothing to compare against). This mirrors bodh's "missing baseline is
+  gate cannot fire (nothing to compare against). This mirrors bodhyanga's "missing baseline is
   informational" behavior.
 - **Manifest references a missing / unparseable fixture file** → a hard load error before
   any case runs (fail fast — a broken suite must not silently shrink).
@@ -179,7 +179,7 @@ gate run against that fresh baseline reports no regression.
   pipeline (`pkg/pipeline.Runner`) with the **rule diagnostician**, fully offline — no
   network, no credentials, no Docker — so it runs unmodified in CI.
 - **FR-003**: The harness MUST score each terminal case by comparing the produced diagnosis
-  against the case's gold diagnosis using a trimmed, case-insensitive equality (bodh's
+  against the case's gold diagnosis using a trimmed, case-insensitive equality (bodhyanga's
   `diagnosisMatch` semantics), yielding a per-case boolean match.
 - **FR-004**: The harness MUST report, per case: case id, gold diagnosis, produced
   diagnosis, match/failure/unscored status, and whether progression was forced; and MUST
@@ -201,8 +201,8 @@ gate run against that fresh baseline reports no regression.
 - **FR-010**: A missing baseline file MUST be informational (not fatal); an empty manifest
   and an unparseable/missing fixture MUST be fatal (fail fast). The harness MUST NOT report
   an accuracy figure for zero scored cases.
-- **FR-011** *(cost — DEFERRED / blocked)*: bodh's Pareto (accuracy-vs-cost) axis and its
-  cost-ceiling regression gate are **out of scope** for this feature because bodh-maf tracks
+- **FR-011** *(cost — DEFERRED / blocked)*: bodhyanga's Pareto (accuracy-vs-cost) axis and its
+  cost-ceiling regression gate are **out of scope** for this feature because bodhyanga-maf tracks
   no per-case or per-test cost (see Context findings). The report and baseline MUST be
   structured so a cost column and a cost gate can be added later without a breaking format
   change, and the missing-cost prerequisite MUST be documented (plan.md risks). No fabricated
@@ -211,23 +211,23 @@ gate run against that fresh baseline reports no regression.
   deterministic (rule engine only); no test may require credentials, a network, or Docker.
   (Live-LLM benchmarking, if ever added, is opt-in behind env flags — not part of this
   feature.)
-- **FR-013**: The harness MUST reuse bodh-maf's existing evaluation and pipeline surfaces
+- **FR-013**: The harness MUST reuse bodhyanga-maf's existing evaluation and pipeline surfaces
   where they fit (`pkg/pipeline.Runner`, `eval.Store`/`eval.InteractionRecord`,
   `agents.PatientCase`) rather than reimplementing them; gold-scoring, which those surfaces
   do not provide, is the new logic this feature adds.
 
 ### Key Entities
 
-- **Fixture**: one synthetic teaching case as a bodh-maf `PatientCase` (case id, symptoms,
+- **Fixture**: one synthetic teaching case as a bodhyanga-maf `PatientCase` (case id, symptoms,
   history) stored as a JSON file — no real patient data.
 - **Manifest**: the ordered list of fixtures with their gold diagnoses and metadata (tags);
-  the authoritative source of bench expectations, as in bodh.
+  the authoritative source of bench expectations, as in bodhyanga.
 - **Case result**: the outcome of running one fixture — produced diagnosis, forced flag,
   match/failure/unscored status, and the fixture's gold.
 - **Aggregate summary**: the suite-level roll-up (provider label, cases scored, accuracy
   percentage) that is compared against the baseline and printed as the headline.
 - **Baseline**: the committed record of a provider's expected accuracy (and case count and
-  timestamp) that the regression gate consults; the cost fields bodh's baseline carries are
+  timestamp) that the regression gate consults; the cost fields bodhyanga's baseline carries are
   omitted here pending the cost prerequisite.
 
 ## Success Criteria *(mandatory)*
@@ -253,13 +253,13 @@ gate run against that fresh baseline reports no regression.
 - The slice pipeline (`pkg/pipeline.Runner`, the rule diagnostician, the review gate) is the
   substrate this feature drives; its behavior is not changed by this feature — the harness is
   a new caller, not a pipeline edit.
-- bodh's evaluation library (`pkg/eval`) is consumable via the existing `replace ../bodh`;
+- bodhyanga's evaluation library (`pkg/eval`) is consumable via the existing `replace ../bodhyanga`;
   its `InteractionRecord`/`Store` and `diagnosisMatch` semantics are the authority for record
   shape and match comparison. Gold-vs-produced scoring is added by this feature because the
-  bodh-maf terminal record does not carry gold.
-- New bodh-maf-native fixtures and a manifest are authored for this feature (bodh's fixtures
+  bodhyanga-maf terminal record does not carry gold.
+- New bodhyanga-maf-native fixtures and a manifest are authored for this feature (bodhyanga's fixtures
   are incompatible — different case schema and diagnosis vocabulary); all fixtures are
-  synthetic teaching cases, no real patient data, consistent with bodh's NOTICE.
+  synthetic teaching cases, no real patient data, consistent with bodhyanga's NOTICE.
 - Cost/Pareto benchmarking is out of scope until the pipeline emits per-case cost; this is a
   named prerequisite, not a silent omission.
 - CI runs the harness (or its test wrapper) as an offline gate; live-LLM benchmarking is a

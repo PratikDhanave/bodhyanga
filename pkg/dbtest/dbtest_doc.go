@@ -1,4 +1,4 @@
-// Copyright 2024-2026 Pratik Dhanave and Bodh contributors.
+// Copyright 2024-2026 Pratik Dhanave and Bodhyanga contributors.
 // Portions adapted from github.com/ardanlabs/service/business/sdk/dbtest
 // and business/sdk/unittest, Copyright (c) 2018-2026 Ardan Labs, licensed
 // under the Apache License 2.0.
@@ -9,7 +9,7 @@
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
 
-// Package dbtest is Bodh's shared Postgres integration-test harness.
+// Package dbtest is Bodhyanga's shared Postgres integration-test harness.
 //
 // # Origin and credit
 //
@@ -28,14 +28,14 @@
 // NOTICE file; each source file in pkg/dbtest carries its own Apache 2.0
 // header naming the upstream.
 //
-// # What Bodh changed
+// # What Bodhyanga changed
 //
-// Bodh's adaptation departs from the upstream in three load-bearing ways:
+// Bodhyanga's adaptation departs from the upstream in three load-bearing ways:
 //
 //  1. Tenant scoping by RLS, not per-test database. ardanlabs/service
 //     creates a fresh "<random>.<image>" database per test and runs the full
-//     migration on each. Bodh has Postgres row-level security (db/migrations/
-//     0002_rls.sql) and a bodh_app role that NOBYPASSRLS — tearing it down
+//     migration on each. Bodhyanga has Postgres row-level security (db/migrations/
+//     0002_rls.sql) and a bodhyanga_app role that NOBYPASSRLS — tearing it down
 //     per test would blow the 20% test-runtime budget. Instead NewDB(t)
 //     returns a *DB whose TenantID is a unique "tenant_test_<hex>" scope.
 //     RLS makes other tenants' rows invisible.

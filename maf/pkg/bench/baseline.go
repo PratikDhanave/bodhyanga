@@ -11,7 +11,7 @@ import (
 )
 
 // accuracyToleranceP is the allowed accuracy drop (percentage points) before a
-// regression fires — bodh's accuracyToleranceP, accuracy-only.
+// regression fires — bodhyanga's accuracyToleranceP, accuracy-only.
 const accuracyToleranceP = 1.0
 
 // Baseline is the committed accuracy record (no mean_cost_usd — accuracy-only).

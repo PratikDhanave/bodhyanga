@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/comm"
-	"github.com/PratikDhanave/bodh/pkg/hitl"
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/comm"
+	"github.com/PratikDhanave/bodhyanga/pkg/hitl"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // mirrorBusToHub is the backend half of the event-driven SPA. It subscribes to

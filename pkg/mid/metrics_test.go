@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/errs"
-	"github.com/PratikDhanave/bodh/pkg/web"
+	"github.com/PratikDhanave/bodhyanga/pkg/errs"
+	"github.com/PratikDhanave/bodhyanga/pkg/web"
 )
 
 func TestMetrics_CountsRequestsAndErrors(t *testing.T) {

@@ -1,12 +1,12 @@
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/dev/sales/dev-sales-configmap.yaml
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
 # Dev ConfigMap patch — debug logs + Ollama as the diagnostician.
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: bodh-care-config
+  name: bodhyanga-care-config
 data:
-  BODH_LOG_LEVEL: "debug"
-  BODH_DIAGNOSTICIAN: "llm-ollama"
+  BODHYANGA_LOG_LEVEL: "debug"
+  BODHYANGA_DIAGNOSTICIAN: "llm-ollama"
   OLLAMA_HOST: "http://ollama:11434"

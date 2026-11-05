@@ -1,4 +1,4 @@
-# Bodh — unified developer Makefile.
+# Bodhyanga — unified developer Makefile.
 #
 # Every workflow lives here: build, test, evals, Ollama, SPA, Docker Compose,
 # migrations, Kubernetes, and container image builds.
@@ -101,8 +101,8 @@ CDSHOOKS_ADDR  ?= :8096
 
 # ----- Container / Compose --------------------------------------------------
 
-IMG_CARE  ?= localhost/bodh-care:dev
-IMG_ADMIN ?= localhost/bodh-kronk:dev
+IMG_CARE  ?= localhost/bodhyanga-care:dev
+IMG_ADMIN ?= localhost/bodhyanga-kronk:dev
 COMPOSE   := $(DOCKER) compose -f zarf/compose/docker_compose.yaml
 
 # ----- Kubernetes -----------------------------------------------------------
@@ -114,10 +114,10 @@ K8S_CONTEXT ?=
 
 LLM_ENV := \
 	OLLAMA_HOST=$(OLLAMA_HOST) \
-	BODH_OLLAMA_MODEL=$(OLLAMA_MODEL) \
-	BODH_ANTHROPIC_MODEL=$(ANTHROPIC_MODEL) \
-	BODH_OPENAI_MODEL=$(OPENAI_MODEL) \
-	BODH_KNOWLEDGE_CORPUS=$(KNOWLEDGE_CORPUS)
+	BODHYANGA_OLLAMA_MODEL=$(OLLAMA_MODEL) \
+	BODHYANGA_ANTHROPIC_MODEL=$(ANTHROPIC_MODEL) \
+	BODHYANGA_OPENAI_MODEL=$(OPENAI_MODEL) \
+	BODHYANGA_KNOWLEDGE_CORPUS=$(KNOWLEDGE_CORPUS)
 
 EVALS_ENV := \
 	EVALS_PROVIDER=$(EVALS_PROVIDER) \
@@ -138,7 +138,7 @@ WEB := cmd/care/web
 
 .PHONY: help
 help:
-	@echo "Bodh Makefile  (Go $$($(GO) version | awk '{print $$3}'))"
+	@echo "Bodhyanga Makefile  (Go $$($(GO) version | awk '{print $$3}'))"
 	@echo ""
 	@echo "━━━ Lessons (agents-v2 curriculum) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  make lesson-01       01-Intro-to-Agents: single LLM call (no tools, no loop)"
@@ -169,9 +169,9 @@ help:
 	@echo "  make caredemo        CDM/TCM/Panel demo (cmd/caredemo)"
 	@echo "  make bench           provider benchmark (cmd/bench)"
 	@echo "  make bench-compare   rule vs $(DIAGNOSTICIAN) side-by-side"
-	@echo "  make bodhadmin       build + install cmd/bodhadmin"
-	@echo "  make bodhctl         build + install cmd/bodhctl"
-	@echo "  make export-hitl     export HITL feedback to /tmp/bodh-ft"
+	@echo "  make bodhyangaadmin       build + install cmd/bodhyangaadmin"
+	@echo "  make bodhyangactl         build + install cmd/bodhyangactl"
+	@echo "  make export-hitl     export HITL feedback to /tmp/bodhyanga-ft"
 	@echo ""
 	@echo "━━━ maf/ subproject (MAF-go MARA slice — nested module) ━━━━━━━"
 	@echo "  make maf-build       cd maf && go build ./..."
@@ -212,7 +212,7 @@ help:
 	@echo "  make evals           run eval suite (default: Ollama, no API key)"
 	@echo "  make evals-fast      evals without LLM judge (EVALS_NO_JUDGE=1)"
 	@echo "  make evals-anthropic run evals against Anthropic (needs ANTHROPIC_API_KEY)"
-	@echo "  make evals-save      run evals, save scores to /tmp/bodh-evals.json"
+	@echo "  make evals-save      run evals, save scores to /tmp/bodhyanga-evals.json"
 	@echo "  Variables: EVALS_PROVIDER EVALS_AGENT_MODEL EVALS_DATASET EVALS_PASS_THRESHOLD"
 	@echo ""
 	@echo "━━━ Ollama (local LLM) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -242,14 +242,14 @@ help:
 	@echo "  make compose-down    stop + remove containers"
 	@echo "  make compose-ps      list container status"
 	@echo "  make compose-logs    stream logs (Ctrl-C to stop)"
-	@echo "  make compose-build   (re)build bodh-care image used by compose"
-	@echo "  make compose-restart restart bodh-care container only"
+	@echo "  make compose-build   (re)build bodhyanga-care image used by compose"
+	@echo "  make compose-restart restart bodhyanga-care container only"
 	@echo "  make compose-clean   down + delete named volumes (wipes DB!)"
 	@echo ""
 	@echo "━━━ Database migrations ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo "  make migrate         run all pending SQL migrations via cmd/bodhadmin"
+	@echo "  make migrate         run all pending SQL migrations via cmd/bodhyangaadmin"
 	@echo "  make migrate-status  show applied / pending migrations"
-	@echo "  DSN defaults to BODH_DB_DSN env var or postgres://postgres:postgres@localhost:5432/bodh"
+	@echo "  DSN defaults to BODHYANGA_DB_DSN env var or postgres://postgres:postgres@localhost:5432/bodhyanga"
 	@echo ""
 	@echo "━━━ Container images ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  make docker          build $(IMG_CARE)"
@@ -259,8 +259,8 @@ help:
 	@echo "━━━ Kubernetes ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  make k8s-diff        kustomize diff against cluster (K8S_ENV=dev|prod)"
 	@echo "  make k8s-apply       kustomize apply (K8S_ENV=dev|prod)"
-	@echo "  make k8s-status      kubectl get pods -n bodh"
-	@echo "  make k8s-logs        kubectl logs for bodh-care pods"
+	@echo "  make k8s-status      kubectl get pods -n bodhyanga"
+	@echo "  make k8s-logs        kubectl logs for bodhyanga-care pods"
 	@echo "  make k8s-validate    validate kustomize manifests (no cluster needed)"
 	@echo ""
 	@echo "━━━ Observability — Laminar (lmnr.ai) ━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -269,7 +269,7 @@ help:
 	@echo "  Env: LMNR_PROJECT_API_KEY  — Laminar project API key"
 	@echo "       LMNR_BASE_URL         — override endpoint (self-hosted: http://localhost:8000)"
 	@echo "       LMNR_GROUP_NAME       — eval group name (default: my_first_feature)"
-	@echo "       BODH_SERVICE_NAME     — OTel service.name (default: bodh)"
+	@echo "       BODHYANGA_SERVICE_NAME     — OTel service.name (default: bodhyanga)"
 	@echo "  Build: go build -tags otel ./cmd/care     enables Laminar OTLP export"
 	@echo ""
 	@echo "━━━ Variables ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -366,11 +366,11 @@ VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 ## Build release binaries with version info embedded.
 ##   make release VERSION=v1.0.0
 release:
-	@echo "Building Bodh $(VERSION)..."
+	@echo "Building Bodhyanga $(VERSION)..."
 	$(GO) build -ldflags "-X main.version=$(VERSION)" -o bin/care    ./cmd/care/...
 	$(GO) build -ldflags "-X main.version=$(VERSION)" -o bin/demo    ./cmd/demo/...
 	$(GO) build -ldflags "-X main.version=$(VERSION)" -o bin/bench   ./cmd/bench/...
-	$(GO) build -ldflags "-X main.version=$(VERSION)" -o bin/bodhctl ./cmd/bodhctl/...
+	$(GO) build -ldflags "-X main.version=$(VERSION)" -o bin/bodhyangactl ./cmd/bodhyangactl/...
 	@echo "Binaries in bin/"
 	@ls -lh bin/
 
@@ -378,8 +378,8 @@ release:
 ## Build + tag Docker image for release.
 ##   make docker-release VERSION=v1.0.0
 docker-release:
-	docker build -t bodh-care:$(VERSION) -t bodh-care:latest .
-	@echo "Tagged: bodh-care:$(VERSION) bodh-care:latest"
+	docker build -t bodhyanga-care:$(VERSION) -t bodhyanga-care:latest .
+	@echo "Tagged: bodhyanga-care:$(VERSION) bodhyanga-care:latest"
 
 .PHONY: coverage-check
 ## Fail if test coverage drops below 80%.
@@ -478,17 +478,17 @@ bench:
 bench-compare:
 	$(LLM_ENV) $(GO) run ./cmd/bench -providers=rule,$(DIAGNOSTICIAN) $(ARGS)
 
-.PHONY: bodhadmin
-bodhadmin:
-	$(GO) install ./cmd/bodhadmin
+.PHONY: bodhyangaadmin
+bodhyangaadmin:
+	$(GO) install ./cmd/bodhyangaadmin
 
-.PHONY: bodhctl
-bodhctl:
-	$(GO) install ./cmd/bodhctl
+.PHONY: bodhyangactl
+bodhyangactl:
+	$(GO) install ./cmd/bodhyangactl
 
 .PHONY: export-hitl
 export-hitl:
-	$(GO) run ./cmd/export-hitl-feedback -in data/hitl-sample.json -out-dir /tmp/bodh-ft
+	$(GO) run ./cmd/export-hitl-feedback -in data/hitl-sample.json -out-dir /tmp/bodhyanga-ft
 
 # ===========================================================================
 # LESSONS — step-by-step tutorials
@@ -673,8 +673,8 @@ evals-anthropic:
 
 .PHONY: evals-save
 evals-save:
-	$(EVALS_ENV) $(GO) run ./cmd/evals -output /tmp/bodh-evals.json $(ARGS)
-	@echo "Scores written to /tmp/bodh-evals.json"
+	$(EVALS_ENV) $(GO) run ./cmd/evals -output /tmp/bodhyanga-evals.json $(ARGS)
+	@echo "Scores written to /tmp/bodhyanga-evals.json"
 
 # ===========================================================================
 # OLLAMA
@@ -815,11 +815,11 @@ compose-logs:
 
 .PHONY: compose-build
 compose-build:
-	$(COMPOSE) build bodh-care
+	$(COMPOSE) build bodhyanga-care
 
 .PHONY: compose-restart
 compose-restart:
-	$(COMPOSE) restart bodh-care
+	$(COMPOSE) restart bodhyanga-care
 
 .PHONY: compose-clean
 compose-clean:
@@ -831,15 +831,15 @@ compose-clean:
 # DATABASE MIGRATIONS
 # ===========================================================================
 
-DSN ?= $(or $(BODH_DB_DSN),postgres://postgres:postgres@localhost:5432/bodh?sslmode=disable)
+DSN ?= $(or $(BODHYANGA_DB_DSN),postgres://postgres:postgres@localhost:5432/bodhyanga?sslmode=disable)
 
 .PHONY: migrate
 migrate:
-	$(GO) run ./cmd/bodhadmin migrate -dsn "$(DSN)" $(ARGS)
+	$(GO) run ./cmd/bodhyangaadmin migrate -dsn "$(DSN)" $(ARGS)
 
 .PHONY: migrate-status
 migrate-status:
-	$(GO) run ./cmd/bodhadmin migrate -dsn "$(DSN)" -status $(ARGS)
+	$(GO) run ./cmd/bodhyangaadmin migrate -dsn "$(DSN)" -status $(ARGS)
 
 # ===========================================================================
 # CONTAINER IMAGES
@@ -851,13 +851,13 @@ docker:
 
 .PHONY: docker-admin
 docker-admin:
-	$(DOCKER) build -t $(IMG_ADMIN) -f zarf/docker/Dockerfile.bodhadmin \
+	$(DOCKER) build -t $(IMG_ADMIN) -f zarf/docker/Dockerfile.bodhyangaadmin \
 		--build-arg TAGS=kronk .
 
 .PHONY: docker-run
 docker-run:
 	$(DOCKER) run --rm -p 8088:8088 \
-		-e BODH_DIAGNOSTICIAN=$(DIAGNOSTICIAN) \
+		-e BODHYANGA_DIAGNOSTICIAN=$(DIAGNOSTICIAN) \
 		-e OLLAMA_HOST=$(OLLAMA_HOST) \
 		$(IMG_CARE)
 
@@ -887,11 +887,11 @@ k8s-apply:
 
 .PHONY: k8s-status
 k8s-status:
-	$(KUBECTL) $(_k8s_ctx) get pods,svc,ingress -n bodh
+	$(KUBECTL) $(_k8s_ctx) get pods,svc,ingress -n bodhyanga
 
 .PHONY: k8s-logs
 k8s-logs:
-	$(KUBECTL) $(_k8s_ctx) logs -n bodh -l app=bodh-care -f $(ARGS)
+	$(KUBECTL) $(_k8s_ctx) logs -n bodhyanga -l app=bodhyanga-care -f $(ARGS)
 
 # ===========================================================================
 # MAF SUBPROJECT (maf/ — MARA pipeline on Microsoft Agent Framework for Go)

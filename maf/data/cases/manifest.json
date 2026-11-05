@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "description": "bodh-maf SD-Bench synthetic suite (accuracy-only; cost is a flagged pipeline prerequisite). Rule-engine golds use the diagnostician's lowercase vocabulary.",
+  "description": "bodhyanga-maf SD-Bench synthetic suite (accuracy-only; cost is a flagged pipeline prerequisite). Rule-engine golds use the diagnostician's lowercase vocabulary.",
   "cases": [
     {"id": "acs",    "path": "acs.json",    "gold_diagnosis": "acute coronary syndrome",    "tags": ["cardiac"]},
     {"id": "cap",    "path": "cap.json",    "gold_diagnosis": "community-acquired pneumonia", "tags": ["respiratory"]},

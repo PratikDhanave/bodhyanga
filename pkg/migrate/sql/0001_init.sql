@@ -55,10 +55,10 @@ CREATE INDEX IF NOT EXISTS audit_events_tenant_kind_idx
 INSERT INTO audit_events
     (tenant_id, id, at, kind, agent_id, reason)
 VALUES
-    ('_bodh_system',
+    ('_bodhyanga_system',
      'mig-bootstrap-0001',
      now(),
      'schema_migration',
-     'bodh-migrator',
+     'bodhyanga-migrator',
      '0001_init.sql: init')
 ON CONFLICT (tenant_id, id) DO NOTHING;

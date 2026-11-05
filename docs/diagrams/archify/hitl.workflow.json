@@ -48,7 +48,7 @@
     { "id": "e-resume", "from": "resume", "to": "downstream", "label": "resume", "role": "main", "fromSide": "top", "toSide": "bottom" }
   ],
   "cards": [
-    { "dot": "rose", "title": "Fail-closed", "items": ["No consequential action proceeds without approval", "The gate is the Cures Act independent-review criterion, in code", "Bypassing it makes Bodh a regulated medical device"] },
+    { "dot": "rose", "title": "Fail-closed", "items": ["No consequential action proceeds without approval", "The gate is the Cures Act independent-review criterion, in code", "Bypassing it makes Bodhyanga a regulated medical device"] },
     { "dot": "cyan", "title": "What is gated", "items": ["Diagnosis conclusions & treatment plans", "Discharge, refill and prior-auth approvals", "Outreach on 42 CFR Part 2 protected conditions"] },
     { "dot": "amber", "title": "Cascades", "items": ["An approved action can trigger a downstream agent", "That agent may emit its own review_request", "The queue drains across rounds until quiet"] }
   ]

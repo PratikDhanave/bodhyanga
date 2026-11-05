@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/PratikDhanave/bodh/pkg/eval"
-	"github.com/PratikDhanave/bodh/pkg/eval/equity"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval/equity"
 )
 
 func main() {

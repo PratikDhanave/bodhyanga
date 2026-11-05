@@ -10,7 +10,7 @@
 //   - wrong tenant -> 403
 //
 // Plus the dev-mode escape hatch: Authenticator == nil bypasses both
-// middlewares so cmd/care continues to work with BODH_AUTH=disabled.
+// middlewares so cmd/care continues to work with BODHYANGA_AUTH=disabled.
 
 package mid
 
@@ -22,7 +22,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/PratikDhanave/bodh/pkg/auth"
+	"github.com/PratikDhanave/bodhyanga/pkg/auth"
 )
 
 // newAuth builds a one-kid Authenticator + a helper that mints a token
@@ -38,10 +38,10 @@ func newAuth(t *testing.T) (*auth.Authenticator, func(claims auth.Claims) string
 	if err := ks.LoadRSAPEM(kid, priv); err != nil {
 		t.Fatalf("load pem: %v", err)
 	}
-	a := auth.New(auth.Config{KeyLookup: ks, Issuer: "bodh-test"})
+	a := auth.New(auth.Config{KeyLookup: ks, Issuer: "bodhyanga-test"})
 	mint := func(c auth.Claims) string {
 		if c.Issuer == "" {
-			c.Issuer = "bodh-test"
+			c.Issuer = "bodhyanga-test"
 		}
 		if c.ExpiresAt == nil {
 			c.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Hour))
@@ -64,7 +64,7 @@ var okHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 })
 
 func TestAuthenticate_DisabledBypass(t *testing.T) {
-	// Authenticator == nil -> middleware no-ops. BODH_AUTH=disabled
+	// Authenticator == nil -> middleware no-ops. BODHYANGA_AUTH=disabled
 	// preserves current dev UX.
 	h := Authenticate(nil)(okHandler)
 	rr := httptest.NewRecorder()

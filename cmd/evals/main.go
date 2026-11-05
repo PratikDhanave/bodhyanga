@@ -1,4 +1,4 @@
-// Copyright 2025 The Bodh Authors
+// Copyright 2025 The Bodhyanga Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -6,7 +6,7 @@
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
 
-// Command evals runs Bodh's multi-turn agent evaluation suite.
+// Command evals runs Bodhyanga's multi-turn agent evaluation suite.
 //
 // # What it tests
 //
@@ -67,8 +67,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/PratikDhanave/bodh/pkg/evals/multiturn"
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/evals/multiturn"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 func main() {

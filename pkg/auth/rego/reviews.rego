@@ -1,7 +1,7 @@
-# Authorization policy for /api/reviews — Bodh HITL gate (21 USC §360j(o)(1)
+# Authorization policy for /api/reviews — Bodhyanga HITL gate (21 USC §360j(o)(1)
 # CDS carve-out criterion 4 "independent review" surface).
 #
-# Authored for Bodh. Adapted in shape from
+# Authored for Bodhyanga. Adapted in shape from
 # https://github.com/ardanlabs/service/blob/master/app/sdk/auth/rego/authorization.rego
 # (Apache 2.0).
 #
@@ -17,7 +17,7 @@
 #   input.Path     — request URL path (e.g. "/api/reviews",
 #                    "/api/reviews/{id}", "/api/reviews/{id}/decide").
 #   input.TenantID — JWT's tenant_id claim.
-#   input.ResourceTenantID — binary's BODH_TENANT_ID.
+#   input.ResourceTenantID — binary's BODHYANGA_TENANT_ID.
 #
 # Policy summary:
 #   GET  /api/reviews            -> clinician | compliance_officer | nurse
@@ -26,7 +26,7 @@
 #   POST /api/reviews/{id}/decide -> clinician | compliance_officer ONLY,
 #                                    same tenant. NEVER nurse.
 
-package bodh.reviews
+package bodhyanga.reviews
 
 import rego.v1
 

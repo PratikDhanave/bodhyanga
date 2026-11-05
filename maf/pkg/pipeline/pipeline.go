@@ -4,12 +4,12 @@
 package pipeline
 
 import (
-	"github.com/PratikDhanave/bodh/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
 	"github.com/microsoft/agent-framework-go/workflow"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/admit"
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
-	"github.com/PratikDhanave/bodh-maf/pkg/intake"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/admit"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/intake"
 )
 
 // Config parameterizes the graph. Zero values get slice defaults
@@ -87,7 +87,7 @@ func New(cfg Config) (*workflow.Workflow, error) {
 	b = b.
 		AddEdge(planner, diagnostician).
 		AddDirectEdge(diagnostician, planner, false, isQuery).
-		WithName("bodh-maf MARA slice")
+		WithName("bodhyanga-maf MARA slice")
 
 	if !cfg.Review {
 		return b.

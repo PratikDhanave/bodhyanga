@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/medical"
-	"github.com/PratikDhanave/bodh/pkg/tasks"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/tasks"
 )
 
 func TestTCMCoordinatorIDNameCapabilities(t *testing.T) {

@@ -95,9 +95,9 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
 }
 
-// ─── Built-in Bodh hook handlers ─────────────────────────────────────────────
+// ─── Built-in Bodhyanga hook handlers ─────────────────────────────────────────────
 
-// BuiltinServices returns the four built-in Bodh CDS services and their handlers.
+// BuiltinServices returns the four built-in Bodhyanga CDS services and their handlers.
 // Register all of them in one call:
 //
 //	for _, pair := range cdshooks.BuiltinServices() {
@@ -108,8 +108,8 @@ func BuiltinServices() []ServiceHandler {
 		{
 			Service: Service{
 				Hook:        HookPatientView,
-				ID:          "bodh-patient-view",
-				Title:       "Bodh — Preventive Care Gaps",
+				ID:          "bodhyanga-patient-view",
+				Title:       "Bodhyanga — Preventive Care Gaps",
 				Description: "Checks for overdue panel gaps (A1c, BP, mammogram, colonoscopy) and returns warning cards for each gap.",
 				Prefetch: map[string]string{
 					"patient": "Patient/{{context.patientId}}",
@@ -120,8 +120,8 @@ func BuiltinServices() []ServiceHandler {
 		{
 			Service: Service{
 				Hook:        HookMedPrescribe,
-				ID:          "bodh-medication-prescribe",
-				Title:       "Bodh — Drug-Drug Interaction Check",
+				ID:          "bodhyanga-medication-prescribe",
+				Title:       "Bodhyanga — Drug-Drug Interaction Check",
 				Description: "Screens draft medication orders for high-severity drug-drug interactions and returns critical cards.",
 				Prefetch: map[string]string{
 					"medications": "MedicationRequest?patient={{context.patientId}}&status=active",
@@ -132,8 +132,8 @@ func BuiltinServices() []ServiceHandler {
 		{
 			Service: Service{
 				Hook:        HookOrderSign,
-				ID:          "bodh-order-sign",
-				Title:       "Bodh — Diagnostic Cost Check",
+				ID:          "bodhyanga-order-sign",
+				Title:       "Bodhyanga — Diagnostic Cost Check",
 				Description: "Compares the cost of draft diagnostic orders against the patient's plan budget and returns an info card when over threshold.",
 			},
 			Handler: orderSignHandler,
@@ -141,8 +141,8 @@ func BuiltinServices() []ServiceHandler {
 		{
 			Service: Service{
 				Hook:        HookEncounterDischarge,
-				ID:          "bodh-encounter-discharge",
-				Title:       "Bodh — TCM Follow-Up",
+				ID:          "bodhyanga-encounter-discharge",
+				Title:       "Bodhyanga — TCM Follow-Up",
 				Description: "Suggests a Transitional Care Management follow-up appointment after discharge to reduce readmission risk.",
 			},
 			Handler: encounterDischargeHandler,
@@ -175,8 +175,8 @@ func patientViewHandler(_ context.Context, req CDSRequest) (CDSResponse, error) 
 			Detail:    fmt.Sprintf("**%s** is overdue per current preventive care guidelines. Consider scheduling or ordering today.", gap),
 			Indicator: "warning",
 			Source: Source{
-				Label: "Bodh Preventive Care Engine",
-				URL:   "https://github.com/PratikDhanave/bodh",
+				Label: "Bodhyanga Preventive Care Engine",
+				URL:   "https://github.com/PratikDhanave/bodhyanga",
 			},
 			Suggestions: []Suggestion{
 				{
@@ -241,8 +241,8 @@ func medPrescribeHandler(_ context.Context, req CDSRequest) (CDSResponse, error)
 				Detail:    fmt.Sprintf("**%s** and **%s** have a known HIGH-severity drug-drug interaction. Review patient medications before signing.", medA, medB),
 				Indicator: "critical",
 				Source: Source{
-					Label: "Bodh DDI Engine",
-					URL:   "https://github.com/PratikDhanave/bodh",
+					Label: "Bodhyanga DDI Engine",
+					URL:   "https://github.com/PratikDhanave/bodhyanga",
 				},
 				Links: []Link{
 					{
@@ -283,8 +283,8 @@ func orderSignHandler(_ context.Context, req CDSRequest) (CDSResponse, error) {
 				Detail:    fmt.Sprintf("The estimated cost of the current order set (**$%.2f**) exceeds the patient's plan diagnostic budget (**$%.2f**). Review orders for alternatives.", estimatedCost, threshold),
 				Indicator: "info",
 				Source: Source{
-					Label: "Bodh Diagnostic Cost Engine",
-					URL:   "https://github.com/PratikDhanave/bodh",
+					Label: "Bodhyanga Diagnostic Cost Engine",
+					URL:   "https://github.com/PratikDhanave/bodhyanga",
 				},
 			},
 		},
@@ -309,8 +309,8 @@ func encounterDischargeHandler(_ context.Context, req CDSRequest) (CDSResponse, 
 				Detail:    detail,
 				Indicator: "info",
 				Source: Source{
-					Label: "Bodh Care Transitions Engine",
-					URL:   "https://github.com/PratikDhanave/bodh",
+					Label: "Bodhyanga Care Transitions Engine",
+					URL:   "https://github.com/PratikDhanave/bodhyanga",
 				},
 				Suggestions: []Suggestion{
 					{

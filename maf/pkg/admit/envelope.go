@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 	"github.com/google/uuid"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
 // Message-type labels — the wire-level catalog governance and audit see.

@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// End-to-end browser tests for the Bodh clinician console. Each test boots
+// End-to-end browser tests for the Bodhyanga clinician console. Each test boots
 // the real cmd/care binary (rule-based diagnostician — deterministic, no
 // API key required), navigates the served SPA, and asserts on what the
 // user sees plus what the backend records.
@@ -10,10 +10,10 @@ import { defineConfig, devices } from '@playwright/test';
 // Then:
 //   npm run test:e2e
 //
-// Inside Bodh:
+// Inside Bodhyanga:
 //   make e2e                         # equivalent, from repo root
 //
-// Set BODH_E2E_REUSE_SERVER=1 to use an already-running cmd/care instead
+// Set BODHYANGA_E2E_REUSE_SERVER=1 to use an already-running cmd/care instead
 // of spawning a fresh one; useful when iterating on tests locally.
 export default defineConfig({
   testDir: './e2e',
@@ -39,7 +39,7 @@ export default defineConfig({
     command: 'make care DIAGNOSTICIAN=rule',
     url: 'http://localhost:8088/healthz',
     timeout: 120_000,
-    reuseExistingServer: !!process.env.BODH_E2E_REUSE_SERVER,
+    reuseExistingServer: !!process.env.BODHYANGA_E2E_REUSE_SERVER,
     stdout: 'pipe',
     stderr: 'pipe',
     cwd: '../../..',

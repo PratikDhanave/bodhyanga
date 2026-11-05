@@ -1,6 +1,6 @@
 # Model Card — `LLMDiagnostician`
 
-> **Card version:** 1.0.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodh maintainers
+> **Card version:** 1.0.0 · **Last reviewed:** 2026-05-25 · **Author:** Bodhyanga maintainers
 
 ## Model details
 
@@ -9,12 +9,12 @@
 - **Type:** Single-LLM-call agent with deterministic rule-based fallback
 - **Default LLM provider:** Anthropic / OpenAI / Ollama (selected via `-diagnostician=llm-{anthropic,openai,ollama}`)
 - **Default LLM models:**
-  - Anthropic: `claude-sonnet-4-6` (override via `BODH_ANTHROPIC_MODEL`)
-  - OpenAI: `gpt-4o` (override via `BODH_OPENAI_MODEL`)
-  - Ollama: `llama3.2` (override via `BODH_OLLAMA_MODEL`)
+  - Anthropic: `claude-sonnet-4-6` (override via `BODHYANGA_ANTHROPIC_MODEL`)
+  - OpenAI: `gpt-4o` (override via `BODHYANGA_OPENAI_MODEL`)
+  - Ollama: `llama3.2` (override via `BODHYANGA_OLLAMA_MODEL`)
 - **Provider-configurable:** yes
-- **License:** Apache-2.0 (Bodh) / provider terms (LLM)
-- **Maintainer:** Bodh project
+- **License:** Apache-2.0 (Bodhyanga) / provider terms (LLM)
+- **Maintainer:** Bodhyanga project
 
 ## Intended use
 
@@ -29,7 +29,7 @@
 
 - **Relevant conditions:** Any condition the underlying LLM's training data covers + RAG corpus when enabled. Empirically wider than the rule-based variant.
 - **Patient demographics:** Inherits any biases in the underlying LLM. Equity audit pipeline planned.
-- **Instrumentation:** Same `CaseState` inputs as rule-based; optional `BODH_KNOWLEDGE_CORPUS` enables RAG with `HybridStore` (vector + BM25 + reciprocal-rank fusion).
+- **Instrumentation:** Same `CaseState` inputs as rule-based; optional `BODHYANGA_KNOWLEDGE_CORPUS` enables RAG with `HybridStore` (vector + BM25 + reciprocal-rank fusion).
 - **Environment:** Always invoked downstream of `cost_guardian`; always upstream of `reasoning_verifier`. Prompt caching enabled by default on Anthropic and OpenAI.
 
 ## Metrics
@@ -40,7 +40,7 @@ LLM-provider bench results are deployment-dependent (model version, API region, 
 
 | Metric | Expected range |
 |---|---|
-| Accuracy (exact-match) | 85-92% on Bodh's 7-fixture bench (typical) |
+| Accuracy (exact-match) | 85-92% on Bodhyanga's 7-fixture bench (typical) |
 | Mean cost USD | ~$240 (same workups as rule provider; test_planner is shared) |
 | Mean message steps | 11.0 |
 | Latency p50 | 2-5s per LLM call |
@@ -94,6 +94,6 @@ Compare the per-provider accuracy, mean cost, and Pareto score. The interesting 
 ## References
 
 - [agents/diagnostician_llm.go](../../agents/diagnostician_llm.go)
-- [bodh-linkedin/04-fallback-is-the-contract.md](../../bodh-linkedin/04-fallback-is-the-contract.md) — the fallback contract write-up
+- [bodhyanga-linkedin/04-fallback-is-the-contract.md](../../bodhyanga-linkedin/04-fallback-is-the-contract.md) — the fallback contract write-up
 - [docs/compliance.md § HIPAA Privacy Rule](../compliance.md#hipaa-privacy-rule) — BAA chain
 - [docs/ai-features.md](../ai-features.md) — RAG + prompt caching setup

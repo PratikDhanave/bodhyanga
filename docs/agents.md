@@ -1,6 +1,6 @@
-# Bodh — Agent Reference
+# Bodhyanga — Agent Reference
 
-Every Bodh agent implements the same five-method interface. This document is the field guide: what each agent does, what messages it accepts, what it emits, what shared state it touches, and what its failure modes are.
+Every Bodhyanga agent implements the same five-method interface. This document is the field guide: what each agent does, what messages it accepts, what it emits, what shared state it touches, and what its failure modes are.
 
 > See [architecture.md](architecture.md) for the orchestrator pattern, [api.md](api.md) for the HTTP surface, [data-model.md](data-model.md) for the clinical types.
 
@@ -179,7 +179,7 @@ All variants share `agents/diagnostician_factory.go` (`NewDiagnostician(provider
 
 - **Source:** [agents/diagnostician_llm.go](../agents/diagnostician_llm.go)
 - **CLI:** `-diagnostician=llm-anthropic | llm-openai | llm-ollama`
-- **Behaviour:** Builds the same `DiagnosisProposal` JSON shape from the same `CaseState` input as the rule-based agent. The cost guardian, reasoning verifier, HITL gate, and supervisor logic are unchanged. RAG support via `knowledge.HybridStore` when `BODH_KNOWLEDGE_CORPUS` is set.
+- **Behaviour:** Builds the same `DiagnosisProposal` JSON shape from the same `CaseState` input as the rule-based agent. The cost guardian, reasoning verifier, HITL gate, and supervisor logic are unchanged. RAG support via `knowledge.HybridStore` when `BODHYANGA_KNOWLEDGE_CORPUS` is set.
 - **Fallback:** Any per-call failure (timeout, malformed JSON, transport error, confidence below `MinConfidence`, hallucination check, refusal phrase) routes to `DiagnosticianAgent`.
 
 ### `LLMDiagnosticianVision`

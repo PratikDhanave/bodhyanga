@@ -9,7 +9,7 @@
 // software must "enable the health care professional to independently
 // review the basis for the recommendations." Without an enforced review
 // gate the platform tips into being a regulated medical device under FDA
-// jurisdiction. See bodh-linkedin/02-cures-act-as-code.md for the long
+// jurisdiction. See bodhyanga-linkedin/02-cures-act-as-code.md for the long
 // write-up; docs/architecture.md § Human-in-the-loop pattern for the
 // in-tree summary including the envelope-key catalog and the gated-agent
 // inventory.
@@ -29,7 +29,7 @@ import (
 	// medical is imported for the ReviewRequest type and the
 	// ReviewStatus lifecycle constants. The queue is a pure container;
 	// it does not interpret Kind or Payload contents.
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 	// uuid backs ReviewRequest.ID generation. The ID is the resume
 	// handle the reviewer references when calling /reviews/{id}/decide.
 	"github.com/google/uuid"

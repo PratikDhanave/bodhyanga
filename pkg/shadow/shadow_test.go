@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // TestConcordanceLedger_Append verifies that records are stored in memory

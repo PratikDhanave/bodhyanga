@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // TestHubSubscribeBroadcast verifies that a subscribed channel receives

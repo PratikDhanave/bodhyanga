@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/webhooks"
+	"github.com/PratikDhanave/bodhyanga/pkg/webhooks"
 )
 
 // --- Dispatch: inactive endpoint skipped ---

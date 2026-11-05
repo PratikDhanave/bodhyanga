@@ -1,6 +1,6 @@
-# Authorization policy for /api/audit — Bodh HIPAA §164.312(b) audit log read.
+# Authorization policy for /api/audit — Bodhyanga HIPAA §164.312(b) audit log read.
 #
-# Authored for Bodh. Adapted in shape from
+# Authored for Bodhyanga. Adapted in shape from
 # https://github.com/ardanlabs/service/blob/master/app/sdk/auth/rego/authorization.rego
 # (Apache 2.0).
 #
@@ -11,7 +11,7 @@
 # Input contract:
 #   input.Roles — array of role strings from JWT claims.
 
-package bodh.audit
+package bodhyanga.audit
 
 import rego.v1
 

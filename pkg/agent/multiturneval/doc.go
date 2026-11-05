@@ -1,5 +1,5 @@
 // Package multiturneval provides a multi-turn conversation evaluation harness
-// for Bodh LLM agents.
+// for Bodhyanga LLM agents.
 //
 // # What multi-turn evals add over single-turn
 //

@@ -11,15 +11,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/eval"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/eval"
 	"github.com/microsoft/agent-framework-go/workflow"
 	"github.com/microsoft/agent-framework-go/workflow/checkpoint"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/admit"
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
-	"github.com/PratikDhanave/bodh-maf/pkg/auditbridge"
-	"github.com/PratikDhanave/bodh-maf/pkg/pipeline"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/admit"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/auditbridge"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/pipeline"
 )
 
 func TestExitCriterion1_AdmissionFidelity(t *testing.T) {

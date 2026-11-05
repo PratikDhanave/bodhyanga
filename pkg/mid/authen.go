@@ -1,7 +1,7 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/app/sdk/mid/authen.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh:
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga:
 //   - stdlib net/http middleware (not the upstream ardanlabs/service web.MidFunc).
-//   - No userbus / Basic-auth path: Bodh does not manage credentials.
+//   - No userbus / Basic-auth path: Bodhyanga does not manage credentials.
 //   - ContextKey type is unexported; access via Claims(ctx) accessor.
 
 package mid
@@ -11,7 +11,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/PratikDhanave/bodh/pkg/auth"
+	"github.com/PratikDhanave/bodhyanga/pkg/auth"
 )
 
 // claimsKey is the unexported context key for Claims. Unexported so
@@ -25,7 +25,7 @@ func WithClaims(ctx context.Context, c auth.Claims) context.Context {
 }
 
 // Claims pulls the Claims out of ctx. Returns zero-value + false when
-// no claims are present (e.g. BODH_AUTH=disabled, or middleware not
+// no claims are present (e.g. BODHYANGA_AUTH=disabled, or middleware not
 // installed).
 func Claims(ctx context.Context) (auth.Claims, bool) {
 	v, ok := ctx.Value(claimsKey{}).(auth.Claims)
@@ -37,7 +37,7 @@ func Claims(ctx context.Context) (auth.Claims, bool) {
 // stashes the parsed Claims in the request context. On failure it
 // writes 401 and stops the chain.
 //
-// The middleware is no-op-safe: if a == nil (BODH_AUTH=disabled) the
+// The middleware is no-op-safe: if a == nil (BODHYANGA_AUTH=disabled) the
 // inner handler runs without any Claims context entry. This is the
 // dev-mode escape hatch promised in the task spec.
 func Authenticate(a *auth.Authenticator) func(http.Handler) http.Handler {

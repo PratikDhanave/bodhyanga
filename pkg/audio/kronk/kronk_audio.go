@@ -1,7 +1,7 @@
 // Package kronk wraps the Ardan Labs kronk SDK to provide an on-prem
-// Whisper-style audio transcriber for Bodh. This file is compiled ONLY
+// Whisper-style audio transcriber for Bodhyanga. This file is compiled ONLY
 // when the `kronk` build tag is set (e.g. `go build -tags kronk
-// ./cmd/care`). The default Bodh build does not link the kronk runtime
+// ./cmd/care`). The default Bodhyanga build does not link the kronk runtime
 // — see kronk_audio_stub.go for the no-op constructor used otherwise.
 //
 // Wiring (cmd/care/main.go, also under `//go:build kronk`):
@@ -30,7 +30,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/audio"
+	"github.com/PratikDhanave/bodhyanga/pkg/audio"
 
 	// kronk is the upstream Ardan Labs SDK. Adding it to go.mod is gated
 	// behind this build tag so the default `go.sum` stays tiny.

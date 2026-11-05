@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/governance"
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 func TestInMemoryRecord(t *testing.T) {

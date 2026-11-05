@@ -79,14 +79,14 @@ function CarePlanCard({ patient }: { patient: import('../types').PatientRecord }
       <div className="card-header">{t('portal.care_plan')}</div>
       <div className="card-body space-y-4 text-sm">
         <section>
-          <h3 className="text-xs uppercase tracking-wide text-bodh-400 mb-2">{t('portal.conditions')}</h3>
+          <h3 className="text-xs uppercase tracking-wide text-bodhyanga-400 mb-2">{t('portal.conditions')}</h3>
           {conditions.length === 0 ? (
-            <p className="text-bodh-400">{t('portal.no_conditions')}</p>
+            <p className="text-bodhyanga-400">{t('portal.no_conditions')}</p>
           ) : (
             <ul className="space-y-1">
               {conditions.map((c) => (
                 <li key={c} className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-bodh-500 inline-block" />
+                  <span className="w-2 h-2 rounded-full bg-bodhyanga-500 inline-block" />
                   {c}
                 </li>
               ))}
@@ -95,9 +95,9 @@ function CarePlanCard({ patient }: { patient: import('../types').PatientRecord }
         </section>
 
         <section>
-          <h3 className="text-xs uppercase tracking-wide text-bodh-400 mb-2">{t('portal.medications')}</h3>
+          <h3 className="text-xs uppercase tracking-wide text-bodhyanga-400 mb-2">{t('portal.medications')}</h3>
           {medications.length === 0 ? (
-            <p className="text-bodh-400">{t('portal.no_medications')}</p>
+            <p className="text-bodhyanga-400">{t('portal.no_medications')}</p>
           ) : (
             <ul className="space-y-1">
               {medications.map((m) => (
@@ -110,8 +110,8 @@ function CarePlanCard({ patient }: { patient: import('../types').PatientRecord }
         </section>
 
         <section>
-          <h3 className="text-xs uppercase tracking-wide text-bodh-400 mb-2">{t('portal.goals')}</h3>
-          <ul className="space-y-1 text-bodh-600">
+          <h3 className="text-xs uppercase tracking-wide text-bodhyanga-400 mb-2">{t('portal.goals')}</h3>
+          <ul className="space-y-1 text-bodhyanga-600">
             {conditions.includes('diabetes') && (
               <li>{t('portal.goal.a1c')}</li>
             )}
@@ -124,9 +124,9 @@ function CarePlanCard({ patient }: { patient: import('../types').PatientRecord }
         </section>
 
         <section>
-          <h3 className="text-xs uppercase tracking-wide text-bodh-400 mb-2">{t('portal.next_appointment')}</h3>
-          <p className="text-bodh-700 font-medium">{nextAppt.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-          <p className="text-xs text-bodh-400 mt-0.5">{t('portal.arrive_early')}</p>
+          <h3 className="text-xs uppercase tracking-wide text-bodhyanga-400 mb-2">{t('portal.next_appointment')}</h3>
+          <p className="text-bodhyanga-700 font-medium">{nextAppt.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <p className="text-xs text-bodhyanga-400 mt-0.5">{t('portal.arrive_early')}</p>
         </section>
       </div>
     </div>
@@ -151,20 +151,20 @@ function PanelGapsCard({ gaps }: { gaps: import('../types').PanelGap[] }) {
       <div className="card-header">{t('portal.care_reminders')}</div>
       <div className="card-body space-y-3">
         {gaps.length === 0 && (
-          <p className="text-sm text-bodh-400">{t('portal.up_to_date')}</p>
+          <p className="text-sm text-bodhyanga-400">{t('portal.up_to_date')}</p>
         )}
         {gaps.map((g, i) => (
           <div key={i} className={`rounded-md p-3 border ${g.severity === 'high' ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50'}`}>
-            <div className="text-sm font-medium text-bodh-800">{formatMeasure(g.measure)}</div>
-            <p className="text-xs text-bodh-600 mt-1">{g.reason}</p>
+            <div className="text-sm font-medium text-bodhyanga-800">{formatMeasure(g.measure)}</div>
+            <p className="text-xs text-bodhyanga-600 mt-1">{g.reason}</p>
             <span className={`badge mt-2 ${g.severity === 'high' ? 'badge-urgent' : 'badge-pending'}`}>{g.severity} {t('portal.priority')}</span>
           </div>
         ))}
         {/* Static example when no gaps exist for demo purposes */}
         {gaps.length === 0 && (
-          <div className="rounded-md p-3 border border-bodh-100 bg-bodh-50">
-            <div className="text-sm font-medium text-bodh-700">{t('portal.annual_wellness')}</div>
-            <p className="text-xs text-bodh-400 mt-1">{t('portal.annual_wellness_hint')}</p>
+          <div className="rounded-md p-3 border border-bodhyanga-100 bg-bodhyanga-50">
+            <div className="text-sm font-medium text-bodhyanga-700">{t('portal.annual_wellness')}</div>
+            <p className="text-xs text-bodhyanga-400 mt-1">{t('portal.annual_wellness_hint')}</p>
           </div>
         )}
       </div>
@@ -201,11 +201,11 @@ function VitalsTable({ patient }: { patient: import('../types').PatientRecord })
       <div className="card-header">{t('portal.vitals')}</div>
       {rows.length === 0 ? (
         <div className="card-body">
-          <p className="text-sm text-bodh-400">{t('portal.no_vitals')}</p>
+          <p className="text-sm text-bodhyanga-400">{t('portal.no_vitals')}</p>
         </div>
       ) : (
         <table className="min-w-full text-sm">
-          <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+          <thead className="bg-bodhyanga-50 text-bodhyanga-400 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">{t('portal.vitals.date')}</th>
               <th className="px-4 py-2 text-left">{t('portal.vitals.measure')}</th>
@@ -215,11 +215,11 @@ function VitalsTable({ patient }: { patient: import('../types').PatientRecord })
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i} className="border-t border-bodh-100">
-                <td className="px-4 py-2 text-xs text-bodh-400">{r.date}</td>
+              <tr key={i} className="border-t border-bodhyanga-100">
+                <td className="px-4 py-2 text-xs text-bodhyanga-400">{r.date}</td>
                 <td className="px-4 py-2 font-medium">{r.measure}</td>
                 <td className="px-4 py-2">{r.value}</td>
-                <td className="px-4 py-2 text-xs text-bodh-400">{r.unit}</td>
+                <td className="px-4 py-2 text-xs text-bodhyanga-400">{r.unit}</td>
               </tr>
             ))}
           </tbody>

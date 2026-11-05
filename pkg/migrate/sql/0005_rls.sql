@@ -1,21 +1,21 @@
 -- 0005_rls.sql
--- Row-Level Security policies + role grants for bodh_app + bodh_audit_app.
+-- Row-Level Security policies + role grants for bodhyanga_app + bodhyanga_audit_app.
 --
 -- Two application roles are created:
 --
---   bodh_app       -- general application role. CRUD on
+--   bodhyanga_app       -- general application role. CRUD on
 --                     interaction_records / patient_records /
 --                     case_state / review_requests. SELECT + INSERT
 --                     on audit_events (the table is append-only at
 --                     the GRANT layer).
 --
---   bodh_audit_app -- dedicated audit-writer role. SELECT + INSERT
+--   bodhyanga_audit_app -- dedicated audit-writer role. SELECT + INSERT
 --                     on audit_events only. Lets the auditing path
 --                     run under a separate role from the application
 --                     so a compromise of the application credential
 --                     can't update / delete past audit rows even if
 --                     a future grant slip-up loosened UPDATE on
---                     audit_events for bodh_app. Defence in depth
+--                     audit_events for bodhyanga_app. Defence in depth
 --                     against §164.312(b) tampering.
 --
 -- Both roles are created with NOBYPASSRLS so the policies in this
@@ -66,9 +66,9 @@ CREATE POLICY review_requests_tenant_isolation
 
 -- audit_events: separate SELECT + INSERT policies. UPDATE and DELETE
 -- policies are intentionally absent. The bootstrap migration-audit
--- row inserted by 0001 carries tenant_id='_bodh_system' and is
--- visible only to a role that has SET app.tenant_id='_bodh_system'
--- — typically the operator running cmd/bodhadmin migrate.
+-- row inserted by 0001 carries tenant_id='_bodhyanga_system' and is
+-- visible only to a role that has SET app.tenant_id='_bodhyanga_system'
+-- — typically the operator running cmd/bodhyangaadmin migrate.
 DROP POLICY IF EXISTS audit_events_tenant_select ON audit_events;
 CREATE POLICY audit_events_tenant_select
     ON audit_events
@@ -81,40 +81,40 @@ CREATE POLICY audit_events_tenant_insert
     FOR INSERT
     WITH CHECK (tenant_id = current_setting('app.tenant_id', true));
 
--- bodh_app role
+-- bodhyanga_app role
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bodh_app') THEN
-        CREATE ROLE bodh_app LOGIN PASSWORD 'bodh_app' NOBYPASSRLS;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bodhyanga_app') THEN
+        CREATE ROLE bodhyanga_app LOGIN PASSWORD 'bodhyanga_app' NOBYPASSRLS;
     ELSE
-        ALTER ROLE bodh_app NOBYPASSRLS;
+        ALTER ROLE bodhyanga_app NOBYPASSRLS;
     END IF;
 END
 $$;
 
-GRANT USAGE ON SCHEMA public TO bodh_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON interaction_records TO bodh_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON patient_records      TO bodh_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON case_state           TO bodh_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON review_requests      TO bodh_app;
-GRANT SELECT, INSERT                 ON audit_events         TO bodh_app;
-GRANT SELECT                         ON schema_migrations    TO bodh_app;
+GRANT USAGE ON SCHEMA public TO bodhyanga_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON interaction_records TO bodhyanga_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON patient_records      TO bodhyanga_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON case_state           TO bodhyanga_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON review_requests      TO bodhyanga_app;
+GRANT SELECT, INSERT                 ON audit_events         TO bodhyanga_app;
+GRANT SELECT                         ON schema_migrations    TO bodhyanga_app;
 
--- bodh_audit_app role -- separate writer for audit_events.
+-- bodhyanga_audit_app role -- separate writer for audit_events.
 -- This is the role pkg/audit.Recorder runs under once the audit
 -- sink is wired through pkg/persistence/postgres in a future PR.
 -- For now it's provisioned so deployments can rotate to two-role
 -- mode without an additional migration.
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bodh_audit_app') THEN
-        CREATE ROLE bodh_audit_app LOGIN PASSWORD 'bodh_audit_app' NOBYPASSRLS;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bodhyanga_audit_app') THEN
+        CREATE ROLE bodhyanga_audit_app LOGIN PASSWORD 'bodhyanga_audit_app' NOBYPASSRLS;
     ELSE
-        ALTER ROLE bodh_audit_app NOBYPASSRLS;
+        ALTER ROLE bodhyanga_audit_app NOBYPASSRLS;
     END IF;
 END
 $$;
 
-GRANT USAGE ON SCHEMA public TO bodh_audit_app;
-GRANT SELECT, INSERT ON audit_events     TO bodh_audit_app;
-GRANT SELECT         ON schema_migrations TO bodh_audit_app;
+GRANT USAGE ON SCHEMA public TO bodhyanga_audit_app;
+GRANT SELECT, INSERT ON audit_events     TO bodhyanga_audit_app;
+GRANT SELECT         ON schema_migrations TO bodhyanga_audit_app;

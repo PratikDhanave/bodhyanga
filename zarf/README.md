@@ -1,11 +1,11 @@
-# zarf/ — Deployment layout for Bodh
+# zarf/ — Deployment layout for Bodhyanga
 
 > **Attribution.** This directory's layout is adapted from
 > [`ardanlabs/service`](https://github.com/ardanlabs/service) by William
 > Kennedy / Ardan Labs (Apache 2.0). The Kustomize base/overlay split, the
 > `zarf/compose` + `zarf/docker` + `zarf/keys` arrangement, the
 > request-equals-limit "Guaranteed QoS" pattern, and the `pg_hba.conf` shape
-> for the dev cluster are theirs. Every modification for Bodh's HIPAA-aware,
+> for the dev cluster are theirs. Every modification for Bodhyanga's HIPAA-aware,
 > multi-agent shape — PodSecurity restricted profile, Workload-Identity
 > serviceaccount seam, default-deny NetworkPolicy with provider-tightened
 > egress, PDB on the care deployment, distroless final stages — is in this
@@ -22,8 +22,8 @@ zarf/
 │   └── pg_hba.conf                  # dev Postgres host-based auth (NOT prod)
 ├── docker/
 │   ├── Dockerfile.care              # cmd/care — HTTP API + clinician SPA
-│   ├── Dockerfile.bodhctl           # cmd/bodhctl — operator CLI
-│   └── Dockerfile.bodhadmin         # cmd/bodhadmin — admin tool (placeholder)
+│   ├── Dockerfile.bodhyangactl           # cmd/bodhyangactl — operator CLI
+│   └── Dockerfile.bodhyangaadmin         # cmd/bodhyangaadmin — admin tool (placeholder)
 ├── k8s/
 │   ├── base/                        # Kustomize base — strict shape
 │   │   ├── kustomization.yaml
@@ -74,12 +74,12 @@ Manager / Key Vault / Vault) and are pulled in at apply time.
 ## Drift from upstream
 
 The Ardan Labs original was designed for a single Go service (`sales`) with
-an `auth` companion. Bodh is a multi-agent platform where the shipping
-binary is `cmd/care`, with `cmd/bodhctl` and a placeholder `cmd/bodhadmin`
+an `auth` companion. Bodhyanga is a multi-agent platform where the shipping
+binary is `cmd/care`, with `cmd/bodhyangactl` and a placeholder `cmd/bodhyangaadmin`
 companions. The deltas worth flagging when reading this against the
 upstream:
 
-| Upstream | Bodh delta |
+| Upstream | Bodhyanga delta |
 |---|---|
 | `base-sales.yaml` had everything in one file (Namespace + Deployment + Service) | Split into one resource per file; same kustomization assembly |
 | Alpine final stage | Distroless static, non-root, readOnlyRootFilesystem |
@@ -89,5 +89,5 @@ upstream:
 | Single-replica dev pattern | Same in dev overlay; 3 replicas in prod with topology spread |
 | pg_hba.conf `trust` everywhere | scram-sha-256 outside the local socket; cert-only auth deferred to Cloud SQL Auth Proxy in prod |
 
-The upstream's Tiltfile and kind-config helpers are not vendored — Bodh's
+The upstream's Tiltfile and kind-config helpers are not vendored — Bodhyanga's
 local-dev story is `docker compose` first, kind second.

@@ -15,7 +15,7 @@
 //   3. Wrap the handle in a kronkClient that implements llm.Client.
 //   4. Return a Closer that calls handle.Unload() — frees the GPU memory.
 //
-// The Bodh-side contract is unchanged: Factory returns llm.Client + io.Closer
+// The Bodhyanga-side contract is unchanged: Factory returns llm.Client + io.Closer
 // + error, and the pool itself doesn't know which provider the spec belongs
 // to. Only this file imports the kronk SDK.
 
@@ -28,7 +28,7 @@ import (
 	"io"
 	"path/filepath"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 	// NOTE: the kronk SDK import is intentionally left as a comment-only
 	// placeholder — the integration track (#21) wires the real package
 	// once the kronk Go bindings stabilise. The build tag still gates the

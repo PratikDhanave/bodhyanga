@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 // Encoding holds the five delimiter characters defined by MSH-1 and MSH-2.
@@ -329,7 +329,7 @@ func pickPatientID(pid Segment, enc Encoding) string {
 	return component(reps[0], enc, 1)
 }
 
-// MessageToADTEvent maps a parsed Message onto Bodh's medical.ADTEvent.
+// MessageToADTEvent maps a parsed Message onto Bodhyanga's medical.ADTEvent.
 //
 // Mapping summary:
 //

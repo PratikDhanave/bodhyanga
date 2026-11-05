@@ -1,4 +1,4 @@
-// Command cdshooks runs the Bodh CDS Hooks service, which exposes four
+// Command cdshooks runs the Bodhyanga CDS Hooks service, which exposes four
 // built-in clinical decision support hooks to EHR systems (Epic, Cerner, etc.)
 // via the HL7 CDS Hooks standard (https://cds-hooks.org/).
 //
@@ -14,7 +14,7 @@
 //
 // Fire the patient-view hook:
 //
-//	curl -X POST http://localhost:8096/cds-services/bodh-patient-view \
+//	curl -X POST http://localhost:8096/cds-services/bodhyanga-patient-view \
 //	  -H 'Content-Type: application/json' \
 //	  -d '{"hook":"patient-view","hookInstance":"abc","context":{"patientId":"p1"}}'
 //
@@ -38,7 +38,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/PratikDhanave/bodh/pkg/cdshooks"
+	"github.com/PratikDhanave/bodhyanga/pkg/cdshooks"
 )
 
 func main() {
@@ -64,7 +64,7 @@ func main() {
 		discoveryURL = fmt.Sprintf("http://%s/cds-services", *addrFlag)
 	}
 
-	fmt.Printf("Bodh CDS Hooks service\n")
+	fmt.Printf("Bodhyanga CDS Hooks service\n")
 	fmt.Printf("  Discovery : %s\n", discoveryURL)
 	fmt.Printf("  Hooks     : patient-view, medication-prescribe, order-sign, encounter-discharge\n")
 	if *verboseFlag {

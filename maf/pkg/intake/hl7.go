@@ -1,13 +1,13 @@
 package intake
 
 import (
-	"github.com/PratikDhanave/bodh/pkg/hl7v2"
+	"github.com/PratikDhanave/bodhyanga/pkg/hl7v2"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
 // translateHL7 turns an HL7 v2 ADT message into one PatientCase. The parse and
-// ADT-conversion logic is bodh's pkg/hl7v2, imported UNCHANGED; this seam only
+// ADT-conversion logic is bodhyanga's pkg/hl7v2, imported UNCHANGED; this seam only
 // maps medical.ADTEvent → agents.PatientCase and categorizes failures into the
 // PHI-free RejectReason taxonomy (never wrapping the parser's raw error text).
 //

@@ -1,4 +1,4 @@
-# Bodh — Domain Data Model
+# Bodhyanga — Domain Data Model
 
 Every clinical type lives in `pkg/medical`. This document is the type catalogue: shape, semantics, when to use, and the JSON encoding contracts.
 

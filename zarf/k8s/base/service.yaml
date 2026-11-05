@@ -1,18 +1,18 @@
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/dev/sales/dev-sales-patch-service.yaml
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
-# ClusterIP Service for the Bodh care HTTP API. External exposure happens
+# ClusterIP Service for the Bodhyanga care HTTP API. External exposure happens
 # at the Ingress / Gateway layer in the overlays — never via NodePort or
 # LoadBalancer at base, so accidental public exposure is impossible without
 # an explicit overlay change.
 apiVersion: v1
 kind: Service
 metadata:
-  name: bodh-care
+  name: bodhyanga-care
 spec:
   type: ClusterIP
   selector:
-    app.kubernetes.io/name: bodh-care
+    app.kubernetes.io/name: bodhyanga-care
   ports:
     - name: http
       port: 80

@@ -9,13 +9,13 @@ function useReviewerId() {
   const [id, setId] = useState("");
   useEffect(() => {
     try {
-      setId(localStorage.getItem("bodh-reviewer") ?? "");
+      setId(localStorage.getItem("bodhyanga-reviewer") ?? "");
     } catch {}
   }, []);
   const update = (v: string) => {
     setId(v);
     try {
-      localStorage.setItem("bodh-reviewer", v);
+      localStorage.setItem("bodhyanga-reviewer", v);
     } catch {}
   };
   return [id, update] as const;

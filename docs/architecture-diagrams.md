@@ -1,4 +1,4 @@
-# Bodh — Architecture & Flow Diagrams
+# Bodhyanga — Architecture & Flow Diagrams
 
 Fourteen interactive [Archify](https://github.com/tt-a1i/archify) diagrams covering the
 whole system, generated from and validated against the codebase. Each **SVG renders inline

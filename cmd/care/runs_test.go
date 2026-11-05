@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/comm"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/comm"
 )
 
 // TestRunManager_FunnelsMessagesMatchingCaseID asserts the broadcast subscriber

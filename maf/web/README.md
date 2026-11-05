@@ -1,6 +1,6 @@
 # Care console (web)
 
-A [Next.js](https://nextjs.org) clinician console for the Bodh care API (`maf/cmd/care`).
+A [Next.js](https://nextjs.org) clinician console for the Bodhyanga care API (`maf/cmd/care`).
 Submit a case, poll status, list and answer physician reviews, and read a case's PHI-free
 audit trail.
 

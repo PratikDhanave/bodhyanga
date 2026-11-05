@@ -1,5 +1,5 @@
 -- Checkpoint store for MAF workflow state (specs/001 contracts/checkpoint-postgres.md).
--- APPEND-ONLY: the application role gets INSERT+SELECT only (bodh persistence
+-- APPEND-ONLY: the application role gets INSERT+SELECT only (bodhyanga persistence
 -- discipline); data is the framework's opaque checkpoint payload and is
 -- PHI-BEARING — never log it, never expose it outside this table's access tier.
 CREATE TABLE IF NOT EXISTS checkpoints (
@@ -14,5 +14,5 @@ CREATE TABLE IF NOT EXISTS checkpoints (
 CREATE INDEX IF NOT EXISTS checkpoints_session_idx ON checkpoints (session_id, seq);
 
 -- Example grants (role name deployment-specific):
---   GRANT SELECT, INSERT ON checkpoints TO bodh_maf_app;
---   GRANT USAGE ON SEQUENCE checkpoints_seq_seq TO bodh_maf_app;
+--   GRANT SELECT, INSERT ON checkpoints TO bodhyanga_maf_app;
+--   GRANT USAGE ON SEQUENCE checkpoints_seq_seq TO bodhyanga_maf_app;

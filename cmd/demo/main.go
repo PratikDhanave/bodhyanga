@@ -8,15 +8,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/PratikDhanave/bodh/agents"
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/comm"
-	"github.com/PratikDhanave/bodh/pkg/governance"
-	"github.com/PratikDhanave/bodh/pkg/knowledge"
-	"github.com/PratikDhanave/bodh/pkg/medical"
-	"github.com/PratikDhanave/bodh/pkg/observability"
-	"github.com/PratikDhanave/bodh/pkg/orchestration"
-	"github.com/PratikDhanave/bodh/pkg/registry"
+	"github.com/PratikDhanave/bodhyanga/agents"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/comm"
+	"github.com/PratikDhanave/bodhyanga/pkg/governance"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/orchestration"
+	"github.com/PratikDhanave/bodhyanga/pkg/registry"
 )
 
 // Demo: sequential diagnosis workflow inspired by Microsoft MAI-DxO and SD Bench.
@@ -140,12 +140,12 @@ func pneumoniaDefault() medical.PatientPresentation {
 }
 
 // loadRAGStore builds the knowledge.Store used by the diagnostician when
-// BODH_KNOWLEDGE_CORPUS is set and an embedder credential is available for
+// BODHYANGA_KNOWLEDGE_CORPUS is set and an embedder credential is available for
 // the supplied provider. Prints a one-line startup log either way.
 func loadRAGStore(ctx context.Context, provider string) knowledge.Store {
-	corpus := os.Getenv("BODH_KNOWLEDGE_CORPUS")
+	corpus := os.Getenv("BODHYANGA_KNOWLEDGE_CORPUS")
 	if corpus == "" {
-		fmt.Println("[demo] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)")
+		fmt.Println("[demo] RAG disabled (BODHYANGA_KNOWLEDGE_CORPUS not set)")
 		return nil
 	}
 	embedder, err := agents.DefaultEmbedderForProvider(provider)
@@ -163,7 +163,7 @@ func loadRAGStore(ctx context.Context, provider string) knowledge.Store {
 		return nil
 	}
 	if store == nil {
-		fmt.Println("[demo] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)")
+		fmt.Println("[demo] RAG disabled (BODHYANGA_KNOWLEDGE_CORPUS not set)")
 		return nil
 	}
 	fmt.Printf("[demo] RAG enabled with %d docs\n", store.Size())

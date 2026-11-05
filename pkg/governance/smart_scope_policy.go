@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/auth"
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/auth"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // SMARTScopePolicy is a governance.Policy that validates SMART on FHIR access

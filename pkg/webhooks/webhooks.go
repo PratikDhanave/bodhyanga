@@ -1,10 +1,10 @@
 // Package webhooks provides push-notification delivery to external systems
-// when Bodh platform events occur (diagnosis complete, review submitted, etc.).
+// when Bodhyanga platform events occur (diagnosis complete, review submitted, etc.).
 //
 // Each tenant registers one or more Endpoint records. When Dispatch is called
 // the Dispatcher fans out concurrently to every active endpoint that has
 // subscribed to the fired EventType, signs the JSON payload with
-// HMAC-SHA256 (X-Bodh-Signature: sha256=<hex>), and retries up to three times
+// HMAC-SHA256 (X-Bodhyanga-Signature: sha256=<hex>), and retries up to three times
 // on transient failure (1 s → 5 s → 15 s back-off). Delivery is fire-and-forget
 // — the caller is never blocked.
 package webhooks
@@ -23,7 +23,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// EventType identifies the Bodh platform event that triggered a webhook.
+// EventType identifies the Bodhyanga platform event that triggered a webhook.
 type EventType string
 
 const (
@@ -186,7 +186,7 @@ func (d *Dispatcher) post(url, sig string, body []byte) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Bodh-Signature", "sha256="+sig)
+	req.Header.Set("X-Bodhyanga-Signature", "sha256="+sig)
 
 	resp, err := d.client.Do(req)
 	if err != nil {

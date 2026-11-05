@@ -180,7 +180,7 @@ export default function Bench() {
         <div className="card-header">Cost vs accuracy — Pareto frontier</div>
         <div className="card-body">
           <ParetoChart data={data} />
-          <p className="text-xs text-bodh-400 mt-2">
+          <p className="text-xs text-bodhyanga-400 mt-2">
             Dashed line connects non-dominated providers. Filled circles are on the frontier.
           </p>
         </div>
@@ -189,7 +189,7 @@ export default function Bench() {
       {/* Summary table */}
       <div className="card overflow-hidden">
         <table className="min-w-full text-sm">
-          <thead className="bg-bodh-50 text-bodh-400 text-xs uppercase tracking-wide">
+          <thead className="bg-bodhyanga-50 text-bodhyanga-400 text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-2 text-left">Provider</th>
               <th className="px-4 py-2 text-right">Cases</th>
@@ -200,7 +200,7 @@ export default function Bench() {
           </thead>
           <tbody>
             {data.map((r) => (
-              <tr key={r.provider} className="border-t border-bodh-100">
+              <tr key={r.provider} className="border-t border-bodhyanga-100">
                 <td className="px-4 py-2 font-mono">{r.provider}</td>
                 <td className="px-4 py-2 text-right">{r.cases}</td>
                 <td className="px-4 py-2 text-right">{r.mean_accuracy_pct.toFixed(0)}%</td>

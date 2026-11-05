@@ -8,7 +8,7 @@
 
 **Input**: User description: "An HTTP service that drives the MAF-go pipeline Runner — submit a
 case and get a run id; poll status and result; list pending physician reviews and post a decision
-that resumes a paused run; read the PHI-free audit trail for a case. The bodh-maf analog of bodh's
+that resumes a paused run; read the PHI-free audit trail for a case. The bodhyanga-maf analog of bodhyanga's
 `cmd/care`, API only (no React SPA). It wraps the EXISTING `pkg/pipeline.Runner`
 (`Run`/`Resume`/`Responder`), preserving the admission boundary and PHI-free-audit invariants at
 the HTTP edge. Success = each user story proven by an httptest handler test; durable review answered
@@ -26,7 +26,7 @@ via the API after a simulated process restart, exactly as `specs/001` proved at 
   substrate. The two are kept consistent by the API writing the registry on every terminal/paused
   transition.
 - Q: Auth posture for the slice? → A: **No auth middleware** — documented non-goal / roadmap,
-  matching bodh's `cmd/care` default (ADR-0006 "research-grade substrate"). The service binds
+  matching bodhyanga's `cmd/care` default (ADR-0006 "research-grade substrate"). The service binds
   loopback by default and states the gap loudly.
 - Q: Does the Runner support answering a *specific* pending review across a process restart? → A:
   Yes, by composition: `Runner.Resume(sessionID)` republishes the same pending request and the
@@ -219,7 +219,7 @@ case ids and zero clinical strings.
   US1/US2/US4 use the rule engine + in-memory audit + in-memory registry; only the US3
   restart-durability test requires Postgres (testcontainers), reusing `pkg/ckptpg`.
 - **FR-013**: Authentication/authorization is a documented **non-goal** for this slice (no auth
-  middleware wired), mirroring bodh's `cmd/care` research-grade default (ADR-0006); the service
+  middleware wired), mirroring bodhyanga's `cmd/care` research-grade default (ADR-0006); the service
   binds loopback by default and states the gap in its startup banner and README.
 - **FR-014**: The service MUST support concurrent case submissions without cross-contaminating
   handles, registry state, or per-case audit trails.
@@ -267,9 +267,9 @@ case ids and zero clinical strings.
   rather than re-proving MAF's resume semantics.
 - Postgres (via `pkg/ckptpg`) is available for the durability story; automated tests provision it
   ephemerally (testcontainers), consistent with specs/001.
-- The audit source for the HTTP read is bodh's `audit.Recorder` (in-memory in the slice; the
-  production sink chain is bodh's concern, unchanged here).
+- The audit source for the HTTP read is bodhyanga's `audit.Recorder` (in-memory in the slice; the
+  production sink chain is bodhyanga's concern, unchanged here).
 - The service is single-process; distribution (A2A, multiple API replicas sharing one registry) is
   out of scope — the registry is process-local, rebuildable from checkpoints for the restart case.
-- No clinical UI/SPA ships with this feature; the API is the entire deliverable (matches bodh-maf's
+- No clinical UI/SPA ships with this feature; the API is the entire deliverable (matches bodhyanga-maf's
   non-goals in README).

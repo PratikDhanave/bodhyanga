@@ -1,5 +1,5 @@
 -- 0001_init.sql
--- Initial schema for Bodh's Postgres backend.
+-- Initial schema for Bodhyanga's Postgres backend.
 --
 -- Three tables are required by the contracts implemented in
 -- pkg/persistence/postgres:

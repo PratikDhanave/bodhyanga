@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/protocol"
+	"github.com/PratikDhanave/bodhyanga/pkg/protocol"
 )
 
 // RateLimitConfig holds the configuration for RateLimitPolicy.

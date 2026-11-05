@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 )
 
 // rpcRequest mirrors what the server sees so test handlers can assert on it.

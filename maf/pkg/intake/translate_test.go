@@ -3,7 +3,7 @@ package intake
 import (
 	"testing"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
 func TestTranslate_JSONRoundTrips(t *testing.T) {

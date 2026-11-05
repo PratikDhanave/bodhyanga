@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
 )
 
 // JudgeSystemPrompt is the cached system prompt that defines the clinical

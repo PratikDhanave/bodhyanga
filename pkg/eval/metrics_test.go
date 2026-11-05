@@ -3,7 +3,7 @@ package eval
 import (
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 func TestScoreCase(t *testing.T) {

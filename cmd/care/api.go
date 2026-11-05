@@ -11,15 +11,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/audit"
-	"github.com/PratikDhanave/bodh/pkg/comm"
-	"github.com/PratikDhanave/bodh/pkg/engagement"
-	"github.com/PratikDhanave/bodh/pkg/hitl"
-	"github.com/PratikDhanave/bodh/pkg/medical"
-	"github.com/PratikDhanave/bodh/pkg/observability"
-	"github.com/PratikDhanave/bodh/pkg/registry"
-	"github.com/PratikDhanave/bodh/pkg/tasks"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/comm"
+	"github.com/PratikDhanave/bodhyanga/pkg/engagement"
+	"github.com/PratikDhanave/bodhyanga/pkg/hitl"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/registry"
+	"github.com/PratikDhanave/bodhyanga/pkg/tasks"
 )
 
 // fixtureFile mirrors the JSON shape used by cmd/demo and cmd/bench.
@@ -146,7 +146,7 @@ func (s *apiServer) runtime(w http.ResponseWriter, _ *http.Request) {
 		"diagnostician": s.provider,
 		"started_at":    time.Now().UTC().Format(time.RFC3339),
 		"hitl_enabled":  true,
-		"rag_enabled":   os.Getenv("BODH_KNOWLEDGE_CORPUS") != "",
+		"rag_enabled":   os.Getenv("BODHYANGA_KNOWLEDGE_CORPUS") != "",
 	})
 }
 
@@ -344,7 +344,7 @@ func (s *apiServer) reviewDecide(w http.ResponseWriter, r *http.Request) {
 	// hitl.Queue.Decide takes verbs ("approve", "approve_with_modifications",
 	// "reject"). The SPA's ReviewDecision type uses the past-tense forms that
 	// match medical.ReviewStatus constants. Translate so both wire formats
-	// work — bodhctl can send the verb form and the SPA can send the status
+	// work — bodhyangactl can send the verb form and the SPA can send the status
 	// form interchangeably.
 	decision := body.Decision
 	switch decision {

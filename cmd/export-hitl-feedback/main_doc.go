@@ -10,7 +10,7 @@
 //   an output directory.
 //
 // Flow:
-//   1. Resolve input path (-in or $HOME/.bodh/hitl-queue.json).
+//   1. Resolve input path (-in or $HOME/.bodhyanga/hitl-queue.json).
 //   2. Decode []medical.ReviewRequest (bare array or {"reviews":[...]} wrapper).
 //   3. Filter to decided reviews (drop pending / expired).
 //   4. For SFT: emit one chat-shaped line per approved / modified / (optionally)

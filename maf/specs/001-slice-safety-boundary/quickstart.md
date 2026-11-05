@@ -1,6 +1,6 @@
 # Quickstart: validating the Slice Safety Boundary
 
-Prerequisites: Go 1.26; Docker (testcontainers + local Postgres); `../bodh` checked
+Prerequisites: Go 1.26; Docker (testcontainers + local Postgres); `../bodhyanga` checked
 out (local replace). Optional for live-LLM runs: `ANTHROPIC_API_KEY` or Ollama at
 `$OLLAMA_HOST`.
 

@@ -3,7 +3,7 @@ package safety
 import (
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/knowledge"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge"
 )
 
 // --- significantTerms edge cases ---

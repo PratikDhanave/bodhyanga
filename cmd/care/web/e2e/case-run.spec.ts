@@ -38,7 +38,7 @@ test('submitting a fixture starts a run and streams events', async ({ page }) =>
   const streamCard = page.locator('.card', { has: page.getByText('Agent message stream') });
   await expect(streamCard).toBeVisible();
 
-  // Each event is rendered as a div with `border-l-2 border-bodh-200 pl-3`.
+  // Each event is rendered as a div with `border-l-2 border-bodhyanga-200 pl-3`.
   // Wait for at least 8 of them.
   const eventRows = streamCard.locator('div.border-l-2');
   await expect.poll(

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Bodh Platform Architecture (MARA)",
+    "title": "Bodhyanga Platform Architecture (MARA)",
     "subtitle": "One Go binary: clients \u2192 orchestrator \u2192 in-process bus \u2192 agents, gated by governance, HITL and append-only audit",
     "output": "platform.architecture.html",
     "quality_profile": "showcase",
@@ -374,7 +374,7 @@
       "title": "Observability",
       "items": [
         "OTel / Laminar spans (otel build tag)",
-        "bodh.case_id is sha256(caseID)[:8] \u2014 never a raw MRN"
+        "bodhyanga.case_id is sha256(caseID)[:8] \u2014 never a raw MRN"
       ]
     }
   ]

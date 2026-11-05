@@ -27,8 +27,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/tools"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/tools"
 )
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 	fmt.Printf("[filesystemtools] provider=%s model=%s\n", client.Provider(), client.Model())
 
 	// --- Set up a temporary sandbox directory --------------------------------
-	sandboxDir, err := os.MkdirTemp("", "bodh-lesson06-*")
+	sandboxDir, err := os.MkdirTemp("", "bodhyanga-lesson06-*")
 	if err != nil {
 		fatalf("create sandbox: %v", err)
 	}
@@ -53,7 +53,7 @@ func main() {
 
 	// Populate a few sample files.
 	sampleFiles := map[string]string{
-		"hello.txt": "Hello from Bodh Lesson 06! This is the file system tools lesson.",
+		"hello.txt": "Hello from Bodhyanga Lesson 06! This is the file system tools lesson.",
 		"notes.txt": "Agent can read and write files safely.\nPaths are restricted to relative paths only.",
 		"data.json": `{"lesson":6,"topic":"file system tools","status":"complete"}`,
 	}
@@ -201,7 +201,7 @@ func buildClient(provider, model, ollamaHost string) llm.Client {
 		}
 		m := model
 		if m == "" {
-			m = envOr("BODH_ANTHROPIC_MODEL", "claude-sonnet-4-6")
+			m = envOr("BODHYANGA_ANTHROPIC_MODEL", "claude-sonnet-4-6")
 		}
 		return llm.NewAnthropic(key, m)
 
@@ -212,14 +212,14 @@ func buildClient(provider, model, ollamaHost string) llm.Client {
 		}
 		m := model
 		if m == "" {
-			m = envOr("BODH_OPENAI_MODEL", "gpt-4o")
+			m = envOr("BODHYANGA_OPENAI_MODEL", "gpt-4o")
 		}
 		return llm.NewOpenAI(key, m)
 
 	default: // ollama
 		m := model
 		if m == "" {
-			m = envOr("BODH_OLLAMA_MODEL", "llama3.2")
+			m = envOr("BODHYANGA_OLLAMA_MODEL", "llama3.2")
 		}
 		return llm.NewOllama(ollamaHost, m)
 	}

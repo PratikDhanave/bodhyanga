@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 )
 
 // DefaultCallTimeout is the per-call wall-clock cap applied when the caller
@@ -14,10 +14,10 @@ import (
 // as resources or as A2A tasks (Proposal 2), not as multi-minute MCP calls.
 const DefaultCallTimeout = 30 * time.Second
 
-// DefaultClientName / DefaultClientVersion identify Bodh in the initialize
+// DefaultClientName / DefaultClientVersion identify Bodhyanga in the initialize
 // handshake unless overridden via Option.
 const (
-	DefaultClientName    = "bodh-mcp-client"
+	DefaultClientName    = "bodhyanga-mcp-client"
 	DefaultClientVersion = "0.1.0"
 )
 

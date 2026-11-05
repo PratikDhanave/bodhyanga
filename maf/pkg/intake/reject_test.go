@@ -3,7 +3,7 @@ package intake
 import (
 	"testing"
 
-	"github.com/PratikDhanave/bodh-maf/pkg/agents"
+	"github.com/PratikDhanave/bodhyanga-maf/pkg/agents"
 )
 
 // Each canonical bad input maps to a DISTINCT PHI-free reason and yields no

@@ -56,7 +56,7 @@ export default function NotificationBell() {
       <button
         onClick={handleBellClick}
         aria-label="Notifications"
-        className="relative p-1 rounded-md hover:bg-bodh-100 dark:hover:bg-gray-700 text-bodh-700 dark:text-gray-300"
+        className="relative p-1 rounded-md hover:bg-bodhyanga-100 dark:hover:bg-gray-700 text-bodhyanga-700 dark:text-gray-300"
       >
         {/* Bell SVG */}
         <svg
@@ -95,23 +95,23 @@ export default function NotificationBell() {
       {open && (
         <div
           className="absolute right-0 top-8 z-40 w-72 rounded-lg shadow-lg border
-                     bg-white border-bodh-200 dark:bg-gray-800 dark:border-gray-700"
+                     bg-white border-bodhyanga-200 dark:bg-gray-800 dark:border-gray-700"
         >
-          <div className="flex items-center justify-between px-3 py-2 border-b border-bodh-200 dark:border-gray-700">
-            <span className="text-sm font-medium text-bodh-700 dark:text-gray-100">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-bodhyanga-200 dark:border-gray-700">
+            <span className="text-sm font-medium text-bodhyanga-700 dark:text-gray-100">
               HITL Alerts
             </span>
             <Link
               to="/reviews"
               onClick={() => setOpen(false)}
-              className="text-xs text-bodh-600 hover:underline dark:text-bodh-400"
+              className="text-xs text-bodhyanga-600 hover:underline dark:text-bodhyanga-400"
             >
               View all
             </Link>
           </div>
-          <ul className="max-h-64 overflow-y-auto divide-y divide-bodh-100 dark:divide-gray-700">
+          <ul className="max-h-64 overflow-y-auto divide-y divide-bodhyanga-100 dark:divide-gray-700">
             {alerts.length === 0 ? (
-              <li className="px-3 py-4 text-xs text-center text-bodh-400 dark:text-gray-500">
+              <li className="px-3 py-4 text-xs text-center text-bodhyanga-400 dark:text-gray-500">
                 No alerts yet
               </li>
             ) : (
@@ -120,12 +120,12 @@ export default function NotificationBell() {
                   <Link
                     to="/reviews"
                     onClick={() => setOpen(false)}
-                    className="block px-3 py-2 hover:bg-bodh-50 dark:hover:bg-gray-700"
+                    className="block px-3 py-2 hover:bg-bodhyanga-50 dark:hover:bg-gray-700"
                   >
-                    <p className="text-xs text-bodh-700 dark:text-gray-200 truncate">
+                    <p className="text-xs text-bodhyanga-700 dark:text-gray-200 truncate">
                       {a.message}
                     </p>
-                    <p className="text-[10px] text-bodh-400 dark:text-gray-500 mt-0.5">
+                    <p className="text-[10px] text-bodhyanga-400 dark:text-gray-500 mt-0.5">
                       {new Date(a.timestamp).toLocaleString()}
                     </p>
                   </Link>

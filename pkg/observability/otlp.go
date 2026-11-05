@@ -1,7 +1,7 @@
 // otlp.go — real OTLP/HTTP exporter for LLMTrace records.
 //
 // Build tag: this file is compiled ONLY when the `otel` build tag is set
-// (e.g. `go build -tags otel ./cmd/care`). The default Bodh build does not
+// (e.g. `go build -tags otel ./cmd/care`). The default Bodhyanga build does not
 // link the OTel SDK — see otlp_stub.go for the no-op shim used otherwise.
 // Gating keeps go.sum tiny (~1 dep) for users who don't need OTLP export.
 //
@@ -50,7 +50,7 @@ type OTLPLLMExporter struct {
 
 // NewOTLPLLMExporter builds an exporter pointed at the given OTLP/HTTP
 // endpoint (e.g. "http://localhost:4318"). It returns a started exporter
-// ready to receive Record calls. The service name is "bodh-care".
+// ready to receive Record calls. The service name is "bodhyanga-care".
 func NewOTLPLLMExporter(ctx context.Context, endpoint string) (*OTLPLLMExporter, error) {
 	host, path, insecure, err := splitOTLPEndpoint(endpoint)
 	if err != nil {
@@ -72,7 +72,7 @@ func NewOTLPLLMExporter(ctx context.Context, endpoint string) (*OTLPLLMExporter,
 
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
-			semconv.ServiceName("bodh-care"),
+			semconv.ServiceName("bodhyanga-care"),
 		),
 	)
 	if err != nil {
@@ -97,7 +97,7 @@ func NewOTLPLLMExporter(ctx context.Context, endpoint string) (*OTLPLLMExporter,
 
 	return &OTLPLLMExporter{
 		tp:     tp,
-		tracer: tp.Tracer("github.com/PratikDhanave/bodh/pkg/observability"),
+		tracer: tp.Tracer("github.com/PratikDhanave/bodhyanga/pkg/observability"),
 	}, nil
 }
 

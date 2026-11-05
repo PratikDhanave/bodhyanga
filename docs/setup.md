@@ -1,8 +1,8 @@
-# Bodh — Provider setup
+# Bodhyanga — Provider setup
 
-This document is the focused setup guide for the three LLM providers Bodh supports out of the box: **Anthropic Claude**, **OpenAI**, and **Ollama** (local). Pick one. The diagnostic and care-services demos work without any LLM credential — the rule-based agents are the default. You only need this page when you want to enable the LLM-backed agents or RAG.
+This document is the focused setup guide for the three LLM providers Bodhyanga supports out of the box: **Anthropic Claude**, **OpenAI**, and **Ollama** (local). Pick one. The diagnostic and care-services demos work without any LLM credential — the rule-based agents are the default. You only need this page when you want to enable the LLM-backed agents or RAG.
 
-> Bodh always ships a rule-based fallback. If your LLM call fails for any reason (no key, timeout, bad JSON, transport error, low confidence), the agent transparently falls back to the deterministic rule-based agent — the case still finalizes.
+> Bodhyanga always ships a rule-based fallback. If your LLM call fails for any reason (no key, timeout, bad JSON, transport error, low confidence), the agent transparently falls back to the deterministic rule-based agent — the case still finalizes.
 
 For deeper architecture, prompts, and tracing details, see [ai-features.md](ai-features.md).
 
@@ -13,14 +13,14 @@ For deeper architecture, prompts, and tracing details, see [ai-features.md](ai-f
 - **Go 1.22+** — `go version` should report `go1.22.x` or newer
 - **Clone the repo**
   ```bash
-  git clone https://github.com/PratikDhanave/bodh.git
-  cd bodh
+  git clone https://github.com/PratikDhanave/bodhyanga.git
+  cd bodhyanga
   ```
 - A terminal that can `export` env vars (or a `.env` file plus `set -a; . ./.env; set +a`)
 
 Optional but recommended once your provider works:
 
-- A **knowledge corpus** for RAG. The repo ships [`data/knowledge/corpus.json`](../data/knowledge/corpus.json) (15 synthetic teaching documents — CAP, ADHF, PE, sepsis, T2DM, COPD, HTN, ...). Enable with `export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json`.
+- A **knowledge corpus** for RAG. The repo ships [`data/knowledge/corpus.json`](../data/knowledge/corpus.json) (15 synthetic teaching documents — CAP, ADHF, PE, sepsis, T2DM, COPD, HTN, ...). Enable with `export BODHYANGA_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json`.
 
 ---
 
@@ -39,7 +39,7 @@ Use Anthropic when you want the strongest clinical reasoning available today and
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 # Optional model override (defaults to claude-sonnet-4-6):
-# export BODH_ANTHROPIC_MODEL=claude-sonnet-4-6
+# export BODHYANGA_ANTHROPIC_MODEL=claude-sonnet-4-6
 ```
 
 ### Smoke test
@@ -51,18 +51,18 @@ go run ./cmd/demo -diagnostician=llm-anthropic
 Expected first few log lines:
 
 ```
-[demo] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)
-[bodh] [intake] case=demo-case-001 chief_complaint="Cough and fever"
-[bodh] [supervisor] starting sequential diagnosis for case demo-case-001
-[bodh] [diagnostician/llm] provider=anthropic model=claude-sonnet-4-6 diagnosis="Community-acquired pneumonia" confidence=88%
-[bodh] [diagnostician/llm] tokens in=812 out=146 cached=0 stop=tool_use
+[demo] RAG disabled (BODHYANGA_KNOWLEDGE_CORPUS not set)
+[bodhyanga] [intake] case=demo-case-001 chief_complaint="Cough and fever"
+[bodhyanga] [supervisor] starting sequential diagnosis for case demo-case-001
+[bodhyanga] [diagnostician/llm] provider=anthropic model=claude-sonnet-4-6 diagnosis="Community-acquired pneumonia" confidence=88%
+[bodhyanga] [diagnostician/llm] tokens in=812 out=146 cached=0 stop=tool_use
 [llm-trace] {"started_at":"...","duration_ms":2438,"provider":"anthropic","model":"claude-sonnet-4-6","agent_id":"diagnostician","case_id":"demo-case-001",...}
-[bodh] [reasoning_verifier] VERIFIED diagnosis "Community-acquired pneumonia"
+[bodhyanga] [reasoning_verifier] VERIFIED diagnosis "Community-acquired pneumonia"
 ```
 
 ### Vision
 
-Sonnet and Opus accept inline images. Pass an `image_path` in case metadata or HTTP API body; Bodh sniffs PNG/JPEG and attaches them. See [ai-features.md § Vision](ai-features.md#vision-diagnostician).
+Sonnet and Opus accept inline images. Pass an `image_path` in case metadata or HTTP API body; Bodhyanga sniffs PNG/JPEG and attaches them. See [ai-features.md § Vision](ai-features.md#vision-diagnostician).
 
 ### RAG (Anthropic + Voyage embeddings)
 
@@ -71,7 +71,7 @@ Anthropic doesn't ship an embeddings model — Voyage AI is Anthropic's recommen
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 export VOYAGE_API_KEY=pa-...
-export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
+export BODHYANGA_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
 go run ./cmd/demo -diagnostician=llm-anthropic
 # [demo] RAG enabled with 15 docs
 # [diagnostician/llm] rag retrieved 4 citations
@@ -98,7 +98,7 @@ Use OpenAI when you want a single key that covers chat, embeddings, and vision. 
 ```bash
 export OPENAI_API_KEY=sk-...
 # Optional model override (defaults to gpt-4o):
-# export BODH_OPENAI_MODEL=gpt-4o
+# export BODHYANGA_OPENAI_MODEL=gpt-4o
 ```
 
 ### Smoke test
@@ -110,16 +110,16 @@ go run ./cmd/demo -diagnostician=llm-openai
 Expected first few log lines:
 
 ```
-[demo] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)
-[bodh] [intake] case=demo-case-001 chief_complaint="Cough and fever"
-[bodh] [diagnostician/llm] provider=openai model=gpt-4o diagnosis="Community-acquired pneumonia" confidence=86%
-[bodh] [diagnostician/llm] tokens in=798 out=142 cached=0 stop=stop
-[bodh] [reasoning_verifier] VERIFIED diagnosis "Community-acquired pneumonia"
+[demo] RAG disabled (BODHYANGA_KNOWLEDGE_CORPUS not set)
+[bodhyanga] [intake] case=demo-case-001 chief_complaint="Cough and fever"
+[bodhyanga] [diagnostician/llm] provider=openai model=gpt-4o diagnosis="Community-acquired pneumonia" confidence=86%
+[bodhyanga] [diagnostician/llm] tokens in=798 out=142 cached=0 stop=stop
+[bodhyanga] [reasoning_verifier] VERIFIED diagnosis "Community-acquired pneumonia"
 ```
 
 ### Vision
 
-`gpt-4o` accepts inline images as `image_url` data URLs. Bodh handles the encoding. Pass `image_path` in metadata to enable.
+`gpt-4o` accepts inline images as `image_url` data URLs. Bodhyanga handles the encoding. Pass `image_path` in metadata to enable.
 
 ### RAG (OpenAI all-in-one)
 
@@ -127,13 +127,13 @@ OpenAI has both chat and embeddings under one key — simplest setup.
 
 ```bash
 export OPENAI_API_KEY=sk-...
-export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
+export BODHYANGA_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
 go run ./cmd/demo -diagnostician=llm-openai
 # [demo] RAG enabled with 15 docs
 # [diagnostician/llm] rag retrieved 4 citations
 ```
 
-Embedding model defaults to `text-embedding-3-small` (1536d). Override with `BODH_OPENAI_EMBED_MODEL=text-embedding-3-large`.
+Embedding model defaults to `text-embedding-3-small` (1536d). Override with `BODHYANGA_OPENAI_EMBED_MODEL=text-embedding-3-large`.
 
 ### Cost notes
 
@@ -181,8 +181,8 @@ ollama pull bakllava
 ```bash
 # All optional — these are the defaults:
 # export OLLAMA_HOST=http://localhost:11434
-# export BODH_OLLAMA_MODEL=llama3.2
-# export BODH_OLLAMA_EMBED_MODEL=nomic-embed-text
+# export BODHYANGA_OLLAMA_MODEL=llama3.2
+# export BODHYANGA_OLLAMA_EMBED_MODEL=nomic-embed-text
 ```
 
 ### Smoke test
@@ -195,23 +195,23 @@ go run ./cmd/demo -diagnostician=llm-ollama
 Expected first few log lines:
 
 ```
-[demo] RAG disabled (BODH_KNOWLEDGE_CORPUS not set)
-[bodh] [intake] case=demo-case-001 chief_complaint="Cough and fever"
-[bodh] [diagnostician/llm] provider=ollama model=llama3.2 diagnosis="Community-acquired pneumonia" confidence=72%
-[bodh] [diagnostician/llm] tokens in=842 out=156 cached=0 stop=stop
-[bodh] [reasoning_verifier] VERIFIED diagnosis "Community-acquired pneumonia"
+[demo] RAG disabled (BODHYANGA_KNOWLEDGE_CORPUS not set)
+[bodhyanga] [intake] case=demo-case-001 chief_complaint="Cough and fever"
+[bodhyanga] [diagnostician/llm] provider=ollama model=llama3.2 diagnosis="Community-acquired pneumonia" confidence=72%
+[bodhyanga] [diagnostician/llm] tokens in=842 out=156 cached=0 stop=stop
+[bodhyanga] [reasoning_verifier] VERIFIED diagnosis "Community-acquired pneumonia"
 ```
 
 ### Vision
 
-Use a vision-capable model: `llama3.2-vision`, `bakllava`, or `llava:13b`. Override with `BODH_OLLAMA_MODEL=llama3.2-vision` and attach an `image_path` in metadata.
+Use a vision-capable model: `llama3.2-vision`, `bakllava`, or `llava:13b`. Override with `BODHYANGA_OLLAMA_MODEL=llama3.2-vision` and attach an `image_path` in metadata.
 
 ### RAG (Ollama all-local)
 
 ```bash
 ollama pull llama3.2
 ollama pull nomic-embed-text
-export BODH_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
+export BODHYANGA_KNOWLEDGE_CORPUS=./data/knowledge/corpus.json
 go run ./cmd/demo -diagnostician=llm-ollama
 # [demo] RAG enabled with 15 docs
 ```
@@ -278,6 +278,6 @@ go run ./cmd/bench -providers=rule,llm-anthropic,llm-openai,llm-ollama -json | j
 | `[demo] RAG disabled (no embedder credential for llm-anthropic)` | `export VOYAGE_API_KEY=pa-...` (Anthropic path uses Voyage for embeddings) |
 | `[diagnostician/llm] confidence 0.20 below threshold 0.30 — falling back to rule-based` | The LLM is uncertain; the rule-based fallback ran. This is by design. |
 | `connection refused` on Ollama | `ollama serve` not running, or wrong `OLLAMA_HOST` |
-| Slow Ollama responses | Try a smaller model (`BODH_OLLAMA_MODEL=llama3.2:3b`) or use a GPU host |
+| Slow Ollama responses | Try a smaller model (`BODHYANGA_OLLAMA_MODEL=llama3.2:3b`) or use a GPU host |
 
 See [ai-features.md](ai-features.md) for the full architecture walk-through and the env-var reference table.

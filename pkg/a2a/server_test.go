@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/a2a"
+	"github.com/PratikDhanave/bodhyanga/pkg/a2a"
 )
 
 // echoHandler returns "Echo: " + input["message"].

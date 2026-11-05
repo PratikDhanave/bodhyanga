@@ -1,8 +1,8 @@
 // Adapted from https://github.com/ardanlabs/service/blob/master/foundation/keystore/keystore.go
-// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh:
-//   - Moved into pkg/auth (kept as a single package; Bodh has no
+// Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga:
+//   - Moved into pkg/auth (kept as a single package; Bodhyanga has no
 //     `foundation/`).
-//   - Added GenerateRSAKey helper for cmd/bodhadmin's "generate" path.
+//   - Added GenerateRSAKey helper for cmd/bodhyangaadmin's "generate" path.
 //   - Single in-memory implementation; no on-disk loading variant in this
 //     adaptation (the upstream LoadByFileSystem path is preserved for
 //     parity).
@@ -41,7 +41,7 @@ type keyPair struct {
 
 // KeyStore is an in-memory implementation of KeyLookup. Safe for
 // concurrent reads / writes. Construct via NewKeyStore; populate with
-// LoadByFileSystem (production) or LoadRSAPEM (tests / cmd/bodhadmin).
+// LoadByFileSystem (production) or LoadRSAPEM (tests / cmd/bodhyangaadmin).
 type KeyStore struct {
 	mu    sync.RWMutex
 	store map[string]keyPair
@@ -54,7 +54,7 @@ func NewKeyStore() *KeyStore {
 
 // LoadRSAPEM registers the given kid with the supplied private-key PEM.
 // The public PEM is derived automatically. Used by tests and by
-// cmd/bodhadmin's "issue-token" path.
+// cmd/bodhyangaadmin's "issue-token" path.
 func (ks *KeyStore) LoadRSAPEM(kid, privatePEM string) error {
 	pubPEM, err := toPublicPEM(privatePEM)
 	if err != nil {
@@ -69,7 +69,7 @@ func (ks *KeyStore) LoadRSAPEM(kid, privatePEM string) error {
 // LoadByFileSystem reads every *.pem file in fsys and registers them
 // under their filename (sans extension) as kid. Mirrors the upstream
 // ardanlabs/service behaviour so operators can drop PEMs into a
-// directory and let Bodh pick them up.
+// directory and let Bodhyanga pick them up.
 func (ks *KeyStore) LoadByFileSystem(fsys fs.FS) (int, error) {
 	fn := func(name string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -124,7 +124,7 @@ func (ks *KeyStore) PublicKey(kid string) (string, error) {
 }
 
 // GenerateRSAKey produces a fresh RSA 2048 keypair encoded as PKCS#1 PEM
-// for the private key. Helper for cmd/bodhadmin and for tests that mint
+// for the private key. Helper for cmd/bodhyangaadmin and for tests that mint
 // throwaway keys; production deployments typically pre-generate keys
 // out-of-band and drop them in a mounted directory.
 func GenerateRSAKey(bits int) (privatePEM string, err error) {

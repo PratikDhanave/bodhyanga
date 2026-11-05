@@ -23,7 +23,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/PratikDhanave/bodh/pkg/a2a"
+	"github.com/PratikDhanave/bodhyanga/pkg/a2a"
 )
 
 func main() {
@@ -32,7 +32,7 @@ func main() {
 	flag.Parse()
 
 	card := a2a.AgentCard{
-		Name:        "bodh-echo",
+		Name:        "bodhyanga-echo",
 		Description: "A simple echo agent that reflects input messages back to the caller.",
 		Version:     "0.1.0",
 		URL:         "http://localhost" + *addr,

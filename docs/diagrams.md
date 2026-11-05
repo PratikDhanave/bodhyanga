@@ -1,6 +1,6 @@
-# Bodh — Architecture diagrams
+# Bodhyanga — Architecture diagrams
 
-This file is the visual index of the Bodh platform. It is the deep companion to the [main README](../README.md), which keeps the two canonical PNGs and a short summary. The 25 mermaid diagrams below stay in sync with the source tree as agents and packages evolve.
+This file is the visual index of the Bodhyanga platform. It is the deep companion to the [main README](../README.md), which keeps the two canonical PNGs and a short summary. The 25 mermaid diagrams below stay in sync with the source tree as agents and packages evolve.
 
 Start with the two PNGs referenced in the README (`Architecture.png` and `architectureflow.png`), then drill into the mermaid views below, grouped A–F by topic.
 
@@ -15,14 +15,14 @@ Start with the two PNGs referenced in the README (`Architecture.png` and `archit
 The Microsoft-style **Multi-Agent Reference Architecture (MARA)** mapping — user, application, orchestrator, classifier, registry, knowledge/storage, supervisor/worker agents, MCP, observability, evaluation.
 
 <p align="center">
-  <img src="../Architecture.png" alt="Bodh platform architecture aligned with Microsoft MARA" width="820"/>
+  <img src="../Architecture.png" alt="Bodhyanga platform architecture aligned with Microsoft MARA" width="820"/>
 </p>
 
 **How each box maps to the Go code:**
 
-| Area on diagram | Bodh implementation | Go path |
+| Area on diagram | Bodhyanga implementation | Go path |
 |-----------------|---------------------|---------|
-| User / User application | Entry that publishes the first `protocol.Message` | `cmd/demo`, `cmd/caredemo`, `cmd/care` (HTTP), `cmd/bodhctl` (CLI) |
+| User / User application | Entry that publishes the first `protocol.Message` | `cmd/demo`, `cmd/caredemo`, `cmd/care` (HTTP), `cmd/bodhyangactl` (CLI) |
 | Orchestrator | Subscribes agents, runs governance, calls `HandleMessage`, republishes outputs | `pkg/orchestration` |
 | Classifier | Route intent (chest pain vs rash, refill vs urgent) | `inbox_triage` agent · future `pkg/classifier` |
 | Agent registry | Lists agents, resolves capabilities | `pkg/registry` |
@@ -37,7 +37,7 @@ The Microsoft-style **Multi-Agent Reference Architecture (MARA)** mapping — us
 
 ### Clinical flow — [`architectureflow.png`](../architectureflow.png)
 
-End-to-end **sequential diagnosis** for one case: presentation → RPM monitor → history → tests (with cost check + rework loop) → diagnosis → reasoning verification → human sign-off → final report. The Bodh expression of [MAI-DxO](https://microsoft.ai/news/the-path-to-medical-superintelligence/)'s virtual physician panel.
+End-to-end **sequential diagnosis** for one case: presentation → RPM monitor → history → tests (with cost check + rework loop) → diagnosis → reasoning verification → human sign-off → final report. The Bodhyanga expression of [MAI-DxO](https://microsoft.ai/news/the-path-to-medical-superintelligence/)'s virtual physician panel.
 
 <p align="center">
   <img src="../architectureflow.png" alt="Sequential diagnosis flow — virtual physician panel" width="820"/>
@@ -58,9 +58,9 @@ End-to-end **sequential diagnosis** for one case: presentation → RPM monitor �
 
 ## A. Bird's-eye views
 
-### 1. System context (level 1) — Bodh in its world
+### 1. System context (level 1) — Bodhyanga in its world
 
-The actors and external systems Bodh exchanges data with.
+The actors and external systems Bodhyanga exchanges data with.
 
 ```mermaid
 flowchart TB
@@ -72,20 +72,20 @@ flowchart TB
     Payer[Payer / CMS<br/>X12 837 / 835 / 270 / 271]
     Pharma[Pharmacy network<br/>NCPDP SCRIPT]
     SMS[SMS / email gateway<br/>Twilio · SendGrid]
-    Bodh((Bodh Platform))
+    Bodhyanga((Bodhyanga Platform))
 
-    Clinician -->|web app, SMART launch| Bodh
+    Clinician -->|web app, SMART launch| Bodhyanga
     Patient -->|SMS reply| SMS
-    SMS -->|webhook| Bodh
-    EHR -->|FHIR R4 / HL7 v2| Bodh
-    Device -->|vendor webhook| Bodh
-    ADT -->|HL7 v2 stream| Bodh
-    Bodh -->|outreach SMS / email| SMS
+    SMS -->|webhook| Bodhyanga
+    EHR -->|FHIR R4 / HL7 v2| Bodhyanga
+    Device -->|vendor webhook| Bodhyanga
+    ADT -->|HL7 v2 stream| Bodhyanga
+    Bodhyanga -->|outreach SMS / email| SMS
     SMS --> Patient
-    Bodh -->|FHIR write-back| EHR
-    Bodh -->|837 claim| Payer
-    Payer -->|835 ERA| Bodh
-    Bodh -->|NewRx / RefillRx| Pharma
+    Bodhyanga -->|FHIR write-back| EHR
+    Bodhyanga -->|837 claim| Payer
+    Payer -->|835 ERA| Bodhyanga
+    Bodhyanga -->|NewRx / RefillRx| Pharma
 ```
 
 ### 2. MARA platform — building blocks → Go packages
@@ -161,7 +161,7 @@ flowchart TB
 
 ### 4. Message lifecycle — what happens to one Message
 
-Every interaction in Bodh is a `protocol.Message`. This is its lifecycle.
+Every interaction in Bodhyanga is a `protocol.Message`. This is its lifecycle.
 
 ```mermaid
 sequenceDiagram
@@ -465,7 +465,7 @@ sequenceDiagram
 
 ### 16. TCM (transitional care) — full cascade from ADT
 
-The most involved cascade in Bodh: ADT → risk → discharge review → TCM tasks → welcome review → patient SMS.
+The most involved cascade in Bodhyanga: ADT → risk → discharge review → TCM tasks → welcome review → patient SMS.
 
 ```mermaid
 sequenceDiagram
@@ -576,44 +576,44 @@ sequenceDiagram
     participant Pt as Patient
     participant Dev as RPM scale
     participant ADT
-    participant Bodh
+    participant Bodhyanga
     participant Clin as Clinician
     participant Eng as engagement
 
     Note over Pt,Eng: Day 0 — enrollment
-    Bodh->>Bodh: register PatientRecord(chf)
-    Bodh->>Bodh: BuildCarePlan(chf)
-    Bodh->>Clin: review_request (care_plan_review)
-    Clin->>Bodh: approve
-    Bodh->>Eng: SMS welcome + plan
+    Bodhyanga->>Bodhyanga: register PatientRecord(chf)
+    Bodhyanga->>Bodhyanga: BuildCarePlan(chf)
+    Bodhyanga->>Clin: review_request (care_plan_review)
+    Clin->>Bodhyanga: approve
+    Bodhyanga->>Eng: SMS welcome + plan
     Eng->>Pt: "Your CHF plan is ready"
 
     Note over Pt,Eng: Day 7 — RPM cadence
-    Dev->>Bodh: weight=185 lb
-    Bodh->>Bodh: store · no threshold breach
+    Dev->>Bodhyanga: weight=185 lb
+    Bodhyanga->>Bodhyanga: store · no threshold breach
 
     Note over Pt,Eng: Day 14 — deterioration
-    Dev->>Bodh: weight=192 lb (+4 lb / 24h)
-    Bodh->>Bodh: threshold breach · publish alert
-    Bodh->>Clin: NurseTask priority=urgent
+    Dev->>Bodhyanga: weight=192 lb (+4 lb / 24h)
+    Bodhyanga->>Bodhyanga: threshold breach · publish alert
+    Bodhyanga->>Clin: NurseTask priority=urgent
     Clin->>Pt: phone call · adjust diuretic
 
     Note over Pt,Eng: Day 20 — hospital admit
-    ADT->>Bodh: adt_event admit
-    Bodh->>Bodh: ScoreReadmissionRisk · band=high
+    ADT->>Bodhyanga: adt_event admit
+    Bodhyanga->>Bodhyanga: ScoreReadmissionRisk · band=high
 
     Note over Pt,Eng: Day 23 — discharge
-    ADT->>Bodh: adt_event discharge
-    Bodh->>Clin: review_request (discharge_review · urgent)
-    Clin->>Bodh: approve
-    Bodh->>Bodh: tcm_coordinator creates 5 tasks
-    Bodh->>Clin: review_request (tcm_welcome_review)
-    Clin->>Bodh: approve cascade
-    Bodh->>Eng: TCM welcome SMS
+    ADT->>Bodhyanga: adt_event discharge
+    Bodhyanga->>Clin: review_request (discharge_review · urgent)
+    Clin->>Bodhyanga: approve
+    Bodhyanga->>Bodhyanga: tcm_coordinator creates 5 tasks
+    Bodhyanga->>Clin: review_request (tcm_welcome_review)
+    Clin->>Bodhyanga: approve cascade
+    Bodhyanga->>Eng: TCM welcome SMS
 
     Note over Pt,Eng: Day 30 — billing
-    Bodh->>Bodh: BillablePeriod qualifies for CCM (CPT 99490)
-    Bodh->>Bodh: generate 837 claim
+    Bodhyanga->>Bodhyanga: BillablePeriod qualifies for CCM (CPT 99490)
+    Bodhyanga->>Bodhyanga: generate 837 claim
 ```
 
 ---
@@ -644,7 +644,7 @@ flowchart TB
             Dataflow[Dataflow streaming]
         end
         subgraph Services[Services · stateless]
-            GKE[GKE Bodh microservices]
+            GKE[GKE Bodhyanga microservices]
             CR[Cloud Run RPM ingest]
         end
         subgraph Data[Data]
@@ -705,7 +705,7 @@ flowchart TB
             Lambda[Lambda parsers]
         end
         subgraph ComputeA[Compute]
-            EKS[EKS / ECS Fargate<br/>Bodh microservices]
+            EKS[EKS / ECS Fargate<br/>Bodhyanga microservices]
         end
         subgraph DataA[Data]
             RDS[(RDS Postgres<br/>operational)]
@@ -764,7 +764,7 @@ Where each Security-Rule technical safeguard lives.
 flowchart TB
     User[Clinician or patient request] --> IdP[OIDC IdP<br/>SMART on FHIR · OIDC]
     IdP -->|access token + id token| GW[API Gateway<br/>JWT validation · WAF · rate limit · IP allowlist]
-    GW -->|mTLS| API[Bodh API · 8088]
+    GW -->|mTLS| API[Bodhyanga API · 8088]
     API --> Scope[Scope check<br/>RequireScopePolicy]
     Scope --> Tenant[Tenant check<br/>RequireTenantPolicy]
     Tenant --> Authz[Centralized chokepoint<br/>per-resource RBAC]
@@ -811,7 +811,7 @@ flowchart LR
 
 ## G. AI subsystem
 
-The LLM-specific view of Bodh. Every diagram here corresponds to code in `pkg/llm`, `pkg/embeddings`, `pkg/knowledge`, `pkg/safety`, `pkg/observability`, `pkg/eval`, and the LLM-backed agents under `agents/`. See [ai-features.md](ai-features.md) for the prose walk-through.
+The LLM-specific view of Bodhyanga. Every diagram here corresponds to code in `pkg/llm`, `pkg/embeddings`, `pkg/knowledge`, `pkg/safety`, `pkg/observability`, `pkg/eval`, and the LLM-backed agents under `agents/`. See [ai-features.md](ai-features.md) for the prose walk-through.
 
 ### 26. LLM provider abstraction — Client interface + adapters + Mock
 
@@ -898,7 +898,7 @@ sequenceDiagram
 
 ### 28. RAG retrieval pipeline
 
-When `BODH_KNOWLEDGE_CORPUS` is set, the LLM diagnostician prepends an "Evidence:" block to the user message and propagates the retrieved Citations onto the final proposal.
+When `BODHYANGA_KNOWLEDGE_CORPUS` is set, the LLM diagnostician prepends an "Evidence:" block to the user message and propagates the retrieved Citations onto the final proposal.
 
 ```mermaid
 flowchart TB
@@ -1008,7 +1008,7 @@ flowchart TB
     Call --> Build[Build LLMTrace<br/>provider · model · duration_ms<br/>input/output/cached tokens<br/>stop_reason · agent_id<br/>case_id · trace_id · kind]
     Build --> Log["StdLogger.RecordLLMCall<br/>emit '[llm-trace] {json}' line"]
     Log --> Sink1[(stdout log<br/>Loki / Cloud Logging)]
-    Log --> Gate{BODH_OTEL_ENABLED=1<br/>AND otelHook set?}
+    Log --> Gate{BODHYANGA_OTEL_ENABLED=1<br/>AND otelHook set?}
     Gate -->|yes| Hook["otelHook(LLMTrace)<br/>SetLLMOTelHook(fn)"]
     Hook --> OTLP[(OTLP exporter)]
     OTLP --> Collector[(OTel collector)]

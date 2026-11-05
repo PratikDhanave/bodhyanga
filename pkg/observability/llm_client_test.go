@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/PratikDhanave/bodh/pkg/llm"
-	"github.com/PratikDhanave/bodh/pkg/observability"
+	"github.com/PratikDhanave/bodhyanga/pkg/llm"
+	"github.com/PratikDhanave/bodhyanga/pkg/observability"
 )
 
 // ── stubs ─────────────────────────────────────────────────────────────────────

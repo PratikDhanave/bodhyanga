@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/audit"
+	"github.com/PratikDhanave/bodhyanga/pkg/audit"
 )
 
 // Outcome strings used in CallEvent.Outcome.
@@ -16,7 +16,7 @@ const (
 )
 
 // CallEvent is the audit-friendly summary of one CallTool invocation. Field
-// selection mirrors the rule used everywhere else in Bodh's audit pipeline:
+// selection mirrors the rule used everywhere else in Bodhyanga's audit pipeline:
 // enough to reconstruct who called what when, never enough to leak the tool
 // arguments or response content.
 //

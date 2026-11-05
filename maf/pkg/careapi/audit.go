@@ -12,7 +12,7 @@ type auditEvent struct {
 	CaseToken string `json:"case_token,omitempty"`
 }
 
-// auditTrail returns the case-filtered, ordered, PHI-free trail. The bodh audit
+// auditTrail returns the case-filtered, ordered, PHI-free trail. The bodhyanga audit
 // recorder is already PHI-free (case ids are hashed tokens); we filter to the
 // requested token and project the safe fields. 404 distinguishes an unknown
 // case from one with an empty trail (FR-010).

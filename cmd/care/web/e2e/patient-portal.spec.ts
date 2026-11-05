@@ -13,7 +13,7 @@ test.describe('Patient Portal', () => {
     await login(page);
     // Seed a patient so the portal renders the care-plan, reminders and vitals
     // sections instead of the "no patient" empty state.
-    const token = await page.evaluate(() => localStorage.getItem('bodh_jwt'));
+    const token = await page.evaluate(() => localStorage.getItem('bodhyanga_jwt'));
     await page.request.post('/patients', {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       data: {

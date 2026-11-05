@@ -14,7 +14,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/PratikDhanave/bodh/pkg/knowledge/rerank"
+	"github.com/PratikDhanave/bodhyanga/pkg/knowledge/rerank"
 )
 
 // ErrNotBuilt is returned by every constructor in the default build.

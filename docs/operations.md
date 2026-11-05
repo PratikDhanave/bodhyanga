@@ -1,6 +1,6 @@
-# Bodh — Operations Guide
+# Bodhyanga — Operations Guide
 
-Observability, audit, SLOs, and operational concerns for running Bodh.
+Observability, audit, SLOs, and operational concerns for running Bodhyanga.
 
 > Pairs with [deployment.md](deployment.md) (how to deploy) and [governance.md](governance.md) (policy and audit semantics).
 
@@ -25,8 +25,8 @@ Observability, audit, SLOs, and operational concerns for running Bodh.
 
 | Signal | Source | Sink (default) | Sink (production) |
 |---|---|---|---|
-| Application logs | `observability.Logger` | stdout `[bodh]` prefix | Loki / Cloud Logging via Vector / Fluent Bit |
-| LLM call traces | `observability.LLMTrace` | stdout `[llm-trace]` JSON line | OTLP collector via `BODH_OTEL_EXPORT=1` |
+| Application logs | `observability.Logger` | stdout `[bodhyanga]` prefix | Loki / Cloud Logging via Vector / Fluent Bit |
+| LLM call traces | `observability.LLMTrace` | stdout `[llm-trace]` JSON line | OTLP collector via `BODHYANGA_OTEL_EXPORT=1` |
 | Audit events | `pkg/audit.Recorder` | in-memory | Postgres `audit_events` table + WORM sink |
 | Eval records | `pkg/eval.Store` | in-memory | Postgres `interaction_records` table |
 | HTTP access logs | (cmd/care default mux) | stdout | API gateway / reverse proxy |
@@ -37,7 +37,7 @@ Observability, audit, SLOs, and operational concerns for running Bodh.
 
 ## Structured logs
 
-The default `observability.StdLogger` writes `[bodh] ...` lines to stdout with microsecond timestamps. Replace it with anything that satisfies the `Logger` interface:
+The default `observability.StdLogger` writes `[bodhyanga] ...` lines to stdout with microsecond timestamps. Replace it with anything that satisfies the `Logger` interface:
 
 ```go
 type Logger interface {
@@ -100,16 +100,16 @@ Recommended metrics to expose (planned):
 
 | Metric | Type | Labels |
 |---|---|---|
-| `bodh_messages_total` | counter | `agent_id`, `type`, `tenant_id` |
-| `bodh_policy_decisions_total` | counter | `policy`, `decision`, `tenant_id` |
-| `bodh_agent_errors_total` | counter | `agent_id` |
-| `bodh_llm_calls_total` | counter | `provider`, `model`, `agent_id`, `outcome` |
-| `bodh_llm_call_duration_seconds` | histogram | `provider`, `model` |
-| `bodh_llm_tokens_total` | counter | `provider`, `model`, `direction` (in/out/cached) |
-| `bodh_fallback_total` | counter | `agent_id`, `reason` |
-| `bodh_review_queue_depth` | gauge | `priority` |
-| `bodh_case_completion_seconds` | histogram | `condition` |
-| `bodh_diagnostic_cost_usd` | histogram | `condition`, `provider` |
+| `bodhyanga_messages_total` | counter | `agent_id`, `type`, `tenant_id` |
+| `bodhyanga_policy_decisions_total` | counter | `policy`, `decision`, `tenant_id` |
+| `bodhyanga_agent_errors_total` | counter | `agent_id` |
+| `bodhyanga_llm_calls_total` | counter | `provider`, `model`, `agent_id`, `outcome` |
+| `bodhyanga_llm_call_duration_seconds` | histogram | `provider`, `model` |
+| `bodhyanga_llm_tokens_total` | counter | `provider`, `model`, `direction` (in/out/cached) |
+| `bodhyanga_fallback_total` | counter | `agent_id`, `reason` |
+| `bodhyanga_review_queue_depth` | gauge | `priority` |
+| `bodhyanga_case_completion_seconds` | histogram | `condition` |
+| `bodhyanga_diagnostic_cost_usd` | histogram | `condition`, `provider` |
 
 ---
 
@@ -127,14 +127,14 @@ go mod tidy
 go build -tags otel -o ./care ./cmd/care
 
 # 3. Run with the env var
-BODH_OTEL_EXPORT=1 BODH_OTEL_ENDPOINT=http://otel-collector:4318 ./care
+BODHYANGA_OTEL_EXPORT=1 BODHYANGA_OTEL_ENDPOINT=http://otel-collector:4318 ./care
 ```
 
-When `BODH_OTEL_EXPORT` is unset, `cmd/care` uses a no-op stub (no SDK linked at all). The default `go.sum` stays minimal.
+When `BODHYANGA_OTEL_EXPORT` is unset, `cmd/care` uses a no-op stub (no SDK linked at all). The default `go.sum` stays minimal.
 
 ### Span shape
 
-Service name: `bodh-care`. Span name: `llm.completion` (or `llm.embedding`). Attributes:
+Service name: `bodhyanga-care`. Span name: `llm.completion` (or `llm.embedding`). Attributes:
 
 | Attribute | Type | Notes |
 |---|---|---|
@@ -187,7 +187,7 @@ service:
       exporters: [prometheus]
 ```
 
-The `attributes/strip_phi` processor is **defence in depth** — Bodh's exporter already hashes `case_id` and never emits content, but a collector-level strip catches misconfigured custom spans.
+The `attributes/strip_phi` processor is **defence in depth** — Bodhyanga's exporter already hashes `case_id` and never emits content, but a collector-level strip catches misconfigured custom spans.
 
 ---
 
@@ -212,7 +212,7 @@ When OTel is on, the same record is also sent as a span.
 
 ## Audit pipeline
 
-Per HIPAA §164.312(b), Bodh emits audit events for every clinical message. PR #12 wired this into the orchestrator.
+Per HIPAA §164.312(b), Bodhyanga emits audit events for every clinical message. PR #12 wired this into the orchestrator.
 
 ### Event types
 
@@ -280,9 +280,9 @@ type NATSBus struct {
 }
 
 func (b *NATSBus) Subscribe(agentID string, h Handler) func() {
-    consumer, _ := b.js.CreateConsumer(ctx, "bodh", jetstream.ConsumerConfig{
+    consumer, _ := b.js.CreateConsumer(ctx, "bodhyanga", jetstream.ConsumerConfig{
         Durable:       agentID,
-        FilterSubject: fmt.Sprintf("bodh.msg.%s", agentID),
+        FilterSubject: fmt.Sprintf("bodhyanga.msg.%s", agentID),
         MaxAckPending: 1,                  // FIFO per recipient
         AckPolicy:     jetstream.AckExplicitPolicy,
     })
@@ -297,7 +297,7 @@ func (b *NATSBus) Subscribe(agentID string, h Handler) func() {
 
 func (b *NATSBus) Publish(ctx context.Context, msg protocol.Message) {
     data, _ := json.Marshal(msg)
-    b.js.Publish(ctx, fmt.Sprintf("bodh.msg.%s", msg.To), data)
+    b.js.Publish(ctx, fmt.Sprintf("bodhyanga.msg.%s", msg.To), data)
 }
 ```
 
@@ -363,24 +363,24 @@ If you want cross-provider failover (Anthropic outage → OpenAI), implement a `
 
 ## Multi-model pool
 
-When Bodh runs on-premise with kronk (local llama.cpp), several models share one GPU — typically a chat diagnostician, a vision diagnostician, and an embedding model. The pool in `pkg/llm/pool` keeps clients resident, with LRU + TTL eviction so idle models release their GPU slots. The pool is opt-in and provider-agnostic; with the default `BODH_LLM_POOL` unset, cmd/care uses the existing single-client path unchanged. See [ai-features.md § Multi-model pool](ai-features.md#multi-model-pool-pkgllmpool) for the design.
+When Bodhyanga runs on-premise with kronk (local llama.cpp), several models share one GPU — typically a chat diagnostician, a vision diagnostician, and an embedding model. The pool in `pkg/llm/pool` keeps clients resident, with LRU + TTL eviction so idle models release their GPU slots. The pool is opt-in and provider-agnostic; with the default `BODHYANGA_LLM_POOL` unset, cmd/care uses the existing single-client path unchanged. See [ai-features.md § Multi-model pool](ai-features.md#multi-model-pool-pkgllmpool) for the design.
 
 ### Environment variables
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `BODH_LLM_POOL` | unset | Set to `1` to enable the pool in `cmd/care`. |
-| `BODH_LLM_POOL_MAX` | `0` (unbounded) | Maximum resident clients. For kronk, set to the number of model slots the GPU can hold simultaneously (typically 2–4 on a 24 GB card). |
-| `BODH_LLM_POOL_TTL` | `0` (no TTL) | Idle-eviction interval, parsed by `time.ParseDuration` (e.g. `15m`, `1h`). For kronk, a TTL of 10–30 minutes is typical so a model used for one care episode releases its slot before the next shift. |
-| `BODH_KRONK_MODELS_DIR` | unset | Directory containing the `.gguf` checkpoint files. The pool loads `<spec.Tag>.gguf` from this directory. |
-| `BODH_KRONK_CTX` | `0` (runtime default) | Max context tokens for kronk-loaded models. |
-| `BODH_KRONK_GPU_LAYERS` | `-1` (all) | Number of model layers offloaded to GPU. `0` runs entirely on CPU. |
+| `BODHYANGA_LLM_POOL` | unset | Set to `1` to enable the pool in `cmd/care`. |
+| `BODHYANGA_LLM_POOL_MAX` | `0` (unbounded) | Maximum resident clients. For kronk, set to the number of model slots the GPU can hold simultaneously (typically 2–4 on a 24 GB card). |
+| `BODHYANGA_LLM_POOL_TTL` | `0` (no TTL) | Idle-eviction interval, parsed by `time.ParseDuration` (e.g. `15m`, `1h`). For kronk, a TTL of 10–30 minutes is typical so a model used for one care episode releases its slot before the next shift. |
+| `BODHYANGA_KRONK_MODELS_DIR` | unset | Directory containing the `.gguf` checkpoint files. The pool loads `<spec.Tag>.gguf` from this directory. |
+| `BODHYANGA_KRONK_CTX` | `0` (runtime default) | Max context tokens for kronk-loaded models. |
+| `BODHYANGA_KRONK_GPU_LAYERS` | `-1` (all) | Number of model layers offloaded to GPU. `0` runs entirely on CPU. |
 
 ### MaxResident sizing for GPU
 
 A reasonable starting point on a single-GPU host:
 
-| GPU memory | Suggested `BODH_LLM_POOL_MAX` | Notes |
+| GPU memory | Suggested `BODHYANGA_LLM_POOL_MAX` | Notes |
 |---|---|---|
 | 12 GB (consumer) | `1` | Run one model at a time; rely on TTL eviction to swap. |
 | 24 GB (RTX 4090 / A10) | `2` | Chat + embeddings comfortably; vision must swap in. |
@@ -391,7 +391,7 @@ The exact number depends on model size and quantization. Q4_K_M weights run roug
 
 ### Operational signals
 
-The pool exposes `Stats()` (resident count, hits, misses, evictions, last-eviction time, hit rate). When the rate of evictions stays high under steady load, `BODH_LLM_POOL_MAX` is too small for the workload — either raise it or accept the slowdown. When hit rate stays below 80%, the workload is touching more distinct specs than the pool can keep; consider sharding by tenant or by case-type.
+The pool exposes `Stats()` (resident count, hits, misses, evictions, last-eviction time, hit rate). When the rate of evictions stays high under steady load, `BODHYANGA_LLM_POOL_MAX` is too small for the workload — either raise it or accept the slowdown. When hit rate stays below 80%, the workload is touching more distinct specs than the pool can keep; consider sharding by tenant or by case-type.
 
 ### Failure modes
 
@@ -421,12 +421,12 @@ Beyond the LLM-specific SLOs above, for the platform layer:
 
 ## Runbooks
 
-### "Bodh is denying every clinical message"
+### "Bodhyanga is denying every clinical message"
 
 Symptom: Logs flooded with `message X denied by policy: ...`.
 
 Triage:
-1. Inspect the deny reasons: `kubectl logs deploy/bodh-care | grep "denied by policy" | head`
+1. Inspect the deny reasons: `kubectl logs deploy/bodhyanga-care | grep "denied by policy" | head`
 2. Common causes:
    - `case_id required for clinical messages` — caller isn't propagating `case_id` in metadata. Fix the caller (or temporarily relax `RequireCaseIDPolicy` to log instead of deny).
    - `tenant_id required` — `RequireTenantPolicy` enabled but caller isn't setting `tenant_id`. Verify the API gateway is injecting it from the JWT.
@@ -435,12 +435,12 @@ Triage:
 
 ### "LLM fallback rate spiked"
 
-Symptom: `[llm-trace]` lines showing `stop_reason=error`; `bodh_fallback_total` increasing.
+Symptom: `[llm-trace]` lines showing `stop_reason=error`; `bodhyanga_fallback_total` increasing.
 
 Triage:
 1. Check provider status page (Anthropic / OpenAI / your endpoint).
-2. Check network egress: `kubectl exec -it bodh-care-xxx -- curl -s api.anthropic.com/v1/messages`
-3. Check API key validity: `kubectl get secret bodh-llm -o yaml`
+2. Check network egress: `kubectl exec -it bodhyanga-care-xxx -- curl -s api.anthropic.com/v1/messages`
+3. Check API key validity: `kubectl get secret bodhyanga-llm -o yaml`
 4. If transient, the rule-based fallback handles it — case still finalizes; investigate without firefighting.
 5. If persistent, consider switching providers via `-diagnostician=llm-openai` (cmd/care restart).
 
@@ -457,7 +457,7 @@ Triage:
 
 ### "HITL queue is backing up"
 
-Symptom: `bodh_review_queue_depth` growing; SLA breaches.
+Symptom: `bodhyanga_review_queue_depth` growing; SLA breaches.
 
 Triage:
 1. `curl localhost:8088/reviews?status=pending | jq 'length'`
@@ -476,4 +476,4 @@ Triage:
    - Reasoning verifier reject path (the documented `demo_uri.json` issue — tracked follow-up)
    - Cost guardian deny + max-rework rounds exceeded
    - Pending HITL review
-4. Use `bodhctl reviews pending --case=case-X` to check HITL state.
+4. Use `bodhyangactl reviews pending --case=case-X` to check HITL state.

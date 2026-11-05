@@ -1,15 +1,15 @@
 # Adapted from https://github.com/ardanlabs/service/blob/master/zarf/k8s/dev/sales/dev-sales-patch-deploy.yaml
-# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodh.
+# Original copyright Ardan Labs (Apache 2.0). Modifications for Bodhyanga.
 #
 # Production patch:
 #   - 3 replicas (rolling update with maxSurge=1, maxUnavailable=0)
-#   - Cloud SQL Auth Proxy sidecar — bodh-care talks to localhost:5432
-#   - secretRef wired into envFrom for BODH_DB_DSN + provider API keys
+#   - Cloud SQL Auth Proxy sidecar — bodhyanga-care talks to localhost:5432
+#   - secretRef wired into envFrom for BODHYANGA_DB_DSN + provider API keys
 #   - topologySpreadConstraints across zones for AZ-level resilience
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bodh-care
+  name: bodhyanga-care
 spec:
   replicas: 3
   template:
@@ -20,20 +20,20 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app.kubernetes.io/name: bodh-care
+              app.kubernetes.io/name: bodhyanga-care
       containers:
         - name: care
           envFrom:
             - configMapRef:
-                name: bodh-care-config
+                name: bodhyanga-care-config
             - secretRef:
-                name: bodh-care-secrets # CI / SealedSecret / ExternalSecret.
+                name: bodhyanga-care-secrets # CI / SealedSecret / ExternalSecret.
           env:
-            - name: BODH_DB_DSN
-              # cloudsqlproxy sidecar terminates the TCP — bodh-care talks
+            - name: BODHYANGA_DB_DSN
+              # cloudsqlproxy sidecar terminates the TCP — bodhyanga-care talks
               # to localhost; the proxy authenticates upstream via Workload
               # Identity + Cloud SQL IAM.
-              value: "postgres://bodh_app@localhost:5432/bodh?sslmode=disable"
+              value: "postgres://bodhyanga_app@localhost:5432/bodhyanga?sslmode=disable"
           resources:
             requests:
               cpu: "1000m"

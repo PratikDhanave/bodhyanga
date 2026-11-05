@@ -105,7 +105,7 @@ func (t *OpenURLTool) Invoke(ctx context.Context, args json.RawMessage) (json.Ra
 	if err != nil {
 		return nil, fmt.Errorf("open_url: build request: %w", err)
 	}
-	req.Header.Set("User-Agent", "bodh-computeruse/1.0")
+	req.Header.Set("User-Agent", "bodhyanga-computeruse/1.0")
 
 	resp, err := t.client().Do(req)
 	if err != nil {

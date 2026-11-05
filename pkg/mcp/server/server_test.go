@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/mcp"
-	"github.com/PratikDhanave/bodh/pkg/mcp/server"
-	"github.com/PratikDhanave/bodh/pkg/tools"
+	"github.com/PratikDhanave/bodhyanga/pkg/mcp"
+	"github.com/PratikDhanave/bodhyanga/pkg/mcp/server"
+	"github.com/PratikDhanave/bodhyanga/pkg/tools"
 )
 
 // ─── helpers ────────────────────────────────────────────────────────────────

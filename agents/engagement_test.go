@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/PratikDhanave/bodh/pkg/agent"
-	"github.com/PratikDhanave/bodh/pkg/engagement"
-	"github.com/PratikDhanave/bodh/pkg/medical"
+	"github.com/PratikDhanave/bodhyanga/pkg/agent"
+	"github.com/PratikDhanave/bodhyanga/pkg/engagement"
+	"github.com/PratikDhanave/bodhyanga/pkg/medical"
 )
 
 func TestEngagementIDNameCapabilities(t *testing.T) {

@@ -7,7 +7,7 @@
 // are loaded at startup so the care API can accept username+password
 // requests without an external IdP.
 //
-// Secret: BODH_JWT_SECRET (default "bodh-dev-secret-change-in-prod").
+// Secret: BODHYANGA_JWT_SECRET (default "bodhyanga-dev-secret-change-in-prod").
 package auth
 
 import (
@@ -32,11 +32,11 @@ var ErrInvalidPassword = errors.New("invalid password")
 // token is malformed, expired, or signed with a different secret.
 var ErrInvalidCredentialToken = errors.New("invalid or expired credential token")
 
-// DefaultJWTSecret is the fallback HS256 secret used when BODH_JWT_SECRET
+// DefaultJWTSecret is the fallback HS256 secret used when BODHYANGA_JWT_SECRET
 // is not set. Never use the default in production.
-const DefaultJWTSecret = "bodh-dev-secret-change-in-prod"
+const DefaultJWTSecret = "bodhyanga-dev-secret-change-in-prod"
 
-// User is a Bodh user record stored in a CredentialStore.
+// User is a Bodhyanga user record stored in a CredentialStore.
 type User struct {
 	ID           string // UUID
 	Email        string
@@ -157,10 +157,10 @@ func (s *CredentialStore) ValidateToken(token, secret string) (*User, error) {
 	return u, nil
 }
 
-// JWTSecret returns the active HS256 secret: BODH_JWT_SECRET env var if
+// JWTSecret returns the active HS256 secret: BODHYANGA_JWT_SECRET env var if
 // set, otherwise DefaultJWTSecret.
 func JWTSecret() string {
-	if v := os.Getenv("BODH_JWT_SECRET"); v != "" {
+	if v := os.Getenv("BODHYANGA_JWT_SECRET"); v != "" {
 		return v
 	}
 	return DefaultJWTSecret
