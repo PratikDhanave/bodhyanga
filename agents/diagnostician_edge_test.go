@@ -195,8 +195,8 @@ func TestInferDiagnosisPE(t *testing.T) {
 		},
 	}
 	got := inferDiagnosis(state)
-	if got.Diagnosis != "pulmonary_embolism" {
-		t.Errorf("diagnosis=%q, want pulmonary_embolism", got.Diagnosis)
+	if got.Diagnosis != "Pulmonary embolism" {
+		t.Errorf("diagnosis=%q, want Pulmonary embolism", got.Diagnosis)
 	}
 	if got.Confidence < 0.7 {
 		t.Errorf("confidence=%.2f, want >= 0.7", got.Confidence)
@@ -228,6 +228,89 @@ func TestExtractFirstNumberNoMarker(t *testing.T) {
 	val, ok := extractFirstNumber("42 is the answer", "")
 	if !ok || val != 42 {
 		t.Errorf("got %v ok=%v, want 42 ok=true", val, ok)
+	}
+}
+
+func TestInferDiagnosisURI(t *testing.T) {
+	state := medical.CaseState{
+		Condition: "uri",
+		Presentation: "Sore throat and runny nose for 3 days, low-grade fever",
+		TestResults: map[string]string{
+			"chest_xray":                 "No infiltrate; lungs clear",
+			"complete_blood_count":       "WBC 6.2 K, normal differential, lymphocytosis (viral pattern)",
+			"basic_metabolic_panel":      "Within normal limits",
+		},
+	}
+	got := inferDiagnosis(state)
+	if got.Diagnosis != "Viral upper respiratory infection" {
+		t.Errorf("diagnosis=%q, want Viral upper respiratory infection", got.Diagnosis)
+	}
+	if got.Confidence < 0.7 {
+		t.Errorf("confidence=%.2f, want >= 0.7", got.Confidence)
+	}
+}
+
+func TestIsURILikely(t *testing.T) {
+	cases := []struct {
+		name     string
+		state    medical.CaseState
+		expected bool
+	}{
+		{
+			name: "explicit uri condition tag",
+			state: medical.CaseState{
+				Condition: "uri",
+				Presentation: "Any presentation",
+			},
+			expected: true,
+		},
+		{
+			name: "negative workup with URI symptoms",
+			state: medical.CaseState{
+				Condition: "cap",
+				Presentation: "Sore throat and runny nose",
+				TestResults: map[string]string{
+					"chest_xray":                 "No infiltrate; lungs clear",
+					"complete_blood_count":       "WBC 6.2 K, normal differential",
+					"basic_metabolic_panel":      "Within normal limits",
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "CAP case with infiltrate should not be URI",
+			state: medical.CaseState{
+				Condition: "cap",
+				Presentation: "Cough and fever",
+				TestResults: map[string]string{
+					"chest_xray":                 "Right lower lobe infiltrate",
+					"complete_blood_count":       "WBC 14.2 K, neutrophil predominance",
+					"basic_metabolic_panel":      "Within normal limits",
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "leukocytosis should not be URI",
+			state: medical.CaseState{
+				Condition: "cap",
+				Presentation: "Sore throat",
+				TestResults: map[string]string{
+					"chest_xray":                 "No infiltrate",
+					"complete_blood_count":       "WBC 18.4 K, left shift",
+					"basic_metabolic_panel":      "Within normal limits",
+				},
+			},
+			expected: false,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := isURILikely(tc.state)
+			if got != tc.expected {
+				t.Errorf("isURILikely()=%v, want %v", got, tc.expected)
+			}
+		})
 	}
 }
 

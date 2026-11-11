@@ -1,6 +1,6 @@
 module github.com/PratikDhanave/bodhyanga
 
-go 1.26.5
+go 1.27
 
 require (
 	github.com/google/uuid v1.6.0

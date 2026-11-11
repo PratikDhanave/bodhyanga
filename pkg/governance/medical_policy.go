@@ -2,6 +2,7 @@ package governance
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -166,7 +167,125 @@ func (ResearchDisclaimerPolicy) Evaluate(_ context.Context, _ protocol.Message) 
 	return allow("research demo — not for clinical use"), nil
 }
 
-// RequireTenantPolicy denies any message missing tenant_id in metadata.
+// RequireMinimumNecessaryPolicy limits each agent's metadata surface to only
+// the fields they need to perform their function.
+//
+// This is defence-in-depth on top of the existing RequireCaseIDPolicy and
+// RequireTenantPolicy. It prevents agents from reading fields that contain
+// PHI they shouldn't see (e.g. full MRN, full HPI narrative, lab values,
+// medication names). Only the minimum correlator and condition tags are
+// exposed per-agent, so even a compromised agent's output is constrained.
+//
+// Fields are defined per-agent type via the Required field; types not listed
+// are allowed without surface restrictions — keep the table explicit so
+// operators can audit which operations are gated.
+//
+// Example deployment:
+//   // In cmd/care/main.go:
+//   //   policies := governance.NewComposite(
+//   //       governance.MaxContentLengthPolicy{Max: 65536},
+//   //       governance.RequireCaseIDPolicy{},
+//   //       governance.RequireTenantPolicy{},
+//   //       governance.RequireMinimumNecessaryPolicy{Required: map[string]string{
+//   //           "diagnostician":    "case_id,condition",
+//   //           "questioner":       "case_id,symptoms",
+//   //           "test_planner":     "case_id,condition",
+//   //           "reasoning_verifier": "case_id,test_results",
+//   //       }},
+//   //   ...
+// Regulatory anchor: HIPAA §164.312(b) — minimum necessary standard. Only the
+// fields needed for the agent's function should be present in the metadata
+// they receive; all other PHI must be redacted or absent.
+//
+// Example deny audit record:
+//
+//	{kind: "policy_decision", decision: "deny",
+//	 reason: "minimum necessary violation: unexpected field 'mrn' in metadata",
+//	 type: "presentation"}
+type RequireMinimumNecessaryPolicy struct {
+	// Required maps agent ID -> comma-separated list of metadata fields the
+	// agent is allowed to see. Fields not listed are stripped / cause deny.
+	// Keys are agent IDs (e.g. "diagnostician", "questioner", "test_planner").
+	// The special key "*" applies to all agents not explicitly listed.
+	// Convention: list only the minimum fields each agent needs; never
+	// include full MRN, HPI, lab values, or medication names.
+	Required map[string]string
+}
+
+// Evaluate strips or denies any message whose metadata contains fields the
+// named agent is not authorised to see. The agent_id comes from
+// msg.Metadata["agent_id"] or msg.Metadata["agent"] — whichever is present.
+func (RequireMinimumNecessaryPolicy) Evaluate(ctx context.Context, msg protocol.Message) (PolicyResult, error) {
+	// Determine the agent ID from metadata.
+	var agentID string
+	if v, ok := msg.Metadata["agent_id"].(string); ok {
+		agentID = v
+	} else if v, ok := msg.Metadata["agent"].(string); ok {
+		agentID = v
+	}
+
+	// If no agent identifier, allow through (no surface to gate). This
+	// preserves backwards-compatibility for system messages that don't
+	// carry an agent ID.
+	if agentID == "" {
+		return allow("no agent identifier in metadata"), nil
+	}
+
+	// Look up the allowed fields for this agent.
+	allowed := "*"
+	if a, ok := Required[agentID]; ok {
+		allowed = a
+	} else if a, ok := Required["*"]; ok {
+		allowed = a
+	}
+
+	// Parse the allowed fields into a set. Comma-separated list.
+	allowedSet := make(map[string]bool)
+	if allowed != "*" {
+		for _, f := range strings.Split(allowed, ",") {
+			f = strings.TrimSpace(f)
+			if f != "" {
+				allowedSet[f] = true
+			}
+		}
+	}
+
+	// If no allowed fields configured, allow through (defence-in-depth:
+	// caller should have configured this).
+	if len(allowedSet) == 0 {
+		return allow("minimum necessary policy: no field restrictions for " + agentID), nil
+	}
+
+	// Check each metadata key. If any key is not in the allowed set and is
+	// not the agent_id or agent key itself, deny.
+	if msg.Metadata != nil {
+		for key := range msg.Metadata {
+			// Always allow the agent_id / agent keys themselves.
+			if key == "agent_id" || key == "agent" {
+				continue
+			}
+			if !allowedSet[key] {
+				// This field is not in the allowed set — it's a PHI surface
+				// violation. Deny with a specific reason.
+				return deny("minimum necessary violation: unexpected field '" + key + "' in metadata for agent " + agentID), nil
+			}
+		}
+	}
+
+	return allow("minimum necessary check passed for agent " + agentID), nil
+}
+
+// String returns a human-readable description of the policy's configuration.
+func (p RequireMinimumNecessaryPolicy) String() string {
+	if len(p.Required) == 0 {
+		return "RequireMinimumNecessaryPolicy (no field restrictions configured)"
+	}
+	lines := []string{"RequireMinimumNecessaryPolicy: " + strconv.Itoa(len(p.Required)) + " agent(s) configured"}
+	for agentID, fields := range p.Required {
+		lines = append(lines, "  "+agentID+": "+fields)
+	}
+	return strings.Join(lines, "\n")
+}
 //
 // Failure mode prevented: a message reaching an agent without a tenant
 // correlator, then being written to Postgres without app.tenant_id set —
@@ -288,6 +407,9 @@ func (p RequireScopePolicy) Evaluate(_ context.Context, msg protocol.Message) (P
 }
 
 // allow constructs an allow PolicyResult with the given Reason.
+func (p RequireMinimumNecessaryPolicy) GetRequired() map[string]string {
+	return p.Required
+}
 //
 // IMPORTANT: the Reason string is part of the audit pipeline's public
 // contract. It flows into audit.Event.Reason (see

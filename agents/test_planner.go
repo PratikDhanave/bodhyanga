@@ -33,6 +33,10 @@ var conditionWorkups = map[string][]string{
 	// troponin and BNP surface right-heart strain; ECG may show S1Q3T3 pattern.
 	// Illustrative only — not a clinical guideline.
 	"pe": {"ct_pulmonary_angiography", "d_dimer", "troponin", "bnp_pe", "ecg"},
+	// URI workup: minimal workup for viral URI — CBC and BMP to rule out bacterial
+	// superinfection / DKA mimic. No CXR needed (no infiltrate expected).
+	// Illustrative only — not a clinical guideline.
+	"uri": {"complete_blood_count", "basic_metabolic_panel"},
 }
 
 // defaultWorkup is the respiratory workup used when no condition matches.
@@ -107,6 +111,8 @@ func simulatedTestResult(name, condition string) string {
 			return "WBC 12.5 K, mild leukocytosis (stress demargination)"
 		case "chf":
 			return "WBC 7.8 K, normal differential"
+		case "uri":
+			return "WBC 6.2 K, normal differential, lymphocytosis (viral pattern)"
 		default:
 			return "WBC 14.2 K, neutrophil predominance"
 		}
@@ -129,6 +135,8 @@ func simulatedTestResult(name, condition string) string {
 			return "Within normal limits"
 		case "chf":
 			return "Creatinine 1.4 mg/dL, sodium 134 mEq/L"
+		case "uri":
+			return "Within normal limits"
 		default:
 			return "Within normal limits"
 		}

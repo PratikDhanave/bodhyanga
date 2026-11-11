@@ -388,42 +388,6 @@ coverage-check:
 	@$(GO) test $(PKG) -cover 2>&1 | grep -E "^ok" | grep "coverage:" | awk '{gsub(/%/, "", $$NF); if ($$NF+0 < 80) print "FAIL: " $$2 " at " $$NF "%%"; found++} END {if (!found) print "All packages above 80%%"}'
 
 # ===========================================================================
-# LESSONS — agents-v2 curriculum in Go
-# ===========================================================================
-
-.PHONY: lesson-01
-## 01-Intro-to-Agents: the simplest possible agent — a single LLM call.
-## Exercises: change INTRO_MESSAGE, INTRO_MODEL, or INTRO_PROVIDER.
-##   make lesson-01 INTRO_MESSAGE="What is the ReAct pattern?"
-##   make lesson-01 INTRO_MODEL=llama3.2
-##   make lesson-01 INTRO_PROVIDER=anthropic   # needs ANTHROPIC_API_KEY
-lesson-01:
-	OLLAMA_HOST=$(OLLAMA_HOST) INTRO_PROVIDER=$(INTRO_PROVIDER) \
-	$(GO) run ./cmd/intro/... \
-	  -provider=$(INTRO_PROVIDER) \
-	  -ollama-host=$(OLLAMA_HOST) \
-	  $(if $(INTRO_MODEL),-model=$(INTRO_MODEL),) \
-	  -message=$(INTRO_MESSAGE) \
-	  -verbose \
-	  $(ARGS)
-
-.PHONY: lesson-02
-## 02-Tool-Calling: advertise tools to the LLM; observe which tool it selects.
-## Exercises: change TOOLCALLING_MESSAGE, TOOLCALLING_MODEL, or TOOLCALLING_PROVIDER.
-##   make lesson-02 TOOLCALLING_MESSAGE="What is 2 + 2?"
-##   make lesson-02 TOOLCALLING_MODEL=llama3.2
-##   make lesson-02 TOOLCALLING_PROVIDER=anthropic   # needs ANTHROPIC_API_KEY
-lesson-02:
-	OLLAMA_HOST=$(OLLAMA_HOST) TOOLCALLING_PROVIDER=$(TOOLCALLING_PROVIDER) \
-	$(GO) run ./cmd/toolcalling/... \
-	  -provider=$(TOOLCALLING_PROVIDER) \
-	  -ollama-host=$(OLLAMA_HOST) \
-	  $(if $(TOOLCALLING_MODEL),-model=$(TOOLCALLING_MODEL),) \
-	  -message=$(TOOLCALLING_MESSAGE) \
-	  -verbose \
-	  $(ARGS)
-
-# ===========================================================================
 # RUNNABLES
 # ===========================================================================
 
@@ -493,24 +457,6 @@ export-hitl:
 # ===========================================================================
 # LESSONS — step-by-step tutorials
 # ===========================================================================
-
-.PHONY: lesson-01
-lesson-01:
-	OLLAMA_HOST=$(OLLAMA_HOST) \
-	$(GO) run ./cmd/intro/... \
-		-provider=$(INTRO_PROVIDER) \
-		$(if $(INTRO_MODEL),-model=$(INTRO_MODEL),) \
-		-message="$(INTRO_MESSAGE)" \
-		-verbose $(ARGS)
-
-.PHONY: lesson-02
-lesson-02:
-	OLLAMA_HOST=$(OLLAMA_HOST) \
-	$(GO) run ./cmd/toolcalling/... \
-		-provider=$(TOOLCALLING_PROVIDER) \
-		$(if $(TOOLCALLING_MODEL),-model=$(TOOLCALLING_MODEL),) \
-		-message="$(TOOLCALLING_MESSAGE)" \
-		-verbose $(ARGS)
 
 .PHONY: lesson-03
 lesson-03:
